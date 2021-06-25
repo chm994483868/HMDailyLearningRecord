@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:OfferReview/OfferReview.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Algorithm_Swift/Algorithm_Swift.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Algorithm_C/Algorithm_C.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:StudyMarkdown/StudyMarkdown.xcodeproj">
+   </FileRef>
+</Workspace>
