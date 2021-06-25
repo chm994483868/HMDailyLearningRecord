@@ -1,8 +1,6 @@
 
 *.xcuserstate
-project.xcworkspace
+HMDailyLearningRecord.xcworkspace
 xcuserdata
+hmc.xcuserdatad
 UserInterfaceState.xcuserstate
-project.xcworkspace/
-xcuserdata/
-UserInterface.xcuserstate
