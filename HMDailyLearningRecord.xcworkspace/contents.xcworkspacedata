@@ -2,10 +2,10 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:OfferReview/OfferReview.xcodeproj">
+      location = "group:Algorithm_Swift/Algorithm_Swift.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:Algorithm_Swift/Algorithm_Swift.xcodeproj">
+      location = "group:OfferReview/OfferReview.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Algorithm_C/Algorithm_C.xcodeproj">
