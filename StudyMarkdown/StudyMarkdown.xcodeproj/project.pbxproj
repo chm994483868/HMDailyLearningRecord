@@ -144,6 +144,7 @@
 		8E5E58D52686A0010088C814 /* =default 和 = delete使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "=default 和 = delete使用.md"; sourceTree = "<group>"; };
 		8E5E58D92686A0010088C814 /* memmove函数使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "memmove函数使用.md"; sourceTree = "<group>"; };
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：mach-o 文件使用场景总结.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：mach-o 文件使用场景总结.md"; sourceTree = "<group>"; };
+		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -160,6 +161,7 @@
 		8E5E583C2685979D0088C814 = {
 			isa = PBXGroup;
 			children = (
+				8EB2848E26873FE800CCD5FB /* README.md */,
 				8E5E58472685979D0088C814 /* StudyMarkdown */,
 				8E5E58462685979D0088C814 /* Products */,
 			);
