@@ -8,7 +8,9 @@
 
 &emsp;相信每一位 iOS 开发者都进行过打包测试，当我们把 Ad Hoc 或者 App Store Connect 的包导出到本地时会看到一个 xxx.ipa 文件，ipa 是 iPhone Application Archive 的缩写。实际上 xxx.ipa 只是一个变相的 zip 压缩包，我们可以把 xxx.ipa 文件直接通过 unzip 命令进行解压。
 
-&emsp;我们直接新建一个命名为 Test_ipa_Simple 的空白 iOS App，直接进行 Archive 后并导出 Test_ipa_Simple.ipa 文件查看它的内部结构。在终端执行 unzip Test_ipa_Simple.ipa 解压之后，会有一个 Payload 目录，而 Payload 里则是一个看似是文件的 Test_ipa_Simple.app，而实际上它又是一个目录（文件夹），或者说是一个完整的 App Bundle。其中 Base.lproj 中是我们的 Main.storyboard 和 LaunchScreen.storyboard 的内容，然后是 embedded.mobileprovision（描述文件）和 PkgInfo、Info.plist、_CodeSignature 用于描述 App 的一些信息，然后我们要重点关注的便是当前这个目录里面体积最大的文件 Test_ipa_Simple，它是和我们的 ipa 包同名的一个[二进制文件](https://www.zhihu.com/question/19971994)，然后用 file 命令查看它的文件类型是一个在 arm64 处理器架构下的可执行（executable）文件，格式则是 Mach-O，其他还存在 FAT 格式的 Mach-O 文件（可直白的理解为胖的 Mach-O 文件），它们是支持多个架构的二进制文件的顺序组合，例如这里取 `/bin/ls` 路径下的系统文件 `ls` 作为示例，使用 file 命令对它进行查看，可看到它是一个 FAT 文件，它包含 x86_64 和 arm64e 两个架构（这里是 m1 Mac 下的 `ls` 文件），即这里的 `ls` 是一个支持 x86_64 和 arm64e 两种处理器架构的通用二进制文件，里面包含的两部分都是 Mach-O 格式的 64-bit 可执行文件。在了解了二进制文件的数据结构以后，一切就都显得没有秘密了。（下面是终端执行记录，可大致浏览一下）
+&emsp;我们直接新建一个命名为 Test_ipa_Simple 的空白 iOS App，直接进行 Archive 后并导出 Test_ipa_Simple.ipa 文件查看它的内部结构。在终端执行 unzip Test_ipa_Simple.ipa 解压之后，会有一个 Payload 目录，而 Payload 里则是一个看似是文件的 Test_ipa_Simple.app，而实际上它又是一个目录（文件夹），或者说是一个完整的 App Bundle。其中 Base.lproj 中是我们的 Main.storyboard 和 LaunchScreen.storyboard 的内容，然后是 embedded.mobileprovision（描述文件）和 PkgInfo、Info.plist、_CodeSignature 用于描述 App 的一些信息，然后我们要重点关注的便是当前这个目录里面体积最大的文件 Test_ipa_Simple，它是和我们的 ipa 包同名的一个[二进制文件](https://www.zhihu.com/question/19971994)，然后用 file 命令查看它的文件类型是一个在 arm64 处理器架构下的可执行（executable）文件，格式则是 Mach-O，其他还存在 FAT 格式的 Mach-O 文件（可直白的理解为胖的 Mach-O 文件），它们是支持多个架构的二进制文件的顺序组合，例如这里取 `/bin/ls` 路径下的系统文件 `ls` 作为示例，使用 file 命令对它进行查看，可看到它是一个 FAT 文件，它包含 x86_64 和 arm64e 两个架构（这里是 m1 Mac 下的 `ls` 文件），即这里的 `ls` 是一个支持 x86_64 和 arm64e 两种处理器架构的通用二进制文件，里面包含的两部分都是 Mach-O 格式的 64-bit 可执行文件。
+
+&emsp;能同时适用多种架构的二进制文件，同一个程序包中同时为多种架构提供最理想的性能，因为需要储存多种代码，通用二进制应用程序通常比单一平台二进制的程序要大，但是由于两种架构有共通的非执行资源(代码以外的)，所以并不会达到单一版本的两倍之多，而且由于执行中只调用一部分代码，运行起来也不需要额外的内存。在了解了二进制文件的数据结构以后，一切就都显得没有秘密了。（下面是终端执行记录，可大致浏览一下）
 
 ```c++
 // file 指令可看出 ls 的文件类型：
@@ -55,6 +57,26 @@ hmc@bogon Test_ipa_Simple.app % file Test_ipa_Simple
 Test_ipa_Simple: Mach-O 64-bit executable arm64
 ```
 
+### lipo 命令
+
+&emsp;使用 `lifo -info` 可以查看 Mach-O 文件包含的架构。
+
+```c++
+$lipo -info MachO文件
+```
+
+&emsp;使用 `lifo –thin` 拆分某种架构。
+
+```c++
+$lipo MachO文件 –thin 架构 –output 输出文件路径
+```
+
+&emsp;使用 `lipo -create` 合并多种架构。
+
+```c++
+$lipo -create MachO1 MachO2 -output 输出文件路径
+```
+
 ## Mach-O 格式概述
 
 > &emsp;Mach-O 为 Mach Object 文件格式的缩写，全称为 Mach Object File Format 它是一种用于可执行文件、目标代码、动态库、内核转储的文件格式。作为 a.out 格式的替代者，Mach-O 提供了更强的扩展性，并提升了符号表中信息的访问速度。
@@ -70,13 +92,22 @@ Mach-O 曾经为大部分基于 Mach 核心的操作系统所使用。NeXTSTEP�
 
 &emsp;如果我们新建 iOS App 的话 Mach-O Type 默认就是 Executable，如果新建 Framework 或 Static Library 则 Mach-O Type 分别默认是  Dynamic Library 和 Static Library，如果我们同时选中 Include Tests，创建出的 TARGETS 中的 Tests 和 UITests 的 Mach-O Type 默认是 Bundle。
 
-&emsp;实际上在 [apple/darwin-xnu](https://github.com/apple/darwin-xnu) 的 darwin-xnu/EXTERNAL_HEADERS/mach-o/loader.h 中定义了一组宏来表示不同的 Mach-O Type，如 `#define MH_EXECUTE 0x2 /* demand paged executable file */`、`#define MH_DYLIB 0x6 /* dynamically bound shared library */`、`#define MH_BUNDLE 0x8 /* dynamically bound bundle file */`、`#define MH_OBJECT 0x1 /* relocatable object file */` 等（它们分别对应上面的 Mach-O Type）。在数据结构层面这一组不同的宏正用于为 struct mach_header_64 的 filetype 字段赋值，来表示当前 Mach-O 的不同类型，等下面我们具体分析 Mach-O 结构的时候再来详细分析这些宏值所代表的含义。
+&emsp;实际上在 [apple/darwin-xnu](https://github.com/apple/darwin-xnu) 的 darwin-xnu/EXTERNAL_HEADERS/mach-o/loader.h 中定义了一组宏来表示不同的 Mach-O Type，如 `#define MH_EXECUTE 0x2 /* demand paged executable file */`、`#define MH_DYLIB 0x6 /* dynamically bound shared library */`、`#define MH_BUNDLE 0x8 /* dynamically bound bundle file */`、`#define MH_OBJECT 0x1 /* relocatable object file */` 等（它们分别对应上面的 Mach-O Type）。在数据结构层面这一组不同的宏正用于为 struct mach_header_64 的 filetype 字段赋值，来表示当前 Mach-O 的不同类型。
+
++ MH_OBJECT .m、.c 等文件编译出来的目标文件，文件后缀是 .o。Static Library 类型产出是 MH_OBJECT 类型文件的 archive。
++ MH_EXECUTE 可单独执行的可执行文件，必须有 main 方法作为执行入口，App 的二进制就是这种类型，对应 Executable 类型产出。
++ MH_DYLIB 动态库文件，包括 .dylib 文件，动态 framework，对应 Dynamic Library 类型产出。
++ MH_DYLINKER 动态链接器，在 iOS 中就是 /usr/lib/dyld。
++ MH_BUNDLE 独立的二进制文件，不支持在项目中添加 Link Binary 使用。可以在 Copy Bundle Resources 中作为资源添加。 通过 NSBundle load 的方式加载，对应 Bundle 类型产出。典型的例子就是 /System/Library/AccessibilityBundles 目录的 .axbundle 后缀的文件。
++ MH_DSYM 存储二进制文件符号信息的文件，用于Debug分析。
+
+&emsp;/usr/lib/dyld 仅会处理 MH_BUNDLE、MH_DYLIB、MH_EXECUTE 类型的文件。
 
 &emsp;在 [Code Size Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/CodeFootprint.html#//apple_ref/doc/uid/10000149-SW1) 文档中的 [Overview of the Mach-O Executable Format](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/Articles/MachOOverview.html#//apple_ref/doc/uid/20001860-BAJGJEJC) 章节提到了 Mach-O 格式，并描述了如何组织 Mach-O executable format 来提高代码的效率，下面我们先看下这一节的原文。
 
 &emsp;Mach-O 是 OS X 中二进制文件的 native 可执行格式，是 shipping code 的首选格式。可执行格式决定二进制文件中的代码（code）和数据（data）读入内存的顺序。代码和数据的顺序会影响内存使用和分页活动（paging activity），因此会直接影响程序的性能。
 
-&emsp;Mach-O 二进制文件被组织成段（segments）。每个段包含一个或多个 sections。不同类型的代码或数据进入每个 section。Segments 总是从页（page）边界开始，但 sections 不一定是页对齐的（page-aligned）。Segment 的大小由它包含的所有 sections 中的字节数来度量，并向上舍入到下一个虚拟内存页的边界（virtual memory page boundary）。因此，一个 segment 总是 4096 字节或 4096 字节的倍数，其中 4096 字节是最小大小。
+&emsp;Mach-O 二进制文件被组织成段（segments）。每个段包含一个或多个 sections。不同类型的代码或数据进入每个 section。Segments 总是从页（page）边界开始，但 sections 不一定是页对齐的（page-aligned）。Segment 的大小由它包含的所有 sections 中的字节数来度量，并向上舍入到下一个虚拟内存页的边界（virtual memory page boundary）。因此，一个 segment 总是 4096 字节或 4096 字节的倍数，其中 4096 字节是最小大小。（之所以按照 段->节 的方式组织，是因为同一个段下的节，在内存的权限相同，可以不完全按照页大小进行对齐，节省内存空间。而对外整体暴露 段，在装载程序的时候完整映射成一个 vma，可以更好的做内存对齐。）
 
 &emsp;Mach-O 可执行文件的 segments 和 sections 根据其预期用途命名。Segment 名称的约定是使用前有双下划线的所有大写字母组成（例如：\_\_TEXT）；Section 名称的约定是使用前有双下划线的所有小写字母组成（例如：\_\_text）。
 
@@ -158,7 +189,7 @@ struct mach_header_64 {
 
 &emsp;观察 mach_header_64 结构体各个字段的名字，可看到 header 部分存放的是当前 Mach-O 文件的一些概述信息，例如：支持的 CPU 类型（架构）、支持的 CPU 子类型、文件类型（对应上面的 Mach-O Type）、Load commands 的数量、Load commands 的大小等内容。
 
-+ magic 是 mach 的魔法数标识，Test_ipa_Simple 的 magic 是 MH_MAGIC_64，该值是 loader.h 中的一个宏：`#define MH_MAGIC_64 0xfeedfacf` 用于表示 64 位的 mach 魔法数（64-bit mach magic number）。
++ magic 是 mach 的魔法数标识，Test_ipa_Simple 的 magic 是 MH_MAGIC_64，该值是 loader.h 中的一个宏：`#define MH_MAGIC_64 0xfeedfacf` 用于标识当前设备的是大端序还是小端序，如果是 `0xfeedfacf(MH_MAGIC_64)` 就是大端序，而 `0xcffaedfe(MH_CIGAM_64)` 是小端序，iOS 系统上是小端序。
 
 &emsp;这里牵涉到一个 magic number（魔数）的概念。对于一个二进制文件来说，其对应的类型可以在其最初几个字节来标识出来，即 “魔数”。例如我们特别熟悉的 png 格式的图片，使用 xxd 命令查看前 8 个字节的内容 `00000000: 8950 4e47 0d0a 1a0a 0000 000d 4948 4452  .PNG........IHDR` 我们可识别出它是一张 png 格式的图片，再例如常见的 shell 脚本文件前 8 个字节的内容 `00000000: 6563 686f 2022 7e7e 7e7e 7e7e 7e7e 7e7e  echo "~~~~~~~~~~`。
 
@@ -312,7 +343,7 @@ struct segment_command_64 { /* for 64-bit architectures */
 // 数据段 
 #define SEG_DATA "__DATA" /* the tradition UNIX data segment */
 
-// 包含动态链接器所需的符号、字符串表等数据 
+// 包含需要被动态链接器使用的信息，包括符号表、字符串表、重定位项表等
 #define SEG_LINKEDIT "__LINKEDIT" /* the segment containing all structs */
                                   /* created and maintained by the link */
                                   /* editor.  Created with -seglinkedit */
@@ -355,16 +386,16 @@ struct section_64 { /* for 64-bit architectures */
 + segname[16] 当前 section 所在的 segment 的名字。
 + sectname[16] section 的名字。前面的学习过程中我们可能对以下几个 sections 比较眼熟了。
 
-1. \_\_Text.\_\_text 主程序代码
-2. \_\_Text.\_\_cstring c 字符串
-3. \_\_Text.\_\_stubs 桩代码
-4. \_\_Text.\_\_stub_helper
-5. \_\_Data.\_\_data 初始化可变的数据
+1. \_\_Text.\_\_text 主程序代码（只有可执行的机器码）
+2. \_\_Text.\_\_cstring C 字符串（去重后的 C 字符串）
+3. \_\_Text.\_\_stubs 桩代码（符号桩。本质上是一小段会直接跳入 lazybinding 的表对应项指针指向的地址的代码。）
+4. \_\_Text.\_\_stub_helper（辅助函数。上述提到的 lazybinding 的表中对应项的指针在没有找到真正的符号地址的时候，都指向这。）
+5. \_\_Data.\_\_data 初始化可变的数据（初始化过的可变的数据）
 6. \_\_Data.\_\_objc_imageinfo 镜像信息 ，在运行时初始化时 objc_init，调用 load_images 加载新的镜像到 infolist 中
-7. \_\_Data.\_\_la_symbol_ptr
-8. \_\_Data.\_\_nl_symbol_ptr
+7. \_\_Data.\_\_la_symbol_ptr（lazy-binding 的指针表，每个表项中的指针一开始指向 stub_helper）
+8. \_\_Data.\_\_nl_symbol_ptr（非 lazy-binding 的指针表，每个表项中的指针都指向一个在装载过程中，被动态链机器搜索完成的符号）
 9. \_\_Data.\_\_objc_classlist 类列表
-10. \_\_Data.\_\_objc_classrefs 引用的类
+10. \_\_Data.\_\_objc_classrefs 类的引用
 
 &emsp;同样这里我们也通过几种不同的方式来查看 Test_ipa_Simple 文件中 Load commands 部分的一些详细内容。
 
@@ -583,9 +614,10 @@ Load command 13
 + [apple/darwin-xnu](https://github.com/apple/darwin-xnu) 
 + [Mac 命令 - otool](https://blog.csdn.net/lovechris00/article/details/81561627)
 + [iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469)
++ [深入理解MachO数据解析规则](https://juejin.cn/post/6947843156163428383)
++ [图解 Mach-O 中的 got](https://mp.weixin.qq.com/s/vt2LjEbgYsnU1ZI5P9atRw)
 + [dyld背后的故事&源码分析](https://juejin.cn/post/6844903782833192968)
 + [Mac OS X ABI Mach-O File Format Reference（Mach-O文件格式参考](https://www.jianshu.com/p/f10f916a9a63)
 + [aidansteele/osx-abi-macho-file-format-reference](https://github.com/aidansteele/osx-abi-macho-file-format-reference)
 + [The Nitty Gritty of “Hello World” on macOS](https://www.reinterpretcast.com/hello-world-mach-o)
-+ [深入理解MachO数据解析规则](https://juejin.cn/post/6947843156163428383)
-+ [图解 Mach-O 中的 got](https://mp.weixin.qq.com/s/vt2LjEbgYsnU1ZI5P9atRw)
+
