@@ -70,6 +70,11 @@
 我们可以利用定义在 /usr/include/mach-o/getsect.h 中的函数 getsectdata() 得到 section，例如 getsectdata() 可以得到指向 section 数据的一个指针，并返回相关 section 的长度。
 
 
+&emsp;阅读 kyson 老师的 runtime 的专栏。
+
+
+
+
 
 
 
