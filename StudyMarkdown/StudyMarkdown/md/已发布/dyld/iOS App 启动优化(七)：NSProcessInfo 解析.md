@@ -72,6 +72,9 @@
 
 &emsp;阅读 kyson 老师的 runtime 的专栏。
 
+&emsp;**今天早上的任务就是把 kyson 老师的 runtime 文章全部看完。**
+
+&emsp;
 
 
 

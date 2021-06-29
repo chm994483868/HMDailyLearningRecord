@@ -101,7 +101,7 @@ Mach-O 曾经为大部分基于 Mach 核心的操作系统所使用。NeXTSTEP�
 + MH_BUNDLE 独立的二进制文件，不支持在项目中添加 Link Binary 使用。可以在 Copy Bundle Resources 中作为资源添加。 通过 NSBundle load 的方式加载，对应 Bundle 类型产出。典型的例子就是 /System/Library/AccessibilityBundles 目录的 .axbundle 后缀的文件。
 + MH_DSYM 存储二进制文件符号信息的文件，用于Debug分析。
 
-&emsp;/usr/lib/dyld 仅会处理 MH_BUNDLE、MH_DYLIB、MH_EXECUTE 类型的文件。
+&emsp;/usr/lib/dyld 仅会处理MH_BUNDLE、MH_DYLIB、MH_EXECUTE 类型的文件。
 
 &emsp;在 [Code Size Performance Guidelines](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/CodeFootprint.html#//apple_ref/doc/uid/10000149-SW1) 文档中的 [Overview of the Mach-O Executable Format](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/Articles/MachOOverview.html#//apple_ref/doc/uid/20001860-BAJGJEJC) 章节提到了 Mach-O 格式，并描述了如何组织 Mach-O executable format 来提高代码的效率，下面我们先看下这一节的原文。
 
