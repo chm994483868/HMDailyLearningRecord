@@ -90,3 +90,32 @@
 + [Mach-O 可执行文件](https://objccn.io/issue-6-3/)
 + [巧用nm命令](https://zhuanlan.zhihu.com/p/52984601)
 
+[](https://github.com/zjh171/RuntimeSample)
+
+[](https://xiaozhuanlan.com/runtime)
+
+[](https://blog.csdn.net/jasonblog/article/details/49909209)
+
+[](http://hawk0620.github.io/blog/2018/03/22/study-mach-o-file/)
+
+[](https://easeapi.com/blog/blog/57-ios-dumpdecrypted.html)
+
+[](https://blog.csdn.net/lovechris00/article/details/81561627)
+
+[](https://juejin.cn/post/6844904194877587469)
+
+[](https://www.jianshu.com/p/782c0eb7bc10)
+
+[](https://www.jianshu.com/u/58e5946c7e09)
+
+[](https://juejin.cn/post/6947843156163428383)
+
+[](https://mp.weixin.qq.com/s/vt2LjEbgYsnU1ZI5P9atRw)
+
+[](https://blog.csdn.net/weixin_30463341/article/details/99201551)
+
+[](https://www.cnblogs.com/zhanggui/p/9991455.html)
+
+[](https://objccn.io/issue-6-3/)
+
++ [iOS dyld详解](https://zhangyu.blog.csdn.net/article/details/92835911?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control)
