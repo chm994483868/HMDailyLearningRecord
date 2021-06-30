@@ -1,6 +1,26 @@
-# iOS APP 启动优化(六)：mach-o 文件使用场景总结  
+# iOS APP 启动优化(六)：日常开发中 mach-o 相关场景总结  
 
-&emsp;日常灵魂拷问，学习底层到底有没有用，很多人认为学习底层知识只是为了应付面试，日常开发中根本使用不到，事实真的是这样吗？其实我觉得那些对你学习底层进行 “冷嘲热讽” 的人，仅仅是因为他们不想学习或者他们遇到困难 就退缩学不会，而打击你来寻找存在感罢了，今天我们就总结一些 mach-o 的知识在日常开发中的一些使用场景。来验证一下我们学习底层知识点到底有没有用！
+&emsp;日常灵魂拷问，学习底层到底有没有用，很多人认为学习底层知识只是为了应付面试，日常开发中根本使用不到，事实真的是这样吗？其实我觉得那些对你学习底层进行 “冷嘲热讽” 的人，仅仅是因为他们不想学习或者他们遇到困难就退缩学不会，而打击你来寻找存在感罢了，今天我们就总结一些 mach-o 的知识在日常开发中的一些使用场景。来验证一下我们学习底层知识点到底有没有用！
+
+## 在 mach-o 中插入自定义的 segment 和 section
+
+&emsp;在前面学习 mach-o 和 dyld 的过程中，看到 dyld 任意的加载 mach-o 文件中指定 segment 的各个 section 中的内容，那么，我们可不可以干预 Xcode 生成 mach-o 文件的过程呢？那么，有没有一种方式，可以允许我们在 Xcode Build 过程中动态的在 mach-o 中插入新的 segment 和 section 呢？答案是可以的，下面我们直接揭晓答案：使用 `__attribute__ section` 将指定的数据储存到指定的 segment 和 section 中。
+
+&emsp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 &emsp;设置 section 的数据的意义是什么呢？
 
@@ -149,3 +169,5 @@ int main(int argc, const char * argv[]) {
 + [探秘 Mach-O 文件](http://hawk0620.github.io/blog/2018/03/22/study-mach-o-file/)
 + [深入剖析Macho (1)](http://satanwoo.github.io/2017/06/13/Macho-1/)
 
+&emsp;下面列出真实的参考链接 🔗：
++ [iOS安全：修改Mach-O](https://easeapi.com/blog/blog/70-modify-Mach-O.html)
