@@ -247,7 +247,7 @@ hmc@HMdeMac-mini Test_ipa_Simple.app %
 
 ### Load commands
 
-&emsp;Header 中的数据已经说明了整个 Mach-O 文件的基本信息，但是整个 Mach-O 中最重要的还是 Load commands，Header 之后就是 Load commands，其占用的内存和加载命令的总数在 Header 中已经指出。它说明了操作系统应当如何加载 Mach-O 文件中的数据（描述了怎样加载每个 Segment 的信息），对系统内核加载器和动态链接器起指导作用。
+&emsp;Header 中的数据已经说明了整个 Mach-O 文件的基本信息，但是整个 Mach-O 中最重要的还是 Load commands，Header 之后就是 Load commands，其占用的内存和加载命令的总数在 Header 中已经指出。Load commands 向操作系统说明了应当如何加载 Mach-O 文件中的数据（描述了怎样加载每个 Segment 的信息），对系统内核加载器和动态链接器起指导作用。（Load commands 紧随在 Header 后，它包含了一系列的加载命令，目的是向操作系统描述如何处理 Mach-O 文件。）
 
 1. 它描述了文件中数据的具体组织结构。
 2. 它也说明了进程启动后，对应的内存空间结构是如何组织的。

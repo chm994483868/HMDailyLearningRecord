@@ -39,14 +39,134 @@ struct __COM_easeapi {
 volatile struct __COM_easeapi easeapi_section __attribute__ ((section ("__COM, __easeapi"))) = {255, "name"};
 ```
 
-&emsp;`__attribute__ ((section ("segment, section")))` 只能声明 C 函数、全局（静态）变量、Objective-C 方法及属性。
+&emsp;`__attribute__ ((section ("segment, section")))` 只能声明 C （全局）函数、全局（静态）变量、Objective-C （全局）方法及属性。例如我们直接把其放在我们的 `main` 函数中使用，就会报这样的错误：`'section' attribute only applies to functions, global variables, Objective-C methods, and Objective-C properties`，
 
 &emsp;由于我们需要存储指定的信息，典型的做法就是像上述示例中使用结构体变量。这种方式看似解决了问题，但是有诸多限制：
 
-1. 新插入的 section 数据必须是静态或全局的，不能是运行时生成的。（不是动态数据）
-2. `__TEXT` 段由于是只读的，其限制更大，仅支持绝对寻址，所以也不能使用字符串指针。
+1. 新插入的 section 数据必须是静态或全局的，不能是运行时生成的。（不是动态数据，可以是全局函数的返回值。）
+2. `__TEXT` 段由于是只读的，其限制更大，仅支持绝对寻址，所以也不能使用字符串指针。如下代码：
 
-&emsp;`__attribute__ section` 的方式实际上是 mach-o 加载到内存后填充数据的，并不能直接填充至 mach-o 文件中。
+```c++
+char *tempString __attribute__((section("__TEXT, __customSection"))) = (char *)"customSection string value";
+int tempInt __attribute__((section("__TEXT, __customSection"))) = 5;
+```
+
+&emsp;`tempInt` 能正常保存到 `__TEXT` 段的 `__customSection` 区中，也能正常读取到，而 `tempString` 的话则会直接报：`Absolute addressing not allowed in arm64 code but used in '_string5' referencing 'cstring'`。
+
+&emsp;`__attribute__ ((section ("segment, section")))` 其中 `segment` 可以是已知的段名，也可以是我们自定义的段名，然后读取时保证一致就好了。
+
+&emsp;`__attribute__ section` 的方式实际上是 mach-o 加载到内存后填充数据的，并不能直接填充至 mach-o 文件中的，例如上面示例代码中我们使用自定义的 `segment` 名字，然后打包后使用 MachOView 查看我们的可执行文件的结构，并不会有我们自定义的段，同样的我们使用现用的 `__TEXT` 和 `__DATA` 段，也不会添加新的 `section` 区。
+
+&emsp;下面我们看另一位大佬的示例代码，看下如何读取我们放在指定段和区中的值。[iOS开发之runtime（12）：深入 Mach-O](https://xiaozhuanlan.com/topic/9204153876)
+
+```c++
+#import <Foundation/Foundation.h>
+
+#import <dlfcn.h>
+#import <mach-o/getsect.h>
+
+#ifndef __LP64__
+#define mach_header mach_header
+#else
+#define mach_header mach_header_64
+#endif
+
+const struct mach_header *machHeader = NULL;
+static NSString *configuration = @"";
+
+// 写入 __DATA, __customSection
+char *string1 __attribute__((section("__DATA, __customSection"))) = (char *)"__DATA, __customSection1";
+char *string2 __attribute__((section("__DATA, __customSection"))) = (char *)"__DATA, __customSection2";
+
+// 写入 __CUSTOMSEGMENT, __customSection
+char *string3 __attribute__((section("__CUSTOMSEGMENT, __customSection"))) = (char *)"__CUSTOMSEGMENT, __customSection1";
+char *string4 __attribute__((section("__CUSTOMSEGMENT, __customSection"))) = (char *)"__CUSTOMSEGMENT, __customSection2";
+
+// 在 __TEXT, __customSection 中写入字符串，则会报如下错误：
+// Absolute addressing not allowed in arm64 code but used in '_string5' referencing 'cstring'
+
+//char *string5 __attribute__((section("__TEXT, __customSection"))) = (char *)"customSection string value";
+
+// 写入 __TEXT, __customSection
+int tempInt __attribute__((section("__TEXT, __customSection"))) = 5;
+
+int main(int argc, const char * argv[]) {
+    @autoreleasepool {
+        
+        // ⬇️ 直接在 main 函数中使用 __attribute__ section 会报如下错误：
+        // 'section' attribute only applies to functions, global variables, Objective-C methods, and Objective-C properties
+        // int tempInt2 __attribute__((section("__TEXT, __customSection"))) = 5;
+        
+        if (machHeader == NULL) {
+            Dl_info info;
+            dladdr((__bridge const void *)(configuration), &info);
+            machHeader = (struct mach_header_64 *)info.dli_fbase;
+        }
+        
+        unsigned long byteCount = 0;
+        uintptr_t *data = (uintptr_t *)getsectiondata(machHeader, "__DATA", "__customSection", &byteCount);
+        NSUInteger counter = byteCount/sizeof(void*);
+        
+        for (NSUInteger idx = 0; idx < counter; ++idx) {
+            char *string = (char *)data[idx];
+            NSString *str = [NSString stringWithUTF8String:string];
+            NSLog(@"✳️ %@", str);
+        }
+        
+        unsigned long byteCount1 = 0;
+        uintptr_t *data1 = (uintptr_t *)getsectiondata(machHeader, "__CUSTOMSEGMENT", "__customSection", &byteCount1);
+        NSUInteger counter1 = byteCount/sizeof(void*);
+        
+        for (NSUInteger idx = 0; idx < counter1; ++idx) {
+            char *string = (char *)data1[idx];
+            NSString *str = [NSString stringWithUTF8String:string];
+            NSLog(@"✳️✳️ %@", str);
+        }
+        
+        unsigned long byteCount2 = 0;
+        uintptr_t *data2 = (uintptr_t *)getsectiondata(machHeader, "__TEXT", "__customSection", &byteCount2);
+        NSUInteger counter2 = byteCount2/sizeof(int);
+        
+        for (NSUInteger idx = 0; idx < counter2; ++idx) {
+            int intTemp = (int)data2[idx];
+            NSLog(@"✳️✳️✳️ %d", intTemp);
+        }
+    }
+    
+    return 0;
+}
+
+// ⬇️ 控制台打印:
+ ✳️ __DATA, __customSection1
+ ✳️ __DATA, __customSection2
+ ✳️✳️ __CUSTOMSEGMENT, __customSection1
+ ✳️✳️ __CUSTOMSEGMENT, __customSection2
+ ✳️✳️✳️ 5
+```
+
+&emsp;其中 `Dl_info` 结构体和 `dladdr` 函数我们可能比较陌生，它们两者都是在 dlfcn.h 中声明。上面 `main` 函数开头的 `if (machHeader == NULL) { ... }` 中的代码正是使用 `dladdr` 来获取 header，然后拿到 header 以后作为 `getsectiondata` 函数的参数。 
+
+```c++
+/*
+ * Structure filled in by dladdr().
+ */
+typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+} Dl_info;
+
+extern int dladdr(const void *, Dl_info *);
+```
+
+
+
+
+
+
+
+
 
 
 
@@ -73,6 +193,9 @@ volatile struct __COM_easeapi easeapi_section __attribute__ ((section ("__COM, _
 &emsp;有人会觉得，设置 section 的数据的意义是什么，也许在底层库的设计中可能会用到，但我们的日常开发中有使用场景吗？这主要由其特性决定的：设置 section 的时机在 main 函数之前，这么靠前的位置，其实可能帮助我们做一些管理的工作，比如 APP 的启动器管理：在任何一个想要独立启动的模块中，声明其模块名，并写入相应的 section 中，那么 APP 启动时，就可以通过访问指定 section 中的内容来实现加载启动模块的功能。
 
 ```c++
+#import <Foundation/Foundation.h>
+#import <dlfcn.h>
+
 #ifndef __LP64__
 #define mach_header mach_header
 #else
@@ -206,4 +329,7 @@ int main(int argc, const char * argv[]) {
 &emsp;下面列出真实的参考链接 🔗：
 + [iOS安全：修改Mach-O](https://easeapi.com/blog/blog/70-modify-Mach-O.html)
 + [6.33 Declaring Attributes of Functions](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html)
+
 + [iOS开发之runtime（16）：设置/获取section数据详解](https://xiaozhuanlan.com/topic/8932604571)
++ [iOS安全–验证函数地址，检测是否被替换，反注入](http://www.alonemonkey.com/ioss-validate-address.html)
++ [AloneMonkey](http://blog.alonemonkey.com)
