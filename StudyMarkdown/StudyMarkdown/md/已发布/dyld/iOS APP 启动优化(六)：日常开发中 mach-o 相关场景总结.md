@@ -2,11 +2,13 @@
 
 &emsp;日常灵魂拷问，学习底层到底有没有用，很多人认为学习底层知识只是为了应付面试，日常开发中根本使用不到，事实真的是这样吗？其实我觉得那些对你学习底层进行 “冷嘲热讽” 的人，仅仅是因为他们不想学习或者他们遇到困难就退缩学不会，而打击你来寻找存在感罢了，今天我们就总结一些 mach-o 的知识在日常开发中的一些使用场景。来验证一下我们学习底层知识点到底有没有用！
 
-## 在 mach-o 中插入自定义的 segment 和 section
+## 在指定的 segment 和 section 中存入数据
 
 &emsp;在前面学习 mach-o 和 dyld 的过程中，我们看到了 dyld 任意的加载 mach-o 文件中指定 segment 的各个 section 中的内容，那么，我们可不可以干预 Xcode 生成 mach-o 文件的过程呢？那么，有没有一种方式，可以允许我们在 Xcode Build 过程中动态的在 mach-o 中插入新的 segment 和 section 呢？答案是可以的，下面我们直接揭晓答案：使用 `__attribute__ section` 将指定的数据储存到指定的 segment 和 section 中。
 
-&emsp;下面我们首先做一个知识点的延展，看一下 `__attribute__` 相关的信息，`__attribute__` 可以用来设置函数和变量的属性。下面我们看一下一些比较常用的 `gcc Attribute syntax`。
+### \_\_attribute__ 知识点扩展 
+
+&emsp;下面我们首先做一个知识点的延展，看一下 `__attribute__` 相关的信息，`__attribute__` 可以用来设置函数属性（Function Attribute）、变量属性（Variable Attribute）和类型属性（Type Attribute）。它的书写特征是：`__attribute__` 前后都有两个下划线，并且后面会紧跟一对原括弧，括弧里面是相应的 `__attribute__` 参数，语法格式：`__attribute__((attribute-list))` 另外，它必须放于声明的尾部 `;` 之前。下面我们看一些比较常用的 `gcc Attribute syntax`。
 
 + `__attribute__((format()))` 按照指定格式进行参数检查。
 + `__attribute__((__always_inline__))` 强制内联。
@@ -26,6 +28,8 @@
 + `__attribute__((constructor))` 被 `attribute((constructor))` 标记的函数，会在 `main` 函数之前或动态库加载时执行。在 mach-o 中，被 `attribute((constructor))` 标记的函数会在 `_DATA` 段的 `__mod_init_func` 区中。当多个被标记 `attribute((constructor))` 的方法想要有顺序的执行，怎么办？`attribute((constructor))` 是支持优先级的：`_attribute((constructor(1)))`。
 
 + `__attribute__((destructor))` 和 `attribute((constructor))` 相反：被 `attribute((destructor))` 标记的函数，会在 `main` 函数退出或动态库卸载时执行。在 mach-o 中此类函数会放在 `_DATA` 段的 `__mod_term_func` 区中。
+
+### \_\_attribute__ ((section ("segment, section"))) 使用
 
 &emsp;下面我们看一个示例代码：
 
@@ -144,7 +148,12 @@ int main(int argc, const char * argv[]) {
  ✳️✳️✳️ 5
 ```
 
-&emsp;其中 `Dl_info` 结构体和 `dladdr` 函数我们可能比较陌生，它们两者都是在 dlfcn.h 中声明。上面 `main` 函数开头的 `if (machHeader == NULL) { ... }` 中的代码正是使用 `dladdr` 来获取 header，然后拿到 header 以后作为 `getsectiondata` 函数的参数。 
+> &emsp;有人会觉得，设置 section 的数据的意义是什么，也许在底层库的设计中可能会用到，但我们的日常开发中有使用场景吗？答案是肯定的。
+> &emsp;这主要是由其特性决定的：设置 section 的时机在 main 函数之前。这么靠前的位置，其实可能帮助我们做一些管理性的工作，比如 APP 的启动器管理：在任何一个想要独立启动的模块中，声明其模块名，并写入对应的 section 中，那么 APP 启动时，就可以通过访问指定 section 中的内容来实现加载启动模块的功能。[iOS开发之runtime（12）：深入 Mach-O](https://xiaozhuanlan.com/topic/9204153876)
+
+### dladdr 介绍
+
+&emsp;示例代码中 `Dl_info` 结构体和 `dladdr` 函数我们可能比较陌生，它们两者都是在 dlfcn.h 中声明。上面 `main` 函数开头的 `if (machHeader == NULL) { ... }` 中正是使用 `dladdr` 来获取 header，然后拿到 header 以后作为 `getsectiondata` 函数的参数， 去取指定段和区中的数据。 
 
 ```c++
 /*
@@ -160,6 +169,54 @@ typedef struct dl_info {
 extern int dladdr(const void *, Dl_info *);
 ```
 
+&emsp;下面我们对 `dladdr` 进行学习，`dladdr` 方法可以用来获取一个函数所在的模块、名称以及地址。下面我们继续看一个示例，这个示例是使用 `dladdr` 方法获取 `NSArray` 类的 `description` 函数的 `dl_info`  信息。
+
+```c++
+#import <dlfcn.h>
+#include <objc/objc.h>
+#include <objc/runtime.h>
+#include <stdio.h>
+
+int main(int argc, const char * argv[]) {
+
+//    /*
+//     * Structure filled in by dladdr().
+//     */
+//    typedef struct dl_info {
+//            const char      *dli_fname;     /* Pathname of shared object */
+//            void            *dli_fbase;     /* Base address of shared object */
+//            const char      *dli_sname;     /* Name of nearest symbol */
+//            void            *dli_saddr;     /* Address of nearest symbol */
+//    } Dl_info;
+//
+//    extern int dladdr(const void *, Dl_info *);
+    
+    Dl_info info;
+    IMP imp = class_getMethodImplementation(objc_getClass("NSArray"), sel_registerName("description"));
+    
+    printf("✳️✳️✳️ pointer %p\n", imp);
+    
+    if (dladdr((const void *)(imp), &info)) {
+        printf("✳️✳️✳️ dli_fname: %s\n", info.dli_fname);
+        printf("✳️✳️✳️ dli_fbase: %p\n", info.dli_fbase);
+        printf("✳️✳️✳️ dli_sname: %s\n", info.dli_sname);
+        printf("✳️✳️✳️ dli_saddr: %p\n", info.dli_saddr);
+    } else {
+        printf("error: can't find that symbol.\n");
+    }
+    
+    return 0;
+}
+
+// ⬇️ 控制台打印内容如下：
+✳️✳️✳️ pointer 0x7fff203f44dd
+✳️✳️✳️ dli_fname: /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+✳️✳️✳️ dli_fbase: 0x7fff20387000
+✳️✳️✳️ dli_sname: -[NSArray description]
+✳️✳️✳️ dli_saddr: 0x7fff203f44dd
+```
+
+&emsp;如控制台打印，我们仅需要 `NSArray` 类的 `description` 函数的 `IMP`，`dladdr` 函数就能帮我们获取到此 `IMP` 所在的模块、对应的函数的名称以及地址，所以我们可以通过这种方式来判断一个函数是不是被非法修改了。
 
 
 
@@ -329,7 +386,7 @@ int main(int argc, const char * argv[]) {
 &emsp;下面列出真实的参考链接 🔗：
 + [iOS安全：修改Mach-O](https://easeapi.com/blog/blog/70-modify-Mach-O.html)
 + [6.33 Declaring Attributes of Functions](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html)
-
++ [iOS开发之runtime（12）：深入 Mach-O](https://xiaozhuanlan.com/topic/9204153876)
 + [iOS开发之runtime（16）：设置/获取section数据详解](https://xiaozhuanlan.com/topic/8932604571)
 + [iOS安全–验证函数地址，检测是否被替换，反注入](http://www.alonemonkey.com/ioss-validate-address.html)
 + [AloneMonkey](http://blog.alonemonkey.com)
