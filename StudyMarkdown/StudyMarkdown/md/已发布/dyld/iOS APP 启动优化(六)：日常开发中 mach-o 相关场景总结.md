@@ -104,6 +104,12 @@ int main(int argc, const char * argv[]) {
         if (machHeader == NULL) {
             Dl_info info;
             dladdr((__bridge const void *)(configuration), &info);
+            
+            printf("😮😮😮 dli_fname:%s\n", info.dli_fname);
+            printf("😮😮😮 dli_fbase:%p\n", info.dli_fbase);
+            printf("😮😮😮 dli_sname:%s\n", info.dli_sname);
+            printf("😮😮😮 dli_saddr:%p\n", info.dli_saddr);
+            
             machHeader = (struct mach_header_64 *)info.dli_fbase;
         }
         
@@ -141,6 +147,12 @@ int main(int argc, const char * argv[]) {
 }
 
 // ⬇️ 控制台打印:
+// header 信息
+😮😮😮 dli_fname:/Users/hmc/Library/Developer/Xcode/DerivedData/objc-efzravoaasjkrvghpezsjgrtdmuy/Build/Products/Debug/KCObjc
+😮😮😮 dli_fbase:0x100000000
+😮😮😮 dli_sname:GCC_except_table1
+😮😮😮 dli_saddr:0x100003d0c
+
  ✳️ __DATA, __customSection1
  ✳️ __DATA, __customSection2
  ✳️✳️ __CUSTOMSEGMENT, __customSection1
@@ -216,7 +228,105 @@ int main(int argc, const char * argv[]) {
 ✳️✳️✳️ dli_saddr: 0x7fff203f44dd
 ```
 
-&emsp;如控制台打印，我们仅需要 `NSArray` 类的 `description` 函数的 `IMP`，`dladdr` 函数就能帮我们获取到此 `IMP` 所在的模块、对应的函数的名称以及地址，所以我们可以通过这种方式来判断一个函数是不是被非法修改了。
+&emsp;如控制台打印，我们仅需要将 `NSArray` 类的 `description` 函数的 `IMP` 作为参数传递给 `dladdr` 函数，它就能获取到此 `IMP` 所在的模块、对应的函数的名称以及地址，所以我们可以通过这种方式来判断一个函数是不是被非法修改了。
+
+&emsp;那么我们下面就看一个验证函数是否被修改的例子：
+
+```c++
+static inline BOOL validate_methods(const char *cls,const char *fname) __attribute__ ((always_inline));
+
+BOOL validate_methods(const char *cls, const char *fname) {
+    // 根据类名获取类对象
+    Class aClass = objc_getClass(cls);
+
+    // 用于记录 aClass 类的方法列表
+    Method *methods;
+    // 用于记录方法列表数量
+    unsigned int nMethods;
+    // 获取指定
+    Dl_info info;
+    // 用于记录 method 的 IMP
+    IMP imp;
+
+    char buf[128];
+    Method m;
+
+    if (!aClass) return NO;
+
+    // 🤯 获取 aClass 的所有方法
+    methods = class_copyMethodList(aClass, &nMethods);
+
+    // 🤯 循环验证方法列表中的每个 method
+    while (nMethods--) {
+        m = methods[nMethods];
+
+        printf("✳️✳️✳️ validating [%s %s]\n", (const char *)class_getName(aClass), (const char *)method_getName(m));
+        
+        // 🤯 取得函数的 IMP
+        imp = method_getImplementation(m);
+        // imp = class_getMethodImplementation(aClass, sel_registerName("allObjects"));
+        
+        if (!imp) {
+            // IMP 不存在的话报错并 return
+            printf("✳️✳️✳️ error: method_getImplementation(%s) failed\n", (const char *)method_getName(m));
+
+            free(methods);
+            return NO;
+        }
+        
+        // 🤯 imp 做参数，通过 dladdr 函数获取 imp 的信息
+        if (!dladdr((const void *)imp, &info)) {
+            // 获取失败的话报错并 return
+            printf("✳️✳️✳️ error: dladdr() failed for %s\n", (const char *)method_getName(m));
+
+            free(methods);
+            return NO;
+        }
+
+        // 🤯 Validate image path（验证（比较）函数所在的模块名，如果不同的话，则 goto 语句执行 FAIL 中的内容，打印 info 的信息）
+        if (strcmp(info.dli_fname, fname)) {
+            goto FAIL;
+        }
+
+        // 🤯 通过 dladdr 函数取得的函数名不为 NULL，且也不等于 <redacted> 时，否则打印一句 "✳️✳️✳️ <redacted>" 继续下个循环
+        //（<redacted> 涉及一些符号化相关的知识点，后续我们再进行详细学习）
+        if (info.dli_sname != NULL && strcmp(info.dli_sname, "<redacted>") != 0) {
+            
+            // 🤯 Validate class name in symbol
+            snprintf(buf, sizeof(buf), "[%s ", (const char *)class_getName(aClass));
+
+            if (strncmp(info.dli_sname + 1, buf, strlen(buf))) {
+                snprintf(buf, sizeof(buf), "[%s(", (const char *)class_getName(aClass));
+
+                if (strncmp(info.dli_sname + 1, buf, strlen(buf))) {
+                    goto FAIL;
+                }
+            }
+
+            // 🤯 Validate selector in symbol
+            snprintf(buf, sizeof(buf), " %s]", (const char *)method_getName(m));
+
+            if (strncmp(info.dli_sname + (strlen(info.dli_sname) - strlen(buf)), buf, strlen(buf))) {
+                goto FAIL;
+            }
+            
+        } else {
+            printf("✳️✳️✳️ <redacted> \n");
+        }
+    }
+
+    return YES;
+
+FAIL:
+    printf("🥶🥶🥶 method %s failed integrity test: \n", (const char *)method_getName(m));
+    printf("🥶🥶🥶   dli_fname:%s\n", info.dli_fname);
+    printf("🥶🥶🥶   dli_sname:%s\n", info.dli_sname);
+    printf("🥶🥶🥶   dli_fbase:%p\n", info.dli_fbase);
+    printf("🥶🥶🥶   dli_saddr:%p\n", info.dli_saddr);
+    free(methods);
+    return NO;
+}
+```
 
 
 
@@ -233,7 +343,15 @@ int main(int argc, const char * argv[]) {
 
 
 
-&emsp;设置 section 的数据的意义是什么呢？
+
+
+
+
+
+
+
+
+
 
 ## 模仿 static_init 调用构造函数
 
@@ -244,67 +362,6 @@ int main(int argc, const char * argv[]) {
 
 &emsp;全局搜索 \__objc_init_func 
 
-
-## 设置 section 中的内容
-
-&emsp;有人会觉得，设置 section 的数据的意义是什么，也许在底层库的设计中可能会用到，但我们的日常开发中有使用场景吗？这主要由其特性决定的：设置 section 的时机在 main 函数之前，这么靠前的位置，其实可能帮助我们做一些管理的工作，比如 APP 的启动器管理：在任何一个想要独立启动的模块中，声明其模块名，并写入相应的 section 中，那么 APP 启动时，就可以通过访问指定 section 中的内容来实现加载启动模块的功能。
-
-```c++
-#import <Foundation/Foundation.h>
-#import <dlfcn.h>
-
-#ifndef __LP64__
-#define mach_header mach_header
-#else
-#define mach_header mach_header_64
-#endif
-
-const struct mach_header *machHeader = NULL;
-static NSString *configuration = @"";
-
-
-char *kString __attribute__((section("__DATA,__customSection"))) = (char *)"kyson.cn";
-char *kString1 __attribute__((section("__DATA,__customSection"))) = (char *)"kyson.cn1";
-char *kString2 __attribute__((section("__DATA,__customSection"))) = (char *)"kyson.cn2";
-char *kString3 __attribute__((section("__DATA,__customSection"))) = (char *)"kyson.cn3";
-char *kString4 __attribute__((section("__DATA,__customSection"))) = (char *)"kyson.cn4";
-
-int main(int argc, const char * argv[]) {
-//    @autoreleasepool {
-//        // insert code here...
-//        NSLog(@"🤯🤯🤯");
-//    }
-    NSLog(@"🤯🤯🤯");
-//    [HMUncaughtExceptionHandle installUncaughtSignalExceptionHandler];
-//    NSArray *tempArray = @[@(1), @(2), @(3)];
-//    NSLog(@"🦁🦁🦁 %@", tempArray[100]);
-    
-    //LGPerson *person = [[LGPerson alloc] init];
-    //person.name = @"小花";
-    //person.sex = @"男";
-    //person.age = 8;
-    
-    @autoreleasepool {
-        
-        if (machHeader == NULL) {
-            Dl_info info;
-            dladdr((__bridge const void *)(configuration), &info);
-            machHeader = (struct mach_header_64 *)info.dli_fbase;
-        }
-        
-        unsigned long byteCount = 0;
-        uintptr_t *data = (uintptr_t *)getsectiondata(machHeader, "__DATA", "__customSection", &byteCount);
-        NSUInteger counter = byteCount/sizeof(void*);
-        for (NSUInteger idx = 0; idx < counter; ++idx) {
-            char *string = (char *)data[idx];
-            NSString *str = [NSString stringWithUTF8String:string];
-            NSLog(@"✳️✳️✳️ %@", str);
-        }
-    }
-    
-    return 0;
-}
-```
 
 ## 修改 mach-o 
 
@@ -383,7 +440,8 @@ int main(int argc, const char * argv[]) {
 + [探秘 Mach-O 文件](http://hawk0620.github.io/blog/2018/03/22/study-mach-o-file/)
 + [深入剖析Macho (1)](http://satanwoo.github.io/2017/06/13/Macho-1/)
 
-&emsp;下面列出真实的参考链接 🔗：
+&emsp;下面列出真实的参考链接 🔗，上面是以前的其他文章的参考链接 🔗：
+
 + [iOS安全：修改Mach-O](https://easeapi.com/blog/blog/70-modify-Mach-O.html)
 + [6.33 Declaring Attributes of Functions](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html)
 + [iOS开发之runtime（12）：深入 Mach-O](https://xiaozhuanlan.com/topic/9204153876)
