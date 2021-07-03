@@ -119,3 +119,49 @@
 [](https://objccn.io/issue-6-3/)
 
 + [iOS dyld详解](https://zhangyu.blog.csdn.net/article/details/92835911?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control)
+
+
+## 模仿 static_init 调用构造函数
+
+&emsp;在前面的 \_objc_init 过程解析中我们详细分析了 static_init 函数，已知它是
+
+[iOS开发之runtime（11）：Mach-O 犹抱琵琶半遮面](https://xiaozhuanlan.com/topic/0328479651)
+
+
+&emsp;全局搜索 \__objc_init_func 
+
+## iOS 启动优化 + 监控实践
+
+&emsp;但是每个版本排查启动增量会耗费不少时间,想做一个自动化的启动监控流程来降低这方面的时间成本。
+
++ 启动流程、
++ 如何优化、
++ push 启动优化、
++ 二进制重排、
++ 后续计划
+
+[iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469)
+
+
+&emsp;NSProcessInfo 是我们统计 APP 启动时间时必会用到的一个类，下面我们就通过官方文档对它进行学习。
+
+/Users/hmc/Documents/GitHub/APPLE_开源代码/objc4_debug/objc4-781
+
+&emsp;做逆向和静态分析的时候必会看到的文件格式。
+
+&emsp;每个进程都会被分配一个虚拟地址空间，进程寻址的范围就是在这个虚拟地址空间进行的，虚拟地址到物理地址之间有一个映射表进行管理。
+
+&emsp;编译器或任何创建 Mach-O 文件的工具都可以定义额外的节名。这些额外的名称没有出现在表 1 中。
+
+&emsp;在Mach-O文件中的每个section都包含类型和一组属性标记。在中间对象文件中，这个类型和属性决定了静态连接器怎么将section拷贝到最终产品中。对象文件分析工具（例如otool）用类型和属性决定怎么读取和现实这些section。有些section类型和属性是动态连接器用到的。
+
+## 加载过程
+
+
+&emsp;当你点击一个 icon 启动应用程序的时候，系统在内部大致做了如下几件事：
+
++ 内核（OS Kernel）创建一个进程，分配虚拟的进程空间等等，加载动态链接器。
++ 通过动态链接器加载主二进制程序引用的库、绑定符号。
++ 启动程序
+
+&emsp;struct mach_header_64 这个结构体代表的都是 Mach-O 文件的一些元信息，它的作用是让内核在读取该文件创建虚拟进程空间的时候，检查文件的合法性以及当前硬件的特性是否能支持程序的运行。
