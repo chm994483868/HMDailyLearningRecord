@@ -4,7 +4,7 @@
 
 &emsp;TARGETS -> Build Phases -> Link Binary With Libraries -> (Add/Add Other...) 中我们可以添加多个系统库或我们自己的库，其中便可包含静态库和动态库。
 
-&emsp;静态库通常以 .a .lib 或者 .framework 结尾，动态库以 .dylib .tbd .so .framework 结尾。（等等，.framework 可能是静态库也可能是动态库，后面我们会详细分析。）链接时，静态库会被完整的复制到可执行文件中，被多次使用就会有多份冗余拷贝，系统动态库链接时不复制，程序运行时由系统动态加载到内存中，供程序调用，系统只加载一次，多个程序共用，节省内存。
+&emsp;静态库通常以 .a .lib 或者 .framework 结尾，动态库以 .dylib .tbd .so .framework 结尾。（等等，.framework 可能是静态库也可能是动态库，后面我们会详细分析）链接时，静态库会被完整的复制到可执行文件中，被多次使用就会有多份冗余拷贝，系统动态库链接时不复制，程序运行时由系统动态加载到内存中，供程序调用，系统只加载一次，多个程序共用，节省内存。
 
 &emsp;Shift + command + n 创建 new project，在 Framework & library 中，Framework 选项默认是创建 Dynamic Library（动态库），Static Library 选项默认是创建 Static Library（静态库），创建完成的 Mach-O Type 的值告诉了我们他们对应的类型。 当然我们也能直接切换不同的 Mach-0 Type，如 Static Library 和 Dynamic Library 进行切换。而且从 Products 中看到默认情况下动态库是 .framework 后缀，静态库是 .a 后缀，同时还看到动态库是需要进行签名的，而静态库则不需要。
 
@@ -129,10 +129,9 @@ int main(int argc, char * argv[]) {
 @end
 
 // 运行后控制台打印如下：
-
-2021-05-07 14:46:45.238651+0800 Test_ipa_Simple[43277:456220] 🦁🦁🦁 +[ViewController load] 执行
+🦁🦁🦁 +[ViewController load] 执行
 🦁🦁🦁 main_front 执行 
-2021-05-07 14:46:45.242218+0800 Test_ipa_Simple[43277:456220] 🦁🦁🦁 main 执行
+🦁🦁🦁 main 执行
 🦁🦁🦁 main_back 执行 
 ```
 
@@ -228,12 +227,20 @@ __dyld_start:
     and     sp, x28, #~15        // force 16-byte alignment of stack and 逻辑与指令 ((x28 & #~15) & sp) -> sp
     mov    x0, #0
     mov    x1, #0
+    
+    // stp 入栈指令（str 的变种指令，可以同时操作两个寄存器）将 x1, x0 的值存入 sp 左移 16 字节的位置
     stp    x1, x0, [sp, #-16]!    // make aligned terminating frame
+    
     mov    fp, sp            // set up fp to point to terminating frame
+    
+    // 将某一个寄存器的值和另一寄存器的值相减并将结果保存在另一个寄存器中
     sub    sp, sp, #16             // make room for local variables sub 减法指令 
     
 #if __LP64__
+
+    // load register 将内存中的值读取到寄存器中，如下将寄存器 x28 的值作为地址，取该内存地址的值放入寄存器 x0 中 
     ldr     x0, [x28]               // get app's mh into x0
+    
     ldr     x1, [x28, #8]           // get argc into x1 (kernel passes 32-bit int argc as 64-bits on stack to keep alignment)
     add     x2, x28, #16            // get argv into x2
 #else
@@ -241,15 +248,21 @@ __dyld_start:
     ldr     w1, [x28, #4]           // get argc into x1 (kernel passes 32-bit int argc as 64-bits on stack to keep alignment)
     add     w2, w28, #8             // get argv into x2
 #endif
-
+    
+    // adrp 用来定位数据段中的数据用，因为 astr 会导致代码及数据的地址随机化，用 adrp 来根据 pc 做辅助定位 
     adrp    x3,___dso_handle@page
+    
     add     x3,x3,___dso_handle@pageoff // get dyld's mh in to x4
     mov    x4,sp                   // x5 has &startGlue
     
     // ⬇️⬇️⬇️⬇️⬇️ 这里调用 dyldbootstrap::start 是一个入口  
     // call dyldbootstrap::start(app_mh, argc, argv, dyld_mh, &startGlue)
     
+    // bl 跳转到某地址（有返回），先将下一个指令地址保存到寄存器 lr（x30）中，再进行跳转；（注意是下一条指令的地址，不是当前指令执行后的返回值）
+    // 一般用于不同方法直接的调用。
     bl    __ZN13dyldbootstrap5startEPKN5dyld311MachOLoadedEiPPKcS3_Pm
+    
+    // 这里的 entry point 是 dyld:_main 函数的地址？
     mov    x16,x0                  // save entry point address in x16
     
 #if __LP64__
@@ -257,8 +270,10 @@ __dyld_start:
 #else
     ldr     w1, [sp]
 #endif
-
+    
+    // cmp 比较指令，相当于 subs，影响程序状态寄存器 cpsr
     cmp    x1, #0
+    
     b.ne    Lnew
 
     // LC_UNIXTHREAD way, clean up stack and jump to result
@@ -328,7 +343,7 @@ uintptr_t start(const dyld3::MachOLoaded* appsMachHeader, int argc, const char* 
     rebaseDyld(dyldsMachHeader); // 用于重定位（设置虚拟地址偏移，这里的偏移主要用于重定向）
 
     // kernel sets up env pointer to be just past end of agv array
-    // 内核将 env 指针设置为刚好超出 agv 数组的末尾
+    // 内核将 env 指针（envp）设置为刚好超出 agv 数组（argv）的末尾
     const char** envp = &argv[argc+1];
     
     // kernel sets up apple pointer to be just past end of envp array
@@ -339,28 +354,82 @@ uintptr_t start(const dyld3::MachOLoaded* appsMachHeader, int argc, const char* 
 
     // set up random value for stack canary
     // 为 stack canary 设置随机值
+    // 函数内部实际比较简单，就是为 long __stack_chk_guard = 0; 这个全局变量设置一个随机值（不知道具体用途是啥😂）
     __guard_setup(apple);
 
-#if DYLD_INITIALIZER_SUPPORT // 前面 DYLD_INITIALIZER_SUPPORT 宏的值是 0，所以这里 #if 内部的内容并不会执行 
+// 前面 DYLD_INITIALIZER_SUPPORT 宏的值是 0，所以这里 #if 内部的内容并不会执行
+//（runDyldInitializers 函数的内容也比较简单，就是遍历执行 __DATA 段的 __mod_init_func 区中的 Initializer 函数，）
+//（但是实际上 Initializer 函数是通过 void ImageLoaderMachO::doModInitFunctions(const LinkContext& context) 来执行的，后面我们会进行详细分析，）
+//（这里只需要对 Initializer 和 __mod_init_func 区建立个印象就好了。）
+#if DYLD_INITIALIZER_SUPPORT
     // run all C++ initializers inside dyld
-    // 在 dyld 中运行所有 C++ 初始化器
+    // 在 dyld 中运行所有 C++ initializers
     //（这里可以参考 《Hook static initializers》：https://blog.csdn.net/majiakun1/article/details/99413403）
-    //（帮助我们了解学习 C++ initializers）
+    //（帮助我们了解学习 C++ initializers 是怎么来的）
     runDyldInitializers(argc, argv, envp, apple);
 #endif
-
+    
+    // from libc.a，暂时无法查看其内部实现
     _subsystem_init(apple);
 
     // now that we are done bootstrapping dyld, call dyld's main
-    // 现在我们完成了 bootstrapping dyld，调用 dyld 的 main（进入 dyld 的主函数）
+    // 现在我们完成了 bootstrapping dyld，开始调用 dyld 的 _main 函数
+    
     uintptr_t appsSlide = appsMachHeader->getSlide();
     return dyld::_main((macho_header*)appsMachHeader, appsSlide, argc, argv, envp, apple, startGlue);
 }
 ```
 
-&emsp;在 `start` 函数中 `appsMachHeader` 和 `dyldsMachHeader` 两个参数的类型是 `const dyld3::MachOLoaded*`（它们两个参数可以理解为我们程序的可执行文件和 dyld 程序的 header 的地址），在 dyld/dyld3/MachOLoaded.h 文件中可看到命名空间 dyld3 中定义的 `struct VIS_HIDDEN MachOLoaded : public MachOFile`，即 `MachOLoaded` 结构体公开继承自 `MachOFile` 结构体，在 dyld/dyld3/MachOFile.h 文件中可看到命名空间 dyld3 中定义的 `struct VIS_HIDDEN MachOFile : mach_header`，即 `MachOFile` 结构体继承自 `mach_header` 结构体。
+&emsp;在 `start` 函数中 `appsMachHeader` 和 `dyldsMachHeader` 两个参数的类型是 `const dyld3::MachOLoaded*`（它们两个参数分别可以理解为我们当前要执行的程序的可执行文件和 dyld 程序的 `header` 的地址）。在 dyld/dyld3/MachOLoaded.h 文件中可看到在 namespace dyld3 中定义的 `struct VIS_HIDDEN MachOLoaded : public MachOFile`，即 `MachOLoaded` 结构体公开继承自 `MachOFile` 结构体，在 dyld/dyld3/MachOFile.h 文件中可看到命名空间 dyld3 中定义的 `struct VIS_HIDDEN MachOFile : mach_header`，即 `MachOFile` 结构体继承自 `mach_header` 结构体。
 
-&emsp;在 `return dyld::_main((macho_header*)appsMachHeader, appsSlide, argc, argv, envp, apple, startGlue);` 中，我们看到 `appsMachHeader` 被强转为了 `macho_header*`，那我们接着则看下 `macho_header` 的定义。在 dyld/src/ImageLoader.h 中可看到在 \_\_LP64__ 下 `macho_header` 公开继承自 `mach_header_64` 其他平台则是继承自 `mach_header`（它们的名字仅差一个 `0`），`mach_header` 在前一篇 《iOS APP 启动优化(一)：ipa(iPhone application archive) 包和 Mach-O(Mach Object file format) 概述》中我们有详细分析过：
+&emsp;`MachOLoaded` 声明：
+
+```c++
+#ifndef MachOLoaded_h
+#define MachOLoaded_h
+
+#include <stdint.h>
+
+#include "Array.h" // 这里可以点击进去看看 namespace dyld3 内部对 Array 这个模版类的声明
+#include "MachOFile.h"
+
+
+class SharedCacheBuilder;
+
+namespace dyld3 {
+
+// A mach-o mapped into memory with zero-fill expansion
+// Can be used in dyld at runtime or during closure building
+struct VIS_HIDDEN MachOLoaded : public MachOFile
+{
+...
+};
+
+} // namespace dyld3
+
+#endif /* MachOLoaded_h */
+```
+
+&emsp;`MachOFile` 声明：
+
+```c++
+namespace dyld3 {
+
+...
+
+// A mach-o file read/mapped into memory
+// Only info from mach_header or load commands is accessible (no LINKEDIT info)
+struct VIS_HIDDEN MachOFile : mach_header
+{
+...
+};
+
+} // namespace dyld3
+```
+
+&emsp;其中 `VIS_HIDDEN` 是 `#define VIS_HIDDEN __attribute__((visibility("hidden")))` 可以用于抑制将一个函数的名称被导出，对连接该库的程序文件来说，该函数是不可见的。我们可以参考：[GCC扩展 __attribute__ ((visibility("hidden")))](https://blog.51cto.com/liulixiaoyao/814329) 进行学习。 
+
+&emsp;在 `start` 函数末尾的 `return dyld::_main((macho_header*)appsMachHeader, appsSlide, argc, argv, envp, apple, startGlue);` 调用中，我们看到 `appsMachHeader` 被强转为了 `macho_header*`，那么我们接着来看下 `macho_header` 的定义。在 dyld/src/ImageLoader.h 中可看到在 `__LP64__` 下 `macho_header` 公开继承自 `mach_header_64` 其他平台则是继承自 `mach_header`（`macho_header` 和 `mach_header` 它们的名字仅差一个 `o`），这里虽说是继承，但是看到其实现却为 `{}`。
 
 ```c++
 #if __LP64__
@@ -372,7 +441,9 @@ uintptr_t start(const dyld3::MachOLoaded* appsMachHeader, int argc, const char* 
 #endif
 ```
 
-> &emsp;Mach-O 文件的 Header 部分对应的数据结构定义在 darwin-xnu/EXTERNAL_HEADERS/mach-o/loader.h 中，`struct mach_header` 和 `struct mach_header_64` 分别对应 32-bit architectures 和 64-bit architectures。（对于 32/64-bit architectures，32/64 位的 mach header 都出现在 Mach-O 文件的最开头。）
+&emsp;`mach_header` 在前一篇 《iOS APP 启动优化(一)：ipa(iPhone application archive) 包和 Mach-O(Mach Object file format) 概述》中我们有详细分析过，这里就不再展开了。
+
+> &emsp;Mach-O 文件的 Header 部分对应的数据结构定义是在 darwin-xnu/EXTERNAL_HEADERS/mach-o/loader.h 中，`struct mach_header` 和 `struct mach_header_64` 分别对应 32-bit architectures 和 64-bit architectures。（对于 32/64-bit architectures，32/64 位的 mach header 都是位于 Mach-O 文件的开头）
 
 ```c++
 struct mach_header_64 {
@@ -387,11 +458,11 @@ struct mach_header_64 {
 };
 ```
 
-&emsp;综上，`MachOLoaded -> MachOFile -> mach_header`。MachOFile 继承 mach_header 使其拥有 mach_header 结构体中所有的成员变量，然后 MachOFile 定义中则声明了一大组针对 Mach-O 的 Header 的函数，例如获取架构名、CPU 类型等。MachOLoaded 继承自 MachOFile 其定义中则声明了一组加载 Mach-O 的 Header 的函数。 
+&emsp;综上，`MachOLoaded -> MachOFile -> mach_header`。MachOFile 继承 mach_header 使其拥有 mach_header 结构体中所有的成员变量，然后 MachOFile 定义中则声明了一大组针对 Mach-O 的 Header 的函数，例如获取架构名、CPU 类型等。MachOLoaded 继承自 MachOFile 其定义中则声明了一大组加载、处理 Mach-O 的 Header 的函数。 
 
 #### dyld::_main 
 
-&emsp;下面我们接着看 `dyld::_main` 函数。首先是根据函数调用方式可以看到 \_main 函数是属于 dyld 命名空间的，在 dyld/src/dyld2.cpp 中可看到 namespace dyld 的定义，在 dyld2.h 和 dyld2.cpp 中可看到分别进行了 `uintptr_t _main(const macho_header* mainExecutableMH, uintptr_t mainExecutableSlide, int argc, const char* argv[], const char* envp[], const char* apple[], uintptr_t* startGlue)` 的声明和定义。
+&emsp;下面我们接着看 `dyld::_main` 函数。首先是根据函数调用方式可以看到 \_main 函数是属于 dyld 命名空间的，在 dyld/src/dyld2.cpp 中可看到 namespace dyld 的定义，在 dyld2.h 和 dyld2.cpp 中可看到分别进行了 `uintptr_t _main(const macho_header* mainExecutableMH, uintptr_t mainExecutableSlide, int argc, const char* argv[], const char* envp[], const char* apple[], uintptr_t* startGlue)` 的声明和定义。（`_main` 函数有 7 个参数，再加上每个参数的名字也比较长，所以这个函数声明是真的长）
 
 &emsp;首先是 \_main 函数的注释：
 
@@ -400,9 +471,9 @@ struct mach_header_64 {
 >
 > &emsp;dyld 的入口点。内核加载 dyld 并跳到 \_\_dyld_start 设置一些寄存器并调用此函数。返回目标程序中的 main() 地址，\_\_dyld_start 跳到该地址。
 
-&emsp;下面我们沿着 \_main 函数的定义，来分析 \_main 函数，由于该函数定义内部根据不同的平台、不同的架构作了不同的定义和调用，所以函数定义超长，总共有 800 多行，这里只对必要的代码段进行摘录分析，其中最重要的部分则是分析函数返回值 `uintptr_t result` 在函数内部的赋值情况。
+&emsp;下面我们沿着 `_main` 函数的定义，来分析 `_main` 函数相关的内容，由于该函数定义内部根据不同的平台、不同的架构作了不同的处理和调用，所以函数定义超长，总共有 800 多行，这里只对必要的代码段进行摘录分析，其中最重要的部分则是分析函数返回值 `uintptr_t result` 在函数内部的赋值情况。
 
-&emsp;在 dyld/src/dyld2.cpp 的 7117 行和 7127 行看看到如下代码：
+&emsp;在 `_main` 函数内部我们可以看到如下两行代码：
 
 ```c++
 ...
@@ -415,7 +486,7 @@ result = (uintptr_t)sMainExecutable->getEntryFromLC_UNIXTHREAD();
 ...
 ```
 
-&emsp;`sMainExecutable` 是一个全局变量：`static ImageLoaderMachO* sMainExecutable = NULL;`，在 dyld/src/dyld2.cpp 的 6861 行可看到对其进行实例化。
+&emsp;`sMainExecutable` 是一个全局变量：`static ImageLoaderMachO* sMainExecutable = NULL;`，在 `_main` 函数的 `// instantiate ImageLoader for main executable` 部分可看到对其进行实例化赋值：
 
 ```c++
 // instantiate ImageLoader for main executable
@@ -426,11 +497,19 @@ gLinkContext.mainExecutableCodeSigned = hasCodeSignatureLoadCommand(mainExecutab
 
 ##### ImageLoaderMachO
 
-&emsp;这里我们首先看一下 `ImageLoaderMachO` 类（ImageLoaderMachO is a subclass of ImageLoader which loads mach-o format files.）的定义，`instantiateFromLoadedImage` 函数返回一个 `ImageLoaderMachO` 指针，在 dyld/src/ImageLoaderMachO.h 中可看到 `class ImageLoaderMachO : public ImageLoader` 的定义，`ImageLoaderMachO` 类公开继承自 `ImageLoader` 类。`ImageLoader` 是一个抽象基类。为了支持加载特定的可执行文件格式，可以创建 `ImageLoader` 的一个具体子类。对于使用中的每个可执行文件（dynamic shared object），将实例化一个 `ImageLoader`。`ImageLoader` 基类负责将 images 链接在一起，但它对任何特定的文件格式一无所知，主要由其特定子类来实现。如 `ImageLoaderMachO` 是 `ImageLoader` 的特定子类，可加载 mach-o 格式的文件。（例如还有 `class ImageLoaderMegaDylib : public ImageLoader` ImageLoaderMegaDylib is the concrete subclass of ImageLoader which represents all dylibs in the shared cache.）
+&emsp;这里我们首先看一下 `ImageLoaderMachO` 类（ImageLoaderMachO is a subclass of ImageLoader which loads mach-o format files.），`ImageLoaderMachO` 是 `ImageLoader` 的子类，用于加载 mach-o 格式的文件。
+
+&emsp;`instantiateFromLoadedImage` 函数返回一个 `ImageLoaderMachO` 指针，在 dyld/src/ImageLoaderMachO.h 中可看到 `class ImageLoaderMachO : public ImageLoader` 的定义，`ImageLoaderMachO` 类公开继承自 `ImageLoader` 类。
+
+&emsp;`ImageLoader` 是一个抽象基类。为了支持加载特定的可执行文件格式，可以创建 `ImageLoader` 的一个具体子类。对于使用中的每个可执行文件（dynamic shared object），将实例化一个 `ImageLoader`。
+
+&emsp;`ImageLoader` 基类负责将 images 链接在一起，但它对任何特定的文件格式一无所知，主要由其特定子类来实现。
+
+&emsp;如 `ImageLoaderMachO` 是 `ImageLoader` 的特定子类，可加载 mach-o 格式的文件。（例如还有 `class ImageLoaderMegaDylib : public ImageLoader` ImageLoaderMegaDylib is the concrete subclass of ImageLoader which represents all dylibs in the shared cache.）
 
 ##### instantiateFromLoadedImage
 
-&emsp;下面我们接着看 `instantiateFromLoadedImage` 函数实现，根据入参 `const macho_header* mh` 它内部直接调用 `ImageLoaderMachO` 的 `instantiateMainExecutable` 函数进行主可执行文件的实例化（即创建 ImageLoader 对象）。对于程序中需要的依赖库、插入库，会创建一个对应的 image 对象，对这些 image 进行链接，调用各 image 的初始化方法等等，包括对 runtime 的初始化。然后将 image 加载到 imagelist 中，所以我们在 xcode 中使用 image list 命令查看的第一个便是我们的 mach-o，最后返回根据我们的主可执行文件创建的 ImageLoader 对象的地址，即这里 `sMainExecutable` 就是创建后的主程序。  
+&emsp;`instantiateFromLoadedImage` 是在 `dyld2.h` 中定义的一个静态函数。根据入参 `const macho_header* mh` 它内部直接调用 `ImageLoaderMachO` 的 `instantiateMainExecutable` 函数进行主可执行文件的实例化（即创建 ImageLoader 对象）。对于程序中需要的依赖库、插入库，会创建一个对应的 image 对象，对这些 image 进行链接，调用各 image 的初始化方法等等，包括对 runtime 的初始化。然后将 image 加载到 imagelist 中，所以我们在 xcode 中使用 image list 命令查看的第一个便是我们的 mach-o，最后返回根据我们的主可执行文件创建的 ImageLoader 对象的地址，即这里 `sMainExecutable` 就是创建后的主程序。  
 
 ```c++
 // The kernel maps in main executable before dyld gets control.  We need to 
@@ -438,11 +517,14 @@ gLinkContext.mainExecutableCodeSigned = hasCodeSignatureLoadCommand(mainExecutab
 static ImageLoaderMachO* instantiateFromLoadedImage(const macho_header* mh, uintptr_t slide, const char* path)
 {
     // try mach-o loader
-    // isCompatibleMachO 是检查 mach-o 的 subtype 是否支持当前的 cpu 
+    // isCompatibleMachO 是检查 mach-o 的 subtype 是否支持当前的 cpu（当前源码已经把这个这个判断注释掉） 
 //    if ( isCompatibleMachO((const uint8_t*)mh, path) ) {
+    
+        // 根据我们的主可执行文件创建一个 ImageLoader 对象
         ImageLoader* image = ImageLoaderMachO::instantiateMainExecutable(mh, slide, path, gLinkContext);
         
         // 将 image 加载到 imagelist 中，所以我们在 xcode 中使用 image list 命令查看的第一个便是我们的 mach-o
+        //（把 image 添加到 static std::vector<ImageLoader*> sAllImages; 这个全局变量中）
         addImage(image);
         
         return (ImageLoaderMachO*)image;
@@ -454,7 +536,11 @@ static ImageLoaderMachO* instantiateFromLoadedImage(const macho_header* mh, uint
 
 ##### ImageLoaderMachO::instantiateMainExecutable 
 
-&emsp;下面我们看一下 `ImageLoaderMachO::instantiateMainExecutable` 函数的定义，它的功能便是为 main executable 创建 image。
+&emsp;下面我们看一下 `ImageLoaderMachO::instantiateMainExecutable` 函数的定义，它的功能便是实例化 main executable。它内部又进行了一层嵌套，通过 `sniffLoadCommands` 函数来进行判断是调用 `ImageLoaderMachOCompressed::instantiateMainExecutable` 还是 `ImageLoaderMachOClassic::instantiateMainExecutable`。`ImageLoaderMachOCompressed` 和 `ImageLoaderMachOClassic` 都是 `ImageLoaderMachO` 的子类。 
+
+&emsp;`class ImageLoaderMachOCompressed : public ImageLoaderMachO`：ImageLoaderMachOCompressed is the concrete subclass of ImageLoader which loads mach-o files that use the compressed LINKEDIT format.（`ImageLoaderMachOCompressed` 是 `ImageLoader` 的子类，它加载使用 `LINKEDIT` 压缩格式的 mach-o 文件。）
+
+&emsp;`class ImageLoaderMachOClassic : public ImageLoaderMachO`：ImageLoaderMachOClassic is the concrete subclass of ImageLoader which loads mach-o files that use the traditional LINKEDIT format.（`ImageLoaderMachOClassic` 是 `ImageLoader` 的具体子类，它加载使用传统 `LINKEDIT` 格式的 mach-o 文件。） 
 
 ```c++
 // create image for main executable
@@ -462,13 +548,20 @@ ImageLoader* ImageLoaderMachO::instantiateMainExecutable(const macho_header* mh,
 {
     //dyld::log("ImageLoader=%ld, ImageLoaderMachO=%ld, ImageLoaderMachOClassic=%ld, ImageLoaderMachOCompressed=%ld\n",
     //    sizeof(ImageLoader), sizeof(ImageLoaderMachO), sizeof(ImageLoaderMachOClassic), sizeof(ImageLoaderMachOCompressed));
+    
     bool compressed;
     unsigned int segCount;
     unsigned int libCount;
     const linkedit_data_command* codeSigCmd;
     const encryption_info_command* encryptCmd;
+    
     sniffLoadCommands(mh, path, false, &compressed, &segCount, &libCount, context, &codeSigCmd, &encryptCmd);
+    
     // instantiate concrete class based on content of load commands
+    // 根据加载命令的内容实例化具体类
+    
+    // 根据具体情况判断是使用 ImageLoaderMachOCompressed 还是 ImageLoaderMachOClassic 来调用 instantiateMainExecutable 函数    
+    
     if ( compressed ) 
         return ImageLoaderMachOCompressed::instantiateMainExecutable(mh, slide, path, segCount, libCount, context);
     else
@@ -480,9 +573,7 @@ ImageLoader* ImageLoaderMachO::instantiateMainExecutable(const macho_header* mh,
 }
 ```
 
-&emsp;其中的 `sniffLoadCommands` 函数，它也是 `ImageLoaderMachO` 类的一个函数。
-
-&emsp;`class ImageLoaderMachOCompressed : public ImageLoaderMachO` 即 `ImageLoaderMachOCompressed` 是 `ImageLoaderMachO` 的子类：ImageLoaderMachOCompressed is the concrete subclass of ImageLoader which loads mach-o files that use the compressed LINKEDIT format。
+&emsp;其中的 `sniffLoadCommands` 函数，它也是 `ImageLoaderMachO` 类的一个函数，它是用来确定此 mach-o 文件是否具有经典（classic）或压缩（compressed）的 LINKEDIT 格式 及其具有的段数。（&segCount 和 &libCount 两个参数，用于 `instantiateMainExecutable` 函数的参数使用。）
 
 ##### sniffLoadCommands
 
@@ -536,11 +627,18 @@ switch (cmd->cmd) {
 
 &emsp;`sniffLoadCommands(mh, path, false, &compressed, &segCount, &libCount, context, &codeSigCmd, &encryptCmd);` 函数调用我们就看到这里，然后下面的 `return ImageLoaderMachOCompressed::instantiateMainExecutable(mh, slide, path, segCount, libCount, context);` 和 `return ImageLoaderMachOClassic::instantiateMainExecutable(mh, slide, path, segCount, libCount, context);` 则都是调用 ImageLoaderMachO 的构造函数，创建 ImageLoaderMachO 对象。
 
-&emsp;`sMainExecutable` 创建完毕，我们接着分析 `dyld::_main` 函数。
+
+&emsp;这里我们顺着 `ImageLoaderMachOCompressed` 类的 `instantiateMainExecutable` 函数执行流程往下看的话，就是申请空间，然后一路调用 `ImageLoaderMachOCompressed` 类、`ImageLoaderMachO` 类、`ImageLoader` 类的构造函数一路向下执行。
+
+&emsp;`sMainExecutable` 创建完成以后，赋值给了 `gLinkContext.mainExecutable`。 
+
+&emsp;下面我们沿着 `dyld::_main` 函数的实现从上到下分析其中值得拿出来分析的内容。let's do it!
 
 #### getHostInfo
 
-&emsp;调用 getHostInfo(mainExecutableMH, mainExecutableSlide); 函数来获取 Mach-O 头部信息中的当前运行架构信息，仅是为了给 sHostCPU 和 sHostCPUsubtype 两个全局变量赋值。getHostInfo 函数虽然有两个参数 mainExecutableMH 和 mainExecutableSlide 但是实际都只是为了在 __x86_64__ && !TARGET_OS_SIMULATOR 下使用的。
+&emsp;调用 `getHostInfo(mainExecutableMH, mainExecutableSlide);` 函数来获取 Mach-O 头部信息中的当前运行架构信息，仅是为了给 `sHostCPU` 和 `sHostCPUsubtype` 两个全局变量赋值。
+
+&emsp;`getHostInfo` 函数虽然有两个参数 `mainExecutableMH` 和 `mainExecutableSlide` 但是实际都只是为了在 `__x86_64__ && !TARGET_OS_SIMULATOR` 下使用的，其它平台则都是根据当前环境直接进行赋值了，例如：`__arm64e__` 为真时，直接进行 `sHostCPU = CPU_TYPE_ARM64; sHostCPUsubtype = CPU_SUBTYPE_ARM64E;` 赋值操作。
 
 ```c++
 static void getHostInfo(const macho_header* mainExecutableMH, uintptr_t mainExecutableSlide)
@@ -606,21 +704,32 @@ static void getHostInfo(const macho_header* mainExecutableMH, uintptr_t mainExec
 
 &emsp;在此块区域中我们看到了我们的老朋友 block 在 C/C++ 函数中的使用。
 
-&emsp;判断 `mainExecutableMH` 支持的平台以及当前的版本信息等。
+&emsp;判断 `mainExecutableMH` 支持的平台信息。
 
 ```c++
 // Set the platform ID in the all image infos so debuggers can tell the process type
+// 在所有 image infos 中设置 platform ID，以便调试器可以判断进程类型
+
 // FIXME: This can all be removed once we make the kernel handle it in rdar://43369446
 // The host may not have the platform field in its struct, but there's space for it in the padding, so always set it
 {
+    // __block 修饰 platformFound，需要在下面的 block 中修改它的值
     __block bool platformFound = false;
+    
+    // 这里的 forEachSupportedPlatform 函数有一个 void (^handler)(Platform platform, uint32_t minOS, uint32_t sdk) 参数，
+    // 这里也是第一次看到在 C++ 函数中使用 block
+    
     ((dyld3::MachOFile*)mainExecutableMH)->forEachSupportedPlatform(^(dyld3::Platform platform, uint32_t minOS, uint32_t sdk) {
         if (platformFound) {
             halt("MH_EXECUTE binaries may only specify one platform");
         }
+        
+        // 记录平台信息
         gProcessInfo->platform = (uint32_t)platform;
         platformFound = true;
     });
+    
+    // 如果是未知的平台，在 macOS 下则是赋值为 masOS，其它嵌入式平台则打印并结束
     if (gProcessInfo->platform == (uint32_t)dyld3::Platform::unknown) {
         // There were no platforms found in the binary. This may occur on macOS for alternate toolchains and old binaries.
         // It should never occur on any of our embedded platforms.
@@ -634,9 +743,12 @@ static void getHostInfo(const macho_header* mainExecutableMH, uintptr_t mainExec
 ...
 ```
 
+&emsp;从 `CRSetCrashLogMessage("dyld: launch started");` 下面开始，dyld 便开始启动了。
+
 #### setContext
 
-&emsp;`setContext` 是一个静态全局函数，主要为 `ImageLoader::LinkContext gLinkContext;` 这个全局变量的各项属性以及函数指针赋值。设置 crash 以及 log 地址，设置上下文信息。 
+&emsp;`setContext` 是一个静态全局函数，主要为 `ImageLoader::LinkContext gLinkContext;` 这个全局变量的各项属性以及函数指针赋值。设置 crash 以及 log 地址，设置上下文信息等等。 
+
 ```c++
 CRSetCrashLogMessage("dyld: launch started");
 
@@ -645,14 +757,16 @@ setContext(mainExecutableMH, argc, argv, envp, apple);
 
 #### configureProcessRestrictions
 
-&emsp;设置环境变量，envp 就是 \_main 函数的参数，它是所有环境变量的数组，就是将环境变量插入进去。
+&emsp;设置环境变量，envp 就是 `_main` 函数的参数，它是所有环境变量的数组，就是将环境变量插入进去。主要是对 `ImageLoader::LinkContext gLinkContext;` 这个全局变量进行赋值。
+
 ```c++
 configureProcessRestrictions(mainExecutableMH, envp);
 ```
 
 #### checkSharedRegionDisable
 
-&emsp;对共享缓存进行处理。 
+&emsp;检查 shared cache 的可用性，根据不同的平台或者环境，`gLinkContext.sharedRegionMode` 会被赋值为 `ImageLoader::kDontUseShareRegion` 或者 `ImageLoader::kUsePrivateSharedRegion`。 且没有共享 shared region，iOS 无法运行
+
 ```c++
 // load shared cache
 checkSharedRegionDisable((dyld3::MachOLoaded*)mainExecutableMH, mainExecutableSlide);
@@ -1415,4 +1529,12 @@ Lnew:    mov    lr, x1            // simulate return address into _start in libd
 + [Hook static initializers](https://blog.csdn.net/majiakun1/article/details/99413403)
 + [iOS逆向 dyld流程](https://juejin.cn/post/6844904202242637837)
 + [OC 底层探索 13、类的加载1 - dyld和objc的关联](https://www.cnblogs.com/zhangzhang-y/p/13806192.html)
+
+**下面是一些新增的参考链接🔗：**
+
++ [第十三节—dyld加载流程](https://www.jianshu.com/p/d8cd3421ff4b)
++ [iOS 15 如何让你的应用启动更快](https://juejin.cn/post/6978750428632580110)
++ [iOS 编译详解 LLVM Clang](https://juejin.cn/post/6844903843797401608)
++ [手撕iOS底层17 -- 应用程序加载流程（完善更新）](https://juejin.cn/post/6932101897918791687)
++ [手撕iOS底层18 -- 类加载之初探--dyld与libObjc那些事](https://juejin.cn/post/6936158349339656199)
 
