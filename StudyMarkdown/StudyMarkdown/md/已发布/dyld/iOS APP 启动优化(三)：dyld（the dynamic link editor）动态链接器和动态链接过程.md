@@ -8,7 +8,7 @@
 
 &emsp;Shift + command + n 创建 new project，在 Framework & library 中，Framework 选项默认是创建 Dynamic Library（动态库），Static Library 选项默认是创建 Static Library（静态库），创建完成的 Mach-O Type 的值告诉了我们他们对应的类型。 当然我们也能直接切换不同的 Mach-0 Type，如 Static Library 和 Dynamic Library 进行切换。而且从 Products 中看到默认情况下动态库是 .framework 后缀，静态库是 .a 后缀，同时还看到动态库是需要进行签名的，而静态库则不需要。
 
-![截屏2021-05-09 11.00.43.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bb53b5c4153b4ff6a47032975aabd997~tplv-k3u1fbpfcp-watermark.image)
+![截屏2021-05-09 11.00.43.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bb53b5c4153b4ff6a47032975aabd997~tplv-k3u1fbpfcp-watermark.image) 
 
 ![截屏2021-05-09 10.59.23.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f48dc63bdc744453afeee353a127a7b7~tplv-k3u1fbpfcp-watermark.image)
 
@@ -469,7 +469,7 @@ struct mach_header_64 {
 > &emsp;Entry point for dyld.  The kernel loads dyld and jumps to __dyld_start which sets up some registers and call this function.
 > Returns address of main() in target program which __dyld_start jumps to
 >
-> &emsp;dyld 的入口点。内核加载 dyld 并跳到 \_\_dyld_start 设置一些寄存器并调用此函数。返回目标程序中的 main() 地址，\_\_dyld_start 跳到该地址。
+> &emsp;dyld 的入口点。内核加载 dyld 并跳到 `__dyld_start` 设置一些寄存器并调用此函数。返回目标程序中的 main() 地址，`__dyld_start` 跳到该地址。
 
 &emsp;下面我们沿着 `_main` 函数的定义，来分析 `_main` 函数相关的内容，由于该函数定义内部根据不同的平台、不同的架构作了不同的处理和调用，所以函数定义超长，总共有 800 多行，这里只对必要的代码段进行摘录分析，其中最重要的部分则是分析函数返回值 `uintptr_t result` 在函数内部的赋值情况。
 
@@ -486,7 +486,7 @@ result = (uintptr_t)sMainExecutable->getEntryFromLC_UNIXTHREAD();
 ...
 ```
 
-&emsp;`sMainExecutable` 是一个全局变量：`static ImageLoaderMachO* sMainExecutable = NULL;`，在 `_main` 函数的 `// instantiate ImageLoader for main executable` 部分可看到对其进行实例化赋值：
+&emsp;`sMainExecutable` 是一个全局变量：`static ImageLoaderMachO* sMainExecutable = NULL;`，它就是我们的程序启动所对应的数据结构，在 `_main` 函数的 `// instantiate ImageLoader for main executable` 部分可看到对其进行实例化：
 
 ```c++
 // instantiate ImageLoader for main executable
@@ -774,7 +774,8 @@ checkSharedRegionDisable((dyld3::MachOLoaded*)mainExecutableMH, mainExecutableSl
 
 #### instantiateFromLoadedImage 
 
-&emsp;主程序的初始化。
+&emsp;主程序的初始化。(加载可执行文件并生成一个 ImageLoader 实例对象，上面已经详细分析过了！)
+
 ```c++
 // instantiate ImageLoader for main executable
 sMainExecutable = instantiateFromLoadedImage(mainExecutableMH, mainExecutableSlide, sExecPath);
@@ -803,7 +804,7 @@ link(sMainExecutable, sEnv.DYLD_BIND_AT_LAUNCH, true, ImageLoader::RPathChain(NU
 sMainExecutable->setNeverUnloadRecursive();
 ```
 
-&emsp;link 我们所有的 image（通过上面两个可以知道，必须先 link 主程序，然后在 link 所有的 image） 
+&emsp;link 所有插入的动态库（通过上面两个可以知道，必须先 link 主程序，然后再 link 所有插入的库。）。 
 
 ```c++
 // link any inserted libraries
@@ -853,7 +854,21 @@ initializeMainExecutable();
 notifyMonitoringDyldMain();
 ```
 
-&emsp;设置运行环境 -> 加载共享缓存 -> 实例化主程序 -> 插入加载动态库 -> 连接主程序 -> 链接插入的动态库 -> 执行弱符号绑定 -> 执行初始化方法 -> 查找入口并返回（） 
+&emsp;设置运行环境 -> 加载共享缓存 -> 实例化主程序 -> 插入加载动态库 -> 连接主程序 -> 链接插入的动态库 -> 执行弱符号绑定 -> 执行初始化方法 -> 查找入口并返回。 
+
+&emsp;上面便是 `dyld::_main` 函数的整体执行流程，函数整体做了这么几件事情：
+
+1. 设置运行环境，配置环境变量，根据环境变量设置相应的值以及获取当前运行架构。
+2. 加载共享缓存 -> load share cache。
+3. 主程序 image 的初始化 mainExecutable。
+4. 插入动态库 loadInsertedDylib。
+5. link 主程序。
+6. link 插入的动态库。
+7. weakBind。
+8. initializeMainExecutable()。
+9. 返回 main 函数。
+
+&emsp;下面我们接着对其中的主要事件进行讲解分析。
 
 ### initializeMainExecutable
 
@@ -863,10 +878,14 @@ notifyMonitoringDyldMain();
 void initializeMainExecutable()
 {
     // record that we've reached this step（记录，我们已经达到了这一步）
+    // 在 gLinkContext 全局变量中记录现在 main executable 开始执行 Initializers 了
     gLinkContext.startedInitializingMainExecutable = true;
 
-    // run initialzers for any inserted dylibs（为任何插入的 dylibs 运行初始化器）
+    // run initialzers for any inserted dylibs（为任何插入的 dylibs 运行 initialzers）
+    
+    // 创建一个 struct InitializerTimingList 的数组，用来记录 Initializer 所花费的时间
     ImageLoader::InitializerTimingList initializerTimes[allImagesCount()];
+    
     initializerTimes[0].count = 0;
     const size_t rootCount = sImageRoots.size();
     if ( rootCount > 1 ) {
@@ -883,6 +902,7 @@ void initializeMainExecutable()
         (*gLibSystemHelpers->cxa_atexit)(&runAllStaticTerminators, NULL, NULL);
 
     // dump info if requested
+    // 根据环境变量判断是否需要进行这些信息打印
     if ( sEnv.DYLD_PRINT_STATISTICS )
         ImageLoader::printStatistics((unsigned int)allImagesCount(), initializerTimes[0]);
     if ( sEnv.DYLD_PRINT_STATISTICS_DETAILS )
@@ -890,7 +910,7 @@ void initializeMainExecutable()
 }
 ```
 
-&emsp;`gLinkContext` 是一个 `ImageLoader::LinkContext gLinkContext;` 类型的全局变量，LinkContext 是在 class ImageLoader 中定义的一个结构体，其中定义了很多函数指针和成员变量，来记录和处理 Link 的上下文。其中 `bool startedInitializingMainExecutable;` 则是用来记录标记 MainExecutable 开始进行 Initializing 了，这里是直接把它的值置为 true。
+&emsp;`gLinkContext` 是一个 `ImageLoader::LinkContext gLinkContext;` 类型的全局变量，LinkContext 是在 class ImageLoader 中定义的一个结构体，其中定义了很多函数指针和成员变量，来记录和处理 Link 的上下文。其中 `bool startedInitializingMainExecutable;` 则是用来记录标记 Main Executable 开始进行 Initializing 了，这里是直接把它的值置为 true。
 
 &emsp;`InitializerTimingList` 也是在 class ImageLoader 中定义的一个挺简单的结构体。用来记录 Initializer 所花费的时间。    
 
@@ -920,13 +940,21 @@ void ImageLoader::InitializerTimingList::addTime(const char* name, uint64_t time
 }
 ```
 
-&emsp;下面是 `runInitializers` 函数，同样是 class ImageLoader 中定义的一个函数。
+&emsp;看到 `addTime` 函数是为当前记录到的 image 添加时间。
+
+&emsp;下面看一下 `sImageRoots[i]` 和 `sMainExecutable` 都要调用的 `runInitializers` 函数，`runInitializers` 函数定义在 `ImageLoader` 类中。
 
 ```c++
 void ImageLoader::runInitializers(const LinkContext& context, InitializerTimingList& timingInfo)
 {
-    uint64_t t1 = mach_absolute_time(); // ⬅️ 计时开始
+    // 计时开始
+    uint64_t t1 = mach_absolute_time();
+    
+    // 记录当前所处的线程
     mach_port_t thisThread = mach_thread_self();
+    
+    // UninitedUpwards 是在 ImageLoader 类内部定义的结构体，
+    // 它的 imagesAndPaths 成员变量用来记录 image 和 image 的 path
     ImageLoader::UninitedUpwards up;
     up.count = 1;
     up.imagesAndPaths[0] = { this, this->getPath() };
@@ -934,16 +962,22 @@ void ImageLoader::runInitializers(const LinkContext& context, InitializerTimingL
     // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
     processInitializers(context, thisThread, timingInfo, up);
     
-    context.notifyBatch(dyld_image_state_initialized, false); // ⬅️ 大概是通知初始化完成  
-    mach_port_deallocate(mach_task_self(), thisThread); // ⬅️ deallocate 任务
-    uint64_t t2 = mach_absolute_time(); // ⬅️ 计时结束
-    fgTotalInitTime += (t2 - t1);
+    // 大概是通知初始化完成  
+    context.notifyBatch(dyld_image_state_initialized, false);
+    
+    // deallocate 任务
+    mach_port_deallocate(mach_task_self(), thisThread);
+    
+    // 执行结束时的计时
+    uint64_t t2 = mach_absolute_time();
+    // 统计时长
+    fgTotalInitTime += (t2 - t1); 
 }
 ```
 
-&emsp;在 runInitializers 中我们看到了两个老面孔，在学习 GCD 源码时见过的 `mach_absolute_time` 和 `mach_thread_self` 一个用来统计初始化时间，一个用来记录当前线程。 
+&emsp;在 `runInitializers` 函数中我们看到了两个老面孔，在学习 GCD 源码时见过的 `mach_absolute_time` 和 `mach_thread_self` 一个用来统计初始化时间，一个用来记录当前线程。 
 
-&emsp;`UninitedUpwards` 也是 class ImageLoader 中定义的一个超简单的结构体，其中的成员变量 `std::pair<ImageLoader*, const char*> imagesAndPaths[1];` 一个值记录 ImageLoader 的地址，另一个值记录该 ImageLoader 的路径。 
+&emsp;`UninitedUpwards` 是 `ImageLoader` 类内部定义的一个超简单的结构体，其中的成员变量 `std::pair<ImageLoader*, const char*> imagesAndPaths[1];` 一个值记录 ImageLoader 的地址，另一个值记录该 ImageLoader 的路径。 
 
 ```c++
 struct UninitedUpwards
@@ -1059,7 +1093,7 @@ void ImageLoader::recursiveInitialization(const LinkContext& context, mach_port_
 (*sNotifyObjCInit)(image->getRealPath(), image->machHeader());
 ```
 
-&emsp;sNotifyObjCInit 是一个静态全局变量，是一个名字是 `_dyld_objc_notify_init` 的函数指针，`_dyld_objc_notify_init` 是一个返回值为 void 两个参数分别是 const char * 和 const struct mach_header * 的函数指针：
+&emsp;`sNotifyObjCInit` 是一个静态全局变量，是一个名字是 `_dyld_objc_notify_init` 的函数指针，`_dyld_objc_notify_init` 是一个返回值为 `void` 两个参数分别是 `const char *` 和 `const struct mach_header *` 的函数指针：
 
 ```c++
 typedef void (*_dyld_objc_notify_init)(const char* path, const struct mach_header* mh);
@@ -1108,7 +1142,7 @@ typedef void (*_dyld_objc_notify_init)(const char* path, const struct mach_heade
 typedef void (*_dyld_objc_notify_unmapped)(const char* path, const struct mach_header* mh);
 ```
 
-&emsp;我们看到 `registerObjCNotifiers` 函数的 `_dyld_objc_notify_init init` 参数会直接赋值给 `sNotifyObjCInit`，并在下面的 for 循环中进行调用，那么什么时候调用 `registerObjCNotifiers` 函数呢？`_dyld_objc_notify_init init` 的实参又是什么呢？我们全局搜索 `registerObjCNotifiers` 函数。（其实看到这里，看到 registerObjCNotifiers 函数的形参我们可能会有一点印象了，之前看 objc 的源码时的 \_objc_init 函数中涉及到 image 部分。）
+&emsp;我们看到 `registerObjCNotifiers` 函数的 `_dyld_objc_notify_init init` 参数会直接赋值给 `sNotifyObjCInit`，并在下面的 for 循环中进行调用，那么什么时候调用 `registerObjCNotifiers` 函数呢？`_dyld_objc_notify_init init` 的实参又是什么呢？我们全局搜索 `registerObjCNotifiers` 函数。（其实看到这里，看到 registerObjCNotifiers 函数的形参我们可能会有一点印象了，之前看 objc 的源码时的 `_objc_init` 函数中涉及到 image 部分。）
 
 &emsp;在 dyld/src/dyldAPIs.cpp 中，`_dyld_objc_notify_register` 函数内部调用了 `registerObjCNotifiers` 函数（属于 namespace dyld）。
 
@@ -1533,8 +1567,10 @@ Lnew:    mov    lr, x1            // simulate return address into _start in libd
 **下面是一些新增的参考链接🔗：**
 
 + [第十三节—dyld加载流程](https://www.jianshu.com/p/d8cd3421ff4b)
++ [第十四节—dyld与libobjc](https://www.jianshu.com/p/d502ce2d7179)
 + [iOS 15 如何让你的应用启动更快](https://juejin.cn/post/6978750428632580110)
 + [iOS 编译详解 LLVM Clang](https://juejin.cn/post/6844903843797401608)
 + [手撕iOS底层17 -- 应用程序加载流程（完善更新）](https://juejin.cn/post/6932101897918791687)
 + [手撕iOS底层18 -- 类加载之初探--dyld与libObjc那些事](https://juejin.cn/post/6936158349339656199)
++ [iOS 底层 - 从头梳理 dyld 加载流程](https://juejin.cn/post/6844904040149729294)
 
