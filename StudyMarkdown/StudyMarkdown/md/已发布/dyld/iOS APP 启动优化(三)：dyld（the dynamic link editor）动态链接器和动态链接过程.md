@@ -215,7 +215,7 @@ dyld (for architecture arm64e):    Mach-O 64-bit dynamic linker arm64e
 &emsp;可以看到从 \_dyld_start 函数开始直到 +[ViewController load] 函数，中间的函数调用栈都集中在了 dyld/dyld_sim。（最后的 libobjc.A.dylib`load_images 调用，后面我们会详细分析）下面我们可以通过 [dyld 的源码](https://opensource.apple.com/tarballs/dyld/) 来一一分析上面函数调用堆栈中出现的函数。
 
 #### \_dyld_start
-&emsp;\_dyld_start 是汇编函数，这里我们只看 \_\_arm64__ && !TARGET_OS_SIMULATOR 平台下的。
+&emsp;`_dyld_start` 是汇编函数，这里我们只看 `__arm64__ && !TARGET_OS_SIMULATOR` 平台下的（尽管不同的平台或架构下，`__dyld_start` 的内容有所区别，但是通过注释我们发现它们都会调用 `dyldbootstrap::start` 方法）。
 
 ```c++
 #if __arm64__ && !TARGET_OS_SIMULATOR
@@ -323,7 +323,7 @@ Lapple:    ldr    w4, [x3]
 ```
 
 #### dyldbootstrap::start
-&emsp;然后看到汇编函数 \_\_dyld_start 内部调用了 `dyldbootstrap::start(app_mh, argc, argv, dyld_mh, &startGlue)` 函数，即 dyldbootstrap 命名空间中的 start 函数，namespace dyldbootstrap 定义在 dyldInitialization.cpp 中，它的内容超简单，内部就定义了 start 和 rebaseDyld 两个函数，从命名空间的名字中我们已经能猜到一些它的作用：用来进行 dyld 的初始化，将 dyld 引导到可运行状态（Code to bootstrap dyld into a runnable state）。下面我们一起看下其中的 start 的函数。
+&emsp;然后看到汇编函数 `__dyld_start` 内部调用了 `dyldbootstrap::start(app_mh, argc, argv, dyld_mh, &startGlue)` 函数，即 `dyldbootstrap` 命名空间中的 `start` 函数，`namespace dyldbootstrap` 定义在 dyldInitialization.cpp 中，它的内容超简单，内部就定义了 `start` 和 `rebaseDyld` 两个函数，从命名空间的名字中我们已经能猜到一些它的作用：用来进行 dyld 的初始化，将 dyld 引导到可运行状态（Code to bootstrap dyld into a runnable state）。下面我们一起看下其中的 `start` 的函数。
 
 ```c++
 //
@@ -636,6 +636,8 @@ switch (cmd->cmd) {
 
 #### getHostInfo
 
+&emsp;1⃣️1⃣️
+
 &emsp;调用 `getHostInfo(mainExecutableMH, mainExecutableSlide);` 函数来获取 Mach-O 头部信息中的当前运行架构信息，仅是为了给 `sHostCPU` 和 `sHostCPUsubtype` 两个全局变量赋值。
 
 &emsp;`getHostInfo` 函数虽然有两个参数 `mainExecutableMH` 和 `mainExecutableSlide` 但是实际都只是为了在 `__x86_64__ && !TARGET_OS_SIMULATOR` 下使用的，其它平台则都是根据当前环境直接进行赋值了，例如：`__arm64e__` 为真时，直接进行 `sHostCPU = CPU_TYPE_ARM64; sHostCPUsubtype = CPU_SUBTYPE_ARM64E;` 赋值操作。
@@ -702,6 +704,8 @@ static void getHostInfo(const macho_header* mainExecutableMH, uintptr_t mainExec
 
 #### forEachSupportedPlatform
 
+&emsp;2⃣️2⃣️
+
 &emsp;在此块区域中我们看到了我们的老朋友 block 在 C/C++ 函数中的使用。
 
 &emsp;判断 `mainExecutableMH` 支持的平台信息。
@@ -747,6 +751,8 @@ static void getHostInfo(const macho_header* mainExecutableMH, uintptr_t mainExec
 
 #### setContext
 
+&emsp;3⃣️3⃣️
+
 &emsp;`setContext` 是一个静态全局函数，主要为 `ImageLoader::LinkContext gLinkContext;` 这个全局变量的各项属性以及函数指针赋值。设置 crash 以及 log 地址，设置上下文信息等等。 
 
 ```c++
@@ -757,6 +763,8 @@ setContext(mainExecutableMH, argc, argv, envp, apple);
 
 #### configureProcessRestrictions
 
+&emsp;4⃣️4⃣️
+
 &emsp;设置环境变量，envp 就是 `_main` 函数的参数，它是所有环境变量的数组，就是将环境变量插入进去。主要是对 `ImageLoader::LinkContext gLinkContext;` 这个全局变量进行赋值。
 
 ```c++
@@ -765,7 +773,9 @@ configureProcessRestrictions(mainExecutableMH, envp);
 
 #### checkSharedRegionDisable
 
-&emsp;检查 shared cache 的可用性，根据不同的平台或者环境，`gLinkContext.sharedRegionMode` 会被赋值为 `ImageLoader::kDontUseShareRegion` 或者 `ImageLoader::kUsePrivateSharedRegion`。 且没有共享 shared region，iOS 无法运行
+&emsp;5⃣️5⃣️
+
+&emsp;检查 shared cache 的可用性，加载 shared cache，根据不同的平台或者环境，`gLinkContext.sharedRegionMode` 会被赋值为 `ImageLoader::kDontUseShareRegion` 或者 `ImageLoader::kUsePrivateSharedRegion`。 且没有共享 shared region，iOS 无法运行
 
 ```c++
 // load shared cache
@@ -773,6 +783,8 @@ checkSharedRegionDisable((dyld3::MachOLoaded*)mainExecutableMH, mainExecutableSl
 ```
 
 #### instantiateFromLoadedImage 
+
+&emsp;6⃣️6⃣️ 🦩❤️
 
 &emsp;主程序的初始化。(加载可执行文件并生成一个 ImageLoader 实例对象，上面已经详细分析过了！)
 
@@ -785,7 +797,12 @@ gLinkContext.mainExecutableCodeSigned = hasCodeSignatureLoadCommand(mainExecutab
 
 #### loadInsertedDylib
 
-&emsp;插入动态库。
+&emsp;7⃣️7⃣️
+
+&emsp;以 `sEnv.DYLD_INSERT_LIBRARIES` 为起点，遍历插入动态库，`loadInsertedDylib` 函数只需要传入动态库的路径即可。
+
+> &emsp;Given all the DYLD_ environment variables, the general case for loading libraries is that any given path expands into a list of possible locations to load.  We also must take care to ensure two copies of the "same" library are never loaded.
+> &emsp;The algorithm used here is that there is a separate function for each "phase" of the path expansion.  Each phase function calls the next phase with each possible expansion of that phase.  The result is the last phase is called with all possible paths. To catch duplicates the algorithm is run twice.  The first time, the last phase checks the path against all loaded images.  The second time, the last phase calls open() on the path.  Either time, if an image is found, the phases all unwind without checking for other paths.
 
 ```c++
 // load any inserted libraries
@@ -796,6 +813,8 @@ if ( sEnv.DYLD_INSERT_LIBRARIES != NULL ) {
 ```
 
 #### link
+
+&emsp;8⃣️8⃣️
 
 &emsp;link 主程序。
 
@@ -829,6 +848,8 @@ if ( sInsertedDylibCount > 0 ) {
 
 #### weakBind
 
+&emsp;9⃣️9⃣️
+
 &emsp;绑定弱符号。
 
 ```c++
@@ -836,7 +857,11 @@ if ( sInsertedDylibCount > 0 ) {
 sMainExecutable->weakBind(gLinkContext);
 ```
 
+&emsp;执行到这里的时候，看到了 `CRSetCrashLogMessage("dyld: launch, running initializers");` 此行打印，提示我们 dyld 启动并开始执行 initializers 了，initializers 是 `dyld::_main` 的超级核心，下面我们会详细的分析。
+
 #### initializeMainExecutable
+
+&emsp;🔟🔟
 
 &emsp;执行所有的初始化方法。
 
@@ -846,6 +871,8 @@ initializeMainExecutable();
 ```
 
 #### notifyMonitoringDyldMain
+
+&emsp;🔟1⃣️🔟1⃣️
 
 &emsp;查找 main 函数入口
 
@@ -868,17 +895,17 @@ notifyMonitoringDyldMain();
 8. initializeMainExecutable()。
 9. 返回 main 函数。
 
-&emsp;下面我们接着对其中的主要事件进行讲解分析。
+&emsp;下面我们对 `initializeMainExecutable` 进行分析。
 
 ### initializeMainExecutable
 
-&emsp;上面我们分析了 main 的总体流程，其中 `initializeMainExecutable` 函数进行了所有的 initializers，下面我们详细学习一下 `initializeMainExecutable` 函数。
+&emsp;上面我们分析了 main 的总体流程，其中 `initializeMainExecutable` 函数进行了所有的 initializers，下面我们看一下它的执行过程。
 
 ```c++
 void initializeMainExecutable()
 {
-    // record that we've reached this step（记录，我们已经达到了这一步）
-    // 在 gLinkContext 全局变量中记录现在 main executable 开始执行 Initializers 了
+    // record that we've reached this step
+    // 在 gLinkContext 全局变量中标记现在 main executable 开始执行 Initializers
     gLinkContext.startedInitializingMainExecutable = true;
 
     // run initialzers for any inserted dylibs（为任何插入的 dylibs 运行 initialzers）
