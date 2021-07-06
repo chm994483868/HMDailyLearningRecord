@@ -2,9 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:SwiftTips/SwiftTips.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:Algorithm_Swift/Algorithm_Swift.xcodeproj">
    </FileRef>
    <FileRef

@@ -1439,8 +1439,25 @@ void _objc_init(void)
 
 &emsp;看到这里我们就能连上了，`load_images` 会调用 image 中所有父类、子类、分类中的 `+load` 函数，前面的文章中我们有详细分析过，这里就不展开 `+load` 函数的执行过程了。
 
-&emsp;那么到这里我们就能直接从源码层面连上了：`recursiveInitialization` -> `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo)` -> `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader())`，而这个 `sNotifyObjCInit` 便是 `_objc_init` 函数中调用 `_dyld_objc_notify_register` 注册进来的 `load_images` 函数。即在 objc 这层注册了回调函数，然后在 dyld 调用这些回调函数。（分别对应当前看的两个苹果开源的库：objc4-781 和 dyld-832.7.3） 
+&emsp;那么到这里我们就能直接从源码层面连上了：`recursiveInitialization` -> `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo)` -> `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader())`，而这个 `sNotifyObjCInit` 便是 `_objc_init` 函数中调用 `_dyld_objc_notify_register` 注册进来的 `load_images` 函数，即在 objc 这层注册了回调函数，然后在 dyld 调用这些回调函数。（当前看的两个苹果开源的库：objc4-781 和 dyld-832.7.3） 
 
+&emsp;**在 `_objc_init` 中注册回调函数，在 dyld 中调用这些回调函数。**
+
+&emsp;**在 `_objc_init` 中注册回调函数，在 dyld 中调用这些回调函数。**
+
+&emsp;**在 `_objc_init` 中注册回调函数，在 dyld 中调用这些回调函数。**
+
+&emsp;那么看到这里，我们心中不免有一个疑问，既然在  `_objc_init` 函数内部调用 `_dyld_objc_notify_register` 函数注册了 dyld 的回调函数，那什么时候调用 `_objc_init` 呢？`_objc_init` 是 `libobjc` 这个 image 的初始化函数，那么 `libobjc` 什么时候进行初始化呢？
+
+&emsp;我们依然顺着上面的 `recursiveInitialization` 函数往下，在 `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo);` 调用的下面便是：
+
+```c++
+// initialize this image
+// 初始化 image
+bool hasInitializers = this->doInitialization(context);
+```
+
+&emsp;那么下面我们一起来看这个 `doInitialization` 函数。
 
 ```c++
 bool ImageLoaderMachO::doInitialization(const LinkContext& context)
@@ -1449,6 +1466,7 @@ bool ImageLoaderMachO::doInitialization(const LinkContext& context)
 
     // ⬇️⬇️⬇️⬇️
     // mach-o has -init and static initializers
+    // for 循环调用 image 的初始化方法（libSystem 库需要第一个初始化）
     doImageInit(context);
     
     doModInitFunctions(context);
@@ -1459,19 +1477,60 @@ bool ImageLoaderMachO::doInitialization(const LinkContext& context)
 }
 ```
 
-&emsp;其中的核心是 `doImageInit(context);` 调用。
+&emsp;其中的核心是 `doImageInit(context);` 和 `doModInitFunctions(context);` 两个函数调用。
+
+&emsp;在 `doImageInit(context);` 中，核心就是 for 循环调用 image 的初始化函数，但是需要注意的是 libSystem 库需要第一个初始化。
+
+&emsp;下面我们看一下 `doImageInit` 函数的实现：
+
+&emsp;**// <rdar://problem/17973316> libSystem initializer must run first**
 
 ```c++
 void ImageLoaderMachO::doImageInit(const LinkContext& context)
 {
+    // fHasDashInit 是 class ImageLoaderMachO 其中一个位域：fHasDashInit : 1,
     if ( fHasDashInit ) {
-        const uint32_t cmd_count = ((macho_header*)fMachOData)->ncmds; // ⬅️ load command 的数量
+    
+        // load command 的数量
+        // fMachOData 是 class ImageLoaderMachO 的一个成员变量：const uint8_t* fMachOData;
+        const uint32_t cmd_count = ((macho_header*)fMachOData)->ncmds;
+        
+        // 从 mach header 直接寻址到 load_command 的位置
         const struct load_command* const cmds = (struct load_command*)&fMachOData[sizeof(macho_header)];
         const struct load_command* cmd = cmds;
+        
+        // 下面是对 load_command 进行遍历
         for (uint32_t i = 0; i < cmd_count; ++i) {
+        
             switch (cmd->cmd) {
+            
+                // 看到这里只处理 #define LC_ROUTINES_COMMAND LC_ROUTINES_64 类型的 load_command
+                //（大概是这种类型的 load_command 就是用来放 Initializer 的吗？）
                 case LC_ROUTINES_COMMAND:
+                    
+                    // __LP64__ 下 macho_routines_command 继承自 routines_command_64，
+                    // struct macho_routines_command : public routines_command_64  {};
+                    // 在 darwin-xnu/EXTERNAL_HEADERS/mach-o/loader.h 下搜 routines_command_64 可看到如下定义
+                    
+                    /*
+                     * The 64-bit routines command.  Same use as above.
+                     */
+                    // struct routines_command_64 { /* for 64-bit architectures */
+                    //     uint32_t    cmd;        /* LC_ROUTINES_64 */
+                    //     uint32_t    cmdsize;    /* total size of this command */
+                    //     uint64_t    init_address;    /* address of initialization routine 初始化程序地址 */ 
+                    //     uint64_t    init_module;    /* index into the module table that the init routine is defined in */
+                    //     uint64_t    reserved1;
+                    //     uint64_t    reserved2;
+                    //     uint64_t    reserved3;
+                    //     uint64_t    reserved4;
+                    //     uint64_t    reserved5;
+                    //     uint64_t    reserved6;
+                    // };
+                    
+                    // 这里是找到当前这一条 load_command 的 Initializer
                     Initializer func = (Initializer)(((struct macho_routines_command*)cmd)->init_address + fSlide);
+                    
 #if __has_feature(ptrauth_calls)
                     func = (Initializer)__builtin_ptrauth_sign_unauthenticated((void*)func, ptrauth_key_asia, 0);
 #endif
@@ -1479,25 +1538,41 @@ void ImageLoaderMachO::doImageInit(const LinkContext& context)
                     if ( ! this->containsAddress(stripPointer((void*)func)) ) {
                         dyld::throwf("initializer function %p not in mapped image for %s\n", func, this->getPath());
                     }
+                    
+                    // libSystem 的 initializer 必须首先运行
+                    // extern struct dyld_all_image_infos* gProcessInfo; 声明在 dyld 这个命名空间中 
+                    // 这里如果 libSystem.dylib 没有初始化（及 link）则抛错
                     if ( ! dyld::gProcessInfo->libSystemInitialized ) {
                         // <rdar://problem/17973316> libSystem initializer must run first
                         dyld::throwf("-init function in image (%s) that does not link with libSystem.dylib\n", this->getPath());
                     }
+                    
                     if ( context.verboseInit )
                         dyld::log("dyld: calling -init function %p in %s\n", func, this->getPath());
+                    
+                    // 执行 initializer 
                     {
                         dyld3::ScopedTimer(DBG_DYLD_TIMING_STATIC_INITIALIZER, (uint64_t)fMachOData, (uint64_t)func, 0);
                         func(context.argc, context.argv, context.envp, context.apple, &context.programVars);
                     }
+                    
                     break;
             }
+            
+            // cmd 指向下一条 load_command 
             cmd = (const struct load_command*)(((char*)cmd)+cmd->cmdsize);
         }
     }
 }
 ```
 
-&emsp;看到其中就是遍历 load command，找到其中 LC_ROUTINES_COMMAND 类型的 load command 然后通过内存地址偏移找到要执行的方法的地址并执行。（`Initializer func = (Initializer)(((struct macho_routines_command*)cmd)->init_address + fSlide);`） 其中的 `if ( ! dyld::gProcessInfo->libSystemInitialized )` 是判断 libSystem 必须先初始化，否则就直接抛错。总结：上面我们研究了初始化的过程，最后是由内存地址不断平移拿到初始化方法进行调用。
+&emsp;看了 `doImageInit` 的过程，那么为什么 `libSystem.dylib` 要第一个初始化，是因为 `libobjc` 库的初始化是在 `libDispatch` 库执行的，而 `libDispatch` 库是在 `libSystem` 库初始化后执行。
+
+&emsp;+++++++++++++++++++++++++++++++++++++++++++
+
+&emsp;下面是在 `_objc_init` 函数打断点，查看函数调用流程++++++++++++++++++
+
+&emsp;看到其中就是遍历 load command，找到其中 LC_ROUTINES_COMMAND 类型的 load command 然后通过内存地址偏移找到要执行的方法的地址并执行。（`Initializer func = (Initializer)(((struct macho_routines_command*)cmd)->init_address + fSlide);`） 其中的 `if ( ! dyld::gProcessInfo->libSystemInitialized )` 是判断 libSystem 必须先初始化，否则就直接抛错。上面初始化的过程，是由内存地址不断偏移拿到初始化方法进行调用。
 
 &emsp;这样我们最开始的 bt 指令的截图中出现的函数就都浏览一遍了：`_dyld_start` -> `dyldbootstrap::start` -> `dyld::_main` -> `dyld::initializeMainExecutable` -> `ImageLoader::runInitializers` -> `ImageLoader::processInitializers` -> `ImageLoader::recursiveInitialization` -> `dyld::notifySingle` -> `libobjc.A.dylib \` `load_images`。
 
