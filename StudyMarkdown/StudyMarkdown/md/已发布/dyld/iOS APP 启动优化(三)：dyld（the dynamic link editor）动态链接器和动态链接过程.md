@@ -1211,17 +1211,109 @@ void (*notifySingle)(dyld_image_states, const ImageLoader* image, InitializerTim
 static void setContext(const macho_header* mainExecutableMH, int argc, const char* argv[], const char* envp[], const char* apple[]) { ... }
 ```
 
-&emsp;这个静态全局函数中，`gLinkContext.notifySingle` 被赋值为 `&notifySingle;`，而这个 `notifySingle` 函数是在 dyld2.cpp 中定义的一个静态全局函数。看到这里，我即可确定 `recursiveInitialization`  函数中调用的 `context.notifySingle` 即 `gLinkContext.notifySingle`，即 dyld/src/dyld2.cpp 中的 `notifySingle` 这个静态全局函数。
+&emsp;这个静态全局函数中，`gLinkContext.notifySingle` 被赋值为 `&notifySingle;`，而这个 `notifySingle` 函数是在 dyld2.cpp 中定义的一个静态全局函数。看到这里，我们即可确定 `recursiveInitialization`  函数中调用的 `context.notifySingle` 即 `gLinkContext.notifySingle`，即 dyld/src/dyld2.cpp 中的 `notifySingle` 这个静态全局函数。
 
-&emsp;然后我们直接在 dyld2.cpp 中搜索 `notifySingle` 函数， 它是一个静态全局函数，由于该函数实现过长，那么我们只看其核心部分：
+&emsp;然后我们直接在 dyld2.cpp 中搜索 `notifySingle` 函数， 它是一个静态全局函数，我们现在看一下它的实现：
 
-&emsp;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+&emsp;首先我们看一组在 `ImageLoader.h` 中定义的枚举，它们每个值都表示 dyld 过程中 image 的状态。
 
 ```c++
-(*sNotifyObjCInit)(image->getRealPath(), image->machHeader());
+enum dyld_image_states
+{
+    dyld_image_state_mapped                    = 10,        // No batch notification for this
+    dyld_image_state_dependents_mapped        = 20,        // Only batch notification for this
+    dyld_image_state_rebased                = 30,
+    dyld_image_state_bound                    = 40,
+    dyld_image_state_dependents_initialized    = 45,        // Only single notification for this
+    dyld_image_state_initialized            = 50,
+    dyld_image_state_terminated                = 60        // Only single notification for this
+};
 ```
 
-&emsp;`sNotifyObjCInit` 是一个静态全局变量，是一个名字是 `_dyld_objc_notify_init` 的函数指针，`_dyld_objc_notify_init` 是一个返回值为 `void` 两个参数分别是 `const char *` 和 `const struct mach_header *` 的函数指针：
+
+```c++
+static void notifySingle(dyld_image_states state, const ImageLoader* image, ImageLoader::InitializerTimingList* timingInfo)
+{
+    //dyld::log("notifySingle(state=%d, image=%s)\n", state, image->getPath());
+    
+    // 下面第一个 if 的内容是回调 image 的状态变化（dyld_image_state_change_handler）
+    std::vector<dyld_image_state_change_handler>* handlers = stateToHandlers(state, sSingleHandlers);
+    if ( handlers != NULL ) {
+        dyld_image_info info;
+        info.imageLoadAddress    = image->machHeader();
+        info.imageFilePath        = image->getRealPath();
+        info.imageFileModDate    = image->lastModified();
+        for (std::vector<dyld_image_state_change_handler>::iterator it = handlers->begin(); it != handlers->end(); ++it) {
+            const char* result = (*it)(state, 1, &info);
+            if ( (result != NULL) && (state == dyld_image_state_mapped) ) {
+                //fprintf(stderr, "  image rejected by handler=%p\n", *it);
+                // make copy of thrown string so that later catch clauses can free it
+                const char* str = strdup(result);
+                throw str;
+            }
+        }
+    }
+    
+    // 如果 state 是 dyld_image_state_mapped 时对 Shared Cache 的一些处理
+    
+    // 已知在 recursiveInitialization 函数，两次调用 context.notifySingle 函数，
+    // state 参数分别传入的：dyld_image_state_dependents_initialized 和 dyld_image_state_initialized，
+    // 所以这里我们暂时忽略 state 是 dyld_image_state_mapped 的情况
+    
+    if ( state == dyld_image_state_mapped ) {
+        // <rdar://problem/7008875> Save load addr + UUID for images from outside the shared cache
+        // <rdar://problem/50432671> Include UUIDs for shared cache dylibs in all image info when using private mapped shared caches
+        if (!image->inSharedCache()
+            || (gLinkContext.sharedRegionMode == ImageLoader::kUsePrivateSharedRegion)) {
+            dyld_uuid_info info;
+            if ( image->getUUID(info.imageUUID) ) {
+                info.imageLoadAddress = image->machHeader();
+                addNonSharedCacheImageUUID(info);
+            }
+        }
+    }
+    
+    // ⬇️⬇️⬇️ 这里是我们要重点看的
+    // sNotifyObjCInit 是一个静态全局变量：static _dyld_objc_notify_init sNotifyObjCInit;
+    // 其实是一个函数指针：typedef void (*_dyld_objc_notify_init)(const char* path, const struct mach_header* mh);
+    
+    // 然后 image->notifyObjC() 默认为 1
+    
+    if ( (state == dyld_image_state_dependents_initialized) && (sNotifyObjCInit != NULL) && image->notifyObjC() ) {
+        
+        // 统计开始时间
+        uint64_t t0 = mach_absolute_time();
+        dyld3::ScopedTimer timer(DBG_DYLD_TIMING_OBJC_INIT, (uint64_t)image->machHeader(), 0, 0);
+        
+        // ⬇️⬇️ 调用 sNotifyObjCInit 函数，那么这个全局变量的函数指针在什么时候赋值的呢？    
+        (*sNotifyObjCInit)(image->getRealPath(), image->machHeader());
+        
+        // 统计结束时间，并进行时间追加
+        uint64_t t1 = mach_absolute_time();
+        uint64_t t2 = mach_absolute_time();
+        uint64_t timeInObjC = t1-t0;
+        uint64_t emptyTime = (t2-t1)*100;
+        if ( (timeInObjC > emptyTime) && (timingInfo != NULL) ) {
+            timingInfo->addTime(image->getShortName(), timeInObjC);
+        }
+    }
+    
+    // 当 state 是 dyld_image_state_terminated 时的处理操作，我们可忽略
+    
+    // mach message csdlc about dynamically unloaded images
+    if ( image->addFuncNotified() && (state == dyld_image_state_terminated) ) {
+    
+        notifyKernel(*image, false);
+        
+        const struct mach_header* loadAddress[] = { image->machHeader() };
+        const char* loadPath[] = { image->getPath() };
+        
+        notifyMonitoringDyld(true, 1, loadAddress, loadPath);
+    }
+}
+```
+
+&emsp;可看到 `notifySingle` 函数的核心便是这个 `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader());` 函数的执行！
 
 ```c++
 typedef void (*_dyld_objc_notify_init)(const char* path, const struct mach_header* mh);
@@ -1229,7 +1321,7 @@ typedef void (*_dyld_objc_notify_init)(const char* path, const struct mach_heade
 static _dyld_objc_notify_init sNotifyObjCInit;
 ```
 
-&emsp;然后同样在 dyld2.cpp 文件中搜索，可看到在 `registerObjCNotifiers` 函数中，有对 `sNotifyObjCInit` 这个全局变量赋值。
+&emsp;`sNotifyObjCInit` 是一个静态全局的名为 `_dyld_objc_notify_init` 的函数指针。然后在 dyld2.cpp 文件中搜索，可看到在 `registerObjCNotifiers` 函数中，有对 `sNotifyObjCInit` 这个全局变量进行赋值操作。
 
 ```c++
 void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_init init, _dyld_objc_notify_unmapped unmapped)
@@ -1239,9 +1331,9 @@ void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_in
     
     sNotifyObjCMapped    = mapped;
     
-    // ⬇️⬇️⬇️⬇️⬇️
-    sNotifyObjCInit        = init; // ⬅️
-    // ⬆️⬆️⬆️⬆️⬆️
+    // ⬇️⬇️⬇️
+    sNotifyObjCInit        = init;
+    // ⬆️⬆️⬆️
     
     sNotifyObjCUnmapped = unmapped;
 
@@ -1259,22 +1351,30 @@ void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_in
         if ( (image->getState() == dyld_image_state_initialized) && image->notifyObjC() ) {
             dyld3::ScopedTimer timer(DBG_DYLD_TIMING_OBJC_INIT, (uint64_t)image->machHeader(), 0, 0);
             
-            // ⬇️⬇️⬇️⬇️⬇️⬇️ 
+            // ⬇️⬇️⬇️ 
             (*sNotifyObjCInit)(image->getRealPath(), image->machHeader());
         }
     }
 }
 ```
 
+&emsp;其中进行赋值的三个全局变量定义在一起，即为三个类型不同的函数指针。
+
 ```c++
 typedef void (*_dyld_objc_notify_mapped)(unsigned count, const char* const paths[], const struct mach_header* const mh[]);
 typedef void (*_dyld_objc_notify_init)(const char* path, const struct mach_header* mh);
 typedef void (*_dyld_objc_notify_unmapped)(const char* path, const struct mach_header* mh);
+
+static _dyld_objc_notify_mapped        sNotifyObjCMapped;
+static _dyld_objc_notify_init        sNotifyObjCInit;
+static _dyld_objc_notify_unmapped    sNotifyObjCUnmapped;
 ```
 
-&emsp;我们看到 `registerObjCNotifiers` 函数的 `_dyld_objc_notify_init init` 参数会直接赋值给 `sNotifyObjCInit`，并在下面的 for 循环中进行调用，那么什么时候调用 `registerObjCNotifiers` 函数呢？`_dyld_objc_notify_init init` 的实参又是什么呢？我们全局搜索 `registerObjCNotifiers` 函数。（其实看到这里，看到 registerObjCNotifiers 函数的形参我们可能会有一点印象了，之前看 objc 的源码时的 `_objc_init` 函数中涉及到 image 部分。）
+&emsp;我们看到 `registerObjCNotifiers` 函数的 `_dyld_objc_notify_init init` 参数会直接赋值给 `sNotifyObjCInit`，并在下面的 for 循环中进行调用。
 
-&emsp;在 dyld/src/dyldAPIs.cpp 中，`_dyld_objc_notify_register` 函数内部调用了 `registerObjCNotifiers` 函数（属于 namespace dyld）。
+&emsp;那么什么时候调用 `registerObjCNotifiers` 函数呢？`_dyld_objc_notify_init init` 的实参又是什么呢？我们全局搜索 `registerObjCNotifiers` 函数。（其实看到这里，看到 `registerObjCNotifiers` 函数的形参我们可能会有一点印象了，之前看 objc 的源码时的 `_objc_init` 函数中涉及到 image 部分。）
+
+&emsp;我们全局搜索 `registerObjCNotifiers` 函数，在 dyld/src/dyldAPIs.cpp 中的 `_dyld_objc_notify_register` 函数内部调用了 `registerObjCNotifiers` 函数（属于 namespace dyld）。
 
 ```c++
 void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,
@@ -1285,7 +1385,7 @@ void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,
 }
 ```
 
-&emsp;这下就连上了 `_dyld_objc_notify_register` 函数在 objc4 源码中也有调用过，并且就在 `_objc_init` 函数中。下面我们先看一下 `_dyld_objc_notify_register` 函数的声明。  
+&emsp;这下就连上了，`_dyld_objc_notify_register` 函数在 objc 源码中也有调用过，并且就在 `_objc_init` 函数中。下面我们先看一下 `_dyld_objc_notify_register` 函数的声明。  
 
 ```c++
 //
@@ -1303,7 +1403,9 @@ void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,
                                 _dyld_objc_notify_unmapped  unmapped);
 ```
 
-&emsp;`_dyld_objc_notify_register` 函数仅供 objc runtime 使用。注册在 mapped、unmapped 和 initialized objc images 时要调用的处理程序。Dyld 将使用包含 objc-image-info section 的 images 数组回调 mapped 函数。那些 dylib 的 images 将自动增加引用计数，因此 objc 将不再需要对它们调用 dlopen() 以防止它们被卸载。在调用 \_dyld_objc_notify_register() 期间，dyld 将使用已加载的 objc images 调用 mapped 函数。在以后的任何 dlopen() 调用中，dyld 还将调用 mapped 函数。当 dyld 在该 image 中调用 initializers 时，Dyld 将调用 init 函数。这是当 objc 调用 image 中的任何 +load 方法时。
+&emsp;`_dyld_objc_notify_register` 函数仅供 objc runtime 使用。注册在 mapped、unmapped 和 initialized objc images 时要调用的处理程序。Dyld 将使用包含 objc-image-info section 的 images 数组回调 mapped 函数。那些 dylib 的 images 将自动增加引用计数，因此 objc 将不再需要对它们调用 dlopen() 以防止它们被卸载。在调用 `_dyld_objc_notify_register()` 期间，dyld 将使用已加载的 objc images 调用 mapped 函数。在以后的任何 dlopen() 调用中，dyld 还将调用 mapped 函数。当 dyld 在该 image 中调用 initializers 时，Dyld 将调用 init 函数。这是当 objc 调用 image 中的任何 +load 方法时。
+
+&emsp;`Note: only for use by objc runtime` 提示我们 `_dyld_objc_notify_register` 函数仅提供给 objc runtime 使用，那么我们就去 objc4 源码中寻找 `_dyld_objc_notify_register` 函数的调用。 
 
 &emsp;下面我们在 objc4-781 中搜一下 `_dyld_objc_notify_register` 函数，在 `_objc_init` 中我们看到了它的身影。
 
@@ -1333,7 +1435,12 @@ void _objc_init(void)
 }
 ```
 
-&emsp;那么追了这么久，上面的 init 形数对应的实参便是 `load_images` 函数。总结下：`_dyld_objc_notify_register` 相当于一个回调函数，也就是该方法的调用是在 `_objc_init` 调用的方法里调用,类推就是调用初始化方法才回去调用 `_dyld_objc_notify_register`。下面我们回到前面的 `bool hasInitializers = this->doInitialization(context);` 调用。
+&emsp;那么追了这么久，上面的拿着 `init` 形参对 `sNotifyObjCInit` 赋值的实参便是 `load_images`，另外两个则是 `&map_images` 赋值给 `sNotifyObjCMapped` 和 `unmap_image` 赋值给 `sNotifyObjCUnmapped`。
+
+&emsp;看到这里我们就能连上了，`load_images` 会调用 image 中所有父类、子类、分类中的 `+load` 函数，前面的文章中我们有详细分析过，这里就不展开 `+load` 函数的执行过程了。
+
+&emsp;那么到这里我们就能直接从源码层面连上了：`recursiveInitialization` -> `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo)` -> `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader())`，而这个 `sNotifyObjCInit` 便是 `_objc_init` 函数中调用 `_dyld_objc_notify_register` 注册进来的 `load_images` 函数。即在 objc 这层注册了回调函数，然后在 dyld 调用这些回调函数。（分别对应当前看的两个苹果开源的库：objc4-781 和 dyld-832.7.3） 
+
 
 ```c++
 bool ImageLoaderMachO::doInitialization(const LinkContext& context)
