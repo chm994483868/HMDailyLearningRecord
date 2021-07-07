@@ -1426,7 +1426,7 @@ void _objc_init(void)
     cache_init();
     _imp_implementationWithBlock_init();
     
-    // ⬇️⬇️⬇️⬇️
+    // ⬇️⬇️⬇️
     _dyld_objc_notify_register(&map_images, load_images, unmap_image);
 
 #if __OBJC2__
@@ -1439,7 +1439,9 @@ void _objc_init(void)
 
 &emsp;看到这里我们就能连上了，`load_images` 会调用 image 中所有父类、子类、分类中的 `+load` 函数，前面的文章中我们有详细分析过，这里就不展开 `+load` 函数的执行过程了。
 
-&emsp;那么到这里我们就能直接从源码层面连上了：`recursiveInitialization` -> `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo)` -> `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader())`，而这个 `sNotifyObjCInit` 便是 `_objc_init` 函数中调用 `_dyld_objc_notify_register` 注册进来的 `load_images` 函数，即在 objc 这层注册了回调函数，然后在 dyld 调用这些回调函数。（当前看的两个苹果开源的库：objc4-781 和 dyld-832.7.3） 
+&emsp;那么到这里我们就能直接从源码层面连上了：`recursiveInitialization` -> `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo)` -> `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader())`，而这个 `sNotifyObjCInit` 便是 `_objc_init` 函数中调用 `_dyld_objc_notify_register` 注册进来的 `load_images` 函数，即在 objc 这层注册了回调函数，然后在 dyld 调用这些回调函数。（当前看的两个苹果开源的库：objc4-781 和 dyld-832.7.3）
+
+&emsp;这样我们最开始的 bt 指令的截图中出现的函数就都浏览一遍了：`_dyld_start` -> `dyldbootstrap::start` -> `dyld::_main` -> `dyld::initializeMainExecutable` -> `ImageLoader::runInitializers` -> `ImageLoader::processInitializers` -> `ImageLoader::recursiveInitialization` -> `dyld::notifySingle` -> `libobjc.A.dylib load_images`。
 
 &emsp;**在 `_objc_init` 中注册回调函数，在 dyld 中调用这些回调函数。**
 
@@ -1464,8 +1466,9 @@ bool ImageLoaderMachO::doInitialization(const LinkContext& context)
 {
     CRSetCrashLogMessage2(this->getPath());
 
-    // ⬇️⬇️⬇️⬇️
+    // ⬇️⬇️⬇️
     // mach-o has -init and static initializers
+    // mach-o 包含 -init 和 static initializers（静态初始化方法）
     // for 循环调用 image 的初始化方法（libSystem 库需要第一个初始化）
     doImageInit(context);
     
@@ -1566,21 +1569,55 @@ void ImageLoaderMachO::doImageInit(const LinkContext& context)
 }
 ```
 
-&emsp;看了 `doImageInit` 的过程，那么为什么 `libSystem.dylib` 要第一个初始化，是因为 `libobjc` 库的初始化是在 `libDispatch` 库执行的，而 `libDispatch` 库是在 `libSystem` 库初始化后执行。
+&emsp;在 `doImageInit` 函数内部看到其中就是遍历当前 image 的 load command，找到其中 `LC_ROUTINES_COMMAND` 类型的 load command 然后通过内存地址偏移找到 `Initializer` 函数的位置并执行。（`Initializer func = (Initializer)(((struct macho_routines_command*)cmd)->init_address + fSlide);`） 其中的 `if ( ! dyld::gProcessInfo->libSystemInitialized )` 是判断 libSystem 必须先初始化，否则就直接抛错。
 
-&emsp;+++++++++++++++++++++++++++++++++++++++++++
-
-&emsp;下面是在 `_objc_init` 函数打断点，查看函数调用流程++++++++++++++++++
-
-&emsp;看到其中就是遍历 load command，找到其中 LC_ROUTINES_COMMAND 类型的 load command 然后通过内存地址偏移找到要执行的方法的地址并执行。（`Initializer func = (Initializer)(((struct macho_routines_command*)cmd)->init_address + fSlide);`） 其中的 `if ( ! dyld::gProcessInfo->libSystemInitialized )` 是判断 libSystem 必须先初始化，否则就直接抛错。上面初始化的过程，是由内存地址不断偏移拿到初始化方法进行调用。
-
-&emsp;这样我们最开始的 bt 指令的截图中出现的函数就都浏览一遍了：`_dyld_start` -> `dyldbootstrap::start` -> `dyld::_main` -> `dyld::initializeMainExecutable` -> `ImageLoader::runInitializers` -> `ImageLoader::processInitializers` -> `ImageLoader::recursiveInitialization` -> `dyld::notifySingle` -> `libobjc.A.dylib \` `load_images`。
-
-&emsp;下面我们开始验证 initializeMainExecutable 的流程！
+&emsp;看了 `doImageInit` 的函数实现，我们肯定对其中的那行 `if ( ! dyld::gProcessInfo->libSystemInitialized )` 记忆犹新，那么为什么 `libSystem.dylib` 要第一个初始化，是因为 `libobjc` 库的初始化是在 `libDispatch` 库执行的，而 `libDispatch` 库是在 `libSystem` 库初始化后执行。那么我们怎么验证这个呢？
 
 &emsp;我们在 objc4-781 源码的 `_objc_init` 处打一个断点并运行，可看到如下的堆栈信息。
 
 ![截屏2021-06-06 上午11.30.09.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b43633835e814c2aa4b09cb23304494d~tplv-k3u1fbpfcp-watermark.image)
+
+```c++
+(lldb) bt
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+
+  * frame #0: 0x00000001860964a0 libobjc.A.dylib`_objc_init // ⬅️ 这里
+    frame #1: 0x00000001002f5014 libdispatch.dylib`_os_object_init + 24 // ⬅️ 这里
+    frame #2: 0x0000000100308728 libdispatch.dylib`libdispatch_init + 476 // ⬅️ 这里
+    frame #3: 0x000000018f8777e8 libSystem.B.dylib`libSystem_initializer + 220 // ⬅️ 这里
+    
+    frame #4: 0x000000010003390c dyld`ImageLoaderMachO::doModInitFunctions(ImageLoader::LinkContext const&) + 868
+    frame #5: 0x0000000100033b94 dyld`ImageLoaderMachO::doInitialization(ImageLoader::LinkContext const&) + 56
+    frame #6: 0x000000010002d84c dyld`ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&, unsigned int, char const*, ImageLoader::InitializerTimingList&, ImageLoader::UninitedUpwards&) + 620
+    frame #7: 0x000000010002d794 dyld`ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&, unsigned int, char const*, ImageLoader::InitializerTimingList&, ImageLoader::UninitedUpwards&) + 436
+    frame #8: 0x000000010002b300 dyld`ImageLoader::processInitializers(ImageLoader::LinkContext const&, unsigned int, ImageLoader::InitializerTimingList&, ImageLoader::UninitedUpwards&) + 192
+    frame #9: 0x000000010002b3cc dyld`ImageLoader::runInitializers(ImageLoader::LinkContext const&, ImageLoader::InitializerTimingList&) + 96
+    frame #10: 0x00000001000167fc dyld`dyld::initializeMainExecutable() + 140
+    frame #11: 0x000000010001cb98 dyld`dyld::_main(macho_header const*, unsigned long, int, char const**, char const**, char const**, unsigned long*) + 7388
+    frame #12: 0x0000000100015258 dyld`dyldbootstrap::start(dyld3::MachOLoaded const*, int, char const**, dyld3::MachOLoaded const*, unsigned long*) + 476
+    frame #13: 0x0000000100015038 dyld`_dyld_start + 56
+(lldb) 
+```
+
+&emsp;自 `_dyld_start` 到 `ImageLoaderMachO::doModInitFunctions` 的函数调用我们都已经比较熟悉了，这里我们主要看的是 `libSystem_initializer` 到 `_objc_init` 的调用过程。
+
+```c++
+  libobjc.A.dylib`_objc_init
+  
+  ⬆️⬆️⬆️
+  
+  libdispatch.dylib`_os_object_init
+  
+  ⬆️⬆️⬆️
+  
+  libdispatch.dylib`libdispatch_init
+  
+  ⬆️⬆️⬆️
+  
+  libSystem.B.dylib`libSystem_initializer
+```
+
+&emsp;恰好这些函数所处的库都是开源的，下面我们下载源码一探究竟。
 
 &emsp;我们看到了 `libSystem_initializer` 函数的调用，我们去下载源码：[Libsystem](https://opensource.apple.com/tarballs/Libsystem/)，打开源码，全局搜索 `libSystem_initializer`，可在 Libsystem/init.c 中看到 `libSystem_initializer` 函数的定义如下（只摘录一部分）：
 
@@ -1608,7 +1645,7 @@ libSystem_initializer(int argc,
         ...
 ```
 
-&emsp;下面我们摘录其中比较重要的内容：
+&emsp;下面我们摘录 `libSystem_initializer` 函数中比较重要的内容：
 
 ```c++
 // 对内核的初始化
@@ -1628,23 +1665,38 @@ _libc_initializer(&libc_funcs, envp, apple, vars);
 // Note that __malloc_init() will also initialize ASAN when it is present
 __malloc_init(apple);
 
-// 对 dyld 进行初始化（dyld_start 是 dyld 并没有初始化，dyld 也是一个库）
+// 对 dyld 进行初始化（dyld_start 时 dyld 并没有初始化，dyld 也是一个库）
 _dyld_initializer();
 
-// 对 libdispatch 进行初始化。上面的堆栈信息中我们也看到了 libdispatch 的初始化
+// 对 libdispatch 进行初始化，上面的堆栈信息中我们也看到了 libdispatch 的初始化
 libdispatch_init();
 
 _libxpc_initializer();
 ```
 
-&emsp;我们可看到 `libdispatch_init` 是在 `libdispatch.dylib` 中，我们去下载源码：[libdispatch](https://opensource.apple.com/tarballs/libdispatch/)，打开源码，全局搜索 `libdispatch_init`，可在 libdispatch/Dispatch Source/queue.c 中看到 `libdispatch_init` 函数的定义如下（只摘录一部分）：
+&emsp;在 Libsystem/init.c 文件中我们能看到一组外联函数的声明：
 
 ```c++
-...
-frame #1: 0x00000001002e989f libdispatch.dylib`_os_object_init + 13
-frame #2: 0x00000001002faa13 libdispatch.dylib`libdispatch_init + 285
-...
+// system library initialisers
+extern void mach_init(void);            // from libsystem_kernel.dylib
+extern void __libplatform_init(void *future_use, const char *envp[], const char *apple[], const struct ProgramVars *vars);
+extern void __pthread_init(const struct _libpthread_functions *libpthread_funcs, const char *envp[], const char *apple[], const struct ProgramVars *vars);    // from libsystem_pthread.dylib
+extern void __malloc_init(const char *apple[]); // from libsystem_malloc.dylib
+extern void __keymgr_initializer(void);        // from libkeymgr.dylib
+extern void _dyld_initializer(void);        // from libdyld.dylib
+extern void libdispatch_init(void);        // from libdispatch.dylib
+extern void _libxpc_initializer(void);        // from libxpc.dylib
+extern void _libsecinit_initializer(void);        // from libsecinit.dylib
+extern void _libtrace_init(void);        // from libsystem_trace.dylib
+extern void _container_init(const char *apple[]); // from libsystem_containermanager.dylib
+extern void __libdarwin_init(void);        // from libsystem_darwin.dylib
 ```
+
+&emsp;看到 `libSystem_initializer` 函数的内部，会调用其他库的初始化函数，例如 `_dyld_initializer();` 这个是 `dyld` 库的初始化，因为 `dyld` 也是一个动态库。
+
+> &emsp;在启动一个可执行文件的时候，系统内核做完环境的初始化，就把控制权交给 `dyld` 去执行加载和链接。
+
+&emsp;看到 `libSystem_initializer` 函数内部调用 `libdispatch_init();`，同时可看到 `libdispatch_init` 是在 `libdispatch.dylib` 中，我们去下载源码：[libdispatch](https://opensource.apple.com/tarballs/libdispatch/)，打开源码，全局搜索 `libdispatch_init`，可在 libdispatch/Dispatch Source/queue.c 中看到 `libdispatch_init` 函数的定义如下（只摘录一部分）：
 
 ```c++
 DISPATCH_EXPORT DISPATCH_NOTHROW
@@ -1669,7 +1721,7 @@ _dispatch_hw_config_init();
 _dispatch_time_init();
 _dispatch_vtable_init();
 
-// ⬇️⬇️⬇️⬇️⬇️⬇️
+// ⬇️⬇️⬇️
 _os_object_init();
 
 _voucher_init();
@@ -1677,7 +1729,7 @@ _dispatch_introspection_init();
 }
 ```
 
-&emsp;看到其中 `_os_object_init` 的调用，我们全局搜一下可在 libdispatch/Dispatch Source/object.m 中看到其定义。 
+&emsp;看到其中 `_os_object_init` 的调用（本身它也属于 `libdispatch.dylib`），我们全局搜一下 `_os_object_init`，可在 libdispatch/Dispatch Source/object.m 中看到其定义。 
 
 ```c++
 void
@@ -1705,7 +1757,126 @@ _os_object_init(void)
 }
 ```
 
-&emsp;我们看到 `_os_object_init` 函数定义第一行就是 `_objc_init` 调用，也就是从 `_os_object_init` 跳入到 `_objc_init` 进入 runtime 的初始化，上面我们讲了 `_objc_init` 会调用 `_dyld_objc_notify_register`，然后就对 `sNotifyObjCInit` 赋值。
+&emsp;我们看到 `_os_object_init` 函数定义第一行就是 `_objc_init` 调用，也就是从 `_os_object_init` 跳入到 `_objc_init` 进入 runtime 的初始化，上面我们讲了 `_objc_init` 会调用 `_dyld_objc_notify_register`，对 `sNotifyObjCInit` 进行赋值。
+
+&emsp;所以到这里我们可以总结一下 `_objc_init` 的调用流程：
+
++ `_dyld_start` -> 
++ `dyldbootstrap::start` -> 
++ `dyld::_main` -> 
++ `dyld::initializeMainExecutable` ->
++ `ImageLoader::runInitializers` ->
++ `ImageLoader::processInitializers` ->
++ `ImageLoader::recursiveInitialization` ->
++ `doInitialization` ->
++ `doModInitFunctions` ->
++ `libSystem_initializer 属于 libSystem.B.dylib` ->
++ `libdispatch_init 属于 libdispatch.dylib` ->
++ `_os_object_init 属于 libdispatch.dylib` ->
++ `_objc_init 属于 libobjc.A.dylib`
+
+1. 当 `dyld` 加载到开始链接 `mainExecutable` 的时候，递归调用 `recursiveInitialization` 函数。
+2. 这个函数第一次运行，会进行 `libSystem` 的初始化，会走到 `doInitialization -> doModInitFunctions -> libSystem_initializer`。
+3. `libSystem` 的初始化，会调用 `libdispatch_init`，`libdispatch_init` 会调用 `_os_object_init`，`_os_object_init` 会调用 `_objc_init`。
+4. 在 `_objc_init` 中调用 `dyld` 的 `_dyld_objc_notify_register` 函数注册保存了 `map_images`、`load_images`、`unmap_images` 的函数地址。
+5. 注册完回到 `dyld` 的 `recursiveInitialization` 递归下一次调用，例如 `libObjc`，当 `libObjc` 来到 `recursiveInitialization` 调用时，会触发保存的 `load_images` 回调，就调用了 `load_images` 函数。
+
+&emsp;看到这里时我们还有一个函数没有看，上面我们分析了 `void ImageLoaderMachO::doImageInit(const LinkContext& context)` 函数的内容，然后在 `ImageLoaderMachO::doInitialization` 函数定义内部进行 `doImageInit(context);` 调用，然后下面还有一行 `doModInitFunctions(context);` 的调用，正是在 `doModInitFunctions` 的调用过程中，调用了 `libSystem` 的初始化函数 `libSystem_initializer`。 
+
+&emsp;下面我们看一下 `void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)` 函数的定义。
+
+```c++
+void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
+{
+    if ( fHasInitializers ) {
+        const uint32_t cmd_count = ((macho_header*)fMachOData)->ncmds;
+        const struct load_command* const cmds = (struct load_command*)&fMachOData[sizeof(macho_header)];
+        const struct load_command* cmd = cmds;
+        for (uint32_t i = 0; i < cmd_count; ++i) {
+            if ( cmd->cmd == LC_SEGMENT_COMMAND ) {
+                const struct macho_segment_command* seg = (struct macho_segment_command*)cmd;
+                const struct macho_section* const sectionsStart = (struct macho_section*)((char*)seg + sizeof(struct macho_segment_command));
+                const struct macho_section* const sectionsEnd = &sectionsStart[seg->nsects];
+                for (const struct macho_section* sect=sectionsStart; sect < sectionsEnd; ++sect) {
+                    const uint8_t type = sect->flags & SECTION_TYPE;
+                    if ( type == S_MOD_INIT_FUNC_POINTERS ) {
+                        Initializer* inits = (Initializer*)(sect->addr + fSlide);
+                        const size_t count = sect->size / sizeof(uintptr_t);
+                        // <rdar://problem/23929217> Ensure __mod_init_func section is within segment
+                        if ( (sect->addr < seg->vmaddr) || (sect->addr+sect->size > seg->vmaddr+seg->vmsize) || (sect->addr+sect->size < sect->addr) )
+                            dyld::throwf("__mod_init_funcs section has malformed address range for %s\n", this->getPath());
+                        for (size_t j=0; j < count; ++j) {
+                            Initializer func = inits[j];
+                            // <rdar://problem/8543820&9228031> verify initializers are in image
+                            if ( ! this->containsAddress(stripPointer((void*)func)) ) {
+                                dyld::throwf("initializer function %p not in mapped image for %s\n", func, this->getPath());
+                            }
+                            if ( ! dyld::gProcessInfo->libSystemInitialized ) {
+                                // <rdar://problem/17973316> libSystem initializer must run first
+                                const char* installPath = getInstallPath();
+                                if ( (installPath == NULL) || (strcmp(installPath, libSystemPath(context)) != 0) )
+                                    dyld::throwf("initializer in image (%s) that does not link with libSystem.dylib\n", this->getPath());
+                            }
+                            if ( context.verboseInit )
+                                dyld::log("dyld: calling initializer function %p in %s\n", func, this->getPath());
+                            bool haveLibSystemHelpersBefore = (dyld::gLibSystemHelpers != NULL);
+                            {
+                                dyld3::ScopedTimer(DBG_DYLD_TIMING_STATIC_INITIALIZER, (uint64_t)fMachOData, (uint64_t)func, 0);
+                                func(context.argc, context.argv, context.envp, context.apple, &context.programVars);
+                            }
+                            bool haveLibSystemHelpersAfter = (dyld::gLibSystemHelpers != NULL);
+                            if ( !haveLibSystemHelpersBefore && haveLibSystemHelpersAfter ) {
+                                // now safe to use malloc() and other calls in libSystem.dylib
+                                dyld::gProcessInfo->libSystemInitialized = true;
+                            }
+                        }
+                    }
+                    else if ( type == S_INIT_FUNC_OFFSETS ) {
+                        const uint32_t* inits = (uint32_t*)(sect->addr + fSlide);
+                        const size_t count = sect->size / sizeof(uint32_t);
+                        // Ensure section is within segment
+                        if ( (sect->addr < seg->vmaddr) || (sect->addr+sect->size > seg->vmaddr+seg->vmsize) || (sect->addr+sect->size < sect->addr) )
+                            dyld::throwf("__init_offsets section has malformed address range for %s\n", this->getPath());
+                        if ( seg->initprot & VM_PROT_WRITE )
+                            dyld::throwf("__init_offsets section is not in read-only segment %s\n", this->getPath());
+                        for (size_t j=0; j < count; ++j) {
+                            uint32_t funcOffset = inits[j];
+                            // verify initializers are in image
+                            if ( ! this->containsAddress((uint8_t*)this->machHeader() + funcOffset) ) {
+                                dyld::throwf("initializer function offset 0x%08X not in mapped image for %s\n", funcOffset, this->getPath());
+                            }
+                            if ( ! dyld::gProcessInfo->libSystemInitialized ) {
+                                // <rdar://problem/17973316> libSystem initializer must run first
+                                const char* installPath = getInstallPath();
+                                if ( (installPath == NULL) || (strcmp(installPath, libSystemPath(context)) != 0) )
+                                    dyld::throwf("initializer in image (%s) that does not link with libSystem.dylib\n", this->getPath());
+                            }
+                            Initializer func = (Initializer)((uint8_t*)this->machHeader() + funcOffset);
+                            if ( context.verboseInit )
+                                dyld::log("dyld: calling initializer function %p in %s\n", func, this->getPath());
+#if __has_feature(ptrauth_calls)
+                            func = (Initializer)__builtin_ptrauth_sign_unauthenticated((void*)func, ptrauth_key_asia, 0);
+#endif
+                            bool haveLibSystemHelpersBefore = (dyld::gLibSystemHelpers != NULL);
+                            {
+                                dyld3::ScopedTimer(DBG_DYLD_TIMING_STATIC_INITIALIZER, (uint64_t)fMachOData, (uint64_t)func, 0);
+                                func(context.argc, context.argv, context.envp, context.apple, &context.programVars);
+                            }
+                            bool haveLibSystemHelpersAfter = (dyld::gLibSystemHelpers != NULL);
+                            if ( !haveLibSystemHelpersBefore && haveLibSystemHelpersAfter ) {
+                                // now safe to use malloc() and other calls in libSystem.dylib
+                                dyld::gProcessInfo->libSystemInitialized = true;
+                            }
+                        }
+                    }
+                }
+            }
+            cmd = (const struct load_command*)(((char*)cmd)+cmd->cmdsize);
+        }
+    }
+}
+```
+
 
 ```c++
 ...
@@ -1728,7 +1899,7 @@ context.notifySingle(dyld_image_state_initialized, this, NULL);
 &emsp;文章开头处我们看到 C++ 静态方法是在 +load 方法后面调用的，我们现在看一下它的调用时机。前面分析 `ImageLoaderMachO` 时只看了 `doImageInit` 而没有分析 `doModInitFunctions` 函数。
 
 ```c++
-// ⬇️⬇️⬇️⬇️
+// ⬇️⬇️⬇️
 // mach-o has -init and static initializers
 doImageInit(context);
 doModInitFunctions(context);
