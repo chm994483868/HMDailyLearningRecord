@@ -1788,94 +1788,196 @@ _os_object_init(void)
 ```c++
 void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
 {
+    // 在 ImageLoaderMachO 定的一个位域：fHasInitializers : 1, 标记是否进行过初始化
     if ( fHasInitializers ) {
+    
+        // 找到当前 image 的 load command 的位置
         const uint32_t cmd_count = ((macho_header*)fMachOData)->ncmds;
         const struct load_command* const cmds = (struct load_command*)&fMachOData[sizeof(macho_header)];
         const struct load_command* cmd = cmds;
+        
+        // 遍历 load command
         for (uint32_t i = 0; i < cmd_count; ++i) {
+        
+            // 仅处理类型是 LC_SEGMENT_64 的 load command（#define LC_SEGMENT_COMMAND LC_SEGMENT_64）
             if ( cmd->cmd == LC_SEGMENT_COMMAND ) {
+                
+                // struct macho_segment_command : public segment_command_64  {};
+                // 转化为 segment_command_64 并移动指针，找到 macho_section 的位置
                 const struct macho_segment_command* seg = (struct macho_segment_command*)cmd;
                 const struct macho_section* const sectionsStart = (struct macho_section*)((char*)seg + sizeof(struct macho_segment_command));
                 const struct macho_section* const sectionsEnd = &sectionsStart[seg->nsects];
+                
+                // 对当前的 segment 的 section 进行遍历
                 for (const struct macho_section* sect=sectionsStart; sect < sectionsEnd; ++sect) {
+                    
+                    // 取出当前 section 的类型
                     const uint8_t type = sect->flags & SECTION_TYPE;
+                    
+                    // 如果当前是 S_MOD_INIT_FUNC_POINTERS 类型（即 __mod_init_funcs 区）
                     if ( type == S_MOD_INIT_FUNC_POINTERS ) {
+                    
                         Initializer* inits = (Initializer*)(sect->addr + fSlide);
                         const size_t count = sect->size / sizeof(uintptr_t);
+                        
                         // <rdar://problem/23929217> Ensure __mod_init_func section is within segment
+                        // 确认 __mod_init_func 区在当前段内
                         if ( (sect->addr < seg->vmaddr) || (sect->addr+sect->size > seg->vmaddr+seg->vmsize) || (sect->addr+sect->size < sect->addr) )
                             dyld::throwf("__mod_init_funcs section has malformed address range for %s\n", this->getPath());
+                        
+                        // 遍历当前区的所有的 Initializer
                         for (size_t j=0; j < count; ++j) {
+                            
+                            // 取出每一个 Initializer
                             Initializer func = inits[j];
+                            
                             // <rdar://problem/8543820&9228031> verify initializers are in image
+                            // 验证 initializers 是否在 image 中
                             if ( ! this->containsAddress(stripPointer((void*)func)) ) {
                                 dyld::throwf("initializer function %p not in mapped image for %s\n", func, this->getPath());
                             }
+                            
+                            // 确保 libSystem.dylib 首先进行初始化
                             if ( ! dyld::gProcessInfo->libSystemInitialized ) {
                                 // <rdar://problem/17973316> libSystem initializer must run first
+                                
                                 const char* installPath = getInstallPath();
+                                
+                                // 即如果当前 libSystem.dylib 没有初始化，并且当前 image 的路径为 NULL 或者 当前 image 不是 libSystem.dylib，则进行抛错
+                                // 即如果当前 libSystem.dylib 没有进行初始化，并且当前 image 是 libSystem.dylib 之前的 image 则直接抛错，
+                                // 即必须保证 libSystem.dylib 第一个进行初始化
+                                
                                 if ( (installPath == NULL) || (strcmp(installPath, libSystemPath(context)) != 0) )
                                     dyld::throwf("initializer in image (%s) that does not link with libSystem.dylib\n", this->getPath());
                             }
+                            
+                            // 打印开始调用初始化
                             if ( context.verboseInit )
                                 dyld::log("dyld: calling initializer function %p in %s\n", func, this->getPath());
+                            
+                            // 调用初始化
+                            // const struct LibSystemHelpers* gLibSystemHelpers = NULL; 是一个全局变量，用来协助 LibSystem
+                            // struct LibSystemHelpers 是装满函数指针的结构体
+                            
+                            // 如果当前是 libSystem.dylib 则 haveLibSystemHelpersBefore 的值是 NO
                             bool haveLibSystemHelpersBefore = (dyld::gLibSystemHelpers != NULL);
+                            
                             {
+                                // 计时
                                 dyld3::ScopedTimer(DBG_DYLD_TIMING_STATIC_INITIALIZER, (uint64_t)fMachOData, (uint64_t)func, 0);
+                                
+                                // 执行初始化函数
                                 func(context.argc, context.argv, context.envp, context.apple, &context.programVars);
                             }
+                            
+                            // 如果当前是 libSystem.dylib 则执行到这里时 haveLibSystemHelpersBefore 的值是 YES
                             bool haveLibSystemHelpersAfter = (dyld::gLibSystemHelpers != NULL);
+                            
+                            // 如果前置两个条件一个是 NO 一个是 YES，则表示刚刚是进行的是 libSystem.dylib 的初始化，则把 libSystemInitialized 标记为 true  
                             if ( !haveLibSystemHelpersBefore && haveLibSystemHelpersAfter ) {
                                 // now safe to use malloc() and other calls in libSystem.dylib
+                                // 现在可以安全地在 libSystem.dylib 中使用 malloc() 和其他调用
+                                
                                 dyld::gProcessInfo->libSystemInitialized = true;
                             }
                         }
-                    }
+                        
+                    } 
+                    
+                    // 如果当前是 S_MOD_INIT_FUNC_POINTERS 类型（即 __init_offsets 区）
                     else if ( type == S_INIT_FUNC_OFFSETS ) {
+                        // 读出 inits
                         const uint32_t* inits = (uint32_t*)(sect->addr + fSlide);
                         const size_t count = sect->size / sizeof(uint32_t);
+                        
                         // Ensure section is within segment
+                        // 确保当前 section 在当前 segment 内
                         if ( (sect->addr < seg->vmaddr) || (sect->addr+sect->size > seg->vmaddr+seg->vmsize) || (sect->addr+sect->size < sect->addr) )
                             dyld::throwf("__init_offsets section has malformed address range for %s\n", this->getPath());
+                        
+                        // 确认当前段是只读的
                         if ( seg->initprot & VM_PROT_WRITE )
                             dyld::throwf("__init_offsets section is not in read-only segment %s\n", this->getPath());
+                        
+                        // 遍历当前区的所有的 inits
                         for (size_t j=0; j < count; ++j) {
                             uint32_t funcOffset = inits[j];
+                            
                             // verify initializers are in image
+                            // 验证 initializers 是否在 image 中
                             if ( ! this->containsAddress((uint8_t*)this->machHeader() + funcOffset) ) {
                                 dyld::throwf("initializer function offset 0x%08X not in mapped image for %s\n", funcOffset, this->getPath());
                             }
+                            
+                            // 确保 libSystem.dylib 首先进行初始化
                             if ( ! dyld::gProcessInfo->libSystemInitialized ) {
                                 // <rdar://problem/17973316> libSystem initializer must run first
+                                
+                                // libSystemPath(context) 函数返回的路径，context 参数仅是用来判断是否是 driverKit 环境
+                                // #define LIBSYSTEM_DYLIB_PATH "/usr/lib/libSystem.B.dylib"
+                                // 看到 libSystem 这个系统动态库在本地的位置是固定的
+                                
                                 const char* installPath = getInstallPath();
+                                
+                                // 即如果当前 libSystem.dylib 没有初始化，并且当前 image 的路径为 NULL 或者 当前 image 不是 libSystem.dylib，则进行抛错
+                                // 即如果当前 libSystem.dylib 没有进行初始化，并且当前 image 是 libSystem.dylib 之前的 image 则直接抛错，
+                                // 即必须保证 libSystem.dylib 第一个进行初始化
+                                
                                 if ( (installPath == NULL) || (strcmp(installPath, libSystemPath(context)) != 0) )
                                     dyld::throwf("initializer in image (%s) that does not link with libSystem.dylib\n", this->getPath());
                             }
+                            
+                            // 转换为 Initializer 函数指针 
                             Initializer func = (Initializer)((uint8_t*)this->machHeader() + funcOffset);
+                            
+                            // 打印开始调用初始化 
                             if ( context.verboseInit )
                                 dyld::log("dyld: calling initializer function %p in %s\n", func, this->getPath());
+                                
 #if __has_feature(ptrauth_calls)
                             func = (Initializer)__builtin_ptrauth_sign_unauthenticated((void*)func, ptrauth_key_asia, 0);
 #endif
+                            
+                            // 调用初始化 
+                            
+                            // haveLibSystemHelpersBefore 和 haveLibSystemHelpersAfter 两个变量的使用同上
                             bool haveLibSystemHelpersBefore = (dyld::gLibSystemHelpers != NULL);
                             {
+                                // 计时
                                 dyld3::ScopedTimer(DBG_DYLD_TIMING_STATIC_INITIALIZER, (uint64_t)fMachOData, (uint64_t)func, 0);
+                                
+                                // 执行初始化函数
                                 func(context.argc, context.argv, context.envp, context.apple, &context.programVars);
                             }
                             bool haveLibSystemHelpersAfter = (dyld::gLibSystemHelpers != NULL);
+                            
+                            // 如果前置两个条件一个是 NO 一个是 YES，则表示刚刚是进行的是 libSystem.dylib 的初始化，则把 libSystemInitialized 标记为 true
                             if ( !haveLibSystemHelpersBefore && haveLibSystemHelpersAfter ) {
                                 // now safe to use malloc() and other calls in libSystem.dylib
                                 dyld::gProcessInfo->libSystemInitialized = true;
                             }
                         }
+                        
                     }
                 }
             }
+            
+            // 继续便利下一条 load command  
             cmd = (const struct load_command*)(((char*)cmd)+cmd->cmdsize);
         }
     }
 }
 ```
+
+&emsp;`doModInitFunctions` 函数内部是对 `__mod_init_func` 区和 `__init_offsets` 两个分区的 Initializer 进行调用。而在 `libSystem.dylib` 库的 `__mod_init_func` 区中存放的正是 `libSystem.dylib` 的初始化函数 `libSystem_initializer`。（`__mod_init_func` 区仅用来存放初始化函数。）
+
+&emsp;下面我们用 MachOView 看一下本地的 `libSystem.dylib` 的结构：
+
+
+
+&emsp;+++++++++++++++++++++++++++++++++++++++++++++
+&emsp;找到本地的 libSystem.dylib 用 MachOView 进行查看
+
 
 
 ```c++
