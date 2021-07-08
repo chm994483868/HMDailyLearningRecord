@@ -1875,8 +1875,9 @@ void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
                             
                             // 如果前置两个条件一个是 NO 一个是 YES，则表示刚刚是进行的是 libSystem.dylib 的初始化，则把 libSystemInitialized 标记为 true  
                             if ( !haveLibSystemHelpersBefore && haveLibSystemHelpersAfter ) {
+                            
                                 // now safe to use malloc() and other calls in libSystem.dylib
-                                // 现在可以安全地在 libSystem.dylib 中使用 malloc() 和其他调用
+                                // libSystem 初始化完成，现在可以安全地在 libSystem.dylib 中使用 malloc() 和其他调用了
                                 
                                 dyld::gProcessInfo->libSystemInitialized = true;
                             }
@@ -1953,7 +1954,10 @@ void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
                             
                             // 如果前置两个条件一个是 NO 一个是 YES，则表示刚刚是进行的是 libSystem.dylib 的初始化，则把 libSystemInitialized 标记为 true
                             if ( !haveLibSystemHelpersBefore && haveLibSystemHelpersAfter ) {
+                            
                                 // now safe to use malloc() and other calls in libSystem.dylib
+                                // libSystem 初始化完成，现在可以安全地在 libSystem.dylib 中使用 malloc() 和其他调用了
+                                
                                 dyld::gProcessInfo->libSystemInitialized = true;
                             }
                         }
@@ -1962,7 +1966,7 @@ void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
                 }
             }
             
-            // 继续便利下一条 load command  
+            // 继续遍历下一条 load command  
             cmd = (const struct load_command*)(((char*)cmd)+cmd->cmdsize);
         }
     }
@@ -1971,63 +1975,11 @@ void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
 
 &emsp;`doModInitFunctions` 函数内部是对 `__mod_init_func` 区和 `__init_offsets` 两个分区的 Initializer 进行调用。而在 `libSystem.dylib` 库的 `__mod_init_func` 区中存放的正是 `libSystem.dylib` 的初始化函数 `libSystem_initializer`。（`__mod_init_func` 区仅用来存放初始化函数。）
 
-&emsp;下面我们用 MachOView 看一下本地的 `libSystem.dylib` 的结构：
-
-
-
-&emsp;+++++++++++++++++++++++++++++++++++++++++++++
-&emsp;找到本地的 libSystem.dylib 用 MachOView 进行查看
-
-
-
-```c++
-...
-// initialize this image
-bool hasInitializers = this->doInitialization(context);
-
-// let anyone know we finished initializing this image
-fState = dyld_image_state_initialized;
-oldState = fState;
-context.notifySingle(dyld_image_state_initialized, this, NULL);
-...
-```
-
-&emsp;我们在 `doInitialization` 方法调用之后再进行 `notifySingle`，而 `notifySingle` 就会跳到 `sNotifyObjCInit`，`sNotifyObjCInit()` 才会执行。
-
 &emsp;文章开头处我们看到 load 方法是最先执行的，在之前的文章中我们有详细分析过 +load 的执行，如果还有印象的话一定记得它的入口 `load_imags` 函数。这正和我们上面的分析联系起来了，在 objc-781 源码中，它最先走的是 `objc_init`，它最后会调用 `_dyld_objc_notify_register` 传入 `load_images`，而 `load_images` 内部的 `prepare_load_methods` 和 `call_load_methods` 完成了整个项目中父类、子类、分类中的所有 +load 函数的调用。
 
 ![截屏2021-06-06 下午4.19.52.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ba2304f261cf446bb6434d0c82dceb66~tplv-k3u1fbpfcp-watermark.image)
 
-&emsp;文章开头处我们看到 C++ 静态方法是在 +load 方法后面调用的，我们现在看一下它的调用时机。前面分析 `ImageLoaderMachO` 时只看了 `doImageInit` 而没有分析 `doModInitFunctions` 函数。
-
-```c++
-// ⬇️⬇️⬇️
-// mach-o has -init and static initializers
-doImageInit(context);
-doModInitFunctions(context);
-```
-
-&emsp;在 dyld/src/ImageLoaderMachO.cpp 中我们可看到 `void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)` 的定义，由于其过长，这里我们只摘录看下其内容。
-
-```c++
-void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
-{
-    if ( fHasInitializers ) {
-        const uint32_t cmd_count = ((macho_header*)fMachOData)->ncmds;
-        const struct load_command* const cmds = (struct load_command*)&fMachOData[sizeof(macho_header)];
-        const struct load_command* cmd = cmds;
-        for (uint32_t i = 0; i < cmd_count; ++i) {
-            if ( cmd->cmd == LC_SEGMENT_COMMAND ) {
-                const struct macho_segment_command* seg = (struct macho_segment_command*)cmd;
-                const struct macho_section* const sectionsStart = (struct macho_section*)((char*)seg + sizeof(struct macho_segment_command));
-                const struct macho_section* const sectionsEnd = &sectionsStart[seg->nsects];
-                for (const struct macho_section* sect=sectionsStart; sect < sectionsEnd; ++sect) {
-                    const uint8_t type = sect->flags & SECTION_TYPE;
-                    ...
-...
-```
-
-&emsp;首先遍历找到类型是 `LC_SEGMENT_COMMAND` 的 Load command，然后遍历该段中类型是 `S_MOD_INIT_FUNC_POINTERS` 和 `S_INIT_FUNC_OFFSETS` 的区，然后便利其中的 `Initializer` 并执行。
+&emsp;`doModInitFunctions` 函数首先遍历找到类型是 `LC_SEGMENT_COMMAND` 的 Load command，然后遍历该段中类型是 `S_MOD_INIT_FUNC_POINTERS` 和 `S_INIT_FUNC_OFFSETS` 的区，然后便利其中的 `Initializer` 并执行。
 
 ```c++
 typedef void (*Initializer)(int argc, const char* argv[], const char* envp[], const char* apple[], const ProgramVars* vars);
@@ -2039,39 +1991,85 @@ typedef void (*Initializer)(int argc, const char* argv[], const char* envp[], co
 
 &emsp;可看到 `main_front` 正是在 `ImageLoaderMachO::doModInitFunctions(ImageLoader::LinkContext const&)` 下执行的，也正说明了 C++ 的静态方法就是在执行 `doModInitFunctions` 下执行的。
 
-&emsp;我们在 `main_front` 中打一个断点，然后打开 Debug -> Debug Workflow -> Always Show Disassembly 选项，运行项目。
+&emsp;下面我们用 MachOView 看一下 `libSystem.dylib` 的结构。（这里没找到 `libSystem.dylib` 就不看了）
+
+> &emsp;`__attribute__((constructor))` 被 `attribute((constructor))` 标记的函数，会在 `main` 函数之前或动态库加载时执行。在 mach-o 中，被 `attribute((constructor))` 标记的函数会在 `_DATA` 段的 `__mod_init_func` 区中。当多个被标记 `attribute((constructor))` 的方法想要有顺序的执行，怎么办？`attribute((constructor))` 是支持优先级的：`_attribute((constructor(1)))`。
+
+&emsp;前面我们学习 `__attribute__((constructor))` 时，我们知道被 `attribute((constructor))` 标记的函数会在 `_DATA` 段的 `__mod_init_func` 区中，而在 Libsystem-1292.100.5 中我们搜索 `libSystem_initializer` 函数时，我们能看到它前面有 `attribute((constructor))` 标记，即 `libSystem_initializer` 位于 libSystem.dylib 的 `__mod_init_func` 区中，上面 `void ImageLoaderMachO::doModInitFunctions` 函数调用过程中，查找的正是 `__mod_init_func` 区，既而当 `libSystem.dylib` 调用 `doModInitFunctions` 函数时，正会执行 `libSystem_initializer` 函数。
+
+&emsp;当 `libSystem_initializer` 被调用时，`dyld` 会对 `gProcessInfo->libSystemInitialized` 进行标记，表示 `libSystem` 已经被初始化。
+
+&emsp;这里我们再看一个点，dyld 是怎么知道 libSystem 已经被初始化了，这里用到了 `_dyld_initializer` 函数：
 
 ```c++
-Test_ipa_simple`main_front:
-    0x10fc7bf60 <+0>:  pushq  %rbp
-    0x10fc7bf61 <+1>:  movq   %rsp, %rbp
-    0x10fc7bf64 <+4>:  leaq   0x2105(%rip), %rax        ; @
-    0x10fc7bf6b <+11>: movq   %rax, %rdi
-    0x10fc7bf6e <+14>: leaq   0x1e39(%rip), %rsi        ; "main_front"
-    0x10fc7bf75 <+21>: movb   $0x0, %al
-    0x10fc7bf77 <+23>: callq  0x10fc7c334               ; symbol stub for: NSLog
-->  0x10fc7bf7c <+28>: popq   %rbp
-    0x10fc7bf7d <+29>: retq   
+// called by libSystem_initializer only
+extern void _dyld_initializer(void);
 ```
 
-&emsp;我们下一步等 `main_front` 执行完，再 Continue Program Execution 直接到 main 函数中：
+&emsp;`_dyld_initializer` 函数仅由 `libSystem_initializer` 调用。
 
 ```c++
-Test_ipa_simple`main:
-    0x102838100 <+0>:  pushq  %rbp
-    0x102838101 <+1>:  movq   %rsp, %rbp
-    0x102838104 <+4>:  subq   $0x10, %rsp
-    0x102838108 <+8>:  leaq   0x1f79(%rip), %rax        ; @
-    0x10283810f <+15>: movl   $0x0, -0x4(%rbp)
-    0x102838116 <+22>: movl   %edi, -0x8(%rbp)
-    0x102838119 <+25>: movq   %rsi, -0x10(%rbp)
-->  0x10283811d <+29>: movq   %rax, %rdi
-    0x102838120 <+32>: movb   $0x0, %al
-    0x102838122 <+34>: callq  0x1028383d4               ; symbol stub for: NSLog
-    0x102838127 <+39>: xorl   %eax, %eax
-    0x102838129 <+41>: addq   $0x10, %rsp
-    0x10283812d <+45>: popq   %rbp
-    0x10283812e <+46>: retq   
+//
+// during initialization of libSystem this routine will run and call dyld, 
+// registering the helper functions.
+//
+extern "C" void tlv_initializer();
+
+void _dyld_initializer()
+{    
+   void (*p)(dyld::LibSystemHelpers*);
+
+    // Get the optimized objc pointer now that the cache is loaded
+    // 现在缓存已加载，获取优化的 objc 指针
+    
+    const dyld_all_image_infos* allInfo = _dyld_get_all_image_infos();
+    
+    if ( allInfo != nullptr  ) {
+        const DyldSharedCache* cache = (const DyldSharedCache*)(allInfo->sharedCacheBaseAddress);
+        if ( cache != nullptr )
+            // 仅为了 gObjCOpt 赋值
+            gObjCOpt = cache->objcOpt();
+    }
+
+    if ( gUseDyld3 ) {
+        // 如果开始使用 dyld3 了，则执行如下，对 gAllImages 中所有 Image 执行初始化
+        dyld3::gAllImages.applyInitialImages();
+        
+#if TARGET_OS_IOS && !TARGET_OS_SIMULATOR
+
+        // For binaries built before 13.0, set the lookup function if they need it
+        // 对于 13.0 之前构建的二进制文件，如果需要，请设置查找功能
+        
+        if (dyld_get_program_sdk_version() < DYLD_PACKED_VERSION(13,0,0))
+            setLookupFunc((void*)&dyld3::compatFuncLookup);
+            
+#endif
+
+    }
+    else {
+        _dyld_func_lookup("__dyld_register_thread_helpers", (void**)&p);
+        if(p != NULL)
+            // sHelpers 是一个静态全局结构体变量：static dyld::LibSystemHelpers = {....}
+            p(&sHelpers);
+    }
+    
+    // 这里调用了 tlv_initializer 函数 
+    tlv_initializer();
+}
+```
+
+&emsp;在 `libSystem` 初始化期间，此例程将运行并调用 dyld，注册辅助函数（`LibSystemHelpers`）。这里也对应了 `doModInitFunctions` 函数内部，` bool haveLibSystemHelpersBefore = (dyld::gLibSystemHelpers != NULL);` 和 `bool haveLibSystemHelpersAfter = (dyld::gLibSystemHelpers != NULL);` 两个变量加一起可用来表示 `dyld::gProcessInfo->libSystemInitialized = true;`，指示 `libSystem` 初始化完成，现在可以安全地在 `libSystem.dylib` 中使用 `malloc()` 和其他调用了。
+
+> &emsp;`libSystem` 的初始化是一个内部行为，`dyld` 是如何知道它被初始化的呢？`libSystem` 是一个特殊的 `dylib`，默认情况下会被所有可执行文件所依赖，`dyld` 为它单独提供了一个 API：`_dyld_initializer`，当 `libSystem` 被初始化时，会调用该函数，进而 `dyld` 内部就知道了 `libSystem` 被初始化了。
+
+&emsp;看到这里我们的 `dyld` 的 `_dyld_start` 函数就执行完成了，那它是怎么到我们的 main.m 的 `main` 函数呢？
+
+```c++
+(lldb) bt
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x00000001045d1ad8 Test_ipa_Simple`main(argc=1, argv=0x000000016b82dc88) at main.mm:89:5
+    frame #1: 0x0000000180223cbc libdyld.dylib`start + 4
+(lldb) 
 ```
 
 &emsp;`main` 函数是被编译到内存中的，而且是固定写死的，编译器找到 `main` 函数会加载到内存中，如果我们修改 `main` 函数的名字则会报如下错误: `ld: entry point (_main) undefined. for architecture x86_64`，告诉我们找不到 `main` 函数，这部分其实在 `dyld` 源码中也有所体现，下面我们搜下 `_dyld_start` 看下不同平台下对 `main` 函数的调用。 
