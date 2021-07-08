@@ -1,4 +1,4 @@
-# iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和动态链接过程
+# iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和 dyld 加载流程
 
 ## 静态库与动态库
 
@@ -902,7 +902,7 @@ notifyMonitoringDyldMain();
 
 ### initializeMainExecutable
 
-&emsp;上面我们分析了 main 的总体流程，其中 `initializeMainExecutable` 函数进行了所有的 initializers，下面我们看一下它的执行过程。
+&emsp;上面我们分析了 `dyld::_main` 函数的总体流程，其中 `initializeMainExecutable` 函数进行了所有的 `initializers`，下面我们看一下它的执行过程。
 
 ```c++
 void initializeMainExecutable()
@@ -977,6 +977,8 @@ void ImageLoader::InitializerTimingList::addTime(const char* name, uint64_t time
 ```
 
 &emsp;看到 `addTime` 函数是为当前记录到的 image 追加时间。
+
+#### runInitializers
 
 &emsp;下面看一下 `sImageRoots[i]` 和 `sMainExecutable` 都要调用的 `runInitializers` 函数，`runInitializers` 函数定义在 `ImageLoader` 类中。
 
@@ -1213,6 +1215,8 @@ static void setContext(const macho_header* mainExecutableMH, int argc, const cha
 
 &emsp;这个静态全局函数中，`gLinkContext.notifySingle` 被赋值为 `&notifySingle;`，而这个 `notifySingle` 函数是在 dyld2.cpp 中定义的一个静态全局函数。看到这里，我们即可确定 `recursiveInitialization`  函数中调用的 `context.notifySingle` 即 `gLinkContext.notifySingle`，即 dyld/src/dyld2.cpp 中的 `notifySingle` 这个静态全局函数。
 
+#### notifySingle
+
 &emsp;然后我们直接在 dyld2.cpp 中搜索 `notifySingle` 函数， 它是一个静态全局函数，我们现在看一下它的实现：
 
 &emsp;首先我们看一组在 `ImageLoader.h` 中定义的枚举，它们每个值都表示 dyld 过程中 image 的状态。
@@ -1229,7 +1233,6 @@ enum dyld_image_states
     dyld_image_state_terminated                = 60        // Only single notification for this
 };
 ```
-
 
 ```c++
 static void notifySingle(dyld_image_states state, const ImageLoader* image, ImageLoader::InitializerTimingList* timingInfo)
@@ -1323,6 +1326,8 @@ static _dyld_objc_notify_init sNotifyObjCInit;
 
 &emsp;`sNotifyObjCInit` 是一个静态全局的名为 `_dyld_objc_notify_init` 的函数指针。然后在 dyld2.cpp 文件中搜索，可看到在 `registerObjCNotifiers` 函数中，有对 `sNotifyObjCInit` 这个全局变量进行赋值操作。
 
+#### registerObjCNotifiers
+
 ```c++
 void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_init init, _dyld_objc_notify_unmapped unmapped)
 {
@@ -1372,6 +1377,8 @@ static _dyld_objc_notify_unmapped    sNotifyObjCUnmapped;
 
 &emsp;我们看到 `registerObjCNotifiers` 函数的 `_dyld_objc_notify_init init` 参数会直接赋值给 `sNotifyObjCInit`，并在下面的 for 循环中进行调用。
 
+#### \_dyld_objc_notify_register
+
 &emsp;那么什么时候调用 `registerObjCNotifiers` 函数呢？`_dyld_objc_notify_init init` 的实参又是什么呢？我们全局搜索 `registerObjCNotifiers` 函数。（其实看到这里，看到 `registerObjCNotifiers` 函数的形参我们可能会有一点印象了，之前看 objc 的源码时的 `_objc_init` 函数中涉及到 image 部分。）
 
 &emsp;我们全局搜索 `registerObjCNotifiers` 函数，在 dyld/src/dyldAPIs.cpp 中的 `_dyld_objc_notify_register` 函数内部调用了 `registerObjCNotifiers` 函数（属于 namespace dyld）。
@@ -1406,6 +1413,8 @@ void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,
 &emsp;`_dyld_objc_notify_register` 函数仅供 objc runtime 使用。注册在 mapped、unmapped 和 initialized objc images 时要调用的处理程序。Dyld 将使用包含 objc-image-info section 的 images 数组回调 mapped 函数。那些 dylib 的 images 将自动增加引用计数，因此 objc 将不再需要对它们调用 dlopen() 以防止它们被卸载。在调用 `_dyld_objc_notify_register()` 期间，dyld 将使用已加载的 objc images 调用 mapped 函数。在以后的任何 dlopen() 调用中，dyld 还将调用 mapped 函数。当 dyld 在该 image 中调用 initializers 时，Dyld 将调用 init 函数。这是当 objc 调用 image 中的任何 +load 方法时。
 
 &emsp;`Note: only for use by objc runtime` 提示我们 `_dyld_objc_notify_register` 函数仅提供给 objc runtime 使用，那么我们就去 objc4 源码中寻找 `_dyld_objc_notify_register` 函数的调用。 
+
+#### \_objc_init
 
 &emsp;下面我们在 objc4-781 中搜一下 `_dyld_objc_notify_register` 函数，在 `_objc_init` 中我们看到了它的身影。
 
@@ -1449,6 +1458,8 @@ void _objc_init(void)
 
 &emsp;**在 `_objc_init` 中注册回调函数，在 dyld 中调用这些回调函数。**
 
+#### doInitialization
+
 &emsp;那么看到这里，我们心中不免有一个疑问，既然在  `_objc_init` 函数内部调用 `_dyld_objc_notify_register` 函数注册了 dyld 的回调函数，那什么时候调用 `_objc_init` 呢？`_objc_init` 是 `libobjc` 这个 image 的初始化函数，那么 `libobjc` 什么时候进行初始化呢？
 
 &emsp;我们依然顺着上面的 `recursiveInitialization` 函数往下，在 `context.notifySingle(dyld_image_state_dependents_initialized, this, &timingInfo);` 调用的下面便是：
@@ -1483,6 +1494,8 @@ bool ImageLoaderMachO::doInitialization(const LinkContext& context)
 &emsp;其中的核心是 `doImageInit(context);` 和 `doModInitFunctions(context);` 两个函数调用。
 
 &emsp;在 `doImageInit(context);` 中，核心就是 for 循环调用 image 的初始化函数，但是需要注意的是 libSystem 库需要第一个初始化。
+
+##### doImageInit
 
 &emsp;下面我们看一下 `doImageInit` 函数的实现：
 
@@ -1619,6 +1632,8 @@ void ImageLoaderMachO::doImageInit(const LinkContext& context)
 
 &emsp;恰好这些函数所处的库都是开源的，下面我们下载源码一探究竟。
 
+#### libSystem_initializer 
+
 &emsp;我们看到了 `libSystem_initializer` 函数的调用，我们去下载源码：[Libsystem](https://opensource.apple.com/tarballs/Libsystem/)，打开源码，全局搜索 `libSystem_initializer`，可在 Libsystem/init.c 中看到 `libSystem_initializer` 函数的定义如下（只摘录一部分）：
 
 ```c++
@@ -1696,6 +1711,8 @@ extern void __libdarwin_init(void);        // from libsystem_darwin.dylib
 
 > &emsp;在启动一个可执行文件的时候，系统内核做完环境的初始化，就把控制权交给 `dyld` 去执行加载和链接。
 
+#### libdispatch_init 
+
 &emsp;看到 `libSystem_initializer` 函数内部调用 `libdispatch_init();`，同时可看到 `libdispatch_init` 是在 `libdispatch.dylib` 中，我们去下载源码：[libdispatch](https://opensource.apple.com/tarballs/libdispatch/)，打开源码，全局搜索 `libdispatch_init`，可在 libdispatch/Dispatch Source/queue.c 中看到 `libdispatch_init` 函数的定义如下（只摘录一部分）：
 
 ```c++
@@ -1728,6 +1745,8 @@ _voucher_init();
 _dispatch_introspection_init();
 }
 ```
+
+##### \_os_object_init
 
 &emsp;看到其中 `_os_object_init` 的调用（本身它也属于 `libdispatch.dylib`），我们全局搜一下 `_os_object_init`，可在 libdispatch/Dispatch Source/object.m 中看到其定义。 
 
@@ -1782,6 +1801,8 @@ _os_object_init(void)
 5. 注册完回到 `dyld` 的 `recursiveInitialization` 递归下一次调用，例如 `libObjc`，当 `libObjc` 来到 `recursiveInitialization` 调用时，会触发保存的 `load_images` 回调，就调用了 `load_images` 函数。
 
 &emsp;看到这里时我们还有一个函数没有看，上面我们分析了 `void ImageLoaderMachO::doImageInit(const LinkContext& context)` 函数的内容，然后在 `ImageLoaderMachO::doInitialization` 函数定义内部进行 `doImageInit(context);` 调用，然后下面还有一行 `doModInitFunctions(context);` 的调用，正是在 `doModInitFunctions` 的调用过程中，调用了 `libSystem` 的初始化函数 `libSystem_initializer`。 
+
+#### doModInitFunctions
 
 &emsp;下面我们看一下 `void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)` 函数的定义。
 
@@ -1975,7 +1996,7 @@ void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
 
 &emsp;`doModInitFunctions` 函数内部是对 `__mod_init_func` 区和 `__init_offsets` 两个分区的 Initializer 进行调用。而在 `libSystem.dylib` 库的 `__mod_init_func` 区中存放的正是 `libSystem.dylib` 的初始化函数 `libSystem_initializer`。（`__mod_init_func` 区仅用来存放初始化函数。）
 
-&emsp;文章开头处我们看到 load 方法是最先执行的，在之前的文章中我们有详细分析过 +load 的执行，如果还有印象的话一定记得它的入口 `load_imags` 函数。这正和我们上面的分析联系起来了，在 objc-781 源码中，它最先走的是 `objc_init`，它最后会调用 `_dyld_objc_notify_register` 传入 `load_images`，而 `load_images` 内部的 `prepare_load_methods` 和 `call_load_methods` 完成了整个项目中父类、子类、分类中的所有 +load 函数的调用。
+&emsp;文章开头处我们看到 load 方法是最先执行的，在之前的文章中我们有详细分析过 `+load` 的执行，如果还有印象的话一定记得它的入口 `load_imags` 函数。这正和我们上面的分析联系起来了，在 objc-781 源码中，它最先走的是 `objc_init`，它最后会调用 `_dyld_objc_notify_register` 传入 `load_images`，而 `load_images` 内部的 `prepare_load_methods` 和 `call_load_methods` 完成了整个项目中父类、子类、分类中的所有 +load 函数的调用。
 
 ![截屏2021-06-06 下午4.19.52.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ba2304f261cf446bb6434d0c82dceb66~tplv-k3u1fbpfcp-watermark.image)
 
@@ -1993,11 +2014,15 @@ typedef void (*Initializer)(int argc, const char* argv[], const char* envp[], co
 
 &emsp;下面我们用 MachOView 看一下 `libSystem.dylib` 的结构。（这里没找到 `libSystem.dylib` 就不看了）
 
+#### \_\_attribute__((constructor))
+
 > &emsp;`__attribute__((constructor))` 被 `attribute((constructor))` 标记的函数，会在 `main` 函数之前或动态库加载时执行。在 mach-o 中，被 `attribute((constructor))` 标记的函数会在 `_DATA` 段的 `__mod_init_func` 区中。当多个被标记 `attribute((constructor))` 的方法想要有顺序的执行，怎么办？`attribute((constructor))` 是支持优先级的：`_attribute((constructor(1)))`。
 
 &emsp;前面我们学习 `__attribute__((constructor))` 时，我们知道被 `attribute((constructor))` 标记的函数会在 `_DATA` 段的 `__mod_init_func` 区中，而在 Libsystem-1292.100.5 中我们搜索 `libSystem_initializer` 函数时，我们能看到它前面有 `attribute((constructor))` 标记，即 `libSystem_initializer` 位于 libSystem.dylib 的 `__mod_init_func` 区中，上面 `void ImageLoaderMachO::doModInitFunctions` 函数调用过程中，查找的正是 `__mod_init_func` 区，既而当 `libSystem.dylib` 调用 `doModInitFunctions` 函数时，正会执行 `libSystem_initializer` 函数。
 
 &emsp;当 `libSystem_initializer` 被调用时，`dyld` 会对 `gProcessInfo->libSystemInitialized` 进行标记，表示 `libSystem` 已经被初始化。
+
+#### \_dyld_initializer
 
 &emsp;这里我们再看一个点，dyld 是怎么知道 libSystem 已经被初始化了，这里用到了 `_dyld_initializer` 函数：
 
@@ -2062,7 +2087,9 @@ void _dyld_initializer()
 
 > &emsp;`libSystem` 的初始化是一个内部行为，`dyld` 是如何知道它被初始化的呢？`libSystem` 是一个特殊的 `dylib`，默认情况下会被所有可执行文件所依赖，`dyld` 为它单独提供了一个 API：`_dyld_initializer`，当 `libSystem` 被初始化时，会调用该函数，进而 `dyld` 内部就知道了 `libSystem` 被初始化了。
 
-&emsp;看到这里我们的 `dyld` 的 `_dyld_start` 函数就执行完成了，那它是怎么到我们的 main.m 的 `main` 函数呢？
+#### 在 \_dyld_start 中调用 main() 函数
+
+&emsp;看到这里我们的 `dyld` 的 `_dyld_start` 函数就执行过程中会啊调用 `main()` 函数，那它是怎么调用到我们的 main.m 的 `main` 函数呢？
 
 ```c++
 (lldb) bt

@@ -107,7 +107,7 @@
 		8E5E58AB2686A0010088C814 /* iOS《Core Image Programming Guide》官方文档.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS《Core Image Programming Guide》官方文档.md"; sourceTree = "<group>"; };
 		8E5E58AC2686A0010088C814 /* iOS 2021 面试前的准备（总结各知识点方便面试前快速复习使用）（一）.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS 2021 面试前的准备（总结各知识点方便面试前快速复习使用）（一）.md"; sourceTree = "<group>"; };
 		8E5E58AD2686A0010088C814 /* iOS《View Programming Guide for iOS》官方文档.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS《View Programming Guide for iOS》官方文档.md"; sourceTree = "<group>"; };
-		8E5E58AE2686A0010088C814 /* iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和动态链接过程.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和动态链接过程.md"; sourceTree = "<group>"; };
+		8E5E58AE2686A0010088C814 /* iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和 dyld 加载流程.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和 dyld 加载流程.md"; sourceTree = "<group>"; };
 		8E5E58AF2686A0010088C814 /* iOS 2021 面试前的准备（总结各知识点方便面试前快速复习使用）（六）.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS 2021 面试前的准备（总结各知识点方便面试前快速复习使用）（六）.md"; sourceTree = "<group>"; };
 		8E5E58B02686A0010088C814 /* iOS 多线程知识体系构建(十一)：GCD 源码：dispatch_group函数（超详细）.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS 多线程知识体系构建(十一)：GCD 源码：dispatch_group函数（超详细）.md"; sourceTree = "<group>"; };
 		8E5E58B12686A0010088C814 /* iOS 多线程知识体系构建(七)：GCD 源码：基本数据结构篇.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS 多线程知识体系构建(七)：GCD 源码：基本数据结构篇.md"; sourceTree = "<group>"; };
@@ -275,7 +275,7 @@
 			children = (
 				8E5E58782686A0010088C814 /* iOS APP 启动优化(一)：ipa(iPhone Application) 包和 Mach-O(Mach Object file format) 概述.md */,
 				8E5E586F2686A0010088C814 /* iOS APP 启动优化(二)：Code Size Performance Guidelines.md */,
-				8E5E58AE2686A0010088C814 /* iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和动态链接过程.md */,
+				8E5E58AE2686A0010088C814 /* iOS APP 启动优化(三)：dyld（the dynamic link editor）动态链接器和 dyld 加载流程.md */,
 				8E5E58B32686A0010088C814 /* iOS APP 启动优化(四)：_objc_init 过程解析.md */,
 				8E5E58A12686A0010088C814 /* iOS APP 启动优化(五)：map_images、load_images、unmap_image 过程解析.md */,
 				8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */,
