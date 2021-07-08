@@ -2072,62 +2072,117 @@ void _dyld_initializer()
 (lldb) 
 ```
 
-&emsp;`main` 函数是被编译到内存中的，而且是固定写死的，编译器找到 `main` 函数会加载到内存中，如果我们修改 `main` 函数的名字则会报如下错误: `ld: entry point (_main) undefined. for architecture x86_64`，告诉我们找不到 `main` 函数，这部分其实在 `dyld` 源码中也有所体现，下面我们搜下 `_dyld_start` 看下不同平台下对 `main` 函数的调用。 
+&emsp;此时我们要回忆我们的 `dyld` 的 `dyldbootstrap::start` 函数，如果我们对前面的函数调用还有印象的话，`dyldbootstrap::start` 函数的最后是返回 `dyld::_main` 函数的执行结果：`return dyld::_main((macho_header*)mainExecutableMH, appsSlide, argc, argv, envp, apple, startGlue);`，而 `dyld::_main` 函数的返回值就是 `main()` 函数的地址，`dyld::_main` 函数的注释也说明了这一点：   
+
+> &emsp;Entry point for dyld.  The kernel loads dyld and jumps to __dyld_start which sets up some registers and call this function.
+  Returns address of main() in target program which __dyld_start jumps to.
+  `dyld` 的入口点。内核加载 `dyld` 并跳转到 `__dyld_start`，它设置一些寄存器并调用此函数。
+  返回 `__dyld_start` 跳转到的目标程序中 `main()` 的地址。
+  
+&emsp;下面我们深入 `dyld::_main` 函数的实现看一下最后的返回结果：
 
 ```c++
-#if __i386__ && !TARGET_OS_SIMULATOR
+// find entry point for main executable
+result = (uintptr_t)sMainExecutable->getEntryFromLC_MAIN();
 ...
-         # LC_MAIN case, set up stack for call to main()
-Lnew:    movl    4(%ebp),%ebx
-...
-#endif /* __i386__  && !TARGET_OS_SIMULATOR*/
 
-
-#if __x86_64__ && !TARGET_OS_SIMULATOR
-...
-         # LC_MAIN case, set up stack for call to main()
-Lnew:    addq    $16,%rsp    # remove local variables
-...
-#endif /* __x86_64__ && !TARGET_OS_SIMULATOR*/
-
-
-#if __arm__
-...
-         // LC_MAIN case, set up stack for call to main()
-Lnew:    mov    lr, r5            // simulate return address into _start in libdyld
-...
-#endif /* __arm__ */
-
-
-#if __arm64__ && !TARGET_OS_SIMULATOR
-...
-         // LC_MAIN case, set up stack for call to main()
-Lnew:    mov    lr, x1            // simulate return address into _start in libdyld.dylib
-...
-#endif // __arm64__ && !TARGET_OS_SIMULATOR
+return result;
 ```
 
-&emsp;
+&emsp;下面我们看一下 `getEntryFromLC_MAIN` 函数实现： 
 
+```c++
+void* ImageLoaderMachO::getEntryFromLC_MAIN() const
+{
+    // load command 的数量
+    const uint32_t cmd_count = ((macho_header*)fMachOData)->ncmds;
+    
+    // 跳过 macho_header 寻址到 load command 的位置  
+    const struct load_command* const cmds = (struct load_command*)&fMachOData[sizeof(macho_header)];
+    const struct load_command* cmd = cmds;
+    
+    // 遍历 load command
+    for (uint32_t i = 0; i < cmd_count; ++i) {
+        // 找到 LC_MAIN 类型的 load_command
+        if ( cmd->cmd == LC_MAIN ) {
+            
+            // 返回 entry
+            entry_point_command* mainCmd = (entry_point_command*)cmd;
+            void* entry = (void*)(mainCmd->entryoff + (char*)fMachOData);
+            
+            // <rdar://problem/8543820&9228031> verify entry point is in image
+            if ( this->containsAddress(entry) ) {
+            
+#if __has_feature(ptrauth_calls)
+                // start() calls the result pointer as a function pointer so we need to sign it.
+                return __builtin_ptrauth_sign_unauthenticated(entry, 0, 0);
+#endif
 
+                return entry;
+            }
+            else
+                throw "LC_MAIN entryoff is out of range";
+        }
+        cmd = (const struct load_command*)(((char*)cmd)+cmd->cmdsize);
+    }
+    return NULL;
+}
+```
 
+&emsp;即返回 LC_MAIN 的 Entry Point，而它正是当前可执行程序的 `main()` 地址。
 
+&emsp;至此我们可以接着看 `dyld` 的 `__dyld_start` 的汇编实现，这里我们摘录 `__arm64` 下的汇编实现：
 
+```c++
+// call dyldbootstrap::start(app_mh, argc, argv, dyld_mh, &startGlue)
+bl    __ZN13dyldbootstrap5startEPKN5dyld311MachOLoadedEiPPKcS3_Pm
 
+// ⬆️ 上面便是 dyldbootstrap::start 调用，执行完成后返回 main() 入口地址，并保存在 x16 中
 
+mov    x16,x0                  // save entry point address in x16
 
+#if __LP64__
+ldr     x1, [sp]
+#else
+ldr     w1, [sp]
+#endif
 
+cmp    x1, #0
+b.ne    Lnew
 
+// LC_UNIXTHREAD way, clean up stack and jump to result
+#if __LP64__
+add    sp, x28, #8             // restore unaligned stack pointer without app mh
+#else
+add    sp, x28, #4             // restore unaligned stack pointer without app mh
+#endif
 
+// ⬇️ 跳转到程序的入口，即 main() 函数 
 
+#if __arm64e__
+braaz   x16                     // jump to the program's entry point
+#else
+br      x16                     // jump to the program's entry point
+#endif
 
+// LC_MAIN case, set up stack for call to main() 为调用 main() 设置堆栈
+Lnew:    mov    lr, x1            // simulate return address into _start in libdyld.dylib 将返回地址模拟到 libdyld.dylib 中的 _start
 
+// ⬇️ 下面是我们熟悉的 main 函数的 argc 和 argv 参数
 
+#if __LP64__
+ldr    x0, [x28, #8]       // main param1 = argc
+add    x1, x28, #16        // main param2 = argv
+add    x2, x1, x0, lsl #3
+add    x2, x2, #8          // main param3 = &env[0]
+mov    x3, x2
+```
 
+&emsp;看到这里我们就把 `main()` 函数之前的流程都看完了，在执行完 `dyldbootstrap::start` 后，会调用程序的 `main()` 函数，并且我们也看到了 `main()` 函数的地址其实是从 `LC_MAIN` 类型的 `load command` 读出来的，这也表明了 `main()` 函数是底层写定函数， 
 
+&emsp;`main` 函数是被编译到可执行文件中的，而且是固定写死的，编译器找到 `main` 函数会加载到内存中，如果我们修改 `main` 函数的名字则会报如下错误: `ld: entry point (_main) undefined. for architecture x86_64`，告诉我们找不到 `main` 函数。
 
-
-
+&emsp;至此 `main()` 函数之前的流程我们就全部看完了。完结撒花 🎉🎉🎉
 
 ## 参考链接
 **参考链接:🔗**
