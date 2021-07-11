@@ -230,6 +230,26 @@ OPTION( DisableNonpointerIsa,     OBJC_DISABLE_NONPOINTER_ISA,     "disable non-
 ...
 ```
 
+### 设置 DYLD_PRINT_STATISTICS
+
+&emsp;下面我们演示一下 DYLD_PRINT_STATISTICS 的使用，我们在 Environment Variables 中添加 DYLD_PRINT_STATISTICS 并设置为 YES，会打印 App 在 main 函数前的加载时长，包括整体加载时长和动态库的时长，通过查看耗时，可对其耗时分析进行优化。
+
+```c++
+Total pre-main time:  34.71 milliseconds (100.0%)
+         dylib loading time:  40.06 milliseconds (115.4%)
+        rebase/binding time: 126687488.9 seconds (308867459.9%)
+            ObjC setup time:   7.22 milliseconds (20.8%)
+           initializer time:  36.17 milliseconds (104.2%)
+           slowest intializers :
+             libSystem.B.dylib :   6.81 milliseconds (19.6%)
+   libBacktraceRecording.dylib :   4.87 milliseconds (14.0%)
+               libobjc.A.dylib :   1.51 milliseconds (4.3%)
+                CoreFoundation :   1.00 milliseconds (2.8%)
+    libMainThreadChecker.dylib :  17.30 milliseconds (49.8%)
+        libLLVMContainer.dylib :   1.44 milliseconds (4.1%)
+               Test_ipa_simple :   3.43 milliseconds (9.9%)
+```
+
 ### 设置 OBJC_DISABLE_NONPOINTER_ISA
 
 &emsp;下面我们演示一下 OBJC_DISABLE_NONPOINTER_ISA 的使用，我们在 Environment Variables 中添加 OBJC_DISABLE_NONPOINTER_ISA 并设置为 YES。（我们应该还记得如何判断实例对象的 isa 是 non-pointer 还是 pointer，即 uintptr_t nonpointer : 1，如果 isa 的第一位是 1 则表示它是 non-pointer 否则就是 pointer。）
@@ -256,7 +276,7 @@ OPTION( DisableNonpointerIsa,     OBJC_DISABLE_NONPOINTER_ISA,     "disable non-
 
 ### 设置 OBJC_PRINT_LOAD_METHODS
 
-&emsp;下面我们演示一下 OBJC_PRINT_LOAD_METHODS 的使用，我们在 Environment Variables 中添加 OBJC_PRINT_LOAD_METHODS 并设置为 YES。运行项目，可看到如下打印项目中所有的 load 方法。
+&emsp;下面我们演示一下 OBJC_PRINT_LOAD_METHODS 的使用，我们在 Environment Variables 中添加 OBJC_PRINT_LOAD_METHODS 并设置为 YES。运行项目，可看到如下打印项目中所有的 load 方法，包括系统类我们自己的类以及分类。
 
 ```c++
 objc[37659]: LOAD: category 'NSObject(NSObject)' scheduled for +load
@@ -309,7 +329,7 @@ void tls_init(void)
 
 ## static_init
 
-&emsp;运行 C++ 静态构造函数。libc 在 dyld 调用我们的静态构造函数之前调用 `_objc_init(`)，所以我们必须自己做。
+&emsp;运行 C++ 静态构造函数。libobjc 在 dyld 调用我们的静态构造函数之前自己调用自己的 `_objc_init()`，所以我们必须自己做。
 
 ```c++
 /***********************************************************************
@@ -354,6 +374,10 @@ UnsignedInitializer *getLibobjcInitializers(const header_info *hi, size_t *outCo
     return getDataSection<UnsignedInitializer>(hi->mhdr(), "__objc_init_func", nil, outCount);
 }
 ```
+
+&emsp;即取出 `__objc_init_func` 区中的 `UnsignedInitializer` 来执行。（实际并不存在 `__objc_init_func` 区，它的数据都来自 `__mod_init_func` 区！）
+
+> &emsp;这里会运行系统级别的 C++ 的静态构造函数，在 `dyld` 调用我们的静态构造函数之前，`libObjc` 会调用 `_objc_init`，所以这里我们必须自己来做，并且这里只会初始化系统内置的 C++ 静态构造函数，我们自己代码里面写的并不会在这里初始化。（这里其实要明确的是哪些静态构造函数会放在 `__objc_init_func` 区！）
 
 ## runtime_init
 
@@ -816,7 +840,9 @@ void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,
 }
 ```
 
-&emsp;看到 `_dyld_objc_notify_register` 函数内部是直接调用 `dyld::registerObjCNotifiers` 函数，而 `dyld::registerObjCNotifiers` 内部则是调用 `mappd` 函数初始化所有的 images，然后调用所有初始化后的 images 的 `init` 函数。也就是当 objc 的准备工作都已经完成（objc_init  函数结尾处），此时调用 `_dyld_objc_notify_register` 告诉 dyld 可以进行类的加载，于是 dyld 进行类的加载。 
+&emsp;看到 `_dyld_objc_notify_register` 函数内部是直接调用 `dyld::registerObjCNotifiers` 函数，而 `dyld::registerObjCNotifiers` 内部则是调用 `mappd` 函数初始化所有的 images，然后调用所有初始化后的 images 的 `init` 函数。也就是当 objc 的准备工作都已经完成（`_objc_init` 函数结尾处），此时调用 `_dyld_objc_notify_register` 告诉 dyld 可以进行类的加载，于是 dyld 进行类的加载。
+
+&emsp;（在上一篇我们知道 `load_images` 是在 `notifySingle` 方法中，通过 `sNotifyObjCInit` 调用的，那么 `map_images` 的调用时机呢，在 `dyld` 中全局搜索 `sNotifyObjcMapped`，在 `notifyBatchPartial` 中会对 `sNotifyObjcMapped` 进行调用，也就是说，`map_images` 的调用时机比 `load_images` 要提前，即先 `map_images`，再 `load_images`。）
 
 &emsp;下面我们开始分析极其重要的三个函数 `map_images`、`load_images`、`unmap_image` 函数，由于本篇篇幅过长了，我们就留到下篇文章进行分析吧！继续加油哦！🎉🎉🎉
 

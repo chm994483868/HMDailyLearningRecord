@@ -59,7 +59,7 @@ void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_in
     sNotifyObjCUnmapped = unmapped;
 
     // call 'mapped' function with all images mapped so far
-    // ⬇️⬇️⬇️ 调用 'mapped' 函数，其中包含迄今为止映射的所有 images
+    // ⬇️⬇️⬇️ 调用 'mapped' 函数，其中包含迄今为止映射的所有 images（即 map_image 是要比 load_images 要早的）
     try {
         notifyBatchPartial(dyld_image_state_bound, true, NULL, false, true);
     }
