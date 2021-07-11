@@ -132,14 +132,14 @@ int main(int argc, char * argv[]) {
 🦁🦁🦁 +[ViewController load] 执行
 🦁🦁🦁 main_front 执行 
 🦁🦁🦁 main 执行
-🦁🦁🦁 main_back 执行 
+🦁🦁🦁 main_back 执行  // 我们需要把 UIApplicationMain 注释掉，否则 main 函数不会返回
 ```
 
-&emsp;根据控制台打印，可以看到 load 函数最先执行，然后是 constructor 属性修饰的 main_front 函数执行，然后是 main 函数执行，最后是 destructor 属性修饰的 main_back 函数执行。
+&emsp;根据控制台打印，可以看到 `+load` 函数最先执行，然后是 `constructor` 属性修饰的 `main_front` 函数执行，然后是 `main` 函数执行，最后是 `destructor` 属性修饰的 `main_back` 函数执行。
 
 &emsp;\_\_attribute__ 可以设置函数属性(Function Attribute)、变量属性(Variable Attribute)和类型属性(Type Attribute)。\_\_attribute__ 前后都有两个下划线，并且后面会紧跟一对原括弧，括弧里面是相应的 \_\_attribute__ 参数，\_\_attribute__ 语法格式为：`__attribute__((attribute-list))`。
 
-&emsp;若函数被设定为 `constructor` 属性，则该函数会在 main 函数执行之前被自动的执行。类似的，若函数被设定为 `destructor` 属性，则该函数会在 main 函数执行之后或者 exit 被调用后被自动的执行。
+&emsp;若函数被设定为 `constructor` 属性，则该函数会在 `main` 函数执行之前被自动的执行。类似的，若函数被设定为 `destructor` 属性，则该函数会在 `main` 函数执行之后或者 exit 被调用后被自动的执行。
 
 &emsp;我们知道 .h、.m 的类在程序运行时先进行预编译，之后进行编译，编译完成后会进行汇编，在汇编结束后会进入一个阶段叫链接（把所有的代码链接到我们的程序中），最后会生成一个可执行文件。
 
@@ -262,7 +262,7 @@ __dyld_start:
     // 一般用于不同方法直接的调用。
     bl    __ZN13dyldbootstrap5startEPKN5dyld311MachOLoadedEiPPKcS3_Pm
     
-    // 这里的 entry point 是 dyld:_main 函数的地址？
+    // 这里的 entry point 是 dyld:_main 函数的返回值，也就是我们程序的 main 函数？
     mov    x16,x0                  // save entry point address in x16
     
 #if __LP64__

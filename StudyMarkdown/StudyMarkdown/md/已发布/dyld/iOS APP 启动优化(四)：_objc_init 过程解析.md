@@ -1,6 +1,6 @@
 # iOS APP 启动优化(四)：_objc_init 过程解析
 
-&emsp;上一篇学习 dyld 涉及到 objc 中的 \_objc_init 函数，但是我们没有深入学习其涉及到的流程，那么就由本篇开始吧。
+&emsp;上一篇学习 dyld 涉及到 libObjc 中的 \_objc_init 函数，但是我们没有深入学习其涉及到的流程，那么就由本篇开始吧。
 
 ## \_objc_init
 &emsp;在 objc/Source/objc-os.mm 中可找到 `void _objc_init(void)` 的定义。 
@@ -20,17 +20,35 @@ void _objc_init(void)
     initialized = true;
     
     // fixme defer initialization until an objc-using image is found?
+    // 读取影响运行时的环境变量，如果需要，还可以打开环境变量帮助 export OBJC_HELP = 1
     environ_init(); // 1⃣️ 环境变量初始化 
     
+    // 关系线程 KEY 的绑定，例如在 TLS 中保存线程数据的析构函数
     tls_init(); // 2⃣️ 本地线程池
+    
+    // 运行 C++ 静态构造函数，在 dyld 调用我们的静态构造函数之前，libc 会调用 _objc_init()，因此我们必须自己做
     static_init(); // 3⃣️ 系统级别的 C++ 构造函数调用
+    
+    // runtime 运行时环境初始化，里面主要是 unattachedCategories, allocatedClasses -- 分类初始化
     runtime_init(); // 4⃣️ runtime 初始化
+    
+    // 初始化 libobjc 的异常处理系统
     exception_init(); // 5⃣️ 注册监听异常的回调
+    
+    // 缓存条件初始化
     cache_init(); // 6⃣️ cache 的初始化
+    
+    // 启动回调机制，通常不会做什么，因为所有的初始化都是惰性的，但是对于某些进程，我们会迫不及待的加载 trampolines dylib
     _imp_implementationWithBlock_init(); // 7⃣️ 对 imp 的 Block 标记进行初始化
 
     // 8⃣️ 注册回调通知，& 是引用类型的参数
+    // 它是 dyld 里面的函数，但是近供 libobjc 使用
+    // 注册处理程序，以便在 map、unmap 和初始化 objc image 文件时使用，dyld 将使用包含 objc_image_info 的 image 文件数组，回调 mapped 函数
     _dyld_objc_notify_register(&map_images, load_images, unmap_image);
+    
+    // map_images: dyld 将 image 加载进内存时，会触发该函数
+    // load_images: dyld 初始化 image 会触发该函数
+    // unmap_image: dyld 将 image 移除时会触发该函数
 
 #if __OBJC2__
     // 9⃣️ dyld 通知注册标记
@@ -291,7 +309,7 @@ void tls_init(void)
 
 ## static_init
 
-&emsp;运行 C++ 静态构造函数。libc 在 dyld 调用我们的静态构造函数之前调用 _objc_init()，所以我们必须自己做。
+&emsp;运行 C++ 静态构造函数。libc 在 dyld 调用我们的静态构造函数之前调用 `_objc_init(`)，所以我们必须自己做。
 
 ```c++
 /***********************************************************************
@@ -532,6 +550,8 @@ terminating with uncaught exception of type NSException
 
 &emsp;`cache_init` 看名字我们能猜到它和缓存初始化有关，而这个 `cache` 指的就是方法缓存。`cache_init` 函数的定义正位于我们之前学习方法缓存时看了无数遍的 `objc-cache.mm` 文件。
 
+&emsp;当然我们已知的类的方法缓存是类结构的一个成员变量，每个类处理自己的方法缓存，那么这个 `cache_init` 初始化的是谁呢？它针对的其实是旧的是否要进行释放的方法缓存列表。
+
 &emsp;`HAVE_TASK_RESTARTABLE_RANGES` 是一个宏定义，在不同的平台下它的值是 0 或 1。
 
 ```c++
@@ -763,7 +783,7 @@ int main(int argc, const char * argv[]) {
 _dyld_objc_notify_register(&map_images, load_images, unmap_image);
 ```
 
-&emsp;可看到 `_dyld_objc_notify_register` 的参数有三个，分别是 `&map_images`、`load_images`、`unmap_image`，在前面一篇 dyld 的文章中我们有提到 `_dyld_objc_notify_register` 它是用来注册一些回调函数。
+&emsp;`_dyld_objc_notify_register` 是 `dyld` 中的函数，它并不属于 `libobjc` 库，可看到 `_dyld_objc_notify_register` 的参数有三个，分别是 `&map_images`、`load_images`、`unmap_image`，在前面一篇 `dyld` 的文章中我们有提到 `_dyld_objc_notify_register` 它是用来注册一些回调函数。
 
 &emsp;我们从 `dyld_priv.h` 中看一下 `_dyld_objc_notify_register` 函数的声明。
 
