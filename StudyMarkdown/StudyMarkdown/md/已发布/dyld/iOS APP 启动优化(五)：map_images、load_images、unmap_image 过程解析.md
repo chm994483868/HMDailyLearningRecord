@@ -1,28 +1,52 @@
 # iOS APP 启动优化(五)：map_images、load_images、unmap_image 过程解析
 
-&emsp;我们再梳理一下 dyld 的流程：
+&emsp;正式开始本篇之前，我们先回顾一下前面几篇的核心流程：
 
-```c++
-+ 在 recursiveInitialization 方法中调用 bool hasInitializers = this->doInitialization(context); 这个方法是来判断 image 是否已加载
+&emsp;首先是 `_objc_init`:
 
-+ doInitialization 这个方法会调用 doModInitFunctions(context) 这个方法就会进入 libSystem 框架里调用 libSystem_initializer 方法，最后就会调用 _objc_init 方法
+&emsp;我们看到 `_os_object_init` 函数定义第一行就是 `_objc_init` 调用，也就是从 `_os_object_init` 跳入到 `_objc_init` 进入 runtime 的初始化，上面我们讲了 `_objc_init` 会调用 `_dyld_objc_notify_register`，对 `sNotifyObjCInit` 进行赋值。
 
-+ _objc_init 会调用 _dyld_objc_notify_register 将 map_images、load_images、unmap_image 传入 dyld 方法 registerObjCNotifiers。
+&emsp;所以到这里我们可以总结一下 `_objc_init` 的调用流程：
 
-+ 在 registerObjCNotifiers 方法中，我们把 _dyld_objc_notify_register 传入的 map_images 赋值给 sNotifyObjCMapped，将 load_images 赋值给 sNotifyObjCInit，将 unmap_image 赋值给 sNotifyObjCUnmapped。
++ `_dyld_start` -> 
++ `dyldbootstrap::start` -> 
++ `dyld::_main` -> 
++ `dyld::initializeMainExecutable` ->
++ `ImageLoader::runInitializers` ->
++ `ImageLoader::processInitializers` ->
++ `ImageLoader::recursiveInitialization` ->
++ `doInitialization` ->
++ `doModInitFunctions` ->
 
-+ 在 registerObjCNotifiers 方法中，我们将传参复制后就开始调用 notifyBatchPartial()。
++ `libSystem_initializer 属于 libSystem.B.dylib` ->
 
-+ notifyBatchPartial 方法中会调用 (*sNotifyObjCMapped)(objcImageCount, paths, mhs)； 触发 map_images 方法。
++ `libdispatch_init 属于 libdispatch.dylib` ->
++ `_os_object_init 属于 libdispatch.dylib` ->
 
-+ dyld 的 recursiveInitialization 方法在调用完 bool hasInitializers = this->doInitialization(context) 方法后，会调用 notifySingle() 方法
++ `_objc_init 属于 libobjc.A.dylib`
 
-+ 在 notifySingle() 中会调用 (*sNotifyObjCInit)(image->getRealPath(), image->machHeader());
+1. 当 `dyld` 加载到开始链接 `mainExecutable` 的时候，递归调用 `recursiveInitialization` 函数。
+2. 这个函数第一次运行，会进行 `libSystem` 的初始化，会走到 `doInitialization -> doModInitFunctions -> libSystem_initializer`。
+3. `libSystem` 的初始化，会调用 `libdispatch_init`，`libdispatch_init` 会调用 `_os_object_init`，`_os_object_init` 会调用 `_objc_init`。
+4. 在 `_objc_init` 中调用 `dyld` 的 `_dyld_objc_notify_register` 函数注册保存了 `map_images`、`load_images`、`unmap_images` 的函数地址。
+5. 注册完回到 `dyld` 的 `recursiveInitialization` 递归下一次调用，例如 `libObjc`，当 `libObjc` 来到 `recursiveInitialization` 调用时，会触发保存的 `load_images` 回调，就调用了 `load_images` 函数。
 
-+ 上面我们将 load_images 赋值给了 sNotifyObjCInit，所以此时就会触发 load_images 方法。
+&emsp;`doModInitFunctions` 函数内部是对 `__mod_init_func` 区和 `__init_offsets` 两个分区的 `Initializer` 进行调用。而在 `libSystem.dylib` 库的 `__mod_init_func` 区中存放的正是 `libSystem.dylib` 的初始化函数 `libSystem_initializer`。（`__mod_init_func` 区仅用来存放初始化函数。）
 
-+ sNotifyObjCUnmapped 会在 removeImage 方法里触发，字面理解就是删除 Image（映射的镜像文件）。
-```
+&emsp;（在上一篇我们知道 `load_images` 是在 `notifySingle` 方法中，通过 `sNotifyObjCInit` 调用的，那么 `map_images` 的调用时机呢，在 `dyld` 中全局搜索 `sNotifyObjcMapped`，在 `notifyBatchPartial` 中会对 `sNotifyObjcMapped` 进行调用，也就是说，`map_images` 的调用时机比 `load_images` 要提前，即先 `map_images`，再 `load_images`。）
+
+&emsp;下面是另一位大佬梳理的 dyld 的流程：
+
++ 在 `recursiveInitialization` 方法中调用 `bool hasInitializers = this->doInitialization(context);` 这个方法是来判断 `Image` 是否已加载。
++ `doInitialization` 这个方法会调用 `doModInitFunctions(context)` 这个方法就会进入 `libSystem` 框架里调用 `libSystem_initializer` 方法，最后就会调用 `_objc_init` 方法。
++ `_objc_init` 会调用 `_dyld_objc_notify_register` 将 `map_images`、`load_images`、`unmap_image` 传入 dyld 方法 `registerObjCNotifiers`。
++ 在 `registerObjCNotifiers` 方法中，我们把 `_dyld_objc_notify_register` 传入的 `map_images` 赋值给 `sNotifyObjCMapped`，将 `load_images` 赋值给 `sNotifyObjCInit`，将 `unmap_image` 赋值给 `sNotifyObjCUnmapped`。
++ 在 `registerObjCNotifiers` 方法中，我们将传参复制后就开始调用 `notifyBatchPartial()`。
++ `notifyBatchPartial` 方法中会调用 `(*sNotifyObjCMapped)(objcImageCount, paths, mhs);` 触发 `map_images` 方法。
++ `dyld` 的 `recursiveInitialization` 方法在调用完 `bool hasInitializers = this->doInitialization(context)` 方法后，会调用 `notifySingle()` 方法。
++ 在 `notifySingle()` 中会调用 `(*sNotifyObjCInit)(image->getRealPath(), image->machHeader());`。
++ 上面我们将 `load_images` 赋值给了 `sNotifyObjCInit`，所以此时就会触发 `load_images` 方法。
++ `sNotifyObjCUnmapped` 会在 `removeImage` 方法里触发，字面理解就是删除 `Image`（映射的镜像文件）。
 
 ## \_dyld_objc_notify_register
 
@@ -60,6 +84,7 @@ void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_in
 
     // call 'mapped' function with all images mapped so far
     // ⬇️⬇️⬇️ 调用 'mapped' 函数，其中包含迄今为止映射的所有 images（即 map_image 是要比 load_images 要早的）
+    
     try {
         notifyBatchPartial(dyld_image_state_bound, true, NULL, false, true);
     }
@@ -69,6 +94,7 @@ void registerObjCNotifiers(_dyld_objc_notify_mapped mapped, _dyld_objc_notify_in
 
     // <rdar://problem/32209809> call 'init' function on all images already init'ed (below libSystem)
     // ⬇️⬇️⬇️ <rdar://problem/32209809> 在所有已经初始化的 images 上调用 'init' 函数（在 libSystem 下面）
+    
     for (std::vector<ImageLoader*>::iterator it=sAllImages.begin(); it != sAllImages.end(); it++) {
         ImageLoader* image = *it;
         if ( (image->getState() == dyld_image_state_initialized) && image->notifyObjC() ) {
@@ -102,7 +128,9 @@ static void notifyBatchPartial(dyld_image_states state, bool orLater, dyld_image
 if ( objcImageCount != 0 ) {
     dyld3::ScopedTimer timer(DBG_DYLD_TIMING_OBJC_MAP, 0, 0, 0);
     uint64_t t0 = mach_absolute_time();
+    
     (*sNotifyObjCMapped)(objcImageCount, paths, mhs); // ⬅️ 调用 map_images 函数
+    
     uint64_t t1 = mach_absolute_time();
     ImageLoader::fgTotalObjCSetupTime += (t1-t0);
 }
@@ -114,7 +142,7 @@ if ( objcImageCount != 0 ) {
 
 &emsp;下面我们就开始看下在 objc/Source/objc-runtime-new.m 中声明的极其重要的 `map_images` 函数。
 
-&emsp;处理由 dyld 映射的给定的 images。在获取特定于 ABI 的锁后调用与 ABI 无关的代码。
+&emsp;处理由 `dyld` 映射的给定的 `Images`。在获取特定于 ABI 的锁后调用与 ABI 无关的代码。
 
 ```c++
 /***********************************************************************
@@ -131,6 +159,7 @@ map_images(unsigned count, const char * const paths[],
     // 加锁
     mutex_locker_t lock(runtimeLock);
     // 调用 map_images_nolock
+    
     return map_images_nolock(count, paths, mhdrs);
 }
 ```
@@ -139,7 +168,7 @@ map_images(unsigned count, const char * const paths[],
 
 ### map_images_nolock 
 
-&emsp;处理由 dyld 映射的给定 images。执行所有类注册和 fixups（or deferred pending discovery of missing superclasses etc），并调用 +load 方法。info[] 是自下而上的顺序，即 libobjc 在数组中将比链接到 libobjc 的任何库更早。 
+&emsp;处理由 `dyld` 映射的给定 `Images`。执行所有类注册和 fixups（or deferred pending discovery of missing superclasses etc），并调用 `+load` 方法。`info[]` 是自下而上的顺序，即 `libobjc` 在数组中将比链接到 `libobjc` 的任何库更早。 
 
 &emsp;开启 `OBJC_PRINT_IMAGES` 环境变量时，启动时则打印 images 数量以及具体的 image。如 objc-781 下有此打印: `objc[10503]: IMAGES: processing 296 newly-mapped images...`.
 
@@ -206,6 +235,7 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
             // 以 mdr 构建其 header_info，并添加到全局的 header 列表中（是一个链表，大概看源码到现在还是第一次看到链表的使用）。
             // 且通过 GETSECT(_getObjc2ClassList, classref_t const, "__objc_classlist"); 读取 __objc_classlist 区中的 class 数量添加到 totalClasses 中，
             // 以及未从 dyld shared cache 中找到 mhdr 的 header_info 时，添加 class 的数量到 unoptimizedTotalClasses 中。
+            
             auto hi = addHeader(mhdr, mhPaths[i], totalClasses, unoptimizedTotalClasses);
             
             // 这里有两种情况下 hi 为空：
@@ -225,6 +255,7 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
                 
                 // ⬇️ GETSECT(_getObjc2SelectorRefs, SEL, "__objc_selrefs");
                 // 获取 __objc_selrefs 区中的 SEL 的数量
+                
                 _getObjc2SelectorRefs(hi, &count);
                 selrefCount += count;
                 
@@ -234,6 +265,7 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
                 //     SEL sel;
                 // };
                 // ⬇️ 获取 __objc_msgrefs 区中的 message 数量
+                
                 _getObjc2MessageRefs(hi, &count);
                 selrefCount += count;
 ...
@@ -244,6 +276,7 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
             if (PrintImages) {
                 // 打印 image 信息
                 // 如：objc[10565]: IMAGES: loading image for /usr/lib/system/libsystem_blocks.dylib (has class properties) (preoptimized)
+                
                 _objc_inform("IMAGES: loading image for %s%s%s%s%s\n", 
                              hi->fname(),
                              mhdr->filetype == MH_BUNDLE ? " (bundle)" : "",
@@ -272,6 +305,7 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
         // 1. 自动释放池的初始化（实际是在 TLS 中以 AUTORELEASE_POOL_KEY 为 KEY 写入 tls_dealloc 函数（自动释放池的销毁函数：内部所有 pages pop 并 free））
         // 2. SideTablesMap 初始化，也可理解为 SideTables 的初始化（为 SideTables 这个静态全局变量开辟空间）
         // 3. AssociationsManager 的初始化，即为全局使用的关联对象表开辟空间
+        
         // void arr_init(void) 
         // {
         //     AutoreleasePoolPage::init();
@@ -320,6 +354,8 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
     
     // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ 下面就来到了最核心的地方
     // 以 header_info *hList[mhCount] 数组中收集到的 images 的 header_info 为参，直接进行 image 的读取
+    // _read_images 我们下面进行详细分析
+    
     if (hCount > 0) {
         _read_images(hList, hCount, totalClasses, unoptimizedTotalClasses);
     }
@@ -332,6 +368,7 @@ map_images_nolock(unsigned mhCount, const char * const mhPaths[],
     
     // Call image load funcs after everything is set up.
     // 一切设置完毕后调用 image 加载函数。
+    
     for (auto func : loadImageFuncs) {
         for (uint32_t i = 0; i < mhCount; i++) {
             func(mhdrs[i]);
@@ -523,6 +560,7 @@ void _read_images(header_info **hList, uint32_t hCount, int totalClasses, int un
             
             // 重点 ⚠️⚠️⚠️⚠️ 在这里：readClass。
             // 我们留在下面单独分析。
+            
             Class newCls = readClass(cls, headerIsBundle, headerIsPreoptimized);
 
             if (newCls != cls  &&  newCls) {
