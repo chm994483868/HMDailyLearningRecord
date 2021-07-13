@@ -858,13 +858,13 @@ void _read_images(header_info **hList, uint32_t hCount, int totalClasses, int un
 
 &emsp;第 6⃣️ 部分，Fix up @protocol references。
 
-&emsp;第 7⃣️ 部分，Discover categories，是把 category 的数据追加到原类中去！超重要....（这个在 category 的文章里面有详细的梳理，这里就不展开了），但是这里并不会执行，didInitialAttachCategories 是一个静态全局变量，默认是 false，对于启动时出现的 categories，discovery 被推迟到 `_dyld_objc_notify_register` 调用完成后的第一个 `load_images` 调用。所以这里 if 里面的 Discover categories 是不会执行的。
+&emsp;第 7⃣️ 部分，Discover categories，是把 category 的数据追加到原类中去！超重要....（这个在 category 的文章里面有详细的梳理，这里就不展开了），但是这里并不会执行，`didInitialAttachCategories` 是一个静态全局变量，默认是 `false`，对于启动时出现的 categories，discovery 被推迟到 `_dyld_objc_notify_register` 调用完成后的第一个 `load_images` 调用。所以这里 if 里面的 Discover categories 是不会执行的。
 
-&emsp;第 8⃣️ 部分，实现非懒加载类，首先获取 image 的 `__objc_nlclslist` 区中的非懒加载类（实现了 +load 函数的类），然后对这些类进行重映射，获取正确的类指针，        然后将其添加到用来存储所有类的全局的 set 中（`auto &set = objc::allocatedClasses.get();`），如果 `addMeta` 参数为 true（默认为 true），也自动添加类的元类到这个 set 中。然后调用 `realizeClassWithoutSwift(cls, nil);` 函数实现该类（实现 Swift 之外的 classes），（对类执行首次初始化，包括分配其读写数据。不执行任何 Swift 端初始化。返回类的真实类结构。）大概是设置 `ro` `rw` 和一些标识位的过程，也包括递归实现父类（`supercls = realizeClassWithoutSwift(remapClass(cls->superclass), nil);`）和元类（`metacls = realizeClassWithoutSwift(remapClass(cls->ISA()`), nil);），然后更新 cls 的父类和元类（cls->superclass = supercls; cls->initClassIsa(metacls);），将 cls 连接到其父类的子类列表（`addSubclass(supercls, cls);`）（操作 class_rw_t 的 `Class firstSubclass;` 和 `Class nextSiblingClass;` 两个成员变量），修正 cls 的方法列表、协议列表和属性列表，以及最后的附加任何未完成的 categories 到类中（主要包含 method list、protocol list、property list）（objc::unattachedCategories.attachToClass）。
+&emsp;第 8⃣️ 部分，实现非懒加载类，首先获取 image 的 `__objc_nlclslist` 区中的非懒加载类（实现了 `+load` 函数的类），然后对这些类进行重映射，获取正确的类指针，然后将其添加到用来存储所有类的全局的 set 中（`auto &set = objc::allocatedClasses.get();`），如果 `addMeta` 参数为 `true`（默认为 `true`），也自动添加类的元类到这个 `set` 中。然后调用 `realizeClassWithoutSwift(cls, nil);` 函数实现该类（实现 Swift 之外的 classes），（对类执行首次初始化，包括分配其读写数据。不执行任何 Swift 端初始化。返回类的真实类结构。）大概是设置 `ro` `rw` 和一些标识位的过程，也包括递归实现父类（`supercls = realizeClassWithoutSwift(remapClass(cls->superclass), nil);`）和元类（`metacls = realizeClassWithoutSwift(remapClass(cls->ISA()`), nil);），然后更新 `cls` 的父类和元类（`cls->superclass = supercls; cls->initClassIsa(metacls);`），将 `cls` 连接到其父类的子类列表（`addSubclass(supercls, cls);`）（操作 `class_rw_t` 的 `Class firstSubclass;` 和 `Class nextSiblingClass;` 两个成员变量），修正 `cls` 的方法列表、协议列表和属性列表，以及最后的附加任何未完成的 `categories` 到类中（主要包含 method list、protocol list、property list）（objc::unattachedCategories.attachToClass）。
 
 1. 懒加载：类没有实现 +load 函数，在使用的第一次才会加载，当我们给这个类的发送消息时，如果是第一次，在消息查找的过程中就会判断这个类是否加载，没有加载就会加载这个类。懒加载类在首次调用方法的时候，才会去调用 `realizeClassWithoutSwift` 函数去进行加载。 
 
-2. 非懒加载：类的内部实现了 +load 函数，类的加载就会提前。
+2. 非懒加载：类的内部实现了 `+load` 函数，类的加载就会提前。
 
 &emsp;第 9⃣️ 部分，实现 newly-resolved future classes，以防 CF 操作它们。（第一次启动时并不会执行，我们也可以看到 `resolvedFutureClasses` 中并没有记录到需要执行 `realizeClassWithoutSwift` 的类。）
 
