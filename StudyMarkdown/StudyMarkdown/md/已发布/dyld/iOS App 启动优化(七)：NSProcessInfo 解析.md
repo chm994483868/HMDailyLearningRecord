@@ -2,6 +2,80 @@
 
 &emsp;NSProcessInfo 是我们统计 APP 启动时间时必会用到的一个类，下面我们就通过官方文档对它进行学习。
 
+## NSProcessInfo
+
+&emsp;A collection of information about the current process.（关于当前进程的一个信息集合）
+
+&emsp;
+
+```c++
+@interface NSProcessInfo : NSObject {
+@private
+    NSDictionary    *environment;
+    NSArray        *arguments;
+    NSString        *hostName;
+    NSString        *name;
+    NSInteger        automaticTerminationOptOutCounter;
+}
+```
+
++  @property (readonly, copy) NSArray<NSString *> *arguments; 传入 main 函数中的参数 (可在 Edit Scheme... -> Run -> Arguments -> Arguments Passed On Launch 中添加变量: `{"name":"iOS","arme":"参数"}` )
++ @property (readonly, copy) NSString *hostName; 域名
++ @property (copy) NSString *processName; 进程名称
++ @property (readonly) int processIdentifier; 进程 ID
++ @property (readonly, copy) NSString *globallyUniqueString; 进程全球唯一编号
++ @property (readonly, copy) NSString *operatingSystemVersionString; @property (readonly) NSOperatingSystemVersion operatingSystemVersion API_AVAILABLE(macos(10.10), ios(8.0), watchos(2.0), tvos(9.0)); 系统版本号
++ @property (readonly) NSTimeInterval systemUptime API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0)); 时间段：设备上一次开机至今时间段 
+
+
+
+### NSProcessInfo + NSProcessInfoPowerState
+
+&emsp;`NSProcessInfo` 的 `NSProcessInfoPowerState` 分类仅有一个 `lowPowerModeEnabled` 属性。
+
+&emsp;检索系统当前是否设置了低功耗模式。在低功耗模式未知或不受支持的系统上，从 `lowPowerModeEnabled` 属性返回的值始终为 `NO`。
+
+```c++
+@interface NSProcessInfo (NSProcessInfoPowerState)
+
+// Retrieve the current setting of the system for the low power mode setting.
+// On systems where the low power mode is unknown or unsupported,
+// the value returned from the lowPowerModeEnabled property is always NO.
+
+@property (readonly, getter=isLowPowerModeEnabled) BOOL lowPowerModeEnabled API_AVAILABLE(ios(9.0), watchos(2.0), tvos(9.0)) API_UNAVAILABLE(macos);
+
+@end
+```
+
+
+## 参考链接
+**参考链接:🔗**
++ [iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469) // 进行中...
+
++ [哈啰出行iOS App首屏秒开优化](https://juejin.cn/post/6948990967324082183) // 未开始
++ [抖音研发实践：基于二进制文件重排的解决方案 APP启动速度提升超15%](https://mp.weixin.qq.com/s/Drmmx5JtjG3UtTFksL6Q8Q) // 未开始
++ [iOS App冷启动治理：来自美团外卖的实践](https://juejin.cn/post/6844903733231353863)  // 未开始
++ [APP启动时间最精确的记录方式](https://juejin.cn/post/6844903997153755150)  // 未开始
++ [iOS如何获取当前时间--看我就够了](https://juejin.cn/post/6905671622037307405)  // 未开始
++ [启动优化](https://juejin.cn/post/6983513854546444296)  // 未开始
++ [iOS 优化篇 - 启动优化之Clang插桩实现二进制重排](https://juejin.cn/post/6844904130406793224#heading-29)  // 未开始
++ [懒人版二进制重排](https://juejin.cn/post/6844904192193085448#heading-7)  // 未开始
++ [我是如何让微博绿洲的启动速度提升30%的](https://juejin.cn/post/6844904143111323661)  // 未开始
++ [App性能优化小结](https://juejin.cn/post/6844903704886247431)  // 未开始
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /Users/hmc/Documents/GitHub/APPLE_开源代码/objc4_debug/objc4-781
 
 
