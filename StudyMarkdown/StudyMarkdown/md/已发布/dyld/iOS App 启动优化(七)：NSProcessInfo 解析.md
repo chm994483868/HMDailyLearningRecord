@@ -4,7 +4,83 @@
 
 ## NSProcessInfo
 
+&emsp;NSProcessInfo 就是系统进程信息对象，其中包含一些方法，允许你设置或检索正在运行的应用程序（即进程）的各种类型的信息。
+
 &emsp;A collection of information about the current process.（关于当前进程的一个信息集合）
+
+### Overview
+
+&emsp;每个进程都有一个共享的 `NSProcessInfo` 对象，称为进程信息代理（`NSProcessInfo *info = [NSProcessInfo processInfo];`）。
+
+&emsp;进程信息代理可以返回参数（`arguments`）、环境变量（`environment `）、主机名（`hostName`）和进程名（`name`）等信息。`processInfo` 类方法返回当前进程的共享代理，即其对象发送消息的进程。例如，以下行返回 `NSProcessInfo` 对象，然后提供当前进程的名称：
+
+```c++
+NSString *processName = [[NSProcessInfo processInfo] processName];
+
+// 打印：（当前项目的名字）
+🤯🤯🤯 Test_ipa_simple
+```
+
+> Note
+> `NSProcessInfo` 在 `macOS 10.7` 及更高版本中是线程安全的。（看到这里我们应该会意识到，`NSProcessInfo` 对象的属性和方法并不都是只读的，还有一些我们可以对其进行设置。在我们项目里面的话在任何地方都可以通过 `[NSProcessInfo processInfo]` 来取得当前进程信息对象。）
+
+&emsp;`NSProcessInfo` 类还包括 `operatingSystem` 方法，该方法返回一个枚举常量，标识在其上执行进程的操作系统。
+
+&emsp;如果 `NSProcessInfo` 对象无法将环境变量（environment variables）和命令行参数（command-line arguments）转换为 `Unicode` 作为 `UTF-8` 字符串，则它们会尝试解释用户默认 C 字符串编码中的环境变量和命令行参数。如果 Unicode 和 C 字符串转换都不起作用，`NSProcessInfo` 对象将忽略这些值。（这里描述的应该是使用 `-operatingSystemVersion` 或 `-isOperatingSystemAtLeastVersion:` 代替 `operatingSystem`）
+
+### Managing Activities
+
+&emsp;为了用户的利益，系统具有启发式以提高应用程序的电池寿命、性能和响应能力。你可以使用以下方法来管理或向系统提示你的应用程序有特殊要求的活动（Activities）：
+
++ `beginActivityWithOptions:reason:`
++ `endActivity:`
++ `performActivityWithOptions:reason:usingBlock:`
+
+&emsp;作为对创建活动（activity）的响应，系统将禁用部分或全部启发式方法，以便你的应用程序可以快速完成，同时在用户需要时仍提供响应行为。
+
+&emsp;当你的应用程序执行长时间运行的操作时，你可以使用活动（activities）。如果活动（activity ）可能需要不同的时间（例如，计算国际象棋游戏中的下一步），则应使用此 API。这将确保在数据量或用户计算机功能发生变化时的正确行为。你应该将你的活动归入两个主要类别之一：
+
+1. 用户发起的：这些是​​用户明确开始的有限长度的活动。例如：导出或下载用户指定的文件。
+2. 后台任务：这些是有限长度的活动，它们是应用程序正常操作的一部分，但不是由用户明确启动的。例如：自动保存、索引和自动下载文件。
+
+&emsp;此外，如果你的应用程序需要高优先级 I/O，你可以包含 `NSActivityLatencyCritical` 标志（使用按位 OR）。你应该只将此标志用于确实需要高优先级的音频或视频录制等活动。
+
+&emsp;如果你的活动在主线程上的事件回调中同步发生，则不需要使用此 API。
+
+&emsp;请注意，长时间未能结束这些活动可能会对用户计算机的性能产生重大负面影响，因此请确保仅使用所需的最短时间。用户偏好（preferences）可能会覆盖你的的应用程序的请求。
+
+&emsp;你还可以使用此 API 来控制自动终止（automatic termination）或突然终止（sudden termination）（请参阅 Sudden Termination）。例如：
+
+```c++
+id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAutomaticTerminationDisabled reason:@"Good Reason"];
+
+// Perform some work
+
+[[NSProcessInfo processInfo] endActivity:activity];
+```
+
+相当于:
+
+```c++
+[[NSProcessInfo processInfo] disableAutomaticTermination:@"Good Reason"];
+
+// Perform some work
+
+[[NSProcessInfo processInfo] enableAutomaticTermination:@"Good Reason"];
+```
+
+&emsp;由于此 API 返回一个对象，因此与使用自动终止 API 相比，将开始和结束配对可能更容易——如果在 `endActivity:` 调用之前释放对象，则活动将自动结束。
+
+&emsp;该 API 还提供了一种机制来禁用系统范围的空闲睡眠（system-wide idle sleep）和显示空闲睡眠（display idle sleep）。这些会对用户体验产生很大的影响，所以一定不要忘记结束禁用睡眠的活动（包括 `NSActivityUserInitiated`）。
+
+### Sudden Termination
+
+
+
+
+
+
+
 
 &emsp;
 
