@@ -75,6 +75,42 @@ id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAu
 
 ### Sudden Termination
 
+&emsp;`macOS 10.6` 及更高版本包含一种机制，允许系统通过在可能的情况下终止应用程序，而不是请求应用程序自行退出，从而来更快地注销或关闭应用程序。
+
+&emsp;你的应用程序可以在全局基础上启用此功能，然后在允许突然终止可能导致数据损坏或用户体验不佳的操作期间手动覆盖其可用性。或者，你的应用程序可以手动启用和禁用此功能。
+
+&emsp;方法 `enableSuddenTermination` 和 `disableSuddenTermination` 分别减少或增加一个计数器，该计数器在第一次创建进程时的值为 1。当计数器的值为0时，应用程序被认为是可以安全终止的，并且可以由系统终止，而无需首先向进程发送任何通知或事件。
+
+&emsp;通过向应用程序的 `Info.plist` 添加一个键，你的应用程序可以支持在启动时突然终止。如果 `Info.plist` 中存在 `NSSupportsSuddenTermination` 键，并且其值为 `YES`，则相当于在应用程序启动期间调用 `enableSuddenTermination`。这使得应用程序进程可以立即终止。你仍然可以通过调用 `disableSuddenTermination` 来覆盖此行为。
+
+&emsp;通常，当应用程序延迟了必须在应用程序终止之前完成的工作时，可以禁用突然终止。例如，如果应用程序延迟将数据写入磁盘，并且启用了突然终止，则应将敏感操作与 `disableSuddenTermination` 调用放在一起，执行必要的操作，然后发送一个用于平衡的 `enableSuddenTermination` 消息。
+
+&emsp;在不依赖于 `AppKit` 的代理或守护程序可执行文件中，你可以立即手动调用 `enableSuddenTermination`。然后，只要进程在终止之前有必须完成的工作，就可以使用 `enable` 和 `disable` 方法。
+
+&emsp;某些 `AppKit` 功能会自动临时禁用突然终止（`sudden termination`）以确保数据完整性。
+
++ `NSUserDefaults` 暂时禁用突然终止（`sudden termination`），以防止在设置默认值和将包含该默认值的首选项文件写入磁盘时进程被终止。
+
++ `NSDocument` 暂时禁用突然终止（`sudden termination`），以防止在用户对文档进行更改和将用户更改写入磁盘时进程被终止。
+
+> Note
+> 你可以使用以下 `LLDB` 命令确定突然终止（`sudden termination`）的值。
+> `print (long)[[NSClassFromString(@"NSProcessInfo") processInfo] _suddenTerminationDisablingCount]`
+> 不要试图在应用程序中调用或重写 `suddenTerminationDisablingCount`（私有方法）。它只是为了调试目的而存在的，并且可能随时消失。
+
+### Thermal State and App Performance in macOS
+
+&emsp;`macOS` 中的 Thermal State（热状态）和应用程序性能。
+
+&emsp;在 `macOS` 中，使用当前的热状态（）来确定应用程序是否应该减少系统使用。在 `macOS 10.10.3` 及更高版本中，你可以注册 `NSProcessInfoThermalStateDidChangeNotification`，以便在热状态更改时收到通知。使用 `thermalState` `@property(readonly) NSProcessInfoThermalState thermalState;` 查询当前状态。你的应用程序应该减少系统在高温状态下的使用。有关建议的操作，请参阅 `NSProcessInfoThermalState`。
+
+&emsp;在 `macOS` 中，使用当前的热状态来确定您的应用程序是否应该减少系统使用。在 macOS 10.10.3 及更高版本中，您可以注册 NSProcessInfoThermalStateDidChangeNotification 以在热状态更改时收到通知。使用 heatState 查询当前状态。您的应用应在较高的热状态下减少系统使用。有关推荐的操作，请参阅 NSProcessInfoThermalState。
+
+
+
+
+
+
 
 
 
