@@ -102,10 +102,65 @@ id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAu
 
 &emsp;`macOS` 中的 Thermal State（热状态）和应用程序性能。
 
-&emsp;在 `macOS` 中，使用当前的热状态（）来确定应用程序是否应该减少系统使用。在 `macOS 10.10.3` 及更高版本中，你可以注册 `NSProcessInfoThermalStateDidChangeNotification`，以便在热状态更改时收到通知。使用 `thermalState` `@property(readonly) NSProcessInfoThermalState thermalState;` 查询当前状态。你的应用程序应该减少系统在高温状态下的使用。有关建议的操作，请参阅 `NSProcessInfoThermalState`。
+&emsp;在 `macOS` 中，使用当前的热状态（`thermal state`）来确定应用程序是否应该减少系统使用。在 `macOS 10.10.3` 及更高版本中，你可以注册 `NSProcessInfoThermalStateDidChangeNotification`，以便在热状态更改时收到通知。使用 `thermalState`（ `@property(readonly) NSProcessInfoThermalState thermalState;`）查询当前状态。你的应用程序应该减少系统在 higher thermal states 下的使用。有关建议的操作，请参阅 `NSProcessInfoThermalState`。
 
-&emsp;在 `macOS` 中，使用当前的热状态来确定您的应用程序是否应该减少系统使用。在 macOS 10.10.3 及更高版本中，您可以注册 NSProcessInfoThermalStateDidChangeNotification 以在热状态更改时收到通知。使用 heatState 查询当前状态。您的应用应在较高的热状态下减少系统使用。有关推荐的操作，请参阅 NSProcessInfoThermalState。
+### Topics
 
+#### Getting the Process Information Agent 
+
+##### processInfo
+
+&emsp;`@property (class, readonly, strong) NSProcessInfo *processInfo;` 返回当前进程的进程信息代理（进程的共享进程信息代理。），它是一个类属性，我们可以使用 `NSProcessInfo` 直接调用取得。
+
+&emsp;第一次调用此方法时会创建一个 `NSProcessInfo` 对象，并且在每次后续调用时都会返回相同的对象。
+
+#### Accessing Process Information
+
+##### arguments
+
+&emsp;`@property (readonly, copy) NSArray<NSString *> *arguments;` 包含进程的命令行（command-line）参数的字符串数组。此数组包含在 `argv` 数组中传递的所有信息，`argv` 即 `main` 函数的参数，其第一个元素便是当前可执行文件名。如下示例代码打印：
+
+```c++
+int main(int argc, char * argv[]) {
+    NSString * appDelegateClassName;
+
+    NSLog(@"🦁🦁🦁 %s", __func__);
+    
+    NSProcessInfo *info = [NSProcessInfo processInfo];
+    NSLog(@"🤯🤯🤯 %@", info.arguments);
+    printf("🤯🤯🤯 argc: %d \n", argc);
+    printf("🤯🤯🤯 %s \n", argv[0]);
+    
+    @autoreleasepool {
+        // Setup code that might create autoreleased objects goes here.
+        appDelegateClassName = NSStringFromClass([AppDelegate class]);
+    }
+    return UIApplicationMain(argc, argv, nil, appDelegateClassName);
+}
+
+// 控制台输出：
+2021-07-15 22:27:35.041884+0800 Test_ipa_simple[14236:1094002] 🦁🦁🦁 main
+2021-07-15 22:27:35.042078+0800 Test_ipa_simple[14236:1094002] 🤯🤯🤯 (
+    "/Users/hmc/Library/Developer/CoreSimulator/Devices/CC2922E4-A2DB-43DF-8B6F-D2987F683525/data/Containers/Bundle/Application/67BEBCD2-E89F-4742-B3B0-1827F0E98BD8/Test_ipa_simple.app/Test_ipa_simple"
+)
+🤯🤯🤯 argc: 1 
+🤯🤯🤯 /Users/hmc/Library/Developer/CoreSimulator/Devices/CC2922E4-A2DB-43DF-8B6F-D2987F683525/data/Containers/Bundle/Application/67BEBCD2-E89F-4742-B3B0-1827F0E98BD8/Test_ipa_simple.app/Test_ipa_simple 
+```
+
+&emsp;我们也可以在 `Edit Scheme... -> Run -> Arguments -> Arguments Passed On Launch` 中添加变量，即给 `main` 函数添加启动时的参数，例如：`{"name":"iOS","arme":"参数"}`，这样我们打印 `[NSProcessInfo processInfo].arguments` 便可得如下打印：
+
+```c++
+2021-07-15 22:33:01.141910+0800 Test_ipa_simple[14299:1099660] 🤯🤯🤯 (
+    "/Users/hmc/Library/Developer/CoreSimulator/Devices/CC2922E4-A2DB-43DF-8B6F-D2987F683525/data/Containers/Bundle/Application/6CC75292-B479-4FC0-A5B1-A21C11BEF2D5/Test_ipa_simple.app/Test_ipa_simple",
+    "{name:iOS,arme:\U53c2\U6570}"
+)
+```
+
+##### environment
+
+&emsp;`@property (readonly, copy) NSDictionary<NSString *, NSString *> *environment;`
+
+&emsp;启动进程的环境中的变量名称（键）及其值。（内容过多，这里就不直接贴出来了。）
 
 
 
