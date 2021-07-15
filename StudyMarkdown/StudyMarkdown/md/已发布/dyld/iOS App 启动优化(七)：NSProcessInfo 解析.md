@@ -162,6 +162,139 @@ int main(int argc, char * argv[]) {
 
 &emsp;启动进程的环境中的变量名称（键）及其值。（内容过多，这里就不直接贴出来了。）
 
+##### globallyUniqueString
+
+&emsp;`@property (readonly, copy) NSString *globallyUniqueString;`
+
+&emsp;进程的全局唯一标识符。
+
+&emsp;进程的全局 ID 包括主机名、进程ID和时间戳，这确保了该 ID 对于网络是唯一的。此属性在每次调用其 getter 时生成一个新字符串，并使用计数器来保证从同一进程创建的字符串是唯一的。
+
+##### macCatalystApp
+
+```c++
+@interface NSProcessInfo (NSProcessInfoPlatform)
+
+@property (readonly, getter=isMacCatalystApp) BOOL macCatalystApp API_AVAILABLE(macos(10.15), ios(13.0), watchos(6.0), tvos(13.0));
+@property (readonly, getter=isiOSAppOnMac) BOOL iOSAppOnMac API_AVAILABLE(macos(11.0), ios(14.0), watchos(7.0), tvos(14.0));
+
+@end
+```
+
+&emsp;一个布尔值，指示进程是否源自于 iOS 应用程序并在 macOS 上运行。
+
+&emsp;当此属性的值为 YES 时，此进程：
+
++ 使用 `Mac Catalyst` 构建的 Mac 应用程序，或在 Apple silicon 上运行的 iOS 应用程序。
++ 在 Mac 上运行。
+
+&emsp;支持 iOS 和 macOS 的框架使用此属性来确定进程是否是使用 MacCatalyst 构建的 Mac 应用程序。要有条件地编译只在 `macOS` 中运行的源代码，请改用 `#if TARGET_OS_MACCATALYST`。
+
+> Note
+> 要区分运行在 Apple silicon 上的 iOS 应用程序和使用 Mac Catalyst 构建的 Mac 应用程序，请使用 iOSAppOnMac 属性。
+
+##### iOSAppOnMac
+
+```c++
+@interface NSProcessInfo (NSProcessInfoPlatform)
+
+@property (readonly, getter=isMacCatalystApp) BOOL macCatalystApp API_AVAILABLE(macos(10.15), ios(13.0), watchos(6.0), tvos(13.0));
+@property (readonly, getter=isiOSAppOnMac) BOOL iOSAppOnMac API_AVAILABLE(macos(11.0), ios(14.0), watchos(7.0), tvos(14.0));
+
+@end
+```
+
+&emsp;一个布尔值，指示进程是在 Mac 上运行的 iPhone 或是 iPad 应用程序。
+
+&emsp;仅当进程是在 Mac 上运行的 iOS 应用程序时，此属性的值才为 YES。对于 Mac 上的所有其他应用程序，包括使用 Mac Catalyst 构建的 Mac 应用程序，该属性的值均为 NO。该属性也不适用于在 macOS 以外的平台上运行的进程。
+
+##### processIdentifier
+
+&emsp;`@property (readonly) int processIdentifier;`
+
+&emsp;进程的标识符（通常称为进程 ID）。
+
+##### processName
+
+&emsp;`@property (copy) NSString *processName;`
+
+&emsp;进程的名称。
+
+&emsp;进程名用于注册应用程序默认值，并在错误消息中使用。它不唯一标识进程。
+
+> Warning
+> 用户默认值和环境的其他方面可能取决于进程名称，因此在更改它时要非常小心。以这种方式设置进程名不是线程安全的。
+
+#### Accessing User Information
+
+&emsp;`macOS` 中的每个用户帐户都有一个全名（例如 “Johnny Appleseed”）和一个帐户名称（例如 “jappleseed”）。你可以从 “系统偏好设置” 的 “用户与群组” 面板中查看这些名称，并且可以使用任一名称登录 Mac。
+
+##### userName
+
+```c++
+@interface NSProcessInfo (NSUserInformation)
+
+@property (readonly, copy) NSString *userName API_AVAILABLE(macosx(10.12)) API_UNAVAILABLE(ios, watchos, tvos);
+@property (readonly, copy) NSString *fullUserName API_AVAILABLE(macosx(10.12)) API_UNAVAILABLE(ios, watchos, tvos);
+
+@end
+```
+
+&emsp;返回当前用户的帐户名。（仅 macOS 可见）
+
+##### fullUserName
+
+```c++
+@interface NSProcessInfo (NSUserInformation)
+
+@property (readonly, copy) NSString *userName API_AVAILABLE(macosx(10.12)) API_UNAVAILABLE(ios, watchos, tvos);
+@property (readonly, copy) NSString *fullUserName API_AVAILABLE(macosx(10.12)) API_UNAVAILABLE(ios, watchos, tvos);
+
+@end
+```
+
+&emsp;返回当前用户的全名。（仅 macOS 可见）
+
+#### Sudden Application Termination
+
+&emsp;
+
+```c++
+/* Disable or reenable the ability to be quickly killed. The default implementations of these methods increment or decrement, respectively, a counter whose value is 1 when the process is first created. When the counter's value is 0 the application is considered to be safely killable and may be killed by the operating system without any notification or event being sent to the process first. If an application's Info.plist has an NSSupportsSuddenTermination entry whose value is true then NSApplication invokes -enableSuddenTermination automatically during application launch, which typically renders the process killable right away. You can also manually invoke -enableSuddenTermination right away in, for example, agents or daemons that don't depend on AppKit. After that, you can invoke these methods whenever the process has work it must do before it terminates. For example:
+- NSUserDefaults uses these to prevent process killing between the time at which a default has been set and the time at which the preferences file including that default has been written to disk.
+- NSDocument uses these to prevent process killing between the time at which the user has made a change to a document and the time at which the user's change has been written to disk.
+- You can use these whenever your application defers work that must be done before the application terminates. If for example your application ever defers writing something to disk, and it has an NSSupportsSuddenTermination entry in its Info.plist so as not to contribute to user-visible delays at logout or shutdown time, it must invoke -disableSuddenTermination when the writing is first deferred and -enableSuddenTermination after the writing is actually done.
+*/
+```
+
+> &emsp;禁用或重新启用快速被杀死的能力。这些方法的默认实现分别递增或递减一个计数器，当进程首次创建时其值为 1。当计数器的值为 0 时，应用程序被认为是可以安全地终止的，并且可以由操作系统终止，而不首先向进程发送任何通知或事件。如果应用程序的 `Info.plist` 有一个值为 `true` 的 `NSSupportsSuddenTermination` 条目，那么 `NSApplication` 会在应用程序启动期间自动调用 `-enableSsuddenTermination`，这通常会使进程立即终止。
+
+例如，您还可以在不依赖于 AppKit 的代理或守护程序中立即手动调用 -enableSuddenTermination。之后，您可以在进程终止前必须完成的工作时调用这些方法。例如：
+
+
+##### disableSuddenTermination
+
+&emsp;`- (void)disableSuddenTermination API_AVAILABLE(macos(10.6)) API_UNAVAILABLE(ios, watchos, tvos);`
+
+&emsp;禁用使用 突然终止（sudden termination）快速终止的应用程序。（仅 macOS 可见）
+
+&emsp;此方法递增 突然终止计数器（sudden termination counter）。当终止计数器（termination counter）达到 0 时，应用程序允许突然终止（sudden termination）。
+
+&emsp;默认情况下，突然终止计数器（sudden termination counter）设置为 1。这可以在应用程序的 `Info.plist` 中重写。有关更多信息和调试建议，请参见上面的 Sudden Termination 一节。
+
+##### enableSuddenTermination
+
+&emsp;`- (void)enableSuddenTermination API_AVAILABLE(macos(10.6)) API_UNAVAILABLE(ios, watchos, tvos);`
+
+&emsp;启用应用程序以使用 突然终止（sudden termination.） 快速杀死。（仅 macOS 可见）
+
+&emsp;此方法减少突然终止计数器（sudden termination counter）。当终止计数器达到 0 时，应用程序允许突然终止（ sudden termination）。
+
+&emsp;默认情况下，突然终止计数器（sudden termination counter）设置为 1。这可以在应用程序的 `Info.plist` 中重写。有关更多信息和调试建议，请参见上面的 Sudden Termination 一节。
+
+
+
+
 
 
 
