@@ -344,7 +344,70 @@ int main(int argc, char * argv[]) {
 
 &emsp;`- (NSUInteger)operatingSystem API_DEPRECATED("-operatingSystem always returns NSMACHOperatingSystem, use -operatingSystemVersion or -isOperatingSystemAtLeastVersion: instead", macos(10.0,10.10), ios(2.0,8.0), watchos(2.0,2.0), tvos(9.0,9.0));`
 
-&emsp;已弃用。
+> &emsp;已弃用。
+> &emsp;使用 `operatingSystemVersion` 或  `isOperatingSystemAtLeastVersion:` 代替。
+
+&emsp;返回一个常量，以指示进程正在其上执行的操作系统。
+
+&emsp;操作系统标识符。有关可能值的列表，请参阅 Constants 。在 macOS 中，它是 `NSMACHOperatingSystem`。
+
+##### operatingSystemName
+
+&emsp;`- (NSString *)operatingSystemName API_DEPRECATED("-operatingSystemName always returns NSMACHOperatingSystem, use -operatingSystemVersionString instead", macos(10.0,10.10), ios(2.0,8.0), watchos(2.0,2.0), tvos(9.0,9.0));`
+
+> &emsp;已弃用。
+> &emsp;使用 `operatingSystemVersionString` 代替。
+
+&emsp;操作系统名字。在 `macOS` 中，它是 `NSMACHOperatingSystem`。
+
+##### operatingSystemVersionString
+
+> &emsp;Human readable, localized; appropriate for displaying to user or using in bug emails and such; NOT appropriate for parsing
+>
+> &emsp;人类可读，本地化；适合向用户显示或在错误电子邮件等中使用；不适合解析
+
+&emsp;`@property (readonly, copy) NSString *operatingSystemVersionString;`
+
+&emsp;包含正在执行进程的操作系统版本的字符串。
+
+&emsp;操作系统版本字符串是人类可读的、本地化的，并且适合向用户显示。此字符串不适合进行分析。
+
+##### operatingSystemVersion
+
+&emsp;`@property (readonly) NSOperatingSystemVersion operatingSystemVersion API_AVAILABLE(macos(10.10), ios(8.0), watchos(2.0), tvos(9.0));`
+
+&emsp;执行进程的操作系统的版本。
+
+##### isOperatingSystemAtLeastVersion:  
+
+&emsp;`- (BOOL) isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)version API_AVAILABLE(macos(10.10), ios(8.0), watchos(2.0), tvos(9.0));`
+
+&emsp;返回一个布尔值，该值指示执行进程的操作系统的版本是否与给定版本相同或更高。`version` 参数是要测试的操作系统版本。
+
+&emsp;如果进程正在执行的操作系统与给定版本相同或更新，则为 `YES`；否则为 `NO`。 
+
+&emsp;此方法说明操作系统的主要版本、次要版本和更新版本。
+
+#### Getting Computer Information
+
+##### processorCount
+
+&emsp;`@property (readonly) NSUInteger processorCount API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));`
+
+&emsp;计算机上可用的处理核心数。
+
+&emsp;此属性值等于在当前系统上输入命令 `sysctl -n hw.ncpu` 的结果。（在我的机器上执行结果是：16）
+
+
+
+
+
+
+
+
+
+
+
 
 
 
