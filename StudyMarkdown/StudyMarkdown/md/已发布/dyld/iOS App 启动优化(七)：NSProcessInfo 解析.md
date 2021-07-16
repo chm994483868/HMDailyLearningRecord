@@ -257,20 +257,16 @@ int main(int argc, char * argv[]) {
 
 #### Sudden Application Termination
 
-&emsp;
+> Disable or reenable the ability to be quickly killed. The default implementations of these methods increment or decrement, respectively, a counter whose value is 1 when the process is first created. When the counter's value is 0 the application is considered to be safely killable and may be killed by the operating system without any notification or event being sent to the process first. If an application's Info.plist has an NSSupportsSuddenTermination entry whose value is true then NSApplication invokes -enableSuddenTermination automatically during application launch, which typically renders the process killable right away. You can also manually invoke -enableSuddenTermination right away in, for example, agents or daemons that don't depend on AppKit. After that, you can invoke these methods whenever the process has work it must do before it terminates. For example:
+> 
+> - NSUserDefaults uses these to prevent process killing between the time at which a default has been set and the time at which the preferences file including that default has been written to disk.
+> - NSDocument uses these to prevent process killing between the time at which the user has made a change to a document and the time at which the user's change has been written to disk.
+> - You can use these whenever your application defers work that must be done before the application terminates. If for example your application ever defers writing something to disk, and it has an NSSupportsSuddenTermination entry in its Info.plist so as not to contribute to user-visible delays at logout or shutdown time, it must invoke -disableSuddenTermination when the writing is first deferred and -enableSuddenTermination after the writing is actually done.
 
-```c++
-/* Disable or reenable the ability to be quickly killed. The default implementations of these methods increment or decrement, respectively, a counter whose value is 1 when the process is first created. When the counter's value is 0 the application is considered to be safely killable and may be killed by the operating system without any notification or event being sent to the process first. If an application's Info.plist has an NSSupportsSuddenTermination entry whose value is true then NSApplication invokes -enableSuddenTermination automatically during application launch, which typically renders the process killable right away. You can also manually invoke -enableSuddenTermination right away in, for example, agents or daemons that don't depend on AppKit. After that, you can invoke these methods whenever the process has work it must do before it terminates. For example:
-- NSUserDefaults uses these to prevent process killing between the time at which a default has been set and the time at which the preferences file including that default has been written to disk.
-- NSDocument uses these to prevent process killing between the time at which the user has made a change to a document and the time at which the user's change has been written to disk.
-- You can use these whenever your application defers work that must be done before the application terminates. If for example your application ever defers writing something to disk, and it has an NSSupportsSuddenTermination entry in its Info.plist so as not to contribute to user-visible delays at logout or shutdown time, it must invoke -disableSuddenTermination when the writing is first deferred and -enableSuddenTermination after the writing is actually done.
-*/
-```
-
-> &emsp;禁用或重新启用快速被杀死的能力。这些方法的默认实现分别递增或递减一个计数器，当进程首次创建时其值为 1。当计数器的值为 0 时，应用程序被认为是可以安全地终止的，并且可以由操作系统终止，而不首先向进程发送任何通知或事件。如果应用程序的 `Info.plist` 有一个值为 `true` 的 `NSSupportsSuddenTermination` 条目，那么 `NSApplication` 会在应用程序启动期间自动调用 `-enableSsuddenTermination`，这通常会使进程立即终止。
-
-例如，您还可以在不依赖于 AppKit 的代理或守护程序中立即手动调用 -enableSuddenTermination。之后，您可以在进程终止前必须完成的工作时调用这些方法。例如：
-
+> &emsp;禁用或重新启用快速被杀死的能力。这些方法的默认实现分别递增或递减一个计数器，当进程首次创建时其值为 1。当计数器的值为 0 时，应用程序被认为是可以安全地终止的，并且可以由操作系统终止，而不首先向进程发送任何通知或事件。如果应用程序的 `Info.plist` 有一个值为 `true` 的 `NSSupportsSuddenTermination` 条目，那么 `NSApplication` 会在应用程序启动期间自动调用 `-enableSsuddenTermination`，这通常会使进程立即终止。例如，你还可以在不依赖 `AppKit` 的代理或守护程序中立即手动调用 `-enableSumddenTermination`。之后，只要进程在终止之前有必须完成的工作，就可以调用这些方法。
+> + `NSUserDefaults` 使用这些来防止在设置默认值和将包含该默认值的首选项文件（preferences file）写入磁盘之间的进程终止。
+> + `NSDocument` 使用这些来防止在用户对文档进行更改和将用户更改写入磁盘之间的进程终止。
+> + 当应用程序延迟必须在应用程序终止之前完成的工作时，可以使用这些命令。例如，如果你的的应用程序曾经延迟将某些内容写入磁盘，并且它的 `Info.plist` 中有一个 `NSSupportsSuddenTermination` 条目，以便在注销或关机时不会造成用户可见的延迟，它必须在第一次延迟写入时调用 `-disablesuddenternimination`，并在实际完成写入后调用 `-enablesumddenternimination`。
 
 ##### disableSuddenTermination
 
@@ -292,13 +288,63 @@ int main(int argc, char * argv[]) {
 
 &emsp;默认情况下，突然终止计数器（sudden termination counter）设置为 1。这可以在应用程序的 `Info.plist` 中重写。有关更多信息和调试建议，请参见上面的 Sudden Termination 一节。
 
+#### Controlling Automatic Termination
 
+> &emsp;Increment or decrement the counter tracking the number of automatic quit opt-out requests. When this counter is greater than zero, the app will be considered 'active' and ineligible for automatic termination.
+  An example of using this would be disabling autoquitting when the user of an instant messaging application signs on, due to it requiring a background connection to be maintained even if the app is otherwise inactive.
+  Each pair of calls should have a matching "reason" argument, which can be used to easily track why an application is or is not automatically terminable.
+  A given reason can be used more than once at the same time (for example: two files are transferring over the network, each one disables automatic termination with the reason @"file transfer in progress")
+> 
+> &emsp;增加或减少跟踪自动退出选择退出请求数量的计数器。当此计数器大于零时，应用程序将被视为 “活动” 且不符合自动终止的条件。
+  使用此功能的一个示例是在即时消息应用程序的用户登录时禁用自动退出，因为即使应用程序处于非活动状态，它也需要维护后台连接。
+  `disableAutomaticTermination:` 和 `enableAutomaticTermination:` 每对调用都应该有一个匹配的 `reason` 参数，它可以用来轻松跟踪应用程序为什么可以或不可以自动终止。
+  给定的原因可以同时使用多次（例如：两个文件正在通过网络传输，每个文件都以 `@"file transfer in progress"` 的原因禁用自动终止）
 
+##### disableAutomaticTermination:
 
+&emsp;`- (void)disableAutomaticTermination:(NSString *)reason API_AVAILABLE(macos(10.7)) API_UNAVAILABLE(ios, watchos, tvos);`
 
+&emsp;禁用应用程序的自动终止。`reason` 参数是自动终止被禁用的原因。（仅 macOS 可见）
 
+&emsp;此方法增加自动终止计数器（automatic termination counter）。当计数器大于 0 时，应用程序被认为是活动的，不符合自动终止的条件。例如，你可以在即时消息应用程序的用户登录时禁用自动终止，因为即使应用程序处于非活动状态，应用程序也需要保持后台连接。
 
+&emsp;`reason` 参数用于跟踪应用程序为什么可以或不可自动终止，并且可以通过调试工具进行检查。例如，如果在通过网络传输文件之前禁用自动终止，则可以传递字符串 `@"file transfer in progress"`。在传输完成后使用 `enableAutomaticTermination:` 重新启用自动终止时，你应该传递匹配的字符串。一个给定的理由可以同时使用多次；例如，如果同时传输两个文件，则可以为每个文件禁用自动终止，并传递相同的原因字符串。
 
+##### enableAutomaticTermination:
+
+&emsp;`- (void)enableAutomaticTermination:(NSString *)reason API_AVAILABLE(macos(10.7)) API_UNAVAILABLE(ios, watchos, tvos);`
+
+&emsp;启用应用程序的自动终止。`reason` 参数是启用自动终止的原因。（仅 macOS 可见）
+
+&emsp;此方法减少自动终止计数器（automatic termination counter.）。当计数器为 0 时，应用程序可以自动终止。
+
+&emsp;`reason` 参数用于跟踪应用程序为什么可以或不可自动终止，并且可以通过调试工具进行检查。例如，如果在通过网络传输文件之前禁用自动终止，则可以传递字符串 `@"file transfer in progress"`。在传输完成后使用 `enableAutomaticTermination:` 重新启用自动终止时，你应该传递匹配的字符串。一个给定的理由可以同时使用多次；例如，如果同时传输两个文件，则可以为每个文件禁用自动终止，并传递相同的原因字符串。
+
+##### automaticTerminationSupportEnabled
+
+> &emsp;Marks the calling app as supporting automatic termination. Without calling this or setting the equivalent Info.plist key (NSSupportsAutomaticTermination), the above methods (disableAutomaticTermination:/enableAutomaticTermination:) have no effect, although the counter tracking automatic termination opt-outs is still kept up to date to ensure correctness if this is called later. Currently, passing NO has no effect. This should be called during -applicationDidFinishLaunching or earlier.
+> 
+> &emsp;置为 `YES` 将调用应用程序标记为支持自动终止。不调用它或设置等效的 `Info.plist` 键 (`NSSupportsAutomaticTermination`)，上述方法 (`disableAutomaticTermination:` / `enableAutomaticTermination:`) 无效，尽管计数器跟踪自动终止选择退出仍然保持最新以确保正确性，如果这是稍后调用。目前，传递 `NO` 没有任何效果。这应该在 `-applicationDidFinishLaunching` 或更早的时候调用。
+ 
+&emsp;`@property BOOL automaticTerminationSupportEnabled API_AVAILABLE(macos(10.7)) API_UNAVAILABLE(ios, watchos, tvos);`
+
+&emsp;一个布尔值，指示应用程序是否支持自动终止。
+
+&emsp;不设置此属性或设置等效的 `Info.plist` 键 (`NSSupportsAutomaticTermination`)，方法 `disableAutomaticTermination:` 和 `enableAutomaticTermination:` 无效，尽管计数器跟踪自动终止选择退出仍保持最新以确保稍后调用时的正确性。目前，将此属性设置为 `NO` 无效。此属性应在应用程序委托方法 `applicationDidFinishLaunching:` 或更早前设置。
+
+#### Getting Host Information
+
+##### hostName
+
+&emsp;`@property (readonly, copy) NSString *hostName;` 
+
+&emsp;正在执行进程的主机的名称。例如我的机器打印: `✳️✳️✳️ hostName:hmdemac-mini.local`
+
+##### operatingSystem
+
+&emsp;`- (NSUInteger)operatingSystem API_DEPRECATED("-operatingSystem always returns NSMACHOperatingSystem, use -operatingSystemVersion or -isOperatingSystemAtLeastVersion: instead", macos(10.0,10.10), ios(2.0,8.0), watchos(2.0,2.0), tvos(9.0,9.0));`
+
+&emsp;已弃用。
 
 
 
