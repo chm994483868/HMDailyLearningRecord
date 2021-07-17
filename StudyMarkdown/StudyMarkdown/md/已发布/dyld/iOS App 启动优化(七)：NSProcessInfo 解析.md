@@ -396,7 +396,7 @@ int main(int argc, char * argv[]) {
 
 &emsp;计算机上可用的处理核心数。
 
-&emsp;此属性值等于在当前系统上输入命令 `sysctl -n hw.ncpu` 的结果。（在我的机器上执行结果是：16）
+&emsp;此属性值等于在当前系统上执行 `sysctl -n hw.ncpu` 命令的结果。（在我的机器上执行结果是：16）
 
 ##### activeProcessorCount
 
@@ -406,6 +406,13 @@ int main(int argc, char * argv[]) {
 
 &emsp;`processorCount` 属性报告播发处理核心的数量，而 `activeProcessorCount` 属性则反映系统上活动处理核心的实际数量。有许多不同的因素可能导致核心不活动，包括引导参数、热限制或制造缺陷。
 
+&emsp;`processorCount` 属性报告公布的处理核心数量，而 `activeProcessorCount` 属性反映系统上可活动的（或者可用的）处理核心的实际数量。有许多不同的因素可能导致核心不活动，包括启动参数（boot arguments）、热节流（thermal throttling）或制造缺陷（manufacturing defect）。
+
+&emsp;此属性值等于在当前系统上执行 `sysctl -n hw.logicalcpu` 命令的结果。（在 m1  的 macMini 上是 8）
+
+##### physicalMemory
+
+&emsp;
 
 
 
