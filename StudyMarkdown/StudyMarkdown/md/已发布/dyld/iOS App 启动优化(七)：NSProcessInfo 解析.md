@@ -398,8 +398,13 @@ int main(int argc, char * argv[]) {
 
 &emsp;此属性值等于在当前系统上输入命令 `sysctl -n hw.ncpu` 的结果。（在我的机器上执行结果是：16）
 
+##### activeProcessorCount
 
+&emsp;`@property (readonly) NSUInteger activeProcessorCount API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));`
 
+&emsp;计算机上可用的活动处理核心数。
+
+&emsp;`processorCount` 属性报告播发处理核心的数量，而 `activeProcessorCount` 属性则反映系统上活动处理核心的实际数量。有许多不同的因素可能导致核心不活动，包括引导参数、热限制或制造缺陷。
 
 
 
