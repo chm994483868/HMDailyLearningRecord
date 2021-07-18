@@ -412,7 +412,136 @@ int main(int argc, char * argv[]) {
 
 ##### physicalMemory
 
+&emsp;`@property (readonly) unsigned long long physicalMemory API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));`
+
+&emsp;计算机上的物理内存量（以字节为单位）。（即当前电脑的内存，例如我的电脑是 16 G 的，下面的代码打印 16）
+
+```c++
+NSProcessInfo *info = [NSProcessInfo processInfo];
+NSLog(@"🤯🤯🤯 %lld", info.physicalMemory / 1024 / 1024 / 1024);
+
+// 控制台打印：
+Test_ipa_simple[47082:3533173] 🤯🤯🤯 16
+```
+
+##### systemUptime
+
+&emsp;`@property (readonly) NSTimeInterval systemUptime API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0));`
+
+&emsp;系统自上次重新启动以来一直处于唤醒状态的时间量。（即自上次开机距离现在的的时间）
+
+#### Managing Activities
+
+##### - beginActivityWithOptions:reason:
+
+```c++
+@interface NSProcessInfo (NSProcessInfoActivity)
+ ...
+- (id <NSObject>)beginActivityWithOptions:(NSActivityOptions)options reason:(NSString *)reason API_AVAILABLE(macos(10.9), ios(7.0), watchos(2.0), tvos(9.0));
+...
+@end
+```
+
+> &emsp;Pass in an activity to this API, and a non-NULL, non-empty reason string. Indicate completion of the activity by calling the corresponding endActivity: method with the result of the beginActivityWithOptions:reason: method. The reason string is used for debugging.
+> 
+> &emsp;调用此 API 开始一个活动，参数传入一个活动选型，以及一个非 NULL、非空的原因字符串。通过使用 `beginActivityWithOptions:reason:` 方法的结果（一个指向活动对象的指针）调用相应的 `endActivity:` 方法来指示活动的完成。原因字符串用于调试。
+
+&emsp;`options` 参数：活动的选项。`NSActivityOptions` 枚举列出了所有有关可能的值。
+
+&emsp;`reason` 参数：用于调试的字符串，用于指示活动开始的原因。
+
+&esmp;返回值是一个指向 `NSObject` 的指针，指向活动的对象。通过调用 `endActivity:` 将返回活动的对象作为参数传递来指示活动的完成。
+
+##### - endActivity:
+
+```c++
+@interface NSProcessInfo (NSProcessInfoActivity)
+...
+- (void)endActivity:(id <NSObject>)activity API_AVAILABLE(macos(10.9), ios(7.0), watchos(2.0), tvos(9.0));
+...
+@end
+```
+
+&emsp;实例函数，结束一个给定的活动（`activety` 参数）。
+
+&emsp;`activity` 参数：`beginActivityWithOptions:reason:` 函数返回的活动对象。
+
+##### performActivityWithOptions:reason:usingBlock:
+
+```c++
+@interface NSProcessInfo (NSProcessInfoActivity)
+...
+- (void)performActivityWithOptions:(NSActivityOptions)options reason:(NSString *)reason usingBlock:(void (^)(void))block API_AVAILABLE(macos(10.9), ios(7.0), watchos(2.0), tvos(9.0));
+...
+@end
+```
+> &emsp;Synchronously perform an activity. The activity will be automatically ended after your block argument returns. The reason string is used for debugging.
+> 
+> &emsp;同步执行一项活动。活动将在 `block` 参数返回后（或者 `block` 内容执行完毕）自动结束。`reason` 字符串用于调试。
+
+&emsp;`options` 参数：活动的选项，`NSActivityOptions` 枚举列出了所有有关可能的值。
+
+&emsp;`reason` 参数：用于调试的字符串，用于指示活动开始的原因。
+
+&emsp;`block` 参数：包含活动要执行的内容。
+
+##### performExpiringActivityWithReason:usingBlock:
+
+```c++
+@interface NSProcessInfo (NSProcessInfoActivity)
+...
+- (void)performExpiringActivityWithReason:(NSString *)reason usingBlock:(void(^)(BOOL expired))block API_AVAILABLE(ios(8.2), watchos(2.0), tvos(9.0)) API_UNAVAILABLE(macos);
+...
+@end
+```
+&emsp;异步执行指定的 `block`，并在进程即将挂起时通知你。
+
+> &emsp;Perform an expiring background task, which obtains an expiring task assertion on iOS. 
+> The block contains any work which needs to be completed as a background-priority task. 
+> The block will be scheduled on a system-provided concurrent queue. After a system-specified time, the block will be called with the `expired` parameter set to YES. 
+> The `expired` parameter will also be YES if the system decides to prematurely terminate a previous non-expiration invocation of the block.
+>
+> &emsp;执行过期后台任务，在 `iOS` 上获取过期任务断言。该 `block` 包含需要作为后台优先任务完成的任何工作。该 `block` 将被安排在系统提供的并发队列中。在系统指定的时间之后，将调用该 `block`，并将 `expired` 参数设置为 `YES`。如果系统决定提前终止之前未到期的 `block` 调用，`expired` 参数也将为 `YES`。
+
+&emsp;`reason` 参数：用于调试的字符串，用于指示活动开始的原因。此参数不能为 `nil` 或空字符串。
+
+&emsp;`block` 参数：包含活动要执行的内容的 block 块。该 `block` 没有返回值并采用以下 `BOOL` 类型的 `expired` 参数：
+
+&emsp;`expired` 参数：一个布尔值，指示进程是否将被挂起。如果值为 `YES`，则进程将被挂起，因此你应该采取任何必要的步骤来停止正在进行的工作。如果 `NO`，则启动计划任务。
+
+&emsp;当进程在后台执行时，使用此方法执行任务。此方法将 `block` 排队，以便在并发队列上异步执行。当你的进程在后台时，该方法会尝试执行任务断言，以确保你的 `block` 有时间执行。如果无法执行任务断言，或者分配给任务断言的时间已过期，则系统将执行 `block` 并将参数设置为 `YES`。如果它能够接受任务断言，它将执行 `block`，并为 `expried` 参数传递 `NO`。
+
+&emsp;如果你的 `block` 仍在执行并且系统需要挂起该进程，则系统将第二次执行你的 `block`，并将 `expired` 参数设置为 `YES`。你的 `block` 必须准备好处理这种情况。当 `expired` 参数为 `YES` 时，尽快停止任何正在进行的任务。
+
+#### Getting the Thermal State
+
+##### thermalState
+
+```c++
+@interface NSProcessInfo (NSProcessInfoThermalState)
+
+@property (readonly) NSProcessInfoThermalState thermalState API_AVAILABLE(macosx(10.10.3), ios(11.0), watchos(4.0), tvos(11.0));
+
+@end
+```
+
+> &emsp;Retrieve the current thermal state of the system. On systems where thermal state is unknown or unsupported, the value returned from the thermalState property is always NSProcessInfoThermalStateNominal.
+> 
+> &emsp;检索系统的当前热状态。在热状态未知或不受支持的系统上，从 `thermalState` 属性返回的值始终为 `NSProcessInfoThermalStateNominal`。
+
+&emsp;返回带有系统当前热状态的 `NSProcessInfoThermalState`（一个枚举值）。在较高的热状态下，你的应用应减少系统资源的使用。有关更多信息，参阅 `NSProcessInfoThermalState` 枚举。
+
+#### Determining Whether Low Power Mode is Enabled
+
+##### lowPowerModeEnabled
+
 &emsp;
+
+
+
+
+
+
 
 
 
