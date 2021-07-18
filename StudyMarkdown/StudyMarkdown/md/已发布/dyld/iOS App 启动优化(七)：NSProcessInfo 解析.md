@@ -694,247 +694,89 @@ NSActivityUserInitiated & ~NSActivitySuddenTerminationDisabled
 
 ##### NSProcessInfoThermalState
 
-&emsp;
-
-
-
-
-
-
-
-
-
-&emsp;
-
 ```c++
-@interface NSProcessInfo : NSObject {
-@private
-    NSDictionary    *environment;
-    NSArray        *arguments;
-    NSString        *hostName;
-    NSString        *name;
-    NSInteger        automaticTerminationOptOutCounter;
-}
+// Describes the current thermal state of the system.
+// 描述系统的当前热状态。
+typedef NS_ENUM(NSInteger, NSProcessInfoThermalState) {
+    // No corrective action is needed.
+    // 无需采取纠正措施。（热状态在正常范围内。）
+    NSProcessInfoThermalStateNominal,
+
+    // The system has reached a state where fans may become audible (on systems which have fans). Recommendation: Defer non-user-visible activity.
+    // 系统已达到可以听到风扇声音的状态（在有风扇的系统上）。建议：推迟非用户可见的活动。
+    NSProcessInfoThermalStateFair,
+
+    // Fans are running at maximum speed (on systems which have fans), system performance may be impacted. Recommendation: reduce application's usage of CPU, GPU and I/O, if possible. Switch to lower quality visual effects, reduce frame rates.
+    // 风扇以最大速度运行（在有风扇的系统上），系统性能可能会受到影响。建议：如果可能，减少应用程序对 CPU、GPU 和 I/O 的使用。切换到较低质量的视觉效果，降低帧率。
+    NSProcessInfoThermalStateSerious,
+    
+    // System performance is significantly impacted and the system needs to cool down. Recommendation: reduce application's usage of CPU, GPU, and I/O to the minimum level needed to respond to user actions. Consider stopping use of camera and other peripherals if your application is using them.
+    // 系统性能受到显着影响，系统需要冷却。建议：将应用程序对 CPU、GPU 和 I/O 的使用降低到响应用户操作所需的最低水平。如果你的应用程序正在使用相机和其他外围设备，请考虑停止使用它们。
+    NSProcessInfoThermalStateCritical
+} API_AVAILABLE(macosx(10.10.3), ios(11.0), watchos(4.0), tvos(11.0));
 ```
 
-+  @property (readonly, copy) NSArray<NSString *> *arguments; 传入 main 函数中的参数 (可在 Edit Scheme... -> Run -> Arguments -> Arguments Passed On Launch 中添加变量: `{"name":"iOS","arme":"参数"}` )
-+ @property (readonly, copy) NSString *hostName; 域名
-+ @property (copy) NSString *processName; 进程名称
-+ @property (readonly) int processIdentifier; 进程 ID
-+ @property (readonly, copy) NSString *globallyUniqueString; 进程全球唯一编号
-+ @property (readonly, copy) NSString *operatingSystemVersionString; @property (readonly) NSOperatingSystemVersion operatingSystemVersion API_AVAILABLE(macos(10.10), ios(8.0), watchos(2.0), tvos(9.0)); 系统版本号
-+ @property (readonly) NSTimeInterval systemUptime API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0)); 时间段：设备上一次开机至今时间段 
+&emsp;用于指示系统热状态的值。
 
+&emsp;`NSProcessInfo` 类使用这些值作为热状态（thermalState）的返回值。
 
+&emsp;有关在不同热状态下测试你的应用程序的信息，请参阅 [Test under adverse device conditions (iOS)](https://help.apple.com/xcode/mac/current/#/dev308429d42)
 
-### NSProcessInfo + NSProcessInfoPowerState
+###### NSProcessInfoThermalStateNominal
 
-&emsp;`NSProcessInfo` 的 `NSProcessInfoPowerState` 分类仅有一个 `lowPowerModeEnabled` 属性。
+&emsp;`NSProcessInfoThermalStateNominal` 热状态在正常范围内。  
 
-&emsp;检索系统当前是否设置了低功耗模式。在低功耗模式未知或不受支持的系统上，从 `lowPowerModeEnabled` 属性返回的值始终为 `NO`。
+###### NSProcessInfoThermalStateFair
+
+&emsp;`NSProcessInfoThermalStateFair` 热状态略有升高。系统采取措施减少热状态，例如运行风扇和停止不立即执行用户需要的工作的后台服务。减少或推迟后台工作，例如通过网络预取内容或更新数据库索引。
+
+###### NSProcessInfoThermalStateSerious
+
+&emsp;`NSProcessInfoThermalStateSerious` 热状态高。系统采取适度的步骤来减少热状态，这会降低性能。风扇以最大速度运行。
+
+&emsp;减少产生热量和消耗电池的资源的使用，例如：
+
++ 减少或推迟 I/O 操作，例如网络和蓝牙
+
++ 降低要求的定位精度水平
+
++ 通过停止或延迟工作来减少 CPU 和 GPU 的使用
+
++ 将目标帧速率从 60 FPS 降低到 30 FPS
+
++ 通过使用较少的粒子或较低分辨率的纹理来降低渲染内容的细节级别
+
+&emsp;有关如何减少应用对这些资源的使用的更多详细信息，请参考：[Energy Efficiency and the User Experienc](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/EnergyGuide-iOS/index.html#//apple_ref/doc/uid/TP40015243) 和 [Energy Efficiency Guide for Mac Apps](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/power_efficiency_guidelines_osx/index.html#//apple_ref/doc/uid/TP40013929)。
+
+##### NSProcessInfoThermalStateDidChangeNotification
 
 ```c++
-@interface NSProcessInfo (NSProcessInfoPowerState)
-
-// Retrieve the current setting of the system for the low power mode setting.
-// On systems where the low power mode is unknown or unsupported,
-// the value returned from the lowPowerModeEnabled property is always NO.
-
-@property (readonly, getter=isLowPowerModeEnabled) BOOL lowPowerModeEnabled API_AVAILABLE(ios(9.0), watchos(2.0), tvos(9.0)) API_UNAVAILABLE(macos);
-
-@end
+FOUNDATION_EXTERN NSNotificationName const NSProcessInfoThermalStateDidChangeNotification API_AVAILABLE(macosx(10.10.3), ios(11.0), watchos(4.0), tvos(11.0));
 ```
 
+> &emsp;NSProcessInfoThermalStateDidChangeNotification is posted once the thermal state of the system has changed. Once the notification is posted, use the thermalState property to retrieve the current thermal state of the system.
+> &emsp;`NSProcessInfoThermalStateDidChangeNotification` 在系统的热状态发生更改后发布。发布通知后，使用 `thermalState` 属性检索系统的当前热状态。
+> 
+> &emsp;You can use this opportunity to take corrective action in your application to help cool the system down. Work that could be done in the background or at opportunistic times should be using the Quality of Service levels in NSOperation or the NSBackgroundActivityScheduler API.
+> &emsp;你可以利用这个机会在应用程序中采取纠正措施来帮助冷却系统。可以在后台或机会主义时间完成的工作应该使用 `NSOperation` 或 `NSBackgroundActivityScheduler` API 中的服务质量级别。
+>
+> &emsp;This notification is posted on the global dispatch queue. Register for it using the default notification center. The object associated with the notification is NSProcessInfo.processInfo.
+> &emsp;此通知发布在全局调度队列上。使用默认通知中心注册它。与通知关联的对象是 `NSProcessInfo.processInfo`。
 
-## 参考链接
-**参考链接:🔗**
-+ [iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469) // 进行中...
+&emsp;是一个通知的名字，当系统的热状态发生变化时发布（发出此通知）。
 
-+ [哈啰出行iOS App首屏秒开优化](https://juejin.cn/post/6948990967324082183) // 未开始
-+ [抖音研发实践：基于二进制文件重排的解决方案 APP启动速度提升超15%](https://mp.weixin.qq.com/s/Drmmx5JtjG3UtTFksL6Q8Q) // 未开始
-+ [iOS App冷启动治理：来自美团外卖的实践](https://juejin.cn/post/6844903733231353863)  // 未开始
-+ [APP启动时间最精确的记录方式](https://juejin.cn/post/6844903997153755150)  // 未开始
-+ [iOS如何获取当前时间--看我就够了](https://juejin.cn/post/6905671622037307405)  // 未开始
-+ [启动优化](https://juejin.cn/post/6983513854546444296)  // 未开始
-+ [iOS 优化篇 - 启动优化之Clang插桩实现二进制重排](https://juejin.cn/post/6844904130406793224#heading-29)  // 未开始
-+ [懒人版二进制重排](https://juejin.cn/post/6844904192193085448#heading-7)  // 未开始
-+ [我是如何让微博绿洲的启动速度提升30%的](https://juejin.cn/post/6844904143111323661)  // 未开始
-+ [App性能优化小结](https://juejin.cn/post/6844903704886247431)  // 未开始
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/Users/hmc/Documents/GitHub/APPLE_开源代码/objc4_debug/objc4-781
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-&emsp;做逆向和静态分析的时候必会看到的文件格式。
-
-&emsp;每个进程都会被分配一个虚拟地址空间，进程寻址的范围就是在这个虚拟地址空间进行的，虚拟地址到物理地址之间有一个映射表进行管理。
-
-&emsp;编译器或任何创建 Mach-O 文件的工具都可以定义额外的节名。这些额外的名称没有出现在表 1 中。
-
-&emsp;在Mach-O文件中的每个section都包含类型和一组属性标记。在中间对象文件中，这个类型和属性决定了静态连接器怎么将section拷贝到最终产品中。对象文件分析工具（例如otool）用类型和属性决定怎么读取和现实这些section。有些section类型和属性是动态连接器用到的。
-
-
-## Hello World 和编译器
-
-### 预处理
-
-+ 符号化（Tokenization）
-+ 宏定义的展开
-+ `#include` 的展开
-
-### 语法和语义分析
-
-+ 将符号化后的内容转化为一棵解析树（parse tree）
-+ 解析树做语义分析
-+ 输出一棵抽象语法树（Abstract Syntax Tree*(AST)）
-
-### 生成代码和优化
-
-+ 将 AST 转换为更低级的中间码（LLVM IR）
-+ 对生成的中间码做优化
-+ 生成特定目标代码
-+ 输出汇编代码
-
-### 汇编器
-
-+ 将汇编代码转换为目标对象文件
-
-### 链接器
-
-+ 将多个目标对象文件合并为一个可执行文件（或者一个动态库）
-
-
-
-任意的片段
-
-使用链接符号 -sectcreate 我们可以给可执行文件以 section 的方式添加任意的数据。这就是如何将一个 Info.plist 文件添加到一个独立的可执行文件中的方法。Info.plist 文件中的数据需要放入到 __TEXT segment 里面的一个 __info_plist section 中。可以将 -sectcreate segname sectname file 传递给链接器（通过将下面的内容传递给 clang）：
-
--Wl,-sectcreate,__TEXT,__info_plist,path/to/Info.plist
-同样，-sectalign 规定了对其方式。如果你添加的是一个全新的 segment，那么需要通过 -segprot 来规定 segment 的保护方式 (读/写/可执行)。这些所有内容在链接器的帮助文档中都有，例如 ld(1)。
-
-我们可以利用定义在 /usr/include/mach-o/getsect.h 中的函数 getsectdata() 得到 section，例如 getsectdata() 可以得到指向 section 数据的一个指针，并返回相关 section 的长度。
-
-
-&emsp;阅读 kyson 老师的 runtime 的专栏。
-
-&emsp;**今天早上的任务就是把 kyson 老师的 runtime 文章全部看完。**
-
-&emsp;
-
-
-
-
-
+&emsp;至此 `NSProcesshidp` 的内容就全部都看完了，基本上就是对当前的应用程序（进程）的信息进行获取，然后根据不同的状态对进程进行一些状态的调整应对，以优化我们的设备更好的运行。
 
 ## 参考链接
 **参考链接:🔗**
 + [iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469)
-+ [抖音品质建设 - iOS启动优化《实战篇》](https://juejin.cn/post/6921508850684133390)
-+ [深入理解MachO数据解析规则](https://juejin.cn/post/6947843156163428383)
-+ [探秘 Mach-O 文件](http://hawk0620.github.io/blog/2018/03/22/study-mach-o-file/)
-+ [深入剖析Macho (1)](http://satanwoo.github.io/2017/06/13/Macho-1/)
-+ [Mach-O 可执行文件](https://objccn.io/issue-6-3/)
-+ [巧用nm命令](https://zhuanlan.zhihu.com/p/52984601)
-
-[](https://github.com/zjh171/RuntimeSample)
-
-[](https://xiaozhuanlan.com/runtime)
-
-[](https://blog.csdn.net/jasonblog/article/details/49909209)
-
-[](http://hawk0620.github.io/blog/2018/03/22/study-mach-o-file/)
-
-[](https://easeapi.com/blog/blog/57-ios-dumpdecrypted.html)
-
-[](https://blog.csdn.net/lovechris00/article/details/81561627)
-
-[](https://juejin.cn/post/6844904194877587469)
-
-[](https://www.jianshu.com/p/782c0eb7bc10)
-
-[](https://www.jianshu.com/u/58e5946c7e09)
-
-[](https://juejin.cn/post/6947843156163428383)
-
-[](https://mp.weixin.qq.com/s/vt2LjEbgYsnU1ZI5P9atRw)
-
-[](https://blog.csdn.net/weixin_30463341/article/details/99201551)
-
-[](https://www.cnblogs.com/zhanggui/p/9991455.html)
-
-[](https://objccn.io/issue-6-3/)
-
-+ [iOS dyld详解](https://zhangyu.blog.csdn.net/article/details/92835911?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control)
-
-
-## 模仿 static_init 调用构造函数
-
-&emsp;在前面的 \_objc_init 过程解析中我们详细分析了 static_init 函数，已知它是
-
-[iOS开发之runtime（11）：Mach-O 犹抱琵琶半遮面](https://xiaozhuanlan.com/topic/0328479651)
-
-
-&emsp;全局搜索 \__objc_init_func 
-
-## iOS 启动优化 + 监控实践
-
-&emsp;但是每个版本排查启动增量会耗费不少时间,想做一个自动化的启动监控流程来降低这方面的时间成本。
-
-+ 启动流程、
-+ 如何优化、
-+ push 启动优化、
-+ 二进制重排、
-+ 后续计划
-
-[iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469)
-
-
-&emsp;NSProcessInfo 是我们统计 APP 启动时间时必会用到的一个类，下面我们就通过官方文档对它进行学习。
-
-/Users/hmc/Documents/GitHub/APPLE_开源代码/objc4_debug/objc4-781
-
-&emsp;做逆向和静态分析的时候必会看到的文件格式。
-
-&emsp;每个进程都会被分配一个虚拟地址空间，进程寻址的范围就是在这个虚拟地址空间进行的，虚拟地址到物理地址之间有一个映射表进行管理。
-
-&emsp;编译器或任何创建 Mach-O 文件的工具都可以定义额外的节名。这些额外的名称没有出现在表 1 中。
-
-&emsp;在Mach-O文件中的每个section都包含类型和一组属性标记。在中间对象文件中，这个类型和属性决定了静态连接器怎么将section拷贝到最终产品中。对象文件分析工具（例如otool）用类型和属性决定怎么读取和现实这些section。有些section类型和属性是动态连接器用到的。
-
-## 加载过程
-
-
-&emsp;当你点击一个 icon 启动应用程序的时候，系统在内部大致做了如下几件事：
-
-+ 内核（OS Kernel）创建一个进程，分配虚拟的进程空间等等，加载动态链接器。
-+ 通过动态链接器加载主二进制程序引用的库、绑定符号。
-+ 启动程序
-
-&emsp;struct mach_header_64 这个结构体代表的都是 Mach-O 文件的一些元信息，它的作用是让内核在读取该文件创建虚拟进程空间的时候，检查文件的合法性以及当前硬件的特性是否能支持程序的运行。
++ [哈啰出行iOS App首屏秒开优化](https://juejin.cn/post/6948990967324082183)
++ [抖音研发实践：基于二进制文件重排的解决方案 APP启动速度提升超15%](https://mp.weixin.qq.com/s/Drmmx5JtjG3UtTFksL6Q8Q)
++ [iOS App冷启动治理：来自美团外卖的实践](https://juejin.cn/post/6844903733231353863)
++ [APP启动时间最精确的记录方式](https://juejin.cn/post/6844903997153755150)
++ [iOS如何获取当前时间--看我就够了](https://juejin.cn/post/6905671622037307405)
++ [启动优化](https://juejin.cn/post/6983513854546444296)
++ [iOS 优化篇 - 启动优化之Clang插桩实现二进制重排](https://juejin.cn/post/6844904130406793224#heading-29)
++ [懒人版二进制重排](https://juejin.cn/post/6844904192193085448#heading-7)
++ [我是如何让微博绿洲的启动速度提升30%的](https://juejin.cn/post/6844904143111323661)
++ [App性能优化小结](https://juejin.cn/post/6844903704886247431)
