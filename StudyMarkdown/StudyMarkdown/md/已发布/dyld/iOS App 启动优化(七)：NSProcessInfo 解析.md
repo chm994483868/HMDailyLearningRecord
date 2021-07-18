@@ -531,22 +531,170 @@ Test_ipa_simple[47082:3533173] 🤯🤯🤯 16
 
 &emsp;返回带有系统当前热状态的 `NSProcessInfoThermalState`（一个枚举值）。在较高的热状态下，你的应用应减少系统资源的使用。有关更多信息，参阅 `NSProcessInfoThermalState` 枚举。
 
-#### Determining Whether Low Power Mode is Enabled
+#### Determining Whether Low Power Mode is Enabled（确定是否启用低功耗模式）
 
 ##### lowPowerModeEnabled
 
+```c++s
+@interface NSProcessInfo (NSProcessInfoPowerState)
+
+@property (readonly, getter=isLowPowerModeEnabled) BOOL lowPowerModeEnabled API_AVAILABLE(ios(9.0), watchos(2.0), tvos(9.0)) API_UNAVAILABLE(macos);
+
+@end
+```
+
+> &emsp;Retrieve the current setting of the system for the low power mode setting. On systems where the low power mode is unknown or unsupported, the value returned from the lowPowerModeEnabled property is always NO
+>
+> &emsp;为低功耗模式设置检索系统的当前设置。在低功耗模式未知或不受支持的系统上，从 `lowPowerModeEnabled` 属性返回的值始终为 `NO`
+
+&emsp;一个布尔值，指示是否在 `iOS` 设备上启用了低功耗模式。
+
+&emsp;希望延长 iPhone 电池寿命的用户可以在 “设置”>“电池” 下启用 “低电量模式”。在低电量模式下，iOS 通过制定某些节能措施来延长电池寿命，例如降低 CPU 和 GPU 性能、降低屏幕亮度以及暂停自主活动和后台活动。你的应用程序可以随时查询 `lowPowerModeEnabled` 属性以确定低功耗模式是否处于活动状态。
+
+&emsp;当 iOS 设备的电源状态（低功耗模式启用或禁用）发生更改时，你的应用程序也可以注册以接收通知。要注册电源状态变化的通知，请将消息 `addObserver:selector:name:object:` 发送到应用程序的默认通知中心（`NSNotificationCenter` 的实例）。向其传递要调用的选择器和 `NSProcessInfoPowerStateDidChangeNotification` 的通知名称。一旦应用程序收到电源状态更改的通知，它应该查询 `isLowPowerModeEnabled` 以确定当前的电源状态。如果低功耗模式处于活动状态，则应用程序可以采取适当的步骤来减少活动。否则，可以恢复正常操作。
+
+&emsp;关于更详细的信息，可参考：[Energy Efficiency and the User Experience](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/EnergyGuide-iOS/index.html#//apple_ref/doc/uid/TP40015243) 中的 [React to Low Power Mode on iPhones](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/EnergyGuide-iOS/LowPowerMode.html#//apple_ref/doc/uid/TP40015243-CH31) 部分。
+
+###### NSProcessInfoPowerStateDidChangeNotification
+
+```c++
+FOUNDATION_EXTERN NSNotificationName const NSProcessInfoPowerStateDidChangeNotification API_AVAILABLE(ios(9.0), watchos(2.0), tvos(9.0)) API_UNAVAILABLE(macos);
+```
+
+> &emsp;NSProcessInfoPowerStateDidChangeNotification is posted once any power usage mode of the system has changed. Once the notification is posted, use the isLowPowerModeEnabled property to retrieve the current state of the low power mode setting of the system.
+> &emsp;When this notification is posted your application should attempt to reduce power usage by reducing potentially costly computation and other power using activities like network activity or keeping the screen on if the low power mode setting is enabled.
+> &emsp;This notification is posted on the global dispatch queue. Register for it using the default notification center. The object associated with the notification is NSProcessInfo.processInfo.
+> 
+> &emsp;一旦系统的任何电源使用模式发生更改，就会发布 `NSProcessInfoPowerStateDidChangeNotification`。发布通知后，请使用 `isLowPowerModeEnabled` 属性检索系统的低功耗模式设置的当前状态。
+> &emsp;;当此通知发布时，你的应用程序应尝试通过减少潜在的昂贵计算和其他使用活动（如网络活动）或在启用低功耗模式设置时保持屏幕开启的功耗来降低功耗。
+> &emsp;此通知发布在全局调度队列上。使用默认通知中心注册。与通知关联的对象是 `NSProcessInfo.processInfo`。
+
+&emsp;当 iOS 设备的电源状态（启用或禁用低功耗模式）发生变化时发布（发出此通知）。
+
+&emsp;发布通知后，查询 `lowPowerModeEnabled` 属性以确定设备的当前电源状态。如果低功耗模式处于活动状态，则应用程序可以采取适当的步骤来减少活动。否则，可以恢复正常操作。
+
+&emsp;通知对象是 `NSProcessInfo` 实例。
+
+#### Constants
+
+##### NSOperatingSystemVersion
+
+```c++
+typedef struct {
+    NSInteger majorVersion;
+    NSInteger minorVersion;
+    NSInteger patchVersion;
+} NSOperatingSystemVersion;
+```
+
+&emsp;操作系统版本的结构体，在 `NSProcessInfo` 类的 `operatingSystemVersion` 属性和 `isOperatingSystemAtLeastVersion:` 方法中使用。
+
+&emsp;`majorVersion` 主版本号，如 10.9.3 版中的 10。
+
+&emsp;`minorVersion` 次版本号，例如 10.9.3 版本中的 9。
+
+&emsp;`patchVersion` 更新版本号，如 10.9.3 版中的 3。
+
+##### NSActivityOptions
+
+```c++
+typedef NS_OPTIONS(uint64_t, NSActivityOptions) {
+    
+    // Used for activities that require the screen to stay powered on.
+    // 用于需要屏幕保持开机状态（屏幕一直处于点亮状态）的活动（要求屏幕保持通电状态的标志。）。（1 左移 40 位）
+    NSActivityIdleDisplaySleepDisabled = (1ULL << 40),
+    
+    // Used for activities that require the computer to not idle sleep. This is included in NSActivityUserInitiated.
+    // 用于要求计算机不能闲置睡眠的活动。这包含在 NSActivityUserInitiated 中。
+    NSActivityIdleSystemSleepDisabled = (1ULL << 20),
+    
+    // Prevents sudden termination. This is included in NSActivityUserInitiated.
+    // 防止突然终止。这包括在 NSActivityUserInitiated 中。
+    NSActivitySuddenTerminationDisabled = (1ULL << 14),
+    
+    // Prevents automatic termination. This is included in NSActivityUserInitiated.
+    // 防止自动终止。这包括在NSActivityUserInitiated中。
+    NSActivityAutomaticTerminationDisabled = (1ULL << 15),
+    
+    // ----
+    // Sets of options.
+    // 选项集合
+    
+    // App is performing a user-requested action.
+    // 应用正在执行用户请求的操作。（指示应用程序正在执行用户请求的操作的标志。）
+    NSActivityUserInitiated = (0x00FFFFFFULL | NSActivityIdleSystemSleepDisabled),
+    
+    // 标志以指示应用程序正在执行用户请求的操作，但系统可以在空闲时休眠。
+    NSActivityUserInitiatedAllowingIdleSystemSleep = (NSActivityUserInitiated & ~NSActivityIdleSystemSleepDisabled),
+    
+    // App has initiated some kind of work, but not as the direct result of user request.
+    // 标志，指示应用程序已启动某种工作，但不是用户请求的直接结果。
+    NSActivityBackground = 0x000000FFULL,
+    
+    // Used for activities that require the highest amount of timer and I/O precision available. Very few applications should need to use this constant.
+    // 用于需要最高可用计时器和 I/O 精度的活动。很少有应用程序需要使用这个常量。
+    NSActivityLatencyCritical = 0xFF00000000ULL,
+} API_AVAILABLE(macos(10.9), ios(7.0), watchos(2.0), tvos(9.0));
+```
+
+> &emsp;The system has heuristics to improve battery life, performance, and responsiveness of applications for the benefit of the user. This API can be used to give hints to the system that your application has special requirements. In response to creating one of these activities, the system will disable some or all of the heuristics so your application can finish quickly while still providing responsive behavior if the user needs it.
+> &emsp;为了用户的利益，系统具有启发式以提高应用程序的电池寿命、性能和响应能力。此 API 可用于向系统提示你的应用程序有特殊要求。为了响应创建这些活动之一，系统将禁用部分或全部启发式方法，以便你的应用程序可以快速完成，同时在用户需要时仍提供响应行为。
+> 
+> &emsp;These activities can be used when your application is performing a long-running operation. If the activity can take different amounts of time (for example, calculating the next move in a chess game), it should use this API. This will ensure correct behavior when the amount of data or the capabilities of the user's computer varies. You should put your activity into one of two major categories:
+> &emsp;当你的应用程序正在执行长时间运行的操作时，可以使用这些活动。如果活动可能需要不同的时间（例如，计算国际象棋游戏中的下一步），则应使用此 API。这将确保在数据量或用户计算机功能发生变化时的正确行为。你应该将你的活动归入两个主要类别之一：
+> 
+> &emsp;User initiated: These are finite length activities that the user has explicitly started. Examples include exporting or downloading a user specified file.
+> &emsp;用户发起：这些是用户显式启动的有限长度活动。示例包括导出或下载用户指定的文件。
+>
+> &emsp;Background: These are finite length activities that are part of the normal operation of your application but are not explicitly started by the user. Examples include autosaving, indexing, and automatic downloading of files.
+> &emsp;Background：这些是有限长度的活动，是应用程序正常操作的一部分，但不是由用户显式启动的。示例包括文件的自动保存、索引和自动下载。
+> 
+> &emsp;In addition, if your application requires high priority IO, you can include the 'NSActivityLatencyCritical' flag (using a bitwise or). This should be reserved for activities like audio or video recording.
+> &emsp;此外，如果你的应用程序需要高优先级 IO，你可以包含 `NSActivityLatencyCritical` 标志（使用按位 `or`）。这应该保留用于音频或视频录制等活动。
+> 
+> &emsp;If your activity takes place synchronously inside an event callback on the main thread, you do not need to use this API.
+> &emsp;如果你的活动在主线程上的事件回调中同步发生，则不需要使用此 API。
+> 
+> &emsp;Be aware that failing to end these activities for an extended period of time can have significant negative impacts to the performance of your user's computer, so be sure to use only the minimum amount of time required. User preferences may override your application’s request.
+> &emsp;请注意，长时间未能结束这些活动可能会对用户计算机的性能产生重大负面影响，因此请确保仅使用所需的最短时间。用户偏好（preferences）可能会覆盖你的应用程序的请求。
+> 
+> &emsp;This API can also be used to control auto termination or sudden termination. 
+> &emsp;这个 API 还可以用来控制自动终止或突然终止。
+>
+>   `id activity = [NSProcessInfo.processInfo beginActivityWithOptions:NSActivityAutomaticTerminationDisabled reason:@"Good Reason"];`
+>   // work
+>  `[NSProcessInfo.processInfo endActivity:activity];`
+> 
+> &emsp;is equivalent to:
+> &emsp;相当于：
+>
+>  ` [NSProcessInfo.processInfo disableAutomaticTermination:@"Good Reason"];`
+>   // work
+>    `[NSProcessInfo.processInfo enableAutomaticTermination:@"Good Reason"]`
+>
+> &emsp;Since this API returns an object, it may be easier to pair begins and ends. If the object is deallocated before the -endActivity: call, the activity will be automatically ended.
+> &emsp;由于此 API 返回一个对象，因此将开始和结束配对可能更容易。如果在 `-endActivity:` 调用之前释放对象，则活动将自动结束。
+> 
+> &emsp;This API also provides a mechanism to disable system-wide idle sleep and display idle sleep. These can have a large impact on the user experience, so be sure not to forget to end activities that disable sleep (including NSActivityUserInitiated).
+> &emsp;这个 API 还提供了一种机制来禁用系统范围的空闲睡眠和显示空闲睡眠。这些可能会对用户体验产生很大影响，因此请确保不要忘记结束禁用睡眠的活动（包括 `NSActivityUserInitiated`）。
+
+&emsp;用于 `beginActivityWithOptions:reason:` 函数和 `performActivityWithOptions:reason:usingBlock:` 函数的选项标志。
+
+&emsp;要将这些单个标志之一包含在其中一个集合中，请使用按位 `OR`；例如，在演示过程中，你可能会使用：
+
+```c++
+NSActivityUserInitiated | NSActivityIdleDisplaySleepDisabled
+```
+
+&emsp;要从其中一个集合中排除，请使用按位 `AND` 和 `NOT`；例如，在用户发起的操作期间，如果注销，则可以在没有应用程序交互的情况下安全终止该操作，你可以使用：
+
+```c++
+NSActivityUserInitiated & ~NSActivitySuddenTerminationDisabled
+```
+
+##### NSProcessInfoThermalState
+
 &emsp;
-
-
-
-
-
-
-
-
-
-
-
 
 
 
