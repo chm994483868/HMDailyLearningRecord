@@ -489,7 +489,7 @@ Test_ipa_simple[47082:3533173] 🤯🤯🤯 16
 ```
 > &emsp;Synchronously perform an activity. The activity will be automatically ended after your block argument returns. The reason string is used for debugging.
 > 
-> &emsp;同步执行一项活动。活动将在 `block` 参数返回后（或者 `block` 内容执行完毕）自动结束。`reason` 字符串用于调试。
+> &emsp;同步执行一项活动。活动将在 `block` 参数返回后（即 `block` 内容执行完毕）自动结束。`reason` 字符串用于调试。
 
 &emsp;`options` 参数：活动的选项，`NSActivityOptions` 枚举列出了所有有关可能的值。
 
@@ -517,7 +517,7 @@ Test_ipa_simple[47082:3533173] 🤯🤯🤯 16
 
 &emsp;`reason` 参数：用于调试的字符串，用于指示活动开始的原因。此参数不能为 `nil` 或空字符串。
 
-&emsp;`block` 参数：包含活动要执行的内容的 block 块。该 `block` 没有返回值并采用以下 `BOOL` 类型的 `expired` 参数：
+&emsp;`block` 参数：包含活动要执行的内容的 block 块。该 `block` 没有返回值并采用以下 `BOOL` 类型的 `expired` 参数。
 
 &emsp;`expired` 参数：一个布尔值，指示进程是否将被挂起。如果值为 `YES`，则进程将被挂起，因此你应该采取任何必要的步骤来停止正在进行的工作。如果 `NO`，则启动计划任务。
 
@@ -625,7 +625,7 @@ typedef NS_OPTIONS(uint64_t, NSActivityOptions) {
     NSActivitySuddenTerminationDisabled = (1ULL << 14),
     
     // Prevents automatic termination. This is included in NSActivityUserInitiated.
-    // 防止自动终止。这包括在NSActivityUserInitiated中。
+    // 防止自动终止。这包括在 NSActivityUserInitiated 中。
     NSActivityAutomaticTerminationDisabled = (1ULL << 15),
     
     // ----
@@ -675,14 +675,14 @@ typedef NS_OPTIONS(uint64_t, NSActivityOptions) {
 >
 >   `id activity = [NSProcessInfo.processInfo beginActivityWithOptions:NSActivityAutomaticTerminationDisabled reason:@"Good Reason"];`
 >   // work
->  `[NSProcessInfo.processInfo endActivity:activity];`
+>   `[NSProcessInfo.processInfo endActivity:activity];`
 > 
 > &emsp;is equivalent to:
 > &emsp;相当于：
 >
->  ` [NSProcessInfo.processInfo disableAutomaticTermination:@"Good Reason"];`
+>   `[NSProcessInfo.processInfo disableAutomaticTermination:@"Good Reason"];`
 >   // work
->    `[NSProcessInfo.processInfo enableAutomaticTermination:@"Good Reason"]`
+>   `[NSProcessInfo.processInfo enableAutomaticTermination:@"Good Reason"]`
 >
 > &emsp;Since this API returns an object, it may be easier to pair begins and ends. If the object is deallocated before the -endActivity: call, the activity will be automatically ended.
 > &emsp;由于此 API 返回一个对象，因此将开始和结束配对可能更容易。如果在 `-endActivity:` 调用之前释放对象，则活动将自动结束。
@@ -777,7 +777,7 @@ FOUNDATION_EXTERN NSNotificationName const NSProcessInfoThermalStateDidChangeNot
 
 &emsp;是一个通知的名字，当系统的热状态发生变化时发布（发出此通知）。
 
-&emsp;至此 `NSProcesshidp` 的内容就全部都看完了，基本上就是对当前的应用程序（进程）的信息进行获取，然后根据不同的状态对进程进行一些状态的调整应对，以优化我们的设备更好的运行。
+&emsp;至此 `NSProcesshidp` 的内容就全部都看完了，基本也没什么难度，适合快速浏览。
 
 ## 参考链接
 **参考链接:🔗**
