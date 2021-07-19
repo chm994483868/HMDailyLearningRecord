@@ -12,7 +12,7 @@
 
 &emsp;每个进程都有一个共享的 `NSProcessInfo` 对象，称为进程信息代理（`NSProcessInfo *info = [NSProcessInfo processInfo];`）。
 
-&emsp;进程信息代理可以返回参数（`arguments`）、环境变量（`environment `）、主机名（`hostName`）和进程名（`name`）等信息。`processInfo` 类方法返回当前进程的共享代理，即其对象发送消息的进程。例如，以下行返回 `NSProcessInfo` 对象，然后提供当前进程的名称：
+&emsp;进程信息代理可以返回参数（`arguments`）（`main` 函数的参数：`char * argv[]`）、环境变量（`environment`）、主机名（`hostName`）和进程名（`name`）等信息。`processInfo` 类方法（或者叫 类属性）返回当前进程的共享代理（即通过这个类属性在当前进程，或者我们当前的程序的任何地方，都返回一个 `NSProcessInfo` 对象，它就代表我们当前的这个程序），即其对象发送消息的进程。例如，以下行返回 `NSProcessInfo` 对象，然后提供当前进程的名称：
 
 ```c++
 NSString *processName = [[NSProcessInfo processInfo] processName];
@@ -26,7 +26,7 @@ NSString *processName = [[NSProcessInfo processInfo] processName];
 
 &emsp;`NSProcessInfo` 类还包括 `operatingSystem` 方法，该方法返回一个枚举常量，标识在其上执行进程的操作系统。
 
-&emsp;如果 `NSProcessInfo` 对象无法将环境变量（environment variables）和命令行参数（command-line arguments）转换为 `Unicode` 作为 `UTF-8` 字符串，则它们会尝试解释用户默认 C 字符串编码中的环境变量和命令行参数。如果 Unicode 和 C 字符串转换都不起作用，`NSProcessInfo` 对象将忽略这些值。（这里描述的应该是使用 `-operatingSystemVersion` 或 `-isOperatingSystemAtLeastVersion:` 代替 `operatingSystem`）
+&emsp;如果 `NSProcessInfo` 对象无法将环境变量（environment variables）和命令行参数（command-line arguments）转换为 `Unicode` 作为 `UTF-8` 字符串，则它们会尝试解释用户默认 `C` 字符串编码中的环境变量和命令行参数。如果 `Unicode` 和 `C` 字符串转换都不起作用，`NSProcessInfo` 对象将忽略这些值。
 
 ### Managing Activities
 
@@ -59,7 +59,7 @@ id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAu
 [[NSProcessInfo processInfo] endActivity:activity];
 ```
 
-相当于:
+&emsp;相当于:
 
 ```c++
 [[NSProcessInfo processInfo] disableAutomaticTermination:@"Good Reason"];
@@ -79,7 +79,7 @@ id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAu
 
 &emsp;你的应用程序可以在全局基础上启用此功能，然后在允许突然终止可能导致数据损坏或用户体验不佳的操作期间手动覆盖其可用性。或者，你的应用程序可以手动启用和禁用此功能。
 
-&emsp;方法 `enableSuddenTermination` 和 `disableSuddenTermination` 分别减少或增加一个计数器，该计数器在第一次创建进程时的值为 1。当计数器的值为0时，应用程序被认为是可以安全终止的，并且可以由系统终止，而无需首先向进程发送任何通知或事件。
+&emsp;方法 `enableSuddenTermination` 和 `disableSuddenTermination` 分别减少或增加一个计数器，该计数器在第一次创建进程时的值为 1。当计数器的值为 0 时，应用程序被认为是可以安全终止的，并且可以由系统终止，而无需首先向进程发送任何通知或事件。
 
 &emsp;通过向应用程序的 `Info.plist` 添加一个键，你的应用程序可以支持在启动时突然终止。如果 `Info.plist` 中存在 `NSSupportsSuddenTermination` 键，并且其值为 `YES`，则相当于在应用程序启动期间调用 `enableSuddenTermination`。这使得应用程序进程可以立即终止。你仍然可以通过调用 `disableSuddenTermination` 来覆盖此行为。
 
@@ -168,7 +168,7 @@ int main(int argc, char * argv[]) {
 
 &emsp;进程的全局唯一标识符。
 
-&emsp;进程的全局 ID 包括主机名、进程ID和时间戳，这确保了该 ID 对于网络是唯一的。此属性在每次调用其 getter 时生成一个新字符串，并使用计数器来保证从同一进程创建的字符串是唯一的。
+&emsp;进程的全局 ID 包括主机名、进程 ID 和时间戳，这确保了该 ID 对于网络是唯一的。此属性在每次调用其 `getter` 时生成一个新字符串，并使用计数器来保证从同一进程创建的字符串是唯一的。
 
 ##### macCatalystApp
 
@@ -181,17 +181,17 @@ int main(int argc, char * argv[]) {
 @end
 ```
 
-&emsp;一个布尔值，指示进程是否源自于 iOS 应用程序并在 macOS 上运行。
+&emsp;一个布尔值，指示进程是否源自于 `iOS` 应用程序并在 `macOS` 上运行。
 
-&emsp;当此属性的值为 YES 时，此进程：
+&emsp;当此属性的值为 `YES` 时，此进程：
 
-+ 使用 `Mac Catalyst` 构建的 Mac 应用程序，或在 Apple silicon 上运行的 iOS 应用程序。
-+ 在 Mac 上运行。
++ 使用 `Mac Catalyst` 构建的 `Mac` 应用程序，或在 Apple silicon 上运行的 `iOS` 应用程序。
++ 在 `Mac` 上运行。
 
-&emsp;支持 iOS 和 macOS 的框架使用此属性来确定进程是否是使用 MacCatalyst 构建的 Mac 应用程序。要有条件地编译只在 `macOS` 中运行的源代码，请改用 `#if TARGET_OS_MACCATALYST`。
+&emsp;支持 `iOS` 和 `macOS` 的框架使用此属性来确定进程是否是使用 MacCatalyst 构建的 Mac 应用程序。要有条件地编译只在 `macOS` 中运行的源代码，请改用 `#if TARGET_OS_MACCATALYST`。
 
 > Note
-> 要区分运行在 Apple silicon 上的 iOS 应用程序和使用 Mac Catalyst 构建的 Mac 应用程序，请使用 iOSAppOnMac 属性。
+> 要区分运行在 Apple silicon 上的 iOS 应用程序和使用 Mac Catalyst 构建的 Mac 应用程序，请使用 `iOSAppOnMac` 属性。
 
 ##### iOSAppOnMac
 
@@ -206,7 +206,7 @@ int main(int argc, char * argv[]) {
 
 &emsp;一个布尔值，指示进程是在 Mac 上运行的 iPhone 或是 iPad 应用程序。
 
-&emsp;仅当进程是在 Mac 上运行的 iOS 应用程序时，此属性的值才为 YES。对于 Mac 上的所有其他应用程序，包括使用 Mac Catalyst 构建的 Mac 应用程序，该属性的值均为 NO。该属性也不适用于在 macOS 以外的平台上运行的进程。
+&emsp;仅当进程是在 Mac 上运行的 iOS 应用程序时，此属性的值才为 `YES`。对于 Mac 上的所有其他应用程序，包括使用 Mac Catalyst 构建的 Mac 应用程序，该属性的值均为 `NO`。该属性也不适用于在 macOS 以外的平台上运行的进程。
 
 ##### processIdentifier
 
@@ -264,15 +264,18 @@ int main(int argc, char * argv[]) {
 > - You can use these whenever your application defers work that must be done before the application terminates. If for example your application ever defers writing something to disk, and it has an NSSupportsSuddenTermination entry in its Info.plist so as not to contribute to user-visible delays at logout or shutdown time, it must invoke -disableSuddenTermination when the writing is first deferred and -enableSuddenTermination after the writing is actually done.
 
 > &emsp;禁用或重新启用快速被杀死的能力。这些方法的默认实现分别递增或递减一个计数器，当进程首次创建时其值为 1。当计数器的值为 0 时，应用程序被认为是可以安全地终止的，并且可以由操作系统终止，而不首先向进程发送任何通知或事件。如果应用程序的 `Info.plist` 有一个值为 `true` 的 `NSSupportsSuddenTermination` 条目，那么 `NSApplication` 会在应用程序启动期间自动调用 `-enableSsuddenTermination`，这通常会使进程立即终止。例如，你还可以在不依赖 `AppKit` 的代理或守护程序中立即手动调用 `-enableSumddenTermination`。之后，只要进程在终止之前有必须完成的工作，就可以调用这些方法。
+
 > + `NSUserDefaults` 使用这些来防止在设置默认值和将包含该默认值的首选项文件（preferences file）写入磁盘之间的进程终止。
 > + `NSDocument` 使用这些来防止在用户对文档进行更改和将用户更改写入磁盘之间的进程终止。
 > + 当应用程序延迟必须在应用程序终止之前完成的工作时，可以使用这些命令。例如，如果你的的应用程序曾经延迟将某些内容写入磁盘，并且它的 `Info.plist` 中有一个 `NSSupportsSuddenTermination` 条目，以便在注销或关机时不会造成用户可见的延迟，它必须在第一次延迟写入时调用 `-disablesuddenternimination`，并在实际完成写入后调用 `-enablesumddenternimination`。
+
+&emsp;看到这里，是不是给我们之前那个 “iOS 应用程序怎么退出？” “答：直接写个数组越界。”，这里是不是又提供了一个 iOS 应用程序退出的新思路。
 
 ##### disableSuddenTermination
 
 &emsp;`- (void)disableSuddenTermination API_AVAILABLE(macos(10.6)) API_UNAVAILABLE(ios, watchos, tvos);`
 
-&emsp;禁用使用 突然终止（sudden termination）快速终止的应用程序。（仅 macOS 可见）
+&emsp;禁用使用 突然终止（sudden termination）快速终止的应用程序。（仅 `macOS` 可见）
 
 &emsp;此方法递增 突然终止计数器（sudden termination counter）。当终止计数器（termination counter）达到 0 时，应用程序允许突然终止（sudden termination）。
 
@@ -282,7 +285,7 @@ int main(int argc, char * argv[]) {
 
 &emsp;`- (void)enableSuddenTermination API_AVAILABLE(macos(10.6)) API_UNAVAILABLE(ios, watchos, tvos);`
 
-&emsp;启用应用程序以使用 突然终止（sudden termination.） 快速杀死。（仅 macOS 可见）
+&emsp;启用应用程序以使用 突然终止（sudden termination.） 快速杀死。（仅 `macOS` 可见）
 
 &emsp;此方法减少突然终止计数器（sudden termination counter）。当终止计数器达到 0 时，应用程序允许突然终止（ sudden termination）。
 
@@ -304,7 +307,7 @@ int main(int argc, char * argv[]) {
 
 &emsp;`- (void)disableAutomaticTermination:(NSString *)reason API_AVAILABLE(macos(10.7)) API_UNAVAILABLE(ios, watchos, tvos);`
 
-&emsp;禁用应用程序的自动终止。`reason` 参数是自动终止被禁用的原因。（仅 macOS 可见）
+&emsp;禁用应用程序的自动终止。`reason` 参数是自动终止被禁用的原因。（仅 `macOS` 可见）
 
 &emsp;此方法增加自动终止计数器（automatic termination counter）。当计数器大于 0 时，应用程序被认为是活动的，不符合自动终止的条件。例如，你可以在即时消息应用程序的用户登录时禁用自动终止，因为即使应用程序处于非活动状态，应用程序也需要保持后台连接。
 
@@ -371,6 +374,15 @@ int main(int argc, char * argv[]) {
 &emsp;包含正在执行进程的操作系统版本的字符串。
 
 &emsp;操作系统版本字符串是人类可读的、本地化的，并且适合向用户显示。此字符串不适合进行分析。
+
+```c++
+NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+// 系统版本号
+NSLog(@"✳️✳️✳️ operatingSystemVersionString:%@",processInfo.operatingSystemVersionString);
+
+// 控制台打印
+✳️✳️✳️ operatingSystemVersionString:Version 14.4 (Build 18D46)
+```
 
 ##### operatingSystemVersion
 
