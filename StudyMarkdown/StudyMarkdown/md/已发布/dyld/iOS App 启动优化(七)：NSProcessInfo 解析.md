@@ -1,6 +1,8 @@
-# iOS App 启动优化(七)：NSProcessInfo 解析
+# iOS App 启动优化(八)：NSProcessInfo 解析
 
-&emsp;NSProcessInfo 是我们统计 APP 启动时间时必会用到的一个类，下面我们就通过官方文档对它进行学习。
+&emsp;`NSProcessInfo` 是我们统计 APP 启动时间时必会用到的一个类，下面我们就通过官方文档对它进行学习。
+
+&emsp;`NSProcesshidp` 的内容，基本也没什么难度，适合快速浏览。
 
 ## NSProcessInfo
 
