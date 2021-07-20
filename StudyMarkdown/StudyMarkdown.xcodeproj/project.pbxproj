@@ -23,6 +23,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8E12B93026A6552900BC72AC /* iOS App 启动优化(八)：Hook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：Hook.md"; sourceTree = "<group>"; };
+		8E12B93126A65B1900BC72AC /* 埋点.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "埋点.md"; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
 		8E5E58452685979D0088C814 /* StudyMarkdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StudyMarkdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E5E58482685979D0088C814 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -283,8 +285,10 @@
 				8E5E58A12686A0010088C814 /* iOS APP 启动优化(五)：map_images、load_images、unmap_image 过程解析.md */,
 				8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */,
 				8EB2848F2687EFD000CCD5FB /* iOS App 启动优化(七)：NSProcessInfo 解析.md */,
+				8E12B93026A6552900BC72AC /* iOS App 启动优化(八)：Hook.md */,
 				8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */,
 				8E7B22C7269D08BC00ED3945 /* iOS App 启动优化(九)：LLVM 和 Clang.md */,
+				8E12B93126A65B1900BC72AC /* 埋点.md */,
 			);
 			path = dyld;
 			sourceTree = "<group>";
