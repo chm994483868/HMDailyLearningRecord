@@ -129,8 +129,37 @@
 | imp_getBlock | 获取函数指针中的代码块 |
 | imp_removeBlock | 移除 IMP 中的代码块 |
 
+## Hook 概述
 
+### Hook 的定义
 
+&emsp;Hook 翻译成中文为 “钩子” “挂钩”，在 iOS 逆向领域中指的是改变程序运行流程的一种技术，通过 Hook 可以让别人的程序执行自己所写的代码。
+
+### Hook 的内容
+
+&emsp;OC 函数、Block、C/C++ 函数 
+
+### Hook 的方式
+
+&emsp;在 iOS 中 Hook 技术有以下几种：
+
++ `Method Swizzling` 利用 OC 的 Runtime 特性，动态改变 `SEL`（选择子）和 `IMP`（方法实现）的对应关系，达到 OC 方法调用流程改变的目的。
++ `fishhook` 这是 FaceBook 提供的一个动态修改链接 Mach-O 文件的工具，利用 Mach-O 文件加载原理，通过修改懒加载和非懒加载两个表的指针达到 C 函数 Hook 的目的。
++ `Cydia Substrate` 原名为 `Mobile Substrate`，它的主要作用是针对 OC 方法、C 函数以及函数地址进行 Hook 操作，且安卓也能使用。
+
+> &emsp;之前介绍过 `Method Swizzling`，OC 的 Runtime 特性让它有了 “黑魔法” 之称，同时也是局限性所在。
+
+&emsp;三者的区别如下：
++ `Method Swizzling` 只适用于动态的 OC 方法（运行时确认函数实现地址）
++ `fishhook` 适用于静态的 C 方法（编译时确定函数实现地址）
++ `Cydia Substrate` 是一种强大的框架，只需要通过 Logos 语言（类似于正向开发）就可以进行 Hook，适用于 OC 方法、C 函数以及函数地址。
+
+## fishhook 解读
+
+> &emsp;A library that enables dynamically rebinding symbols in Mach-O binaries running on iOS.
+> &emsp;在 iOS 上运行的 Mach-O 二进制文件中启用 **动态重新绑定符号** 的库。
+
+&emsp;[fishhook](https://github.com/facebook/fishhook)
 
 
 
