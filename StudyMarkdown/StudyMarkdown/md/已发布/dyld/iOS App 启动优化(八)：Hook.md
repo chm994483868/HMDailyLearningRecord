@@ -161,9 +161,9 @@
 
 &emsp;[fishhook](https://github.com/facebook/fishhook)
 
+&emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 上运行的 Mach-O 二进制文件中动态地重新绑定符号。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用以进行调试/跟踪（例如，审计文件描述符的双重关闭问题）。
 
-
-
+&emsp;`dyld` 通过更新 Mach-O 二进制文件的 `__DATA` 的特定部分的指针来绑定懒加载符号和非懒加载符号。fishhook 通过为传递给 rebind_符号的每个符号名确定要更新的位置，然后写出相应的替换来重新绑定这些符号。
 
 
 
