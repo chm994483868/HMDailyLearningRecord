@@ -410,6 +410,7 @@ int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel) {
   if (!_rebindings_head->next) {
   
     // 把 _rebind_symbols_for_image 函数注册为 image 添加时的回调
+    // ⬇️ _dyld_register_func_for_add_image 函数的详细分析在下面
     _dyld_register_func_for_add_image(_rebind_symbols_for_image);
     
   } else {
@@ -432,28 +433,42 @@ int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel) {
 
 ```c++
 /*
- * The following functions allow you to install callbacks which will be called by dyld whenever an image is loaded or unloaded.  During a call to _dyld_register_func_for_add_image() the callback func is called for every existing image.  Later, it is called as each new image is loaded and bound (but initializers not yet run).  The callback registered with _dyld_register_func_for_remove_image() is called after any terminators in an image are run and before the image is un-memory-mapped.
+ * The following functions allow you to install callbacks which will be called by dyld whenever an image is loaded or unloaded.  
+ * During a call to _dyld_register_func_for_add_image() the callback func is called for every existing image. 
+ * Later, it is called as each new image is loaded and bound (but initializers not yet run).  
+ * The callback registered with _dyld_register_func_for_remove_image() is called after any terminators in an image are run and before the image is un-memory-mapped.
  */
  
 extern void _dyld_register_func_for_add_image(void (*func)(const struct mach_header* mh, intptr_t vmaddr_slide))    __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
+extern void _dyld_register_func_for_remove_image(void (*func)(const struct mach_header* mh, intptr_t vmaddr_slide)) __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
 ```
 
+&emsp;以下函数允许你注册回调，每当加载或卸载 image 时，dyld 都会调用这些回调。在调用 `_dyld_register_func_for_add_image()` 期间，为每个现有 image 调用回调函数。稍后，在加载和绑定每个新 image 时调用它（但初始化程序尚未运行）。使用 `_dyld_register_func_for_remove_image()` 注册的回调在运行 image 中的任何终止符之后和 image 取消内存映射（`un-memory-mapped`）之前调用。
+
+&emsp;看到这里我们第一时间大概会想到 `_dyld_objc_notify_register` 函数，他们都是为 `dyld` 注册某种情况的回调函数。这里的 `_dyld_register_func_for_add_image` 注册的回调函数有两个调用时机：
+
+1. 调用完 `_dyld_register_func_for_add_image` 以后会直接遍历当前状态为 `image->getState() >= dyld_image_state_bound && image->getState() < dyld_image_state_terminated` 的 image 调用回调函数。
+2. 把回调函数添加到 `sAddImageCallbacks`（它是一个静态全局的 `std::vector<ImageCallback>` 变量） 中，当后续有新 image 添加时进行调用。
+
+&emsp;（在 `dyld` 源码中都能看到这些函数的定义，这里就不贴源码了。）
+
 ###### \_dyld_image_count \_dyld_get_image_header \_dyld_get_image_vmaddr_slide
+
+&emsp;以下函数允许你遍历所有加载的 images。这不是线程安全的操作。另一个线程可以在迭代过程中添加或删除 image。这些例程的许多用途都可以通过调用 `dladdr()` 来代替，`dladdr()` 将返回 `mach_header` 和 image 名称，给定 image 中的地址。 `dladdr()` 是线程安全的。
 
 ```c++
 /*
  * The following functions allow you to iterate through all loaded images.  
- * This is not a thread safe operation.  Another thread can add or remove
- * an image during the iteration.  
+ * This is not a thread safe operation.  Another thread can add or remove an image during the iteration.  
  *
- * Many uses of these routines can be replace by a call to dladdr() which 
- * will return the mach_header and name of an image, given an address in 
- * the image. dladdr() is thread safe.
+ * Many uses of these routines can be replace by a call to dladdr() which will return the mach_header and name of an image, given an address in the image. dladdr() is thread safe.
  */
  extern uint32_t                    _dyld_image_count(void)                              __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
  extern const struct mach_header*   _dyld_get_image_header(uint32_t image_index)         __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
  extern intptr_t                    _dyld_get_image_vmaddr_slide(uint32_t image_index) 
 ```
+
+&emsp;
 
 ##### prepend_rebindings
 
