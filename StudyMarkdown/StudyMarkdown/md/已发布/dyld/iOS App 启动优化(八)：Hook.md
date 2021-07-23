@@ -157,13 +157,13 @@
 ## fishhook 解读
 
 > &emsp;A library that enables dynamically rebinding symbols in Mach-O binaries running on iOS.
-> &emsp;在 iOS 上运行的 Mach-O 二进制文件中启用 **动态重新绑定符号** 的库。
+> &emsp;在 iOS 上运行的 Mach-O 二进制文件中启用 **动态重新绑定符号** 的库。（仅限于系统的 C 函数）
 
 &emsp;[fishhook](https://github.com/facebook/fishhook)
 
 &emsp;首先我们先看一下官方的描述：
 
-&emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 中运行的 Mach-O 二进制文件中动态地重新绑定符号。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
+&emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 中运行的 Mach-O 二进制文件中动态地重新绑定符号（仅限于系统的 C 函数）。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
 
 ### fishhook 的使用方式
 
@@ -176,13 +176,15 @@
 
 #import "AppDelegate.h"
 #import "fishhook.h"
- 
+
+// 这里声明两个静态全局的函数指针变量，分别用来记录系统函数 close 和 open 的地址
 static int (*orig_close)(int);
 static int (*orig_open)(const char *, int, ...);
  
 int my_close(int fd) {
   printf("🤯🤯🤯 Calling real close(%d)\n", fd);
   
+  // 经过下面 main 函数中的 rebind_symbols 调用后，这里的 orig_close 指针指向的地址就是系统的 close 函数 
   return orig_close(fd);
 }
  
@@ -197,10 +199,13 @@ int my_open(const char *path, int oflag, ...) {
     va_end(ap);
     
     printf("🤯🤯🤯 Calling real open('%s', %d, %d)\n", path, oflag, mode);
+    
+    // 同上，这里的 orig_open 指向系统的 open 函数
     return orig_open(path, oflag, mode);
   } else {
-  
     printf("🤯🤯🤯 Calling real open('%s', %d)\n", path, oflag);
+    
+    // 同上，这里的 orig_open 指向系统的 open 函数
     return orig_open(path, oflag, mode);
   }
 }
@@ -209,14 +214,16 @@ int main(int argc, char * argv[])
 {
   @autoreleasepool {
     
-    // ⬇️⬇️⬇️ 这里我们把系统的 close 和 open 的符号和我们自己的 my_close 和 my_open 函数符号进行交换，
-    // 那样下面的 open 和 close 函数调用时，就会执行我们的 my_open 和 my_open 函数
+    // ⬇️⬇️⬇️ 这里是把系统的 close 和 open 函数的地址替换为我们自己的 my_close 和 my_open 函数，
+    // 并且使用 orig_close 和 orig_open 两个静态全局变量记录系统的 close 和 open 的原始的函数地址。
+    
+    // 那样下面的 open 和 close 函数调用时，就会执行我们的 my_open 和 my_open 函数，然后它们内部又通过 orig_open 和 orig_close 来调用系统内原始的 open 和 close 函数
     rebind_symbols((struct rebinding[2]){{"close", my_close, (void *)&orig_close}, {"open", my_open, (void *)&orig_open}}, 2);
  
     // Open our own binary and print out first 4 bytes (which is the same for all Mach-O binaries on a given architecture)
     // 还记得 argv[0] 的，它就是我们当前程序的可执行文件的本地路径，然后直接读取它的前 4 个字节的内容，
-    // 即对应于 mach_header 结构体中 magic 魔数，用来表示当前的 mach-o 格式的文件是一个什么类型的文件，
-    // 如果我们对之前学习 mach-o 时还有印象的话，那么这里第一时间应该想到的就是 "可执行文件"
+    // 即对应于 mach_header 结构体中 magic 魔数，用来表示当前的 mach-o 格式的文件是一个什么类型的文件，（Mach-O Type）
+    // 如果我们对之前学习 mach-o 时还有印象的话，那么这里第一时间应该想到的就是："可执行文件"。
     
     printf("➡️➡️➡️ %s \n", argv[0]);
     
@@ -239,13 +246,13 @@ int main(int argc, char * argv[])
 // argv[0] 即我们的可执行文件的本地路径
 ➡️➡️➡️ /Users/hmc/Library/Developer/CoreSimulator/Devices/CC2922E4-A2DB-43DF-8B6F-D2987F683525/data/Containers/Bundle/Application/37AD7905-E15C-4039-905D-B474D67074AE/Test_ipa_simple.app/Test_ipa_simple
 
-// int fd = open(argv[0], O_RDONLY); 调用系统的 open 函数，就会调用我们的自己的 my_open 函数
+// int fd = open(argv[0], O_RDONLY); 调用系统的 open 函数转变为调用我们自己的 my_open 函数
 🤯🤯🤯 my_open Calling real open('/Users/hmc/Library/Developer/CoreSimulator/Devices/CC2922E4-A2DB-43DF-8B6F-D2987F683525/data/Containers/Bundle/Application/BD248843-0DA5-4D0F-91C5-7EBE5D97E687/Test_ipa_simple.app/Test_ipa_simple', 0)
 
 // feedfacf 是我们前面学习 mach-o 时贼熟悉的一个魔数了，表示当前是一个 mach-o 格式的可执行文件
 🤯🤯🤯 main Mach-O Magic Number: feedfacf
 
-// close(fd); 同样，调用系统的 close 函数，就会调用我们自己的 my_close 函数
+// close(fd); 同样，调用系统的 close 函数转变为调用我们自己的 my_close 函数
 🤯🤯🤯 my_close Calling real close(3)
 ...
 
@@ -270,12 +277,65 @@ int main(int argc, char * argv[])
 
 #### fishhook.h 
 
-&emsp;
+&emsp;`fishhook.h` 文件内容极少，只有一个结构体定义和两个函数声明。
 
+##### struct rebinding
 
+```c++
+/*
+ * A structure representing a particular intended rebinding from a symbol name to its replacement
+ */
+struct rebinding {
+  const char *name;
+  void *replacement;
+  void **replaced;
+};
+```
 
+&emsp;`rebinding` 表示从 symbol name（指 `name`） 到其替换（指 `replacement`）的特定预期重新绑定的 结构体。
 
+&emsp;如我们上面的示例代码中：`(struct rebinding[2]){{"close", my_close, (void *)&orig_close}, {"open", my_open, (void *)&orig_open}}`，`rebinding` 是一个长度是 2 的 `rebinding` 结构体数组，其中第一个元素的字面量写法可转换为如下：
 
+```c++
+struct rebinding closeVariable;
+closeVariable.name = "close";
+closeVariable.replacement = my_close;
+closeVariable.replaced = (void *)&orig_close;
+```
+
+&emsp;`rebinding` 结构体是用来定义替换函数使用的一个数据结构。`name` 成员变量表示要 Hook 的函数名称（ C 字符串），`replacement` 指针用来指定新的函数地址，即把 `name` 对应的函数的函数地址替换为 `replacement`（C 函数的名称就是一个函数指针，静态语言编译时就已确定。）`replaced` 是一个双重指针，只所以是这样是为了在函数内部直接修改外部指针变量的指向，用在 `rebinding` 结构体中就是为了记录 `name` 对应的原始函数的地址。 对应上面的 `closeVariable` 变量，当把其作为 `rebind_symbols` 函数的参数执行时，找到 `close`（它是一个系统函数）函数把它指向替换为 `my_close` 函数，`orig_close` 则是用来记录 `close` 函数的原始地址。
+
+##### rebind_symbols
+
+```c++
+/*
+ * For each rebinding in rebindings, rebinds references to external, 
+ * indirect symbols with the specified name to instead point at replacement
+ * for each image in the calling process as well as for all future images that are loaded by the process. 
+ * If rebind_functions is called more than once, the symbols to rebind are added to the existing list of rebindings, 
+ * and if a given symbol is rebound more than once, the later rebinding will take precedence.
+ */
+FISHHOOK_VISIBILITY
+int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel);
+```
+
+&emsp;对于 rebindings 中的每次重新绑定，重新绑定对具有指定名称的外部间接符号的引用，以代替调用进程中的每个 image 以及该进程加载的所有 future images 的替换。如果 rebind_functions 被多次调用，则将要重新绑定的符号添加到现有的重新绑定列表中，如果给定符号被多次重新绑定，则后面的重新绑定将优先。（即后面的会覆盖前面的符号绑定）
+
+##### rebind_symbols_image
+
+```c++
+/*
+ * Rebinds as above, but only in the specified image. The header should point
+ * to the mach-o header, the slide should be the slide offset. Others as above.
+ */
+FISHHOOK_VISIBILITY
+int rebind_symbols_image(void *header,
+                         intptr_t slide,
+                         struct rebinding rebindings[],
+                         size_t rebindings_nel);
+```
+
+&emsp;重新绑定同上，但是仅在指定的 image 中，`header` 参数指向该 mach-o 文件的 header，`slide` 参宿是 slide offset，其他都同 `rebind_symbols` 函数。
 
 
 
@@ -317,3 +377,5 @@ int main(int argc, char * argv[])
 **参考链接:🔗**
 + [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
 + [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
++ [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
++ [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
