@@ -393,27 +393,67 @@ static struct rebindings_entry *_rebindings_head;
 
 ```c++
 int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel) {
-  // 
+
+  // prepend_rebindings 函数的解析在下面 ⬇️⬇️
   int retval = prepend_rebindings(&_rebindings_head, rebindings, rebindings_nel);
   
+  // 当 retval 返回 -1 的话表示 prepend_rebindings 函数内部调用 malloc 函数申请空间失败
   if (retval < 0) {
     return retval;
   }
-  // If this was the first call, register callback for image additions (which is also invoked for
-  // existing images, otherwise, just run on existing images
+  
+  // If this was the first call, register callback for image additions (which is also invoked for existing images, otherwise, just run on existing images
+  // 如果这是第一次调用，请注册 image 添加的回调。（第一次调用 rebind_symbols 时 _rebindings_head->next 会为 nil）
+  // 这里用了一个 _dyld_register_func_for_add_image 函数，把 _rebind_symbols_for_image 函数注册为 image 添加时的回调。 
+  
+  // 如果 _rebindings_head->next 不存在时，即是第一次调用 rebind_symbols 函数
   if (!_rebindings_head->next) {
+  
+    // 把 _rebind_symbols_for_image 函数注册为 image 添加时的回调
     _dyld_register_func_for_add_image(_rebind_symbols_for_image);
+    
   } else {
+  
+    // 
     uint32_t c = _dyld_image_count();
+    
+    // 
     for (uint32_t i = 0; i < c; i++) {
       _rebind_symbols_for_image(_dyld_get_image_header(i), _dyld_get_image_vmaddr_slide(i));
     }
+    
   }
+  
   return retval;
 }
 ```
 
-&emsp;
+###### \_dyld_register_func_for_add_image
+
+```c++
+/*
+ * The following functions allow you to install callbacks which will be called by dyld whenever an image is loaded or unloaded.  During a call to _dyld_register_func_for_add_image() the callback func is called for every existing image.  Later, it is called as each new image is loaded and bound (but initializers not yet run).  The callback registered with _dyld_register_func_for_remove_image() is called after any terminators in an image are run and before the image is un-memory-mapped.
+ */
+ 
+extern void _dyld_register_func_for_add_image(void (*func)(const struct mach_header* mh, intptr_t vmaddr_slide))    __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
+```
+
+###### \_dyld_image_count \_dyld_get_image_header \_dyld_get_image_vmaddr_slide
+
+```c++
+/*
+ * The following functions allow you to iterate through all loaded images.  
+ * This is not a thread safe operation.  Another thread can add or remove
+ * an image during the iteration.  
+ *
+ * Many uses of these routines can be replace by a call to dladdr() which 
+ * will return the mach_header and name of an image, given an address in 
+ * the image. dladdr() is thread safe.
+ */
+ extern uint32_t                    _dyld_image_count(void)                              __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
+ extern const struct mach_header*   _dyld_get_image_header(uint32_t image_index)         __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
+ extern intptr_t                    _dyld_get_image_vmaddr_slide(uint32_t image_index) 
+```
 
 ##### prepend_rebindings
 
@@ -430,23 +470,38 @@ static int prepend_rebindings(struct rebindings_entry **rebindings_head,
     return -1;
   }
   
-  // 
+  // 调用 malloc 函数申请空间，并把起始地址赋值给 new_entry 的 rebinings。（这里申请空间的长度是 rebinding 结构体的内存空间占用长度乘以总共的 rebinding 结构体的个数）
   new_entry->rebindings = (struct rebinding *) malloc(sizeof(struct rebinding) * nel);
   
   // 同上，如果 malloc 申请空间失败，则返回 -1（返回之前要把上面 malloc 申请的空间通过 new_entry 指针进行释放）
   if (!new_entry->rebindings) {
+  
+    // 释放 new_entry 
     free(new_entry);
+    
     return -1;
   }
   
+  // 调用 memcpy 函数把入参传入的 rebindings 数组中的所有 rebinding 元素逐字节的拷贝到 new_entry 的 rebindings 成员变量中去   
   memcpy(new_entry->rebindings, rebindings, sizeof(struct rebinding) * nel);
+  
+  // nel 是入参 rebindings 数组的长度，赋值给 new_entry 的 rebindings_nel 成员变量，也表示了当前 new_entry 中保存了多少个 rebinding 结构体 
   new_entry->rebindings_nel = nel;
+  
+  // new_entry 的 next 成员变量指向，第一个参数 *rebindings_head 
   new_entry->next = *rebindings_head;
+  
+  // 这里把 new_entry 赋值给了第一个参数。
+  //（这里有个点，从前面调用可知，rebindings_head 参数其实是前面说过的 static struct rebindings_entry *_rebindings_head; 这个全局变量，
+  // 然后 prepend_rebindings 函数每调用一次就构建一个 struct rebindings_entry *new_entry，然后把 new_entry 添加到 rebindings_head 这个链表的头部，
+  // 然后再通过 *rebindings_head = new_entry; 保证 rebindings_head 一直是链表的头） 
   *rebindings_head = new_entry;
+  
   return 0;
 }
 ```
 
+&emsp;`prepend_rebindings` 函数的内容看完了，它的内部就是构建一个 `struct rebindings_entry *new_entry` 变量，然后把入参 `struct rebinding rebindings[]` 数组中的元素直接复制到 `new_entry` 的 `struct rebinding *rebindings;` 中，然后把入参 `size_t nel` 赋值给 `new_entry` 的 `size_t rebindings_nel;`（`nel` 是 `rebindings` 数组的长度），然后最后最重要的是 `new_entry` 会被拼接到 `rebindings_head` 链表到头部，并更新 `rebindings_head` 的值，保证它还是当前链表的头部。
 
 
 
