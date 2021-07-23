@@ -335,13 +335,117 @@ int rebind_symbols_image(void *header,
                          size_t rebindings_nel);
 ```
 
-&emsp;重新绑定同上，但是仅在指定的 image 中，`header` 参数指向该 mach-o 文件的 header，`slide` 参宿是 slide offset，其他都同 `rebind_symbols` 函数。
+&emsp;重新绑定同上，但是仅在指定的 image 中，`header` 参数指向该 mach-o 文件的 header，`slide` 参数是 slide offset，其他都同 `rebind_symbols` 函数。
 
+&emsp;看上面的 `rebind_symbols` 和 `rebind_symbols_image` 两个函数的定义和注释还是有点迷糊，下面我们直接看 `fishhook.c` 中他们的函数定义。
 
+#### fishhook.c
 
+&emsp;`fishhook.c` 的内容也不多，我们也一起看一下，先看下它涉及的数据结构，然后再沿着函数调用流程看一下它内部每一个函数的执行过程。
 
+&emsp;首先是一组我们比较熟悉的使用 `typedef` 来重命名的结构体，主要用于描述 mach-o 文件中的数据结构。（根据平台不同来使用 32/64 位的定义）
 
+```c++
+#ifdef __LP64__
 
+typedef struct mach_header_64 mach_header_t; // ⬅️ 表示 mach-o 的 hader（头部）的结构体
+typedef struct segment_command_64 segment_command_t; // ⬅️ 表示 mach-o 中 segment load command 的结构体
+typedef struct section_64 section_t; // ⬅️ 表示 mach-o 中 segment 中的 sections 的结构体
+typedef struct nlist_64 nlist_t; // ⬅️ 表示 mach-o 中 符号表条目结构。
+#define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT_64
+
+#else
+
+typedef struct mach_header mach_header_t;
+typedef struct segment_command segment_command_t;
+typedef struct section section_t;
+typedef struct nlist nlist_t;
+#define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT
+
+#endif
+
+#ifndef SEG_DATA_CONST
+
+#define SEG_DATA_CONST  "__DATA_CONST"
+
+#endif
+```
+
+##### rebindings_entry
+
+```c++
+struct rebindings_entry {
+  struct rebinding *rebindings;
+  size_t rebindings_nel;
+  struct rebindings_entry *next;
+};
+
+static struct rebindings_entry *_rebindings_head;
+```
+
+&emsp;`rebindings_entry` 结构体可以理解为一个链表节点的数据结构，`rebindings` 表示当前节点的内容，`rebindings_nel` 是链表长度（节点个数），`next` 是下一个节点。
+
+&emsp;`_rebindings_head` 则是一个静态全局的 `rebindings_entry` 变量，用来记录.....。
+
+##### rebind_symbols
+
+&emsp;下面我们沿着 `rebind_symbols` 函数的调用流程来看下每一个函数的内部实现细节。
+
+```c++
+int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel) {
+  // 
+  int retval = prepend_rebindings(&_rebindings_head, rebindings, rebindings_nel);
+  
+  if (retval < 0) {
+    return retval;
+  }
+  // If this was the first call, register callback for image additions (which is also invoked for
+  // existing images, otherwise, just run on existing images
+  if (!_rebindings_head->next) {
+    _dyld_register_func_for_add_image(_rebind_symbols_for_image);
+  } else {
+    uint32_t c = _dyld_image_count();
+    for (uint32_t i = 0; i < c; i++) {
+      _rebind_symbols_for_image(_dyld_get_image_header(i), _dyld_get_image_vmaddr_slide(i));
+    }
+  }
+  return retval;
+}
+```
+
+&emsp;
+
+##### prepend_rebindings
+
+```c++
+static int prepend_rebindings(struct rebindings_entry **rebindings_head,
+                              struct rebinding rebindings[],
+                              size_t nel) {
+                              
+  // 调用 malloc 函数申请 24 个字节的空间，并把首地址强转为 struct rebindings_entry 指针。（sizeof(struct rebindings_entry) 值为 24）                              
+  struct rebindings_entry *new_entry = (struct rebindings_entry *) malloc(sizeof(struct rebindings_entry));
+  
+  // 如果 malloc 申请空间失败，则返回 -1
+  if (!new_entry) {
+    return -1;
+  }
+  
+  // 
+  new_entry->rebindings = (struct rebinding *) malloc(sizeof(struct rebinding) * nel);
+  
+  // 同上，如果 malloc 申请空间失败，则返回 -1（返回之前要把上面 malloc 申请的空间通过 new_entry 指针进行释放）
+  if (!new_entry->rebindings) {
+    free(new_entry);
+    return -1;
+  }
+  
+  memcpy(new_entry->rebindings, rebindings, sizeof(struct rebinding) * nel);
+  new_entry->rebindings_nel = nel;
+  new_entry->next = *rebindings_head;
+  *rebindings_head = new_entry;
+  return 0;
+}
+```
 
 
 
