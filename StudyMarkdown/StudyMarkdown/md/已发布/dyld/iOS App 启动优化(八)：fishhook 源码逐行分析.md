@@ -1,4 +1,4 @@
-# iOS App 启动优化(八)：Hook 总结
+# iOS App 启动优化(八)：fishhook 源码逐行分析
 
 ## Runtime API 回顾
 
@@ -335,7 +335,7 @@ int rebind_symbols_image(void *header,
                          size_t rebindings_nel);
 ```
 
-&emsp;重新绑定同上，但是仅在指定的 image 中，`header` 参数指向该 mach-o 文件的 header，`slide` 参数是 slide offset，其他都同 `rebind_symbols` 函数。
+&emsp;重新绑定同上，但是仅在指定的 image 中，`header` 参数指向该 mach-o 文件的 header，`slide` 参数指定 image 在虚拟内存中的 slide offset，其他都同 `rebind_symbols` 函数。
 
 &emsp;看上面的 `rebind_symbols` 和 `rebind_symbols_image` 两个函数的定义和注释还是有点迷糊，下面我们直接看 `fishhook.c` 中他们的函数定义。
 
@@ -383,9 +383,9 @@ struct rebindings_entry {
 static struct rebindings_entry *_rebindings_head;
 ```
 
-&emsp;`rebindings_entry` 结构体可以理解为一个链表节点的数据结构，`rebindings` 表示当前节点的内容，`rebindings_nel` 是链表长度（节点个数），`next` 是下一个节点。
+&emsp;`rebindings_entry` 结构体作用为一个单向链表节点的数据结构使用（链表的内容就是我们上面的 `rebinding` 结构体），`rebindings` 表示当前节点的内容，`rebindings_nel` 是当前链表长度（节点个数），`next` 指向下一个节点。
 
-&emsp;`_rebindings_head` 则是一个静态全局的 `rebindings_entry` 变量，用来记录.....。
+&emsp;`_rebindings_head` 则是一个静态全局的 `rebindings_entry` 指针，它作为一个链表的头使用，而链表的每个节点中保存的内容就是我们每次调用 `rebind_symbols` 函数传进来的 `rebinding` 数组，调用一次 `rebind_symbols` 函数就是构建一个 `rebindings_entry` 节点，且这个新节点不是拼接在链表尾部的，这个新节点的 `next` 直接指向 `_rebindings_head`，然后把 `_rebindings_head` 更新为这个新节点的地址，即每次有新节点进来它都是直接拼接在原始链表头部的。
 
 ##### rebind_symbols
 
@@ -415,11 +415,12 @@ int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel) {
     
   } else {
   
-    // 
+    // 取得由 dyld 映射的当前 image 的数量
     uint32_t c = _dyld_image_count();
     
-    // 
+    // 遍历当前的所有 image，把 _rebindings_head 链表中的所有的节点中保存的 rebinding 在 image 的 segment load command 中进行查找绑定
     for (uint32_t i = 0; i < c; i++) {
+      // ⬇️ _rebind_symbols_for_image 函数在下面的详细分析（在当前 image 中进行查找绑定）
       _rebind_symbols_for_image(_dyld_get_image_header(i), _dyld_get_image_vmaddr_slide(i));
     }
     
@@ -454,7 +455,7 @@ extern void _dyld_register_func_for_remove_image(void (*func)(const struct mach_
 
 ###### \_dyld_image_count \_dyld_get_image_header \_dyld_get_image_vmaddr_slide
 
-&emsp;以下函数允许你遍历所有加载的 images。这不是线程安全的操作。另一个线程可以在迭代过程中添加或删除 image。这些例程的许多用途都可以通过调用 `dladdr()` 来代替，`dladdr()` 将返回 `mach_header` 和 image 名称，给定 image 中的地址。 `dladdr()` 是线程安全的。
+&emsp;以下函数允许你遍历所有加载的 images。这不是线程安全的操作，另一个线程可以在迭代过程中添加或删除 image。这些例程的许多用途都可以通过调用 `dladdr()` 来代替，`dladdr()` 将返回 `mach_header` 和 image 名称，给定 image 中的地址。 `dladdr()` 是线程安全的。
 
 ```c++
 /*
@@ -468,7 +469,13 @@ extern void _dyld_register_func_for_remove_image(void (*func)(const struct mach_
  extern intptr_t                    _dyld_get_image_vmaddr_slide(uint32_t image_index) 
 ```
 
-&emsp;
+&emsp;`_dyld_image_count` 返回由 `dyld` 映射的当前 image 的数量。Note: 使用这个
+count 迭代所有 images 不是线程安全的，因为另一个线程
+可能在迭代过程中添加或删除 image。
+
+&emsp;`_dyld_get_image_header` 返回指向由 `image_index` 索引的 image 的 `mach_header` 头的指针。如果 `image_index` 超出范围，则返回 NULL。
+
+&emsp;`_dyld_get_image_vmaddr_slide` 返回由 `image_index` 索引的 image 的虚拟内存地址滑动量。如果 `image_index` 超出范围返回零。
 
 ##### prepend_rebindings
 
@@ -518,10 +525,126 @@ static int prepend_rebindings(struct rebindings_entry **rebindings_head,
 
 &emsp;`prepend_rebindings` 函数的内容看完了，它的内部就是构建一个 `struct rebindings_entry *new_entry` 变量，然后把入参 `struct rebinding rebindings[]` 数组中的元素直接复制到 `new_entry` 的 `struct rebinding *rebindings;` 中，然后把入参 `size_t nel` 赋值给 `new_entry` 的 `size_t rebindings_nel;`（`nel` 是 `rebindings` 数组的长度），然后最后最重要的是 `new_entry` 会被拼接到 `rebindings_head` 链表到头部，并更新 `rebindings_head` 的值，保证它还是当前链表的头部。
 
+&emsp;下面我们看 fishhook 的核心函数，也是上面 `rebind_symbols` 函数的核心函数：`_rebind_symbols_for_image`。
 
+##### \_rebind_symbols_for_image
 
+```c++
+static void _rebind_symbols_for_image(const struct mach_header *header,
+                                      intptr_t slide) {
+    rebind_symbols_for_image(_rebindings_head, header, slide);
+}
+```
 
+&emsp;emmm... 内部调用 `rebind_symbols_for_image` 函数（名字去掉 `_`），然后把 `_rebindings_head` 这个全局变量作为第一个参数传入。下面开始我们详细看一下 `rebind_symbols_for_image` 函数的定义。
 
+##### rebind_symbols_for_image
+
+```c++
+static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
+                                     const struct mach_header *header,
+                                     intptr_t slide) {
+  // 
+  Dl_info info;
+  
+  // 
+  if (dladdr(header, &info) == 0) {
+    return;
+  }
+
+  segment_command_t *cur_seg_cmd;
+  segment_command_t *linkedit_segment = NULL;
+  
+  struct symtab_command* symtab_cmd = NULL;
+  struct dysymtab_command* dysymtab_cmd = NULL;
+
+  // 指针偏移，越过 mach header 部分，直接到达 load command 的首地址
+  uintptr_t cur = (uintptr_t)header + sizeof(mach_header_t);
+  
+  // 遍历 load command 中的 segment 的加载命令，
+  // 分别找到类型是 LC_SEGMENT_ARCH_DEPENDENT、LC_SYMTAB、LC_DYSYMTAB 的 load command
+  for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
+  
+    cur_seg_cmd = (segment_command_t *)cur;
+    
+    if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
+    
+    // 包含动态链接器所需的符号、字符串表等数据
+    
+    // the segment containing all structs created and maintained by the link editor.
+    // 包含由链接编辑器创建和维护的所有结构的段。
+    
+    // Created with -seglinkedit option to ld(1) for MH_EXECUTE and FVMLIB file types only
+    // 使用 -seglinkedit 选项创建 ld(1) 仅适用于 MH_EXECUTE 和 FVMLIB 文件类型
+    
+      if (strcmp(cur_seg_cmd->segname, SEG_LINKEDIT) == 0) {
+        linkedit_segment = cur_seg_cmd;
+      }
+      
+    } else if (cur_seg_cmd->cmd == LC_SYMTAB) {
+    
+      // link-edit stab symbol table info
+      // 符号表
+      symtab_cmd = (struct symtab_command*)cur_seg_cmd;
+      
+    } else if (cur_seg_cmd->cmd == LC_DYSYMTAB) {
+    
+      // 
+      dysymtab_cmd = (struct dysymtab_command*)cur_seg_cmd;
+      
+    }
+  }
+
+  // 如果有任何一个段不存在则直接 return
+  if (!symtab_cmd || !dysymtab_cmd || !linkedit_segment || !dysymtab_cmd->nindirectsyms) {
+    return;
+  }
+
+  // Find base symbol/string table addresses
+  // 
+  uintptr_t linkedit_base = (uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff;
+  
+  nlist_t *symtab = (nlist_t *)(linkedit_base + symtab_cmd->symoff);
+  char *strtab = (char *)(linkedit_base + symtab_cmd->stroff);
+
+  // Get indirect symbol table (array of uint32_t indices into symbol table)
+  uint32_t *indirect_symtab = (uint32_t *)(linkedit_base + dysymtab_cmd->indirectsymoff);
+
+  cur = (uintptr_t)header + sizeof(mach_header_t);
+  
+  for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
+  
+    cur_seg_cmd = (segment_command_t *)cur;
+    if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
+    
+      if (strcmp(cur_seg_cmd->segname, SEG_DATA) != 0 &&
+          strcmp(cur_seg_cmd->segname, SEG_DATA_CONST) != 0) {
+        continue;
+      }
+      
+      for (uint j = 0; j < cur_seg_cmd->nsects; j++) {
+        section_t *sect =
+          (section_t *)(cur + sizeof(segment_command_t)) + j;
+        if ((sect->flags & SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) {
+        
+          //
+          perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
+        }
+        if ((sect->flags & SECTION_TYPE) == S_NON_LAZY_SYMBOL_POINTERS) {
+          
+          // 
+          perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
+        }
+      }
+      
+    }
+    
+  }
+}
+
+```
+
+&emsp;
 
 
 
