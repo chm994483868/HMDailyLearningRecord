@@ -676,3 +676,4 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 + [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
 + [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
 + [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
++ [【iOS 开发】Git 中无法忽略 .xcuserstate 的解决方法](https://www.jianshu.com/p/3aa584f6ed80)
