@@ -658,12 +658,124 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 }
 ```
 
-&emsp;`rebind_symbols_for_image` 函数的内部流程很清晰，就是找到 mach-o 文件的 `lazy symbol pointers` 和 `non-lazy symbol pointers` 两个区调用 `perform_rebinding_with_section` 函数  
+&emsp;`rebind_symbols_for_image` 函数的内部流程很清晰，就是找到 mach-o 文件的 `lazy symbol pointers` 和 `non-lazy symbol pointers` 两个区调用 `perform_rebinding_with_section` 函数。  
 
+&emsp;下面我们看一下 `perform_rebinding_with_section` 函数的内容。
 
+```c++
+/*
+ * An indirect symbol table entry is simply a 32bit index into the symbol table to the symbol that the pointer or stub is refering to.  Unless it is for a non-lazy symbol pointer section for a defined symbol which strip(1) as removed.  In which case it has the value INDIRECT_SYMBOL_LOCAL.  If the symbol was also absolute INDIRECT_SYMBOL_ABS is or'ed with that.
+ */
+#define INDIRECT_SYMBOL_LOCAL    0x80000000
+#define INDIRECT_SYMBOL_ABS    0x40000000
+```
 
+&emsp;间接符号表条目只是指向指针或存根所指符号的符号表中的 32 位索引。除非它是用于已定义符号的非惰性符号指针部分，其中 strip(1) 已删除。在这种情况下，它的值为 INDIRECT_SYMBOL_LOCAL。如果符号也是绝对的，则 INDIRECT_SYMBOL_ABS 与此相关。
 
+##### perform_rebinding_with_section
 
+```c++
+static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
+                                           section_t *section,
+                                           intptr_t slide,
+                                           nlist_t *symtab,
+                                           char *strtab,
+                                           uint32_t *indirect_symtab) {
+                                           
+  // #define SEG_DATA_CONST "__DATA_CONST"
+  // isDataConst 用于标记入参 section 是否是属于 __DATA_CONST 段的区
+  const bool isDataConst = strcmp(section->segname, SEG_DATA_CONST) == 0;
+  
+  // nl_symbol_ptr 和 la_symbol_ptr section 中的 reserved1 字段指明对应的 indirect symbol table 起始的 index
+  uint32_t *indirect_symbol_indices = indirect_symtab + section->reserved1;
+  
+  // slide + section-> addr 就是符号对应的存放函数实现的数组，也就是 __nl_symbol_ptr 和 __la_symbol_ptr 区相应的函数指针都在这里了，所以可以通过 indirect_symbol_bindings 寻找函数地址
+  void **indirect_symbol_bindings = (void **)((uintptr_t)slide + section->addr);
+  
+  // typedef int vm_prot_t;
+  // #define VM_PROT_READ ((vm_prot_t) 0x01) /* read permission */
+  vm_prot_t oldProtection = VM_PROT_READ;
+  
+  // 如果是来自 __DATA_CONST 段的 section，由于 __DATA_CONST 段如其名，其只能读，不能写即不能修改，所以这里要修改它的权限，把它变为可修改。
+  if (isDataConst) {
+    oldProtection = get_protection(rebindings);
+    // 修改权限为可读可写
+    mprotect(indirect_symbol_bindings, section->size, PROT_READ | PROT_WRITE);
+  }
+  
+  // 遍历 section 里的每一个符号
+  for (uint i = 0; i < section->size / sizeof(void *); i++) {
+    // 找到符号在 indirect_symbol_indices 表中的值（符号表在 《程序员的自我修养中》看到，就是按顺序排列的一个一个以 \0 结尾的字符串，可以根据它们的 index 直接读取到它们，这个 index 并不是 0 1 2 按顺序这样，而是每个符号的首字母的下标）
+    uint32_t symtab_index = indirect_symbol_indices[i];
+    
+    if (symtab_index == INDIRECT_SYMBOL_ABS || symtab_index == INDIRECT_SYMBOL_LOCAL ||
+        symtab_index == (INDIRECT_SYMBOL_LOCAL   | INDIRECT_SYMBOL_ABS)) {
+      continue;
+    }
+    
+    // 以 symtab_index 作为下标，访问 symbol table
+    uint32_t strtab_offset = symtab[symtab_index].n_un.n_strx;
+    
+    // 获取到 symbol_name
+    char *symbol_name = strtab + strtab_offset;
+    
+    // 判断是否函数的名称是否有两个字符，为啥是两个，因为函数前面有个 _，所以方法的名称最少要 1 个 
+    bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
+    
+    // 下面开始遍历链表中的 rebinding 进行 hook，把链表的 头 赋值给 cur  
+    struct rebindings_entry *cur = rebindings;
+    
+    // 外层的 while 循环用来遍历 rebindings_entry 链表
+    while (cur) {
+     
+      // 内层的 for 循环遍历链表每个节点的 rebinding 数组
+      for (uint j = 0; j < cur->rebindings_nel; j++) {
+        
+        // 判断从 symbol_name[1] 两个函数的名字是否都是一致的，以及判断两个。找到与 rebinding 的 name 相同的符号
+        if (symbol_name_longer_than_1 && strcmp(&symbol_name[1], cur->rebindings[j].name) == 0) {
+        
+          // 如果 rebinding 的 replaced 不为 NULL 并且方法的实现和 replacement 的方法不一致
+          if (cur->rebindings[j].replaced != NULL && indirect_symbol_bindings[i] != cur->rebindings[j].replacement) {
+          
+            // rebinding 的 replaced 记录原始符号对应的函数实现（rebindings[j].replaced 保存 indirect_symbol_bindings[i] 的函数地址） 
+            *(cur->rebindings[j].replaced) = indirect_symbol_bindings[i];
+          }
+          
+          // 把原始符号对应的函数实现替换为我们 rebinding 中准备的替换函数 replacement 
+          indirect_symbol_bindings[i] = cur->rebindings[j].replacement;
+          
+          // goto 语句，跳到下面的 symbol_loop 处
+          goto symbol_loop;
+        }
+        
+      }
+      
+      // 更新 cur 为链表的下一个节点
+      cur = cur->next;
+    }
+    
+  symbol_loop:;
+  }
+  
+  // 如果 section 是来自 __DATA_CONST 段，上面修改了它的读写权限，所以这里需要把它修改回去！
+  if (isDataConst) {
+    int protection = 0;
+    if (oldProtection & VM_PROT_READ) {
+      protection |= PROT_READ;
+    }
+    if (oldProtection & VM_PROT_WRITE) {
+      protection |= PROT_WRITE;
+    }
+    if (oldProtection & VM_PROT_EXECUTE) {
+      protection |= PROT_EXEC;
+    }
+    mprotect(indirect_symbol_bindings, section->size, protection);
+  }
+  
+}
+```
+
+&emsp;`perform_rebinding_with_section` 函数内部就是取得 `rebinding` 的 `name` 对应的函数实现，然后记录在 `replaced` 中，并把原符号对应的实现，替换为 `replacement`。
 
 
 
