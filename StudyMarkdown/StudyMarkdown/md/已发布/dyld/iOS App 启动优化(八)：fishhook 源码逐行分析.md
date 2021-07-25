@@ -259,7 +259,33 @@ int main(int argc, char * argv[])
 // 然后下面还有一堆的 my_open 和 my_close 的打印，是程序运行时其它的一些 open 和 close 的调用，感兴趣的话可以自己打印看看。 
 ```
 
-&emsp;那么下面我们看一下 fishhook 内部是怎么工作的。
+### 在 mach-o 文件中查找函数实现 
+
+&emsp;在下面看 fishhook 内部是怎么工作之前，我们首先看一个其它的知识点。我们在 `main` 函数中打印 `NSLog` 函数的地址（`NSLog(@"🎃🎃🎃 %p", NSLog);` 控制台输出：`🎃🎃🎃 0x7fff20805d0d`），我们多次打印，或者删除 APP 后重新运行打印，可看到 `NSLog` 函数的地址一直都是固定的。
+
+&emsp;下面我们借助 [fangshufeng/MachOView](https://github.com/fangshufeng/MachOView) 来直面 mach-o 文件，在其中查找函数实现地址，这里以 `NSLog` 函数为例。
+
+&emsp;下面我们根据字符串对应在符号表中的指针，找到其在共享库的函数实现。
+
+1. 在 `Section64(__DATA, __la_symbol_ptr)` 的 `Lazy Symbol Pointers` 中， `_NSLog` 位于第一个，下标为 0。
+
+![截屏2021-07-25 下午8.48.49.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/136ba2d1e68d41228829f3bc0356ed14~tplv-k3u1fbpfcp-watermark.image)
+
+2. 在 `Dynamic Symbol Table` 的 `Indirect Symbols` 中，`_NSLog` 也是位于第一个，且可看到 `Indirect Symbols` 中的 Value 和上面 `Lazy Symbol Pointers` 中的 Value 是一一对应的，依次都是：`_NSLog`、`_NSStringFromClass`、`_NSStringFromSelector`、`_UIApplicationMain`... 等。在 `Indirect Symbols` 中 `_NSLog` 条目的 Data 的值是：`0x111`（十进制是：273），此值会用在另一个表中：`Symbol Table` 的 `Symbols` 中。
+
+![截屏2021-07-25 下午8.51.17.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/629957a693744c7e9de6ac2d6e285d65~tplv-k3u1fbpfcp-watermark.image)
+
+3. 然后我们拿着上面得到的 273 在 `Symbol Table` 的 `Symbols` 中查找，我们看着 Offset 的值一直向上滚动，直到滚动到 #273，我们便找到了 `_NSLog`，此时我们看到 `_NSLog` 条目的 Data 的值是：`Ox000000E1`，此值对应了 `_NSLog` 在 `String Table Index` 中的偏移值。
+
+![截屏2021-07-25 下午9.08.35.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c366c4e8c21f40f18e81fe0f374c9380~tplv-k3u1fbpfcp-watermark.image)
+
+4. 最后在 `String Table` 中计算表头（`Ox00011D00`）+ 偏移量（`Ox000000E1`）得到：`Ox00011DE1`，即找到了 `NSLog` 的函数地址。
+
+![截屏2021-07-25 下午9.27.58.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bdd80417d7e34900afabb3fdeca4b4ee~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;以上查找 `NSLog` 函数的整个流程总结下来便是：`Section64(__DATA, __la_symbol_ptr)`：`Lazy Symbol Pointers` -> `Dynamic Symbol Table`：`Indirect Symbols`（`Data` 转换为 10 进制作为一个下标使用）-> `Symbol Table`：`Symbols`（`Data` 作为一个偏移量使用）-> `String Table`，请对此过程保持一个印象，下面的 fishhook 的实现代码中，对 rebinding 中 name 的查找的过程就和此一致。
+
+&emsp;下面我们继续学习 fishhook 看看它是如何工作的。
 
 ### fishhook How it works
 
@@ -777,24 +803,7 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 
 &emsp;`perform_rebinding_with_section` 函数内部就是取得 `rebinding` 的 `name` 对应的函数实现，然后记录在 `replaced` 中，并把原符号对应的实现，替换为 `replacement`。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;至此 fishhook 的全部实现过程我们就看完了，这样我们在熟练使用 fishhook 来 hook C 函数的同时，也对其实现原理一目了然了。
 
 ## 参考链接
 **参考链接:🔗**
@@ -807,14 +816,8 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 + [iOS程序员的自我修养-fishhook原理（五）](https://juejin.cn/post/6844903926051897358)
 + [iOS 逆向 - Hook / fishHook 原理与符号表](https://juejin.cn/post/6844903992904908814)
 
-
 + [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
 + [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
 + [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
 + [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
 
-
-
-
-
-+ [【iOS 开发】Git 中无法忽略 .xcuserstate 的解决方法](https://www.jianshu.com/p/3aa584f6ed80)
