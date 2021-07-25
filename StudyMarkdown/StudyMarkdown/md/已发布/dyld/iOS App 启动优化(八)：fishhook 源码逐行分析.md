@@ -544,107 +544,121 @@ static void _rebind_symbols_for_image(const struct mach_header *header,
 static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
                                      const struct mach_header *header,
                                      intptr_t slide) {
-  // 
+  // 这里是使用 dladdr 函数来判断传入的 header 地址是否有对应的 image 存在 
   Dl_info info;
-  
-  // 
   if (dladdr(header, &info) == 0) {
     return;
   }
-
-  segment_command_t *cur_seg_cmd;
-  segment_command_t *linkedit_segment = NULL;
   
+  // 下面是 4 个局部变量，分别用来记录从 mach-o 中的找到的指定的 segment load command
+  
+  // cur_seg_cmd 仅用于记录每次循环时的 segment load command
+  segment_command_t *cur_seg_cmd;
+  
+  segment_command_t *linkedit_segment = NULL;
   struct symtab_command* symtab_cmd = NULL;
   struct dysymtab_command* dysymtab_cmd = NULL;
 
-  // 指针偏移，越过 mach header 部分，直接到达 load command 的首地址
+  // 指针偏移，越过 mach-o 的 mach header 部分，直接到达 load command 部分的首地址
   uintptr_t cur = (uintptr_t)header + sizeof(mach_header_t);
   
-  // 遍历 load command 中的 segment 的加载命令，
-  // 分别找到类型是 LC_SEGMENT_ARCH_DEPENDENT、LC_SYMTAB、LC_DYSYMTAB 的 load command
+  // 遍历 mach-o 文件中 load command 部分中保存的每条 segment load command，
+  // 分别找到类型是 LC_SEGMENT_ARCH_DEPENDENT、LC_SYMTAB、LC_DYSYMTAB 的 segment load command
   for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
-  
     cur_seg_cmd = (segment_command_t *)cur;
+    
+    // #define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT_64
     
     if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
     
-    // 包含动态链接器所需的符号、字符串表等数据
-    
-    // the segment containing all structs created and maintained by the link editor.
-    // 包含由链接编辑器创建和维护的所有结构的段。
-    
-    // Created with -seglinkedit option to ld(1) for MH_EXECUTE and FVMLIB file types only
-    // 使用 -seglinkedit 选项创建 ld(1) 仅适用于 MH_EXECUTE 和 FVMLIB 文件类型
-    
+      // #define SEG_LINKEDIT "__LINKEDIT"
+      
       if (strcmp(cur_seg_cmd->segname, SEG_LINKEDIT) == 0) {
+      
+        // SEG_LINKEDIT：the segment containing all structs created and maintained by the link editor. Created with -seglinkedit option to ld(1) for MH_EXECUTE and FVMLIB file types only
+        // SEG_LINKEDIT：包含由 link editor 创建和维护的所有结构的 segment。使用 -seglinkedit 选项创建 ld(1) 仅适用于 MH_EXECUTE 和 FVMLIB 文件类型
         linkedit_segment = cur_seg_cmd;
       }
       
+      // #define LC_SYMTAB 0x2 /* link-edit stab symbol table info */
+      
     } else if (cur_seg_cmd->cmd == LC_SYMTAB) {
-    
-      // link-edit stab symbol table info
-      // 符号表
+      // LC_SYMTAB：link-edit stab symbol table info
       symtab_cmd = (struct symtab_command*)cur_seg_cmd;
       
+      #define LC_DYSYMTAB 0xb /* dynamic link-edit symbol table info */
+      
     } else if (cur_seg_cmd->cmd == LC_DYSYMTAB) {
-    
-      // 
+      // LC_DYSYMTAB：dynamic link-edit symbol table info
       dysymtab_cmd = (struct dysymtab_command*)cur_seg_cmd;
       
     }
   }
 
-  // 如果有任何一个段不存在则直接 return
+  // 如果上面循环遍历中有任何一个 segment load command 不存在则直接 return
   if (!symtab_cmd || !dysymtab_cmd || !linkedit_segment || !dysymtab_cmd->nindirectsyms) {
     return;
   }
 
   // Find base symbol/string table addresses
-  // 
+  // 找到 symbol/string 的基址
+  
+  // uint64_t fileoff; /* file offset of this segment */ segment 在文件的偏移
+  
+  // 链接时程序的基址 = __LINKEDIT.VM_Address - __LINKEDIT.File_Offset + silde 的改变值
   uintptr_t linkedit_base = (uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff;
   
+  // 符号表的地址 = 基址 + 符号表偏移量
   nlist_t *symtab = (nlist_t *)(linkedit_base + symtab_cmd->symoff);
+  
+  // 字符串表的地址 = 基址 + 字符串表偏移量
   char *strtab = (char *)(linkedit_base + symtab_cmd->stroff);
 
   // Get indirect symbol table (array of uint32_t indices into symbol table)
+  
+  // 动态符号表地址 = 基址 + 动态符号表偏移量
   uint32_t *indirect_symtab = (uint32_t *)(linkedit_base + dysymtab_cmd->indirectsymoff);
-
+   
+  // cur 再次回到 segment load command 的起始处
   cur = (uintptr_t)header + sizeof(mach_header_t);
   
+  // 再次对 segment load command 进行遍历
   for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
-  
     cur_seg_cmd = (segment_command_t *)cur;
-    if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
     
-      if (strcmp(cur_seg_cmd->segname, SEG_DATA) != 0 &&
-          strcmp(cur_seg_cmd->segname, SEG_DATA_CONST) != 0) {
+    // 只需要查找 LC_SEGMENT_64 类型的 segment load command 
+    if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
+      
+      // #define SEG_DATA "__DATA" /* the tradition UNIX data segment */
+      // #define SEG_DATA_CONST  "__DATA_CONST"
+      // 如果不是 __DATA 或者 __DATA_CONST 段的话直接跳过 
+      if (strcmp(cur_seg_cmd->segname, SEG_DATA) != 0 && strcmp(cur_seg_cmd->segname, SEG_DATA_CONST) != 0) {
         continue;
       }
       
+      // 下面便是遍历 __DATA 或者 __DATA_CONST 段中的 sections
       for (uint j = 0; j < cur_seg_cmd->nsects; j++) {
-        section_t *sect =
-          (section_t *)(cur + sizeof(segment_command_t)) + j;
-        if ((sect->flags & SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) {
+        section_t *sect = (section_t *)(cur + sizeof(segment_command_t)) + j;
         
-          //
+        // #define S_LAZY_SYMBOL_POINTERS 0x7 /* section with only lazy symbol pointers */
+        // #define S_NON_LAZY_SYMBOL_POINTERS 0x6 /* section with only non-lazy symbol pointers */
+        
+        // 下面便是找到 lazy symbol pointers 和 non-lazy symbol pointers 两个区调用 perform_rebinding_with_section 函数  
+        
+        if ((sect->flags & SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) {
           perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
         }
+        
         if ((sect->flags & SECTION_TYPE) == S_NON_LAZY_SYMBOL_POINTERS) {
-          
-          // 
           perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
         }
-      }
-      
+      } 
     }
-    
   }
 }
-
 ```
 
-&emsp;
+&emsp;`rebind_symbols_for_image` 函数的内部流程很清晰，就是找到 mach-o 文件的 `lazy symbol pointers` 和 `non-lazy symbol pointers` 两个区调用 `perform_rebinding_with_section` 函数  
 
 
 
@@ -672,8 +686,23 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 
 ## 参考链接
 **参考链接:🔗**
++ [一文读懂fishhook原理](https://juejin.cn/post/6857699952563978247)
+
++ [fishhook的实现原理浅析](https://juejin.cn/post/6844903789783154702)
++ [fishhook使用场景&源码分析](https://juejin.cn/post/6844903793008574477)
+
++ [从fishhook第三方库学到的知识【有所得】](https://juejin.cn/post/6915680287049383944)
++ [iOS程序员的自我修养-fishhook原理（五）](https://juejin.cn/post/6844903926051897358)
++ [iOS 逆向 - Hook / fishHook 原理与符号表](https://juejin.cn/post/6844903992904908814)
+
+
 + [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
 + [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
 + [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
 + [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
+
+
+
+
+
 + [【iOS 开发】Git 中无法忽略 .xcuserstate 的解决方法](https://www.jianshu.com/p/3aa584f6ed80)
