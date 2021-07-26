@@ -259,6 +259,37 @@ int main(int argc, char * argv[])
 // 然后下面还有一堆的 my_open 和 my_close 的打印，是程序运行时其它的一些 open 和 close 的调用，感兴趣的话可以自己打印看看。 
 ```
 
+### LLDB 调试
+
+&emsp;下面我们通过 LLDB 追踪一下 `open` 函数被 fishhook 进行 hook 的经过。首先 `open` 是个懒加载的符号，当我们对其调用时才会对其进行链接绑定。
+
+1. 通过 `image list` 打印当前进程用到的 image 镜像，而第一个便是我们当前进程的内存首地址：`0x000000010edd3000`。
+
+```c++
+[  0] FE4E48B2-B8C7-37A3-97FF-F1004704277F 0x000000010edd3000 /Users/hmc/Library/Developer/Xcode/DerivedData/Test_ipa_simple-hfabjfhaswcxjleagxtdjjvbnnhi/Build/Products/Debug-iphonesimulator/Test_ipa_simple.app/Test_ipa_simple 
+      /Users/hmc/Library/Developer/Xcode/DerivedData/Test_ipa_simple-hfabjfhaswcxjleagxtdjjvbnnhi/Build/Products/Debug-iphonesimulator/Test_ipa_simple.app.dSYM/Contents/Resources/DWARF/Test_ipa_simple
+```
+
+![截屏2021-07-26 下午10.54.52.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a205362189284f14b79e7d981ad5b51b~tplv-k3u1fbpfcp-watermark.image)
+
+2. 从当前进程的 mach-o 文件中获取到 `open` 的内存偏移量：`0x000C0D8`，然后通过 内存首地址 + 内存偏移量 取得 `open` 的符号地址：`0x000000010edd3000` + `0x000C0D8` = `0x10EDDF0D8`。
+
+![截屏2021-07-26 下午10.59.47.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4e690287e499463e98f1f79e2a832bba~tplv-k3u1fbpfcp-watermark.image)
+
+3. 通过 `memory read` 读取我们上面计算得出的符号地址，已知 iOS 是小端模式，所以这里我们需要把 8 个字节进行倒着读，即为：`0x010edd90c0`。
+
+![截屏2021-07-26 下午11.08.48.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/141dd4e4038d4685ae5c96acd49c80d0~tplv-k3u1fbpfcp-watermark.image)
+
+4. 下面通过 `dis -s` 查看上面地址的汇编。此时的符号并没有绑定，因为 `open` 函数还没有被使用过。
+
+![截屏2021-07-26 下午11.16.20.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fbd7d15b9e1e443382be81aa692ffefe~tplv-k3u1fbpfcp-watermark.image)
+
+### fishhook 的局限性
+
+&emsp;前面介绍了 fishhook 是用来 hook C 函数的，这里其实还有一个前提，就是它只能 hook 系统的 C 函数，并不能 hook 我们自己写的自定义 C 函数。C 函数是静态的，在编译时就已经确定了函数地址（函数实现地址在 mach-o 本地文件中），而系统的 C 函数则存在着动态的部分，那么为什么系统级别的 C 函数存在着的动态的部分是什么呢？这就要说到 PIC（position-independent code） 技术，又叫做 位置独立代码/位置无关代码，是为了系统 C 函数在编译时期能够确认一个地址的一种技术手段。
+
+&emsp;编译时在 mach-o 文件中预留一段空间 -- 符号表（`__DATA` 段中），dyld 把应用加载到内存中时（此时在 load command 中会依赖 Foundation），在符号表中找到了 `NSLog` 函数，就会进行链接绑定 -- 将 Foundation 中 NSLog 的真实地址赋值到 `__DATA` 段的 `NSLog` 符号上。而自定义的 C 函数是不会生成符号表的，直接就是一个函数地址，所以 fishhook 的局限性就在于只有符号表内的符号才可以进行 hook（重新绑定符号）。
+
 ### 在 mach-o 文件中查找函数实现 
 
 &emsp;在下面看 fishhook 内部是怎么工作之前，我们首先看一个其它的知识点。我们在 `main` 函数中打印 `NSLog` 函数的地址（`NSLog(@"🎃🎃🎃 %p", NSLog);` 控制台输出：`🎃🎃🎃 0x7fff20805d0d`），我们多次打印，或者删除 APP 后重新运行打印，可看到 `NSLog` 函数的地址一直都是固定的。
