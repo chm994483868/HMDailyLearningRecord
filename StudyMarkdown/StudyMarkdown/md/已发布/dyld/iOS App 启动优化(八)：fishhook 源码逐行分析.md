@@ -261,18 +261,42 @@ int main(int argc, char * argv[])
 
 ### LLDB 调试
 
-&emsp;下面我们通过 LLDB 追踪一下 `open` 函数被 fishhook 进行 hook 的经过。首先 `open` 是个懒加载的符号，当我们对其调用时才会对其进行链接绑定。
+&emsp;下面我们通过 LLDB 追踪一下 `open` 函数被 fishhook 进行 hook 的经过。首先 `open` 位于 `__DATA, __la_symbol_ptr` 中是个懒加载的符号，当我们对其调用时才会对其进行链接绑定。
 
-1. 通过 `image list` 打印当前进程用到的 image 镜像，而第一个便是我们当前进程的内存首地址：`0x000000010edd3000`。
+> &emsp;我们先看一下 `image` 指令，`image list` 可列出当前可执行文件和其依赖的 shared library image。
+  
+  ```c++
+  (lldb) image
+       Commands for accessing information for one or more target modules.
+
+  Syntax: target modules <sub-command> ...
+
+  The following subcommands are supported:
+
+        add          -- Add a new module to the current target's modules.
+        dump         -- Commands for dumping information about one or more target
+                        modules.
+        list         -- List current executable and dependent shared library
+                        images.
+        load         -- Set the load addresses for one or more sections in a
+                        target module.
+        lookup       -- Look up information within executable and dependent
+                        shared library images.
+        search-paths -- Commands for managing module search paths for a target.
+        show-unwind  -- Show synthesized unwind instructions for a function.
+
+  For more help on any particular subcommand, type 'help <command> <subcommand>'.
+  ```
+
+1. 通过 `image list` 可打印当前可执行文件和其依赖的 shared library image 镜像被加载到内存时的地址。而第一个便是我们当前进程的内存首地址：`0x00000001028f5000`。（也发现有时候第一个 `/usr/lib/dyld `，这里我们要看准后面的路径，我们需要的是当前可执行文件在内存中的首地址。）
 
 ```c++
-[  0] FE4E48B2-B8C7-37A3-97FF-F1004704277F 0x000000010edd3000 /Users/hmc/Library/Developer/Xcode/DerivedData/Test_ipa_simple-hfabjfhaswcxjleagxtdjjvbnnhi/Build/Products/Debug-iphonesimulator/Test_ipa_simple.app/Test_ipa_simple 
-      /Users/hmc/Library/Developer/Xcode/DerivedData/Test_ipa_simple-hfabjfhaswcxjleagxtdjjvbnnhi/Build/Products/Debug-iphonesimulator/Test_ipa_simple.app.dSYM/Contents/Resources/DWARF/Test_ipa_simple
+[  0] 658ABFCE-9437-3F14-BB5F-A325278E9DBE 0x00000001028f5000 /Users/hmc/Library/Developer/Xcode/DerivedData/TEST_Fishhook-eebpjoiuicbyvheuyroqkvvqteeg/Build/Products/Debug-iphonesimulator/TEST_Fishhook.app/TEST_Fishhook 
 ```
 
-![截屏2021-07-26 下午10.54.52.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a205362189284f14b79e7d981ad5b51b~tplv-k3u1fbpfcp-watermark.image)
+![截屏2021-07-27 09.18.05.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/defe5737a5df46ef8ac57233b95ca2cb~tplv-k3u1fbpfcp-watermark.image)
 
-2. 从当前进程的 mach-o 文件中获取到 `open` 的内存偏移量：`0x000C0D8`，然后通过 内存首地址 + 内存偏移量 取得 `open` 的符号地址：`0x000000010edd3000` + `0x000C0D8` = `0x10EDDF0D8`。
+2. 右键 Products 文件夹中的 TEST_Fishhook.app 点击 Show in Finder，然后选中 TEST_Fishhook.app 显示包内容，然后用 MachOView 打开 TEST_Fishhook，可在此 mach-o 文件的 `Section64(__DATA,__la_symbol_ptr)` 的 `Lazy Symbol Pointers` 中看到 `open` 的内存偏移量：`0x000C0C0`，然后通过 内存首地址 + 内存偏移量 取得 `open` 的符号地址：`0x000000010edd3000` + `0x000C0D8` = `0x10EDDF0D8`。
 
 ![截屏2021-07-26 下午10.59.47.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4e690287e499463e98f1f79e2a832bba~tplv-k3u1fbpfcp-watermark.image)
 
