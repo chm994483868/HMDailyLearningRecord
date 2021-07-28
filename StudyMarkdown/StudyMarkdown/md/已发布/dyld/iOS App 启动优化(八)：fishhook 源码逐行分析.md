@@ -1,134 +1,5 @@
 # iOS App 启动优化(八)：fishhook 源码逐行分析
 
-## Runtime API 回顾
-
-1. objc_xxx 系列函数（objc_ 系列函数关注于宏观使用，如类与协议的空间分配、注册、注销 等操作）
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| objc_getClass | 获取 Class 对象 |
-| objc_getMetaClass | 获取 MetaClass 对象 |
-| objc_allocateClassPair | 分配空间，创建类（仅在创建之后，注册之前 能够添加成员变量） |
-| objc_registerClassPair | 注册一个类（注册后方可使用该类创建对象） |
-| objc_disposeClassPair | 注销某个类 |
-| objc_allocateProtocol | 开辟空间创建协议 |
-| objc_registerProtocol | 注册一个协议 |
-| objc_constructInstance | 构造一个实例对象（ARC 下无效） |
-| objc_destructInstance | 析构一个实例对象（ARC 下无效） |
-| objc_setAssociatedObject | 为实例对象关联对象 |
-| objc_getAssociatedObject | 获取实例对象的关联对象 |
-| objc_removeAssociatedObjects | 清空实例对象的所有关联对象 |
-
-2. class_xxx 系列函数（class_ 系列函数关注于类的内部，如实例变量、属性、方法、协议等相关问题）
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| class_addIvar | 为类添加实例变量 |
-| class_addProperty | 为类添加属性 |
-| class_addMethod | 为类添加方法 |
-| class_addProtocol | 为类遵循协议 |
-| class_replaceMethod | 替换类某方法的实现 |
-| class_getName | 获取类名 |
-| class_isMetaClass | 判断是否为元类 |
-| objc_getProtocol | 获取某个协议 |
-| objc_copyProtocolList | 拷贝在运行时中注册过的协议列表 |
-| class_getSuperclass | 获取某类的父类 |
-| class_setSuperclass | 设置某类的父类 |
-| class_getProperty | 获取某类的属性 |
-| class_getInstanceVariable | 获取实例变量 |
-| class_getClassVariable | 获取类变量 |
-| class_getInstanceMethod | 获取实例方法 |
-| class_getClassMethod | 获取类方法 |
-| class_getMethodImplementation | 获取方法的实现 |
-| class_getInstanceSize | 获取类的实例的大小 |
-| class_respondsToSelector | 判断类是否实现某方法 |
-| class_conformsToProtocol | 判断类是否遵循某协议 |
-| class_createInstance | 创建类的实例 |
-| class_copyIvarList | 拷贝类的实例变量列表 |
-| class_copyMethodList | 拷贝类的方法列表 |
-| class_copyProtocolList | 拷贝类遵循的协议列表 |
-| class_copyPropertyList | 拷贝类的属性列表 |
-
-3. object_xxx 系列函数（object_ 系列函数关注于对象的角度，如实例变量）
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| object_copy | 对象 copy (ARC 无效) |
-| object_dispose | 对象释放 (ARC 无效) |
-| object_getClassName | 获取对象的类名 |
-| object_getClass | 获取对象的 Class |
-| object_setClass | 设置对象的 Class |
-| object_getIvar | 获取对象中实例变量的值 |
-| object_setIvar | 设置对象中实例变量的值 |
-| object_getInstanceVariable | 获取对象中实例变量的值 (ARC 中无效,使用 object_getIvar) |
-| object_setInstanceVariable | 设置对象中实例变量的值 (ARC 中无效,使用 object_setIvar) |
-
-4. method_xxx 系列函数（method_ 系列函数关注于方法内部，如方法的参数及返回值类型和方法的实现）
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| method_getName | 获取方法名 |
-| method_getImplementation | 获取方法的实现 |
-| method_getTypeEncoding | 获取方法的类型编码 |
-| method_getNumberOfArguments | 获取方法的参数个数 |
-| method_copyReturnType | 拷贝方法的返回类型 |
-| method_getReturnType | 获取方法的返回类型 |
-| method_copyArgumentType | 拷贝方法的参数类型 |
-| method_getArgumentType | 获取方法的参数类型 |
-| method_getDescription | 获取方法的描述 |
-| method_setImplementation | 设置方法的实现 |
-| method_exchangeImplementations | 替换方法的实现 |
-
-5. property_xxx 系列函数（property_ 系列函数关于与属性内部，如属性的特性等）
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| property_getName | 获取属性名 |
-| property_getAttributes | 获取属性的特性列表 |
-| property_copyAttributeList | 拷贝属性的特性列表 |
-| property_copyAttributeValue | 拷贝属性中某特性的值 |
-
-6. protocol_xxx 系列函数
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| protocol_conformsToProtocol | 判断一个协议是否遵循另一个协议 |
-| protocol_isEqual | 判断两个协议是否一致 |
-| protocol_getName | 获取协议名称 |
-| protocol_copyPropertyList | 拷贝协议的属性列表 |
-| protocol_copyProtocolList | 拷贝某协议所遵循的协议列表 |
-| protocol_copyMethodDescriptionList | 拷贝协议的方法列表 |
-| protocol_addProtocol | 为一个协议遵循另一协议 |
-| protocol_addProperty | 为协议添加属性 |
-| protocol_getProperty | 获取协议中的某个属性 |
-| protocol_addMethodDescription | 为协议添加方法描述 |
-| protocol_getMethodDescription | 获取协议中某方法的描述 |
-
-7. ivar_xxx 系列函数
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| ivar_getName | 获取 Ivar 名称 |
-| ivar_getTypeEncoding | 获取类型编码 |
-| ivar_getOffset | 获取偏移量 |
-
-8. sel_xxx 系列函数
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| sel_getName | 获取名称 |
-| sel_getUid | 获取 Uid |
-| sel_registerName | 注册方法 |
-| sel_isEqual | 判断方法是否相等 |
-
-9. imp_xxx 系列函数
-
-| 函数名称 | 函数作用 |
-| --- | --- |
-| imp_implementationWithBlock | 通过代码块创建 IMP |
-| imp_getBlock | 获取函数指针中的代码块 |
-| imp_removeBlock | 移除 IMP 中的代码块 |
-
 ## Hook 概述
 
 ### Hook 的定义
@@ -163,7 +34,7 @@
 
 &emsp;首先我们先看一下官方的描述：
 
-&emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 中运行的 Mach-O 二进制文件中动态地重新绑定符号（仅限于系统的 C 函数）。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
+&emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 系统中运行的 Mach-O 二进制文件中动态地重新绑定符号（仅限于系统的 C 函数）。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
 
 ### fishhook 的使用方式
 
@@ -184,7 +55,7 @@ static int (*orig_open)(const char *, int, ...);
 int my_close(int fd) {
   printf("🤯🤯🤯 Calling real close(%d)\n", fd);
   
-  // 经过下面 main 函数中的 rebind_symbols 调用后，这里的 orig_close 指针指向的地址就是系统的 close 函数 
+  // 经过下面 main 函数中的 rebind_symbols 调用后，orig_close 这个函数指针指向的就是系统原始的 close 函数，这里即为调用系统原始的 close 函数 
   return orig_close(fd);
 }
  
@@ -200,12 +71,12 @@ int my_open(const char *path, int oflag, ...) {
     
     printf("🤯🤯🤯 Calling real open('%s', %d, %d)\n", path, oflag, mode);
     
-    // 同上，这里的 orig_open 指向系统的 open 函数
+    // 同上，orig_open 这个函数指针指向系统原始的 open 函数
     return orig_open(path, oflag, mode);
   } else {
     printf("🤯🤯🤯 Calling real open('%s', %d)\n", path, oflag);
     
-    // 同上，这里的 orig_open 指向系统的 open 函数
+    // 同上，orig_open 这个函数指针指向系统原始的 open 函数
     return orig_open(path, oflag, mode);
   }
 }
@@ -214,7 +85,7 @@ int main(int argc, char * argv[])
 {
   @autoreleasepool {
     
-    // ⬇️⬇️⬇️ 这里是把系统的 close 和 open 函数的地址替换为我们自己的 my_close 和 my_open 函数，
+    // ⬇️⬇️⬇️ 这里是把系统原始的 close 和 open 函数的地址替换为我们自定义的 my_close 和 my_open 函数，
     // 并且使用 orig_close 和 orig_open 两个静态全局变量记录系统的 close 和 open 的原始的函数地址。
     
     // 那样下面的 open 和 close 函数调用时，就会执行我们的 my_open 和 my_open 函数，然后它们内部又通过 orig_open 和 orig_close 来调用系统内原始的 open 和 close 函数
@@ -227,12 +98,17 @@ int main(int argc, char * argv[])
     
     printf("➡️➡️➡️ %s \n", argv[0]);
     
+    // 打开文件
     int fd = open(argv[0], O_RDONLY);
+    
+    // 读取前 4 个字节放在 magic_number 变量中
     uint32_t magic_number = 0;
     read(fd, &magic_number, 4);
     
+    // 这里就会打印出我们熟悉的 feedfacf 魔数
     printf("🤯🤯🤯 Mach-O Magic Number: %x \n", magic_number);
     
+    // 关闭文件
     close(fd);
  
     return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
@@ -259,11 +135,13 @@ int main(int argc, char * argv[])
 // 然后下面还有一堆的 my_open 和 my_close 的打印，是程序运行时其它的一些 open 和 close 的调用，感兴趣的话可以自己打印看看。 
 ```
 
-### LLDB 调试
+### 通过 LLDB 调试验证 fishhook 实现 hook 的过程 
 
-&emsp;下面我们通过 LLDB 追踪一下 `open` 函数被 fishhook 进行 hook 的经过。首先 `open` 位于 `__DATA, __la_symbol_ptr` 中是个懒加载的符号，当我们对其调用时才会对其进行链接绑定。
+&emsp;下面我们通过 LLDB 追踪一下 `open` 函数被 fishhook 进行 hook 的经过。
 
-> &emsp;我们先看一下 `image` 指令，`image list` 可列出当前可执行文件和其依赖的 shared library image。
+&emsp;首先 `open` 位于 `__DATA, __la_symbol_ptr` 中是个懒加载的符号，当我们对其调用时才会对其进行链接绑定。
+
+> &emsp;这里我们先看一下 `image` 指令的知识点，`image list` 指令可列出当前可执行文件在内存中的地址和以及其所依赖的 shared library image 的地址。
   
   ```c++
   (lldb) image
@@ -288,25 +166,75 @@ int main(int argc, char * argv[])
   For more help on any particular subcommand, type 'help <command> <subcommand>'.
   ```
 
-1. 通过 `image list` 可打印当前可执行文件和其依赖的 shared library image 镜像被加载到内存时的地址。而第一个便是我们当前进程的内存首地址：`0x00000001028f5000`。（也发现有时候第一个 `/usr/lib/dyld `，这里我们要看准后面的路径，我们需要的是当前可执行文件在内存中的首地址。）
+&emsp;为了便于我们验证 `hook` 的过程，这里我们对上面的示例代码做一下调整，用如下代码作为演示使用。
 
 ```c++
-[  0] 658ABFCE-9437-3F14-BB5F-A325278E9DBE 0x00000001028f5000 /Users/hmc/Library/Developer/Xcode/DerivedData/TEST_Fishhook-eebpjoiuicbyvheuyroqkvvqteeg/Build/Products/Debug-iphonesimulator/TEST_Fishhook.app/TEST_Fishhook 
+int main(int argc, char * argv[]) {
+    
+    // ⬇️ 在此行打一个断点 
+    NSLog(@"🎃🎃🎃 %p", open);
+    
+    int fd = open(argv[0], O_RDONLY);
+    uint32_t magic_number = 0;
+    read(fd, &magic_number, 4);
+    printf("🤯🤯🤯 %s Mach-O Magic Number: %x \n", __func__, magic_number);
+    close(fd);
+    
+    rebind_symbols((struct rebinding[2]){{"close", my_close, (void *)&orig_close}, {"open", my_open, (void *)&orig_open}}, 2);
+    
+    NSString * appDelegateClassName;
+    @autoreleasepool {
+        // Setup code that might create autoreleased objects goes here.
+        appDelegateClassName = NSStringFromClass([AppDelegate class]);
+    }
+    
+    return UIApplicationMain(argc, argv, nil, appDelegateClassName);
+}
 ```
 
-![截屏2021-07-27 09.18.05.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/defe5737a5df46ef8ac57233b95ca2cb~tplv-k3u1fbpfcp-watermark.image)
+&emsp;执行上面的代码，并进入第一个断点：
 
-2. 右键 Products 文件夹中的 TEST_Fishhook.app 点击 Show in Finder，然后选中 TEST_Fishhook.app 显示包内容，然后用 MachOView 打开 TEST_Fishhook，可在此 mach-o 文件的 `Section64(__DATA,__la_symbol_ptr)` 的 `Lazy Symbol Pointers` 中看到 `open` 的内存偏移量：`0x000C0C0`，然后通过 内存首地址 + 内存偏移量 取得 `open` 的符号地址：`0x000000010edd3000` + `0x000C0D8` = `0x10EDDF0D8`。
+1. 通过 `image list` 可打印当前可执行文件和其依赖的 shared library image 镜像被加载到内存时的地址。而第一个便是我们当前进程的内存首地址：`0x000000010b35f000`。（也发现有时候第一个是 `/usr/lib/dyld `，这里我们要看准后面的路径，我们需要的仅是当前可执行文件在内存中的首地址。）
 
-![截屏2021-07-26 下午10.59.47.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4e690287e499463e98f1f79e2a832bba~tplv-k3u1fbpfcp-watermark.image)
+```c++
+[  0] BAAF897A-1463-3D9E-BDFE-EA61525D3435 0x000000010b35f000 /Users/hmc/Library/Developer/Xcode/DerivedData/Test_ipa_simple-hfabjfhaswcxjleagxtdjjvbnnhi/Build/Products/Debug-iphonesimulator/Test_ipa_simple.app/Test_ipa_simple 
+```
 
-3. 通过 `memory read` 读取我们上面计算得出的符号地址，已知 iOS 是小端模式，所以这里我们需要把 8 个字节进行倒着读，即为：`0x010edd90c0`。
+![截屏2021-07-28 下午9.57.03.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9204fe2073fa4701aa30457eafa04091~tplv-k3u1fbpfcp-watermark.image)
 
-![截屏2021-07-26 下午11.08.48.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/141dd4e4038d4685ae5c96acd49c80d0~tplv-k3u1fbpfcp-watermark.image)
+2. 右键 Products 文件夹中的 Test_ipa_simple.app 点击 Show in Finder，然后选中 Test_ipa_simple.app 右键显示包内容，然后用 MachOView 打开 Test_ipa_simple 二进制文件，可在此 mach-o 文件的 `Section64(__DATA,__la_symbol_ptr)` 的 `Lazy Symbol Pointers` 中看到 `open` 符号指针 的偏移量：`0x000C0D8`，然后通过当前进程在内存中的首地址 + `open` 符号指针在内存的偏移量取得 `open` 符号指针的地址：`0x000000010b35f000` + `0x000C0D8` = `0x10B36B0D8`。
 
-4. 下面通过 `dis -s` 查看上面地址的汇编。此时的符号并没有绑定，因为 `open` 函数还没有被使用过。
+![截屏2021-07-28 下午10.03.40.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e7af7a526417469eafa174c91a8244c9~tplv-k3u1fbpfcp-watermark.image)
 
-![截屏2021-07-26 下午11.16.20.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fbd7d15b9e1e443382be81aa692ffefe~tplv-k3u1fbpfcp-watermark.image)
+3. 通过 `memory read` 直接读取我们上面计算得出的 `open` 符号指针的地址（即读出该地址内保存的值，也即为该指针的指向），已知 iOS 是小端模式，所以这里我们需要把 8 个字节进行倒着读，即为：`0x010b3650d0`。
+
+![截屏2021-07-28 下午10.09.34.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5a5de5494903476f90e86e5b75ea0486~tplv-k3u1fbpfcp-watermark.image)
+
+4. 下面通过 `dis -s` 查看上面地址的汇编代码。由于 `open` 是一个懒加载符号，且此时 `open` 函数还没有被使用过，此时并没有被绑定。
+
+![截屏2021-07-28 下午10.30.28.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6eb2ac4031b9468ca1f9a674f1a73554~tplv-k3u1fbpfcp-watermark.image)
+
+5. 然后我们单步向下执行，通过 `NSLog(@"🎃🎃🎃 %p", open);` 语句我们打印出了 `open` 函数指针所指向的地址：`0x7fff61133e65` 这个地址便是系统的 `open` 函数的真正地址，然后我们可以通过 `dis -s 0x7fff61133e65` 查看该地址的汇编代码来进行验证，可看到此地址下正是 `libsystem_kernel.dylib open` 函数。
+
+![截屏2021-07-28 下午10.38.30.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7c964b158e584b29b8d5408ff4072555~tplv-k3u1fbpfcp-watermark.image)
+
+6. 那么此时我们再执行一下 `memory read 0x10B36B0D8` 查看一下我们的 `open` 符号指针的指向有没有发生变化，通过打印发现，它依然指向 `0x010b3650d0`，即我们的 `open` 符号指针的指向还是没有变化。（它的正确的指向应该是 `0x7fff61133e65`）
+
+![截屏2021-07-28 下午10.46.04.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/912fe686ba614a34b64ceef9b09f56fb~tplv-k3u1fbpfcp-watermark.image)
+
+7. 那么到这里大家可能会有疑问了，这个 `open` 符号指针什么时候才能被绑定呢、才能指向真正的系统的 `open` 函数呢？上面我们也已经看到了系统的 `open` 函数的地址是 `0x7fff61133e65`，即当我们执行 `memory read 0x10B36B0D8` 指令输出 `0x7fff61133e65` 的时候，就是 `open` 符号指针被正确绑定了。看上面的代码区我们看到当前我们的单步执行到 `int fd = open(argv[0], O_RDONLY);` 此时我们再往下单步执行一下，然后再执行 `memory read 0x10B36B0D8` 指令便可看到 `0x10B36B0D8` 地址中保存的正是 `0x7fff61133e65`，即当我们第一次调用 `open` 函数的时候，`Section64(__DATA,__la_symbol_ptr)` 的 `Lazy Symbol Pointers` 中的 `open` 符号指针才真正指向系统的 `open` 函数。
+
+![截屏2021-07-28 下午11.05.28.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e2f11823cff54136bf501a4d6aee1a35~tplv-k3u1fbpfcp-watermark.image)
+
+8. 那么看到这里我们的 `open` 符号指针也被正确绑定了，那也该轮到我们的 fishhook 出场了，看它怎么 hook open 函数，把 `open` 符号指针的指向给修改了，指向我们自己的函数。我们连续单步往下执行，直到执行到 `rebind_symbols` 下面一行，然后我们再执行 `memory read 0x10B36B0D8` 指令，可看到我们的 `open` 符号指针的指向变化了，现在指向了 `0x010b363f60`，然后我们再执行 `dis -s 0x010b363f60` 转换为汇编代码，可看到此时 `open` 符号指针指向了 `Test_ipa_simple my_open` 函数，即此时 `open` 符号指针指向了我们自定义的 `my_open` 函数。
+
+![截屏2021-07-28 下午11.16.00.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0e8677b70b71454bad68acc2fcc271f9~tplv-k3u1fbpfcp-watermark.image)
+
+9. 此时还有一个点就是我们的系统的 `open` 函数哪去了呢？即当前我们的 `orig_open` 函数指针正指向我们系统的 `open` 函数，可看到当前 `orig_open` 函数指针指向的地址正是：`0x00007fff61133e65`，即为我们上面看到的系统的 `open` 函数的地址。即此时通过 `orig_open` 函数指针便可调用我们系统的 `open` 函数。
+
+![截屏2021-07-28 下午11.21.14.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/086e922516c649efa7867b36ddc9c8dc~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;这样我们就通过 LLDB 把 fishhook 实现 hook 的过程完整验证了。
 
 ### fishhook 的局限性
 
@@ -884,3 +812,133 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 + [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
 + [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
 + [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
+
+
+## Runtime API 回顾
+
+1. objc_xxx 系列函数（objc_ 系列函数关注于宏观使用，如类与协议的空间分配、注册、注销 等操作）
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| objc_getClass | 获取 Class 对象 |
+| objc_getMetaClass | 获取 MetaClass 对象 |
+| objc_allocateClassPair | 分配空间，创建类（仅在创建之后，注册之前 能够添加成员变量） |
+| objc_registerClassPair | 注册一个类（注册后方可使用该类创建对象） |
+| objc_disposeClassPair | 注销某个类 |
+| objc_allocateProtocol | 开辟空间创建协议 |
+| objc_registerProtocol | 注册一个协议 |
+| objc_constructInstance | 构造一个实例对象（ARC 下无效） |
+| objc_destructInstance | 析构一个实例对象（ARC 下无效） |
+| objc_setAssociatedObject | 为实例对象关联对象 |
+| objc_getAssociatedObject | 获取实例对象的关联对象 |
+| objc_removeAssociatedObjects | 清空实例对象的所有关联对象 |
+
+2. class_xxx 系列函数（class_ 系列函数关注于类的内部，如实例变量、属性、方法、协议等相关问题）
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| class_addIvar | 为类添加实例变量 |
+| class_addProperty | 为类添加属性 |
+| class_addMethod | 为类添加方法 |
+| class_addProtocol | 为类遵循协议 |
+| class_replaceMethod | 替换类某方法的实现 |
+| class_getName | 获取类名 |
+| class_isMetaClass | 判断是否为元类 |
+| objc_getProtocol | 获取某个协议 |
+| objc_copyProtocolList | 拷贝在运行时中注册过的协议列表 |
+| class_getSuperclass | 获取某类的父类 |
+| class_setSuperclass | 设置某类的父类 |
+| class_getProperty | 获取某类的属性 |
+| class_getInstanceVariable | 获取实例变量 |
+| class_getClassVariable | 获取类变量 |
+| class_getInstanceMethod | 获取实例方法 |
+| class_getClassMethod | 获取类方法 |
+| class_getMethodImplementation | 获取方法的实现 |
+| class_getInstanceSize | 获取类的实例的大小 |
+| class_respondsToSelector | 判断类是否实现某方法 |
+| class_conformsToProtocol | 判断类是否遵循某协议 |
+| class_createInstance | 创建类的实例 |
+| class_copyIvarList | 拷贝类的实例变量列表 |
+| class_copyMethodList | 拷贝类的方法列表 |
+| class_copyProtocolList | 拷贝类遵循的协议列表 |
+| class_copyPropertyList | 拷贝类的属性列表 |
+
+3. object_xxx 系列函数（object_ 系列函数关注于对象的角度，如实例变量）
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| object_copy | 对象 copy (ARC 无效) |
+| object_dispose | 对象释放 (ARC 无效) |
+| object_getClassName | 获取对象的类名 |
+| object_getClass | 获取对象的 Class |
+| object_setClass | 设置对象的 Class |
+| object_getIvar | 获取对象中实例变量的值 |
+| object_setIvar | 设置对象中实例变量的值 |
+| object_getInstanceVariable | 获取对象中实例变量的值 (ARC 中无效,使用 object_getIvar) |
+| object_setInstanceVariable | 设置对象中实例变量的值 (ARC 中无效,使用 object_setIvar) |
+
+4. method_xxx 系列函数（method_ 系列函数关注于方法内部，如方法的参数及返回值类型和方法的实现）
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| method_getName | 获取方法名 |
+| method_getImplementation | 获取方法的实现 |
+| method_getTypeEncoding | 获取方法的类型编码 |
+| method_getNumberOfArguments | 获取方法的参数个数 |
+| method_copyReturnType | 拷贝方法的返回类型 |
+| method_getReturnType | 获取方法的返回类型 |
+| method_copyArgumentType | 拷贝方法的参数类型 |
+| method_getArgumentType | 获取方法的参数类型 |
+| method_getDescription | 获取方法的描述 |
+| method_setImplementation | 设置方法的实现 |
+| method_exchangeImplementations | 替换方法的实现 |
+
+5. property_xxx 系列函数（property_ 系列函数关于与属性内部，如属性的特性等）
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| property_getName | 获取属性名 |
+| property_getAttributes | 获取属性的特性列表 |
+| property_copyAttributeList | 拷贝属性的特性列表 |
+| property_copyAttributeValue | 拷贝属性中某特性的值 |
+
+6. protocol_xxx 系列函数
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| protocol_conformsToProtocol | 判断一个协议是否遵循另一个协议 |
+| protocol_isEqual | 判断两个协议是否一致 |
+| protocol_getName | 获取协议名称 |
+| protocol_copyPropertyList | 拷贝协议的属性列表 |
+| protocol_copyProtocolList | 拷贝某协议所遵循的协议列表 |
+| protocol_copyMethodDescriptionList | 拷贝协议的方法列表 |
+| protocol_addProtocol | 为一个协议遵循另一协议 |
+| protocol_addProperty | 为协议添加属性 |
+| protocol_getProperty | 获取协议中的某个属性 |
+| protocol_addMethodDescription | 为协议添加方法描述 |
+| protocol_getMethodDescription | 获取协议中某方法的描述 |
+
+7. ivar_xxx 系列函数
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| ivar_getName | 获取 Ivar 名称 |
+| ivar_getTypeEncoding | 获取类型编码 |
+| ivar_getOffset | 获取偏移量 |
+
+8. sel_xxx 系列函数
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| sel_getName | 获取名称 |
+| sel_getUid | 获取 Uid |
+| sel_registerName | 注册方法 |
+| sel_isEqual | 判断方法是否相等 |
+
+9. imp_xxx 系列函数
+
+| 函数名称 | 函数作用 |
+| --- | --- |
+| imp_implementationWithBlock | 通过代码块创建 IMP |
+| imp_getBlock | 获取函数指针中的代码块 |
+| imp_removeBlock | 移除 IMP 中的代码块 |
