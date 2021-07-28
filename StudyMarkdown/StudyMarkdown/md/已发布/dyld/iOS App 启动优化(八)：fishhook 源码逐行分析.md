@@ -876,3 +876,11 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 + [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
 + [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
 
++ [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
++ [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
++ [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
++ [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
++ [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
++ [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
++ [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
++ [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
