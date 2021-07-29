@@ -597,7 +597,17 @@ Load command 13
 ![截屏2021-04-18 下午4.10.55.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/615183ec70fc43b8b51463a2c8b847f1~tplv-k3u1fbpfcp-watermark.image)
 
 ### Data
-&emsp;至于 Data 部分，在了解了头部和加载命令后，就没什么特别可说的了。Data 是最原始的编译数据，主要是程序的指令（代码）和数据，里面包含了 Objective-C 的类信息、常量等，它们的排布完全依照 Load Commands 的描述，包含 Load commands 中提到的各个段（Segments）的数据。Load Commands 到 Data 的箭头，Data 的位置是由 Load Commands 指定的。
+&emsp;至于 Data 部分，在上面 Load Command 部分中我们只看到了各个段以及包含有 section 的段中保存的区的头部信息（Section Header）（即各个段以及包含区的段，包含区的段中保存了区的头部信息），那么既然有了区的头部信息，那区的具体内容保存在哪里呢？正是保存在这个 Data 部分。通过上面的 Load Commands 的截图和下面的 Section 的截图，可看到 Load Commands 中的每个 Section64 Header 和下面的 Section64 是一一对应的。（这一部分 Section64 中的内容便被我们称之为 mach-o 文件中的 Data 部分！）
+
+&emsp;Data 部分是最原始的编译数据，主要是程序的指令（代码）和数据，里面包含了代码、类信息、常量、类名的字符串字面量、函数名的字符串字面量、函数类型的字符串字面量、懒加载和非懒加载符号指针等等，看它们的名字我们大概也能猜出一些它们的内容是啥，这里我们就不一一分析它们的内容和作用了，在后续的学习中我们都会接触到这些段和这些区，后续再分析它们的具体用途。它们的排布完全依照 Load Commands 的描述，包含 Load commands 中提到的各个段（Segments）的所包含的区（Sections）。
+
+&emsp;在上面那张 mach-o 文件的整体结构图中，简要画了一些 Load Commands 到 Data 的箭头，Data 的位置是由 Load Commands 指定的。
+
+![截屏2021-07-29 08.49.53.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e07016d0d97146718d82fa8b458a9f33~tplv-k3u1fbpfcp-watermark.image)
+
+### Loader Info（链接信息）
+
+&emsp;
 
 ## 参考链接
 **参考链接:🔗**
