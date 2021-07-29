@@ -247,7 +247,11 @@ hmc@HMdeMac-mini Test_ipa_Simple.app %
 
 ### Load commands
 
-&emsp;Header 中的数据已经说明了整个 Mach-O 文件的基本信息，但是整个 Mach-O 中最重要的还是 Load commands，Header 之后就是 Load commands，其占用的内存和加载命令的总数在 Header 中已经指出。Load commands 向操作系统说明了应当如何加载 Mach-O 文件中的数据（描述了怎样加载每个 Segment 的信息），对系统内核加载器和动态链接器起指导作用。（Load commands 紧随在 Header 后，它包含了一系列的加载命令，目的是向操作系统描述如何处理 Mach-O 文件。）
+&emsp;Header 中的数据已经说明了整个 Mach-O 文件的基本信息，但是整个 Mach-O 中最重要的还是 Load commands，Header 之后就是 Load commands，其占用的内存和加载命令的总数在 Header 中已经指出。Load commands 向操作系统说明了应当如何加载 Mach-O 文件中的数据（描述了怎样加载每个 Segment 的信息），对系统内核加载器和动态链接器起指导作用。
+
+> &emsp;（Load commands 紧随在 Header 后，它包含了一系列的加载命令，目的是向操作系统描述如何处理 Mach-O 文件。）
+
+> &emsp;Load commands 紧跟在头部之后，这些加载指令清晰的告诉加载器如何处理二进制数据，有些命令是由内核处理的，有些是由动态链接器处理的。在源码中有明显的注释来说明这些是动态链接器处理的。
 
 1. 它描述了文件中数据的具体组织结构。
 2. 它也说明了进程启动后，对应的内存空间结构是如何组织的。
@@ -285,13 +289,13 @@ struct load_command {
 ```c++
 /* Constants for the cmd field of all load commands, the type */
 
-// 将 segment（段）映射到进程的内存空间
+// 将 segment（段）映射到进程的地址空间
 #define LC_SEGMENT_64 0x19 /* 64-bit segment of this file to be mapped */
 
-// 二进制文件 id，与符号表 uuid 对应，可用作符号表匹配
+// 二进制文件 id，与符号表 uuid 对应，可用作符号表匹配（唯一的 UUID，标示二进制文件）
 #define LC_UUID 0x1b /* the uuid */
 
-// 加载动态链接器
+// 加载动态链接器（启动动态链接器）
 #define LC_LOAD_DYLINKER 0xe /* load a dynamic linker */
 
 // 描述在 __LINKEDIT 段的哪里找字符串表、符号表
@@ -303,6 +307,8 @@ struct load_command {
 // 其他的暂时就不一一列举了
 。。。
 ```
+
+&emsp;`LC_SEGMENT_64` 和 `LC_SEGMENT` 是加载的主要命令，它负责指导内核来设置进程的内存空间。
 
 #### Segment
 
@@ -355,6 +361,9 @@ struct segment_command_64 { /* for 64-bit architectures */
 + vmsize 段的虚拟内存大小。
 + fileoff 段在文件的偏移。
 + filesize 段在文件的大小。
+
+&emsp;将该段对应的文件内容加载到内存中：从 `offset` 处加载 `file size` 大小到虚拟内存 `vmaddr` 处。
+
 + nsects 段中包含多少个 section。
  
 #### Section 
