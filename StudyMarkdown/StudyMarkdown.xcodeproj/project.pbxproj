@@ -26,6 +26,7 @@
 		8E12B93026A6552900BC72AC /* iOS App 启动优化(八)：fishhook 源码逐行分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：fishhook 源码逐行分析.md"; sourceTree = "<group>"; };
 		8E12B93126A65B1900BC72AC /* 埋点.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "埋点.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
+		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
 		8E5E58452685979D0088C814 /* StudyMarkdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StudyMarkdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E5E58482685979D0088C814 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -165,6 +166,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8E53C9F226B29D6400FB0AD7 /* Swift */ = {
+			isa = PBXGroup;
+			children = (
+				8E53C9F326B29D9400FB0AD7 /* main.md */,
+			);
+			path = Swift;
+			sourceTree = "<group>";
+		};
 		8E5E583C2685979D0088C814 = {
 			isa = PBXGroup;
 			children = (
@@ -203,6 +212,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8E53C9F226B29D6400FB0AD7 /* Swift */,
 				8E5E5EA82686AC090088C814 /* KVCKVO */,
 				8E5E5EA72686ABE60088C814 /* 消息转发 */,
 				8E5E5EA62686ABB10088C814 /* ResponderChain */,
