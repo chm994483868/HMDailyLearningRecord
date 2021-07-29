@@ -575,31 +575,31 @@ Load command 13
 
 &emsp;下面的表格我们列出 Mach-O 文件 Test_ipa_simple 中的全部 23 条 Load commands 的名字以及它们对应的段名和包含的区名。
 
-| Load command | cmd | segname | sections | name |
-| --- | --- | --- | --- | --- |
-| 0 | LC_SEGMENT_64 | \_\_PAGEZERO | _ | _ |
-| 1 | LC_SEGMENT_64 | \_\_TEXT | \_\_text<br>\_\_stubs<br>\_\_stub_helper<br>\_\_objc_methlist<br>\_\_objc_methname<br>\_\_objc_classname<br>\_\_objc_methtype<br>\_\_cstring<br>\_\_unwind_info | _ |
-| 2 | LC_SEGMENT_64 | \_\_DATA_CONST | \_\_got<br>\_\_cfstring<br>\_\_objc_classlist<br>\_\_objc_protolist<br>\_\_objc_imageinfo | _ |
-| 3 | LC_SEGMENT_64 | \_\_DATA | \_\_la_symbol_ptr<br>\_\_objc_const<br>\_\_objc_selrefs<br>\_\_objc_classrefs<br>\_\_objc_superrefs<br>\_\_objc_ivar<br>\_\_objc_data<br>\_\_data | _ |
-| 4 | LC_SEGMENT_64 | \_\_LINKEDIT | _ | _ |
-| 5 | LC_DYLD_INFO_ONLY | _ | _ | _ |
-| 6 | LC_SYMTAB | _ | _ | _ |
-| 7 | LC_DYSYMTAB | _ | _ | _ |
-| 8 | LC_LOAD_DYLINKER | _ | _ | /usr/lib/dyld (offset 12) |
-| 9 | LC_UUID | _ | _ | _ |
-| 10 | LC_BUILD_VERSION | _ | _ | _ |
-| 11 | LC_SOURCE_VERSION | _ | _ | _ |
-| 12 | LC_MAIN | _ | _ | _ |
-| 13 | LC_ENCRYPTION_INFO_64 | _ | _ | _ |
-| 14 | LC_LOAD_DYLIB(Foundation) | _ | _ | /System/Library/Frameworks/Foundation.framework/Foundation (offset 24) |
-| 15 | LC_LOAD_DYLIB(libobjc.A.dylib) | _ | _ | /usr/lib/libobjc.A.dylib (offset 24) |
-| 16 | LC_LOAD_DYLIB(libSystem.B.dylib) | _ | _ | /usr/lib/libSystem.B.dylib (offset 24) |
-| 17 | LC_LOAD_DYLIB(CoreFoundation) | _ | _ | /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation (offset 24) |
-| 18 | LC_LOAD_DYLIB(UIKit) | _ | _ | /System/Library/Frameworks/UIKit.framework/UIKit (offset 24) |
-| 19 | LC_RPATH | _ | _ | _ |
-| 20 | LC_FUNCTION_STARTS | _ | _ | _ |
-| 21 | LC_DATA_IN_CODE | _ | _ | _ |
-| 22 | LC_CODE_SIGNATURE | _ | _ | _ |
+| Load command | cmd | segname | sections | name | desc |
+| --- | --- | --- | --- | --- | --- |
+| 0 | LC_SEGMENT_64 | \_\_PAGEZERO | _ | _ | _ |
+| 1 | LC_SEGMENT_64 | \_\_TEXT | \_\_text 主程序代码<br>\_\_stubs 用于动态库链接的桩<br>\_\_stub_helper 用于动态库链接的桩<br>\_\_objc_methlist<br>\_\_objc_methname<br>\_\_objc_classname<br>\_\_objc_methtype<br>\_\_cstring 常量字符串符号表描述信息，通过该区信息，可以获得常量字符串符号表地址<br>\_\_unwind_info | _ | _ |
+| 2 | LC_SEGMENT_64 | \_\_DATA_CONST | \_\_got<br>\_\_cfstring<br>\_\_objc_classlist<br>\_\_objc_protolist<br>\_\_objc_imageinfo | _ | _ |
+| 3 | LC_SEGMENT_64 | \_\_DATA | \_\_la_symbol_ptr<br>\_\_objc_const<br>\_\_objc_selrefs<br>\_\_objc_classrefs<br>\_\_objc_superrefs<br>\_\_objc_ivar<br>\_\_objc_data<br>\_\_data | _ | _ |
+| 4 | LC_SEGMENT_64 | \_\_LINKEDIT | _ | _ | _ |
+| 5 | LC_DYLD_INFO_ONLY | _ | _ | _ | 对应下面链接信息中的 Dynamic Loader Info 中的内容 |
+| 6 | LC_SYMTAB | _ | _ | _ | 符号表和 String 表的加载命令（或者指示如何加载 符号表 和 String 表，或者最大的作用是帮系统指明 符号表和 String 表的 Offset，那么系统就可以通过这个地址偏移，直接读取到 符号表和 String 表的内容），例如在上面示例可执行文件中，它指出符号表的 offset（0x000107B8）、符号数量（323）、String 表的 offset（0x00011D08）、String 表的 Size（8288），然后我们可以直接看底部的链接信息中的：Symbol Table 中共有 323 个符号（#0～#322），第一个 Symbol 的 Offset 的值是 0x000107B8，和 LC_SYMTAB 中描述的完全一致。（String Table 也一样，第一个 String 的 Offset 是 0x00011D08） |
+| 7 | LC_DYSYMTAB | _ | _ | _ | 动态符号表的加载命令（或者指示如何加载动态符号表），同上，亦可在 Dynamic Symbol Table -> Indirect Symbols 中看到第一条 Symbol 的 Offset 和 LC_DYSYMTAB 中的 IndSym Table Offset 的值一致 |
+| 8 | LC_LOAD_DYLINKER | _ | _ | /usr/lib/dyld (offset 12) | 使用使用何种动态加载库，看到示例中可执行文件使用的是 /usr/lib/dyld（在 macOS 和 iOS 中还有第二种动态加载器吗？） |
+| 9 | LC_UUID | _ | _ | _ | 文件的唯一标识，crash 解析中也会用到该值，去确定 dysm 文件和 crash 文件是否是匹配的，可看到在示例可执行文件中 UUID 直接保存在了 LC_UUID 中，其值是：BAAF897A-1463-3D9E-BDFE-EA61525D3435 |
+| 10 | LC_BUILD_VERSION | _ | _ | _ | _ |
+| 11 | LC_SOURCE_VERSION | _ | _ | _ | 构建该二进制文件使用的源代码版本 |
+| 12 | LC_MAIN | _ | _ | _ | 设置程序主线程的入口地址和栈大小 |
+| 13 | LC_ENCRYPTION_INFO_64 | _ | _ | _ | _ |
+| 14 | LC_LOAD_DYLIB(Foundation) | _ | _ | /System/Library/Frameworks/Foundation.framework/Foundation (offset 24) | LC_LOAD_DYLIB 这里 5 条都是用来指示加载额外的动态库（都是我们超熟悉的库），仔细看这个命令格式，动态库地址和名字、当前版本、兼容版本号，该设计比较合理，对于动态库有版本管理能力 |
+| 15 | LC_LOAD_DYLIB(libobjc.A.dylib) | _ | _ | /usr/lib/libobjc.A.dylib (offset 24) | _ |
+| 16 | LC_LOAD_DYLIB(libSystem.B.dylib) | _ | _ | /usr/lib/libSystem.B.dylib (offset 24) | _ |
+| 17 | LC_LOAD_DYLIB(CoreFoundation) | _ | _ | /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation (offset 24) | _ |
+| 18 | LC_LOAD_DYLIB(UIKit) | _ | _ | /System/Library/Frameworks/UIKit.framework/UIKit (offset 24) | _ |
+| 19 | LC_RPATH | _ | _ | _ | _ |
+| 20 | LC_FUNCTION_STARTS | _ | _ | _ | 函数起始地址表 |
+| 21 | LC_DATA_IN_CODE | _ | _ | _ | _ |
+| 22 | LC_CODE_SIGNATURE | _ | _ | _ | _ |
 
 &emsp;使用 MachOView 查看的话 23 条 Load commands 是这样的。
              
@@ -622,11 +622,13 @@ Load command 13
 
 ## Mach-0 总结
 
-&emsp;通过对 mach-o 格式进行学习，我们可以直观的看到我们日常编写的程序经过编译链接后生成的一个可执行文件的最终形态，对  mach-o 内部结构进行梳理可以帮助我们理解和学习 macOS 和 iOS 程序的启动运行过程，除此之外，还可以帮助我们进行符号分析、bitcode、逆向工程、进程启动优化等等。（那么后续一些加油学习吧⛽️⛽️）
+&emsp;通过对 mach-o 格式进行学习，我们可以直观的看到我们日常编写的程序经过编译链接后生成的一个可执行文件的最终形态，进程就是系统根据 mach-o 格式将可执行文件加载到内存后得到的结果，系统通过解析可执行文件，建立依赖（动态库绑定），初始化运行环境，才能真正开始执行该进程。
 
+&emsp;对 mach-o 内部结构进行梳理可以帮助我们理解和学习 macOS 和 iOS 程序的启动运行过程，除此之外，还可以帮助我们进行符号分析、bitcode、逆向工程、进程启动优化等等。（那么后续一起加油学习吧⛽️⛽️）
 
 ## 参考链接
 **参考链接:🔗**
++ [Mach-O文件格式和程序从加载到执行过程](https://blog.csdn.net/bjtufang/article/details/50628310)
 + [MachOView工具](https://www.jianshu.com/p/2092d2d374e5)
 + [查看二进制文件](https://www.cnblogs.com/skydragon/p/7200173.html)
 + [iOS App启动优化（一）—— 了解App的启动流程](https://juejin.cn/post/6844903968837992461)
