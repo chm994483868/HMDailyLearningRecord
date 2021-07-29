@@ -162,7 +162,7 @@ Mach-O 曾经为大部分基于 Mach 核心的操作系统所使用。NeXTSTEP�
 
 &emsp;以上是 Overview of the Mach-O Executable Format 章节中的全部内容，可能我们对其中的 segment 和 section 还不太熟悉，下面我们会进行更详细的解读。
 
-## Mach-O 文件内部构成
+## Mach-O 格式内部构成
 
 &emsp;下面我们结合 [apple/darwin-xnu](https://github.com/apple/darwin-xnu) 中的源码来分析 Mach-O 二进制文件的内部构成，首先看一张大家都在用的官方的图片。
 
@@ -607,7 +607,14 @@ Load command 13
 
 ### Loader Info（链接信息）
 
-&emsp;
+&emsp;一个完整的用户级 mach-o 文件的末端是一系列链接信息。其中包含了动态加载器用来链接可执行文件或者依赖所需使用的符号表、字符串表等。当前我们知道其存在即可，后续的文章中会陆陆续续对它们进行深入学习。
+
+![截屏2021-07-29 14.50.58.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3e395043099f47db8335f7048cfa0e56~tplv-k3u1fbpfcp-watermark.image)
+
+## Mach-0 总结
+
+&emsp;通过对 mach-o 格式进行学习，我们可以直观的看到我们日常编写的程序经过编译链接后生成的一个可执行文件的最终形态，对  mach-o 内部结构进行梳理可以帮助我们理解和学习 macOS 和 iOS 程序的启动运行过程，除此之外，还可以帮助我们进行符号分析、bitcode、逆向工程、进程启动优化等等。（那么后续一些加油学习吧⛽️⛽️）
+
 
 ## 参考链接
 **参考链接:🔗**
