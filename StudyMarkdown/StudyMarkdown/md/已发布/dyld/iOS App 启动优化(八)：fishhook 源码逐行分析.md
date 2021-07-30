@@ -2,8 +2,9 @@
 
 ## 理解 fishhook 实现原理所需要的一些前置知识点
 
-&emsp;首先我们在学习 fishhook 实现原理之前一定要有 mach-o 的知识。
+&emsp;首先我们在学习 fishhook 实现原理之前一定要有 mach-o 的知识，可参考之前的文章：[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
 
+&emsp;fishhook 是 Facebook 开源的可以动态修改 mach-o
 
 &emsp;**目前的窘境：**
 
@@ -25,7 +26,7 @@
 
 &emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 系统中运行的 Mach-O 二进制文件中动态地重新绑定符号（仅限于系统的 C 函数）。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
 
-### fishhook 的使用方式
+### fishhook 使用方式
 
 &emsp;fishhook 的使用方式非常简单，我们只需要把 `fishhook.h/fishhook.c` 文件拖入我们的项目中，然后就可以按如下方式重新绑定符号：
 
@@ -538,6 +539,20 @@ static void _rebind_symbols_for_image(const struct mach_header *header,
 
 ##### rebind_symbols_for_image
 
+&emsp;在开始看 `rebind_symbols_for_image` 函数之前，我们先看三张截图，`rebind_symbols_for_image` 便是要遍历形参 `header` 对应的 image（镜像）的所有 Load commands 查找到如下三个 Load command：
+
+&emsp;`LC_SEGMENT_64(__LINKEDIT)`：
+
+![截屏2021-07-31 上午4.39.48.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/eff8806aa8984edc81fcff5bb411df7d~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;`LC_SYMTAB`：
+
+![截屏2021-07-31 上午4.39.54.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/489acf000bff418cad5517eb13f91f62~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;`LC_DYSYMTAB`：
+
+![截屏2021-07-31 上午4.39.59.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c2f0a91da45940928c7940ff51584a4a~tplv-k3u1fbpfcp-watermark.image)
+
 ```c++
 static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
                                      const struct mach_header *header,
@@ -553,6 +568,7 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
   // cur_seg_cmd 仅用于记录每次循环时的 segment load command
   segment_command_t *cur_seg_cmd;
   
+  // 分别用于记录找到的：LC_SEGMENT_64(__LINKEDIT)、LC_SYMTAB、LC_DYSYMTAB 三个 Load command
   segment_command_t *linkedit_segment = NULL;
   struct symtab_command* symtab_cmd = NULL;
   struct dysymtab_command* dysymtab_cmd = NULL;
@@ -560,17 +576,16 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
   // 指针偏移，越过 mach-o 的 mach header 部分，直接到达 load command 部分的首地址
   uintptr_t cur = (uintptr_t)header + sizeof(mach_header_t);
   
-  // 遍历 mach-o 文件中 load command 部分中保存的每条 segment load command，
-  // 分别找到类型是 LC_SEGMENT_ARCH_DEPENDENT、LC_SYMTAB、LC_DYSYMTAB 的 segment load command
+  // 遍历 mach-o 文件中 load commands 中的每条 segment load command，
+  // 分别找到类型是 LC_SEGMENT_ARCH_DEPENDENT(name 是 __LINKEDIT)、LC_SYMTAB、LC_DYSYMTAB 的 segment load command
   for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
     cur_seg_cmd = (segment_command_t *)cur;
     
     // #define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT_64
-    
+    // 首先判断 Load command 的类型是 LC_SEGMENT_64，然后判断其 segname 是 __LINKEDIT，即找到 LC_SEGMENT_64(__LINKEDIT) 
     if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
     
       // #define SEG_LINKEDIT "__LINKEDIT"
-      
       if (strcmp(cur_seg_cmd->segname, SEG_LINKEDIT) == 0) {
       
         // SEG_LINKEDIT：the segment containing all structs created and maintained by the link editor. Created with -seglinkedit option to ld(1) for MH_EXECUTE and FVMLIB file types only
@@ -578,42 +593,45 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
         linkedit_segment = cur_seg_cmd;
       }
       
-      // #define LC_SYMTAB 0x2 /* link-edit stab symbol table info */
-      
     } else if (cur_seg_cmd->cmd == LC_SYMTAB) {
+      // #define LC_SYMTAB 0x2 /* link-edit stab symbol table info */
       // LC_SYMTAB：link-edit stab symbol table info
       symtab_cmd = (struct symtab_command*)cur_seg_cmd;
       
-      #define LC_DYSYMTAB 0xb /* dynamic link-edit symbol table info */
-      
     } else if (cur_seg_cmd->cmd == LC_DYSYMTAB) {
+      // #define LC_DYSYMTAB 0xb /* dynamic link-edit symbol table info */
       // LC_DYSYMTAB：dynamic link-edit symbol table info
       dysymtab_cmd = (struct dysymtab_command*)cur_seg_cmd;
       
     }
   }
 
-  // 如果上面循环遍历中有任何一个 segment load command 不存在则直接 return
+  // 如果上面循环遍历中有任何一个 segment load command 没找到则直接 return 结束
   if (!symtab_cmd || !dysymtab_cmd || !linkedit_segment || !dysymtab_cmd->nindirectsyms) {
     return;
   }
 
   // Find base symbol/string table addresses
-  // 找到 symbol/string 的基址
+  // 找到 symbol/string table 的基址
+  //（观察上面的 LC_SYMTAB 截图可看到其中的 Symbol Table Offset 和 String Table Offset 两个字段，我们便可以根据这两个字段的值，做地址偏移，便可找到下面的 Symbol Table 和 String Table 两个表）
   
-  // uint64_t fileoff; /* file offset of this segment */ segment 在文件的偏移
+  // 这里有一个知识点，我们如何找到进程的起始地址，在上面 "通过 LLDB 调试验证 fishhook 实现 hook 的过程" 一节中，
+  // 我们在控制台通过 image list 可得当前进程在内存中的地址，那么这里的 linkedit_base 的值是什么呢？
+  // 我们可以直接在此行打断点，然后和我们通过 image list 取得的地址进行比较，发现它们的值是相等的。（测试时同为：0x0000000106730000 这里就不截图了，小伙伴可以自己打印看一下）
   
-  // 链接时程序的基址 = __LINKEDIT.VM_Address - __LINKEDIT.File_Offset + silde 的改变值
+  // 那么下面我们分析一下为什么通过：(uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff 就能得到当前进程的内存地址呢？
+  // ⚠️⚠️⚠️ 其实这里完全多此一举，细心的小伙伴可能已经发现，
+  
+  // uint64_t fileoff; /* file offset of this segment */ fileoff 字段表示 segment 在文件的偏移
+  // 进程的起始地址 = __LINKEDIT.VM_Address - __LINKEDIT.File_Offset + silde 的改变值
   uintptr_t linkedit_base = (uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff;
   
   // 符号表的地址 = 基址 + 符号表偏移量
   nlist_t *symtab = (nlist_t *)(linkedit_base + symtab_cmd->symoff);
-  
   // 字符串表的地址 = 基址 + 字符串表偏移量
   char *strtab = (char *)(linkedit_base + symtab_cmd->stroff);
 
   // Get indirect symbol table (array of uint32_t indices into symbol table)
-  
   // 动态符号表地址 = 基址 + 动态符号表偏移量
   uint32_t *indirect_symtab = (uint32_t *)(linkedit_base + dysymtab_cmd->indirectsymoff);
    
@@ -624,18 +642,18 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
   for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
     cur_seg_cmd = (segment_command_t *)cur;
     
+    // 遍历只需要查找类型是 LC_SEGMENT_64，名字是 __DATA 或者 __DATA_CONST 的 Load command 其它的 Load command 则直接跳过 
     // #define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT_64
-    // 只需要查找 LC_SEGMENT_64 类型的 segment load command 
     if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
       
       // #define SEG_DATA "__DATA" /* the tradition UNIX data segment */
       // #define SEG_DATA_CONST  "__DATA_CONST"
-      // 如果不是 __DATA 或者 __DATA_CONST 段的话直接跳过 
       if (strcmp(cur_seg_cmd->segname, SEG_DATA) != 0 && strcmp(cur_seg_cmd->segname, SEG_DATA_CONST) != 0) {
         continue;
       }
       
-      // 下面便是遍历 __DATA 或者 __DATA_CONST 段中的 sections
+      // 下面便是遍历 __DATA/__DATA_CONST 段中的 sections，找到其中的 _la_symbol_ptr 和 _nola_symbol_ptr 两个区
+      
       for (uint j = 0; j < cur_seg_cmd->nsects; j++) {
         section_t *sect = (section_t *)(cur + sizeof(segment_command_t)) + j;
         

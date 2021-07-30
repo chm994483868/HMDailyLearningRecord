@@ -174,13 +174,6 @@
 			path = Swift;
 			sourceTree = "<group>";
 		};
-		8E53CA1526B399A800FB0AD7 /* Kingfish */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Kingfish;
-			sourceTree = "<group>";
-		};
 		8E5E583C2685979D0088C814 = {
 			isa = PBXGroup;
 			children = (
@@ -219,7 +212,6 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
-				8E53CA1526B399A800FB0AD7 /* Kingfish */,
 				8E53C9F226B29D6400FB0AD7 /* Swift */,
 				8E5E5EA82686AC090088C814 /* KVCKVO */,
 				8E5E5EA72686ABE60088C814 /* 消息转发 */,
