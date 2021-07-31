@@ -6,12 +6,29 @@
 
 &emsp;fishhook 是 Facebook 开源的可以动态修改 mach-o
 
+
+
+
+
+
+
+
+
 &emsp;**目前的窘境：**
 
 1. dyld 的加载流程还是深入理解。mach-o 中的各个 Loac command 都看过了，那怎么把它们的调用或者说是 dyld 怎么对它们启用的，还是模模糊糊！要学习！
 2. fishhook 的过程，mach-o 和 dyld 搞清楚了，自然能一马平川的看懂它的实现原理！
 
 3. 心态放稳，不要因为没有一点进展而心里急躁，不要因为知识点没有头绪就崩了心态！不要觉得 mach-o 浪费时间，它极其重要！所以为它花再多的时间都不是浪费，都值得！
+
+
+
+
+
+
+
+
+
 
 ## fishhook 解读
 
@@ -24,7 +41,7 @@
 
 &emsp;首先我们先看一下官方的描述：
 
-&emsp;fishhook 是一个非常简单的库，它支持在 模拟器和设备上的 `iOS` 系统中运行的 Mach-O 二进制文件中动态地重新绑定符号（仅限于系统的 C 函数）。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
+&emsp;fishhook 是一个非常简单的库，它支持在模拟器和设备上的 `iOS` 系统中运行的 Mach-O 二进制文件中动态地重新绑定符号（仅限于系统的 C 函数）。这提供了类似于在 `OS X` 上使用 `DYLD_INTERPOSE` 的功能。在 Facebook 上，我们发现它是一种很有用的方法，可以在 `libSystem` 中钩住调用（hook calls）以进行调试/跟踪（debugging/tracing）（for example, auditing for double-close issues with file descriptors）。
 
 ### fishhook 使用方式
 
@@ -38,14 +55,14 @@
 #import "AppDelegate.h"
 #import "fishhook.h"
 
-// 这里声明两个静态全局的函数指针变量，分别用来记录系统函数 close 和 open 的地址
+// 这里声明两个静态全局的函数指针变量，分别用来记录系统原始的 close 和 open 函数的地址
 static int (*orig_close)(int);
 static int (*orig_open)(const char *, int, ...);
  
 int my_close(int fd) {
   printf("🤯🤯🤯 Calling real close(%d)\n", fd);
   
-  // 经过下面 main 函数中的 rebind_symbols 调用后，orig_close 这个函数指针指向的就是系统原始的 close 函数，这里即为调用系统原始的 close 函数 
+  // 经过下面 main 函数中的 rebind_symbols 调用后，orig_close 这个函数指针指向的就是系统原始的 close 函数，即这里是调用系统原始的 close 函数 
   return orig_close(fd);
 }
  
@@ -75,10 +92,10 @@ int main(int argc, char * argv[])
 {
   @autoreleasepool {
     
-    // ⬇️⬇️⬇️ 这里是把系统原始的 close 和 open 函数的地址替换为我们自定义的 my_close 和 my_open 函数，
+    // 把符号表中的 close 和 open 函数的地址替换为我们自定义的 my_close 和 my_open 函数，
     // 并且使用 orig_close 和 orig_open 两个静态全局变量记录系统的 close 和 open 的原始的函数地址。
     
-    // 那样下面的 open 和 close 函数调用时，就会执行我们的 my_open 和 my_open 函数，然后它们内部又通过 orig_open 和 orig_close 来调用系统内原始的 open 和 close 函数
+    // 那样下面的 open 和 close 函数调用时，就会执行我们自定义的 my_open 和 my_open 函数，然后它们内部又通过 orig_open 和 orig_close 函数指针来调用系统原始的 open 和 close 函数
     rebind_symbols((struct rebinding[2]){{"close", my_close, (void *)&orig_close}, {"open", my_open, (void *)&orig_open}}, 2);
  
     // Open our own binary and print out first 4 bytes (which is the same for all Mach-O binaries on a given architecture)
@@ -539,7 +556,7 @@ static void _rebind_symbols_for_image(const struct mach_header *header,
 
 ##### rebind_symbols_for_image
 
-&emsp;在开始看 `rebind_symbols_for_image` 函数之前，我们先看三张截图，`rebind_symbols_for_image` 便是要遍历形参 `header` 对应的 image（镜像）的所有 Load commands 查找到如下三个 Load command：
+&emsp;在开始看 `rebind_symbols_for_image` 函数之前，我们先看几张截图，`rebind_symbols_for_image` 函数便是要遍历形参 `header` 对应的 image（镜像）中的所有 Load commands 并查找到如下三个 Load command：
 
 &emsp;`LC_SEGMENT_64(__LINKEDIT)`：
 
@@ -552,6 +569,10 @@ static void _rebind_symbols_for_image(const struct mach_header *header,
 &emsp;`LC_DYSYMTAB`：
 
 ![截屏2021-07-31 上午4.39.59.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c2f0a91da45940928c7940ff51584a4a~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;最后一张截图是 `String Table`（字符串表），用于记录符号表中
+
+![截屏2021-07-31 10.25.48.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d7a374664d6d4617bb8a5efdc614aac8~tplv-k3u1fbpfcp-watermark.image)
 
 ```c++
 static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
@@ -652,7 +673,7 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
         continue;
       }
       
-      // 下面便是遍历 __DATA/__DATA_CONST 段中的 sections，找到其中的 _la_symbol_ptr 和 _nola_symbol_ptr 两个区
+      // 下面便是遍历 __DATA/__DATA_CONST 段中的 sections，找到其中的 _la_symbol_ptr 和 __nl_symbol_ptr 两个区
       
       for (uint j = 0; j < cur_seg_cmd->nsects; j++) {
         section_t *sect = (section_t *)(cur + sizeof(segment_command_t)) + j;
@@ -811,16 +832,6 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 + [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
 + [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
 + [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
-
-+ [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
-+ [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
-+ [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
-+ [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
-+ [iOS逆向 RSA理论](https://juejin.cn/post/6844903989666906125)
-+ [iOS逆向 HOOK原理之fishhook](https://juejin.cn/post/6845166890772332552)
-+ [LXDZombieSniffer](https://github.com/sindrilin/LXDZombieSniffer)
-+ [SDMagicHook](https://github.com/cloverapp1/SDMagicHook)
-
 
 ## Runtime API 回顾
 

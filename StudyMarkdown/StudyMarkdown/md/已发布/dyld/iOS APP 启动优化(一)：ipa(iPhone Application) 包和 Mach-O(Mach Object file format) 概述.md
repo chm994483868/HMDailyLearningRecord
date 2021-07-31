@@ -583,7 +583,7 @@ Load command 13
 | LC_SEGMENT_64 | \_\_DATA | \_\_la_symbol_ptr<br>\_\_objc_const<br>\_\_objc_selrefs<br>\_\_objc_classrefs<br>\_\_objc_superrefs<br>\_\_objc_ivar<br>\_\_objc_data<br>\_\_data | _ | _ |
 | LC_SEGMENT_64 | \_\_LINKEDIT | _ | _ | _ |
 | LC_DYLD_INFO_ONLY | _ | _ | _ | 对应下面链接信息中的 Dynamic Loader Info 中的内容 |
-| LC_SYMTAB | _ | _ | _ | 符号表和 String 表的加载命令（或者指示如何加载 符号表 和 String 表，或者最大的作用是帮系统指明 符号表和 String 表的 Offset，那么系统就可以通过这个地址偏移，直接读取到 符号表和 String 表的内容），例如在上面示例可执行文件中，它指出符号表的 offset（0x000107B8）、符号数量（323）、String 表的 offset（0x00011D08）、String 表的 Size（8288），然后我们可以直接看底部的链接信息中的：Symbol Table 中共有 323 个符号（#0～#322），第一个 Symbol 的 Offset 的值是 0x000107B8，和 LC_SYMTAB 中描述的完全一致。（String Table 也一样，第一个 String 的 Offset 是 0x00011D08） |
+| LC_SYMTAB | _ | _ | _ | 符号表和 String 表的加载命令（或者指示符号表 和 String 表的位置，或者最大的作用是帮系统指明 符号表和 String 表的 Offset，那么系统就可以通过这个地址偏移，直接读取到 符号表和 String 表的内容），例如在上面示例可执行文件中，它指出符号表的 offset（0x000107B8）、符号数量（323）、String 表的 offset（0x00011D08）、String 表的 Size（8288），然后我们可以直接看底部的链接信息中的：Symbol Table 中共有 323 个符号（#0～#322），第一个 Symbol 的 Offset 的值是 0x000107B8，和 LC_SYMTAB 中描述的完全一致。（String Table 也一样，第一个 String 的 Offset 是 0x00011D08） |
 | LC_DYSYMTAB | _ | _ | _ | 动态符号表的加载命令（或者指示如何加载动态符号表），同上，亦可在 Dynamic Symbol Table -> Indirect Symbols 中看到第一条 Symbol 的 Offset 和 LC_DYSYMTAB 中的 IndSym Table Offset 的值一致 |
 | LC_LOAD_DYLINKER | _ | _ | /usr/lib/dyld (offset 12) | 使用使用何种动态加载库，看到示例中可执行文件使用的是 /usr/lib/dyld（在 macOS 和 iOS 中还有第二种动态加载器吗？） |
 | LC_UUID | _ | _ | _ | 文件的唯一标识，crash 解析中也会用到该值，去确定 dysm 文件和 crash 文件是否是匹配的，可看到在示例可执行文件中 UUID 直接保存在了 LC_UUID 中，其值是：BAAF897A-1463-3D9E-BDFE-EA61525D3435 |
@@ -605,13 +605,62 @@ Load command 13
              
 ![截屏2021-04-18 下午4.10.55.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/615183ec70fc43b8b51463a2c8b847f1~tplv-k3u1fbpfcp-watermark.image)
 
+#### Symbol Table
+
+&emsp;下面我们对 **比较重要重要重要** 的符号表进行扩展学习。
+
+![截屏2021-07-31 12.55.05.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6190a34ffe544c03b10b228639617b19~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;符号表的内容如图所示，其对应的数据结构是定义在 `darwin-xnu/EXTERNAL_HEADERS/nlist.h` 中的 `struct nlist_64`。
+
+```c++
+struct nlist_64 {
+    union {
+        uint32_t  n_strx; /* index into the string table */
+    } n_un;
+    uint8_t n_type;        /* type flag, see below */
+    uint8_t n_sect;        /* section number or NO_SECT */
+    uint16_t n_desc;       /* see <mach-o/stab.h> */
+    uint64_t n_value;      /* value of this symbol (or stab offset) */
+};
+```
+
+&emsp;`nlist_64` 结构体用来表示 64-bit architectures 下符号表中的条目（直白一点的理解就是我们的每个符号就是这个 `nlist_64` 结构体）。`nlist_64` 结构体的各个字段的意义也都很清晰：
+
++ `n_strx` 表示某个符号的名字在 `String Table`（字符串表）中的索引，`String Table` 是一个存放符号名字（一个字符串）的字符数组，每个符号的名字以 `.` 结尾，按顺序保存在 `String Table` 中，然后通过每个符号的名字的首字符在 `String Table` 表中的索引来读取该符号名字，可能描述的比较拗口，我们直接看下面一张图片：
+
+![截屏2021-07-31 10.25.48.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d7a374664d6d4617bb8a5efdc614aac8~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;可看到每个符号的名字以 `_` 开头，以 `.` 结尾，通过这个 Offset 的 `#2` `#28` `#56`...（这个 # 开头的值是 MachOView 帮我们做的一个处理，它是一个相对值，其实我们的图片中的 String Table 是从 `0x0000D9C0` 开始的），我们便可以从 `String Table` 中读到每个符号的名字，而相邻的两个符号名字的 Offset 的差便是前一个符号名字的长度。
+
++ `n_type` 表示符号的类型，当前已知的符号类型在 `nlist.h` 文件下面的都有列出：
+
+
+
+
+
+
+
+
+
+// 待补充：++++++++++++++++++++++++++++++
 ### 动态链接器–动态库链接信息
+
+&emsp;这里还有要补充的知识点............................：
 
 &emsp;dyld 内容的正式学习本来是准备放在后续文章的，但是上面既然看到了这么多与 dyld 相关的 Loac commands，所以这里我们先进行一些理论上的学习，后续文章则是直接进入源码进行学习。
 
 &emsp;上面我们基本列举了示例生成的可执行文件中所有的 Load commands 了，那么其中引用的动态库如何根据 Load commands 动态链接到该可执行文件启动后的进程的内存中的呢？下面总结一下这个动态过程。
 
 &emsp;系统通过
+++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
 
 
 ### Data
