@@ -718,6 +718,25 @@ struct nlist_64 {
 ```
 &emsp;符号表的内容就暂时看到这里，还有其它一些内容我看懂是表示什么😭。
 
+&emsp;下面我们看一下 Symbol Table 下面的 Dynamic Symbol Table 是什么的？动态符号表？ 
+
+#### Dynamic Symbol Table
+
+&emsp;`Dynamic Symbol Table`（动态符号表）是 `Symbol Table`（符号表）的 "子集"。这里之所以这么说的话是因为 `Dynamic Symbol Table` 中的 `Indirect Symbols` 其中每一个 Symbol 都是记录了其在 `Symbol Table` 中的索引，例如截图中 `Dynamic Symbol Table` 中的第一个 Symbol：`_NSLog` 其在 `Symbol Table` 中的 `Index` 是 `#288`，然后我们在 `Symbol Table` 的 `#288` 中便找到了位于：`(__TEXT, __stubs)` 中的 `_NSLog`。
+
+![截屏2021-08-01 下午6.53.26.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/74d9af2163d3499eb5b3d98a4584dc60~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;在 `Symbol Table` 的 `#288` 处：
+
+![截屏2021-08-01 下午6.59.03.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/90b97bb3a9eb480b8253287874f6c466~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;我们使用 MachOView 打开上面示例项目的可执行文件，查看它的 `Dynamic Symbol Table` 中的内容，从上到下捋下来可发现 `Dynamic Symbol Table` 包含了不同 section 的符号，分别有：`(__TEXT, __stubs)`、`(__DATA_CONST, __got)`、`(__DATA, __la_symbol_ptr)`。
+
+![截屏2021-08-01 下午6.40.06.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ddbda03fdaf545f9ab3e1eb35b996f03~tplv-k3u1fbpfcp-watermark.image)
+
+![截屏2021-08-01 下午6.40.17.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5675369b9d11476bb4ab5b1bd702abc2~tplv-k3u1fbpfcp-watermark.image)
+
+![截屏2021-08-01 下午6.40.24.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/17fcacba141d45f0b3498adde21c37f6~tplv-k3u1fbpfcp-watermark.image)
 
 ### 动态链接器–动态库链接信息
 
