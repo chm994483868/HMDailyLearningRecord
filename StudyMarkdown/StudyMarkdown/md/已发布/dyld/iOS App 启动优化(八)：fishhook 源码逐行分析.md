@@ -8,7 +8,7 @@
 
 
 
-
+&emsp;Hook 的都是系统动态库中的 C 函数（注意仅仅是 C 函数，不包含系统动态库中的 OC 函数，如果再具体一点的话就是仅仅能 Hook `__DATA` 段中 `__la_symbol_ptr` 中包含的函数！）
 
 
 
@@ -35,7 +35,7 @@
 ### fishhook 官方介绍
 
 > &emsp;A library that enables dynamically rebinding symbols in Mach-O binaries running on iOS.
-> &emsp;在 iOS 上运行的 Mach-O 二进制文件中启用 **动态重新绑定符号** 的库。（仅限于系统的 C 函数）
+> &emsp;在 iOS 上运行的 Mach-O 二进制文件中启用 **动态重新绑定符号** 的库。（仅限于系统的 C 函数，系统动态库中的 C 函数）
 
 &emsp;[fishhook](https://github.com/facebook/fishhook)
 
@@ -819,6 +819,8 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 
 ## 参考链接
 **参考链接:🔗**
++ [巧用符号表 - 探求 fishhook 原理（一）](https://www.desgard.com/iOS-Source-Probe/C/fishhook/巧用符号表%20-%20探求%20fishhook%20原理（一）.html)
+
 + [一文读懂fishhook原理](https://juejin.cn/post/6857699952563978247)
 
 + [fishhook的实现原理浅析](https://juejin.cn/post/6844903789783154702)

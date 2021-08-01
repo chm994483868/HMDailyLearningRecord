@@ -607,11 +607,11 @@ Load command 13
 
 #### Symbol Table
 
-&emsp;下面我们对 **比较重要重要重要** 的符号表进行扩展学习。
+&emsp;下面我们对 **比较重要重要重要** 的符号表进行扩展学习。（首先介绍一下符号表中都保存什么内容：除了当前进程所引用的系统动态库中的 C 函数、OC 函数，还包括类信息、协议信息、代码中的常量值等，大概 sections 中的内容都会存在符号表中。）
 
 ![截屏2021-07-31 12.55.05.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6190a34ffe544c03b10b228639617b19~tplv-k3u1fbpfcp-watermark.image)
 
-&emsp;符号表的内容如图所示，其对应的数据结构是定义在 `darwin-xnu/EXTERNAL_HEADERS/nlist.h` 中的 `struct nlist_64`。
+&emsp;符号表的内容如图所示，其对应的数据结构是定义在 `darwin-xnu/EXTERNAL_HEADERS/mach-o/nlist.h` 中的 `struct nlist_64`。（这里只看 64-bit architectures 下）
 
 ```c++
 struct nlist_64 {
@@ -625,43 +625,106 @@ struct nlist_64 {
 };
 ```
 
-&emsp;`nlist_64` 结构体用来表示 64-bit architectures 下符号表中的条目（直白一点的理解就是我们的每个符号就是这个 `nlist_64` 结构体）。`nlist_64` 结构体的各个字段的意义也都很清晰：
+&emsp;`nlist_64` 结构体用来表示 64-bit architectures 下符号表中的条目（符号表中的每个符号就是一个 `nlist_64` 的结构体实例）。`nlist_64` 结构体的各个字段的意义也都很清晰，下面我们一起来看一下：
 
-+ `n_strx` 表示某个符号的名字在 `String Table`（字符串表）中的索引，`String Table` 是一个存放符号名字（一个字符串）的字符数组，每个符号的名字以 `.` 结尾，按顺序保存在 `String Table` 中，然后通过每个符号的名字的首字符在 `String Table` 表中的索引来读取该符号名字，可能描述的比较拗口，我们直接看下面一张图片：
++ `n_strx` 表示符号的名字字符串在 `String Table`（字符串表）中的索引（`String Table` 的首地址加上这个 `n_strx`（它是此符号的名字字符串在 String Table 中的地址偏移量）的值，便可得到此符号的名字字符串的首个字符的地址，然后沿着此地址顺序往下读，一直读到一个 `\0` 时，便得到了此符号的名字的完整字符串）。
+  `String Table` 是一个字符数组，或者理解为一个字符串数组，每段以 `_` 开头，以 `\0` 结尾的一段字符连在一起就表示一个完整的字符串，`String Table` 中包含有：符号的名字字符串、OC 类名的字符串、OC 元类名的字符串、Protocol 名字的字符串、等等。这里对 `String Table` 描述的可能比较拗口，我们直接看图可能会更清晰：
 
 ![截屏2021-07-31 10.25.48.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d7a374664d6d4617bb8a5efdc614aac8~tplv-k3u1fbpfcp-watermark.image)
 
-&emsp;可看到每个符号的名字以 `_` 开头，以 `.` 结尾，通过这个 Offset 的 `#2` `#28` `#56`...（这个 # 开头的值是 MachOView 帮我们做的一个处理，它是一个相对值，其实我们的图片中的 String Table 是从 `0x0000D9C0` 开始的），我们便可以从 `String Table` 中读到每个符号的名字，而相邻的两个符号名字的 Offset 的差便是前一个符号名字的长度。
+&emsp;可看到每一个字符串以 `_` 开头，以 `\0` 结尾，通过这个 Offset 的 `#2` `#28` `#56`...（这个 # 开头的值是 MachOView 帮我们做的一个提示值，# 号后面的数字是 `n_strx` 字段值的十进制转换，也是每一个字符串的首字符相对 `String Table` 首字符的偏移值，其实我们的图片中的 `String Table` 的起始地址是 `0x0000D9C0` 然后用它加上符号表中某个符号的 `n_strx` 的值，我们便可得到此符号的名字字符串在 `String Table` 中的首地址），我们可以从 `String Table` 中快速读到某个符号的名字字符串。相邻的两个符号的名字字符串的 Offset 的差便是前一个符号的名字字符串的长度，例如图片中 `_OBJC_CLASS_$_AppDelegate\n` 这个符号的名字字符串是 #2 开始的，然后它后面的 `_OBJC_CLASS_$_SceneDelegate\n` 是 #28，它们相差 26 便是 `_OBJC_CLASS_$_AppDelegate\n` （其实是：`_OBJC_CLASS_$_AppDelegate.`）这个字符串的长度。
 
-+ `n_type` 表示符号的类型，当前已知的符号类型在 `nlist.h` 文件下面的都有列出：
++ `n_type` 表示符号的 type flag（类型标记），该字段的值是 `uint8_t` 类型的共 8 个 bit，其实这 8 个 bit 被分割作为位域来使用的，包含了 4 个字段：`unsigned char N_STAB:3, N_PEXT:1, N_TYPE:3, N_EXT:1;`，通过下面的 4 个掩码来读取指定位域的值：
+
+```c++
+#define N_STAB 0xe0 /* 0b 1110 0000  if any of these bits set, a symbolic debugging entry 如果这些位中的任何一个被设置，则是一个符号调试条目 */
+#define N_PEXT 0x10 /* 0b 0001 0000  private external symbol bit 私有外部符号位 */
+
+// n_type 字段虽然是类型字段，其实只需要通过 N_TYPE 掩码读出的其中 3 个bit 的值就足够用来表示 符号 的类型了！
+#define N_TYPE 0x0e /* 0b 0000 1110  mask for the type bits 类型位的掩码 */
+
+#define N_EXT  0x01 /* 0b 0000 0001  external symbol bit, set for external symbols 外部符号位，为外部符号设置 */
+```
+
+&emsp;仅有符号表中某个符号是：符号调试条目（symbolic debugging entries）时才会设置 `n_type` 中的 `N_STAB` 包含的位，如果 `N_STAB` 中的任何一个 bit 被设置，那么该符号就是一个符号调试条目（symbolic debugging entry）（一个 stab）。在这种情况下，`n_type` 字段（整个字段）的值所可能出现的情况都在 `<mach-o/stab.h>` 中列出。下面我们看一下 `darwin-xnu/EXTERNAL_HEADERS/mach-o/stab.h` 文件中的内容。
+
+```c++
+#ifndef _MACHO_STAB_H_
+#define _MACHO_STAB_H_
+
+/*
+#define N_GSYM 0x20    /* 0b 0010 0000 global symbol: name,,NO_SECT,type,0 全局符号 */
+#define N_FNAME 0x22   /* 0b 0010 0010 procedure name (f77 kludge): name,,NO_SECT,0,0 程序名称 */
+#define N_FUN 0x24     /* 0b 0010 0100 procedure: name,,n_sect,linenumber,address */
+#define N_STSYM 0x26   /* 0b 0010 0110 static symbol: name,,n_sect,type,address 静态符号 */
+#define N_LCSYM 0x28   /* 0b 0010 1000 .lcomm symbol: name,,n_sect,type,address */
+#define N_BNSYM 0x2e   /* 0b 0010 1110 begin nsect sym: 0,,n_sect,0,address */
+#define N_AST 0x32     /* 0b 0011 0010 AST file path: name,,NO_SECT,0,0 */
+#define N_OPT 0x3c     /* 0b 0011 1100 emitted with gcc2_compiled and in gcc source */
+#define N_RSYM 0x40    /* 0b 0100 0000 register sym: name,,NO_SECT,type,register */
+#define N_SLINE 0x44   /* 0b 0100 0100 src line: 0,,n_sect,linenumber,address */
+#define N_ENSYM 0x4e   /* 0b 0100 1110 end nsect sym: 0,,n_sect,0,address */
+#define N_SSYM 0x60    /* 0b 0110 0000 structure elt: name,,NO_SECT,type,struct_offset */
+#define N_SO 0x64      /* 0b 0110 0100 source file name: name,,n_sect,0,address */
+#define N_OSO 0x66     /* 0b 0110 0110 object file name: name,,0,0,st_mtime */
+#define N_LSYM 0x80    /* 0b 1000 0000 local sym: name,,NO_SECT,type,offset */
+#define N_BINCL 0x82   /* 0b 1000 0010 include file beginning: name,,NO_SECT,0,sum */
+#define N_SOL 0x84     /* 0b 1000 0100 #included file name: name,,n_sect,0,address */
+#define N_PARAMS 0x86  /* 0b 1000 0110 compiler parameters: name,,NO_SECT,0,0 */
+#define N_VERSION 0x88 /* 0b 1000 1000 compiler version: name,,NO_SECT,0,0 */
+#define N_OLEVEL 0x8A  /* 0b 1000 1010 compiler -O level: name,,NO_SECT,0,0 */
+#define N_PSYM 0xa0    /* 0b 1010 0000 parameter: name,,NO_SECT,type,offset */
+#define N_EINCL 0xa2   /* 0b 1010 0010 include file end: name,,NO_SECT,0,0 */
+#define N_ENTRY 0xa4   /* 0b 1010 0100 alternate entry: name,,n_sect,linenumber,address */
+#define N_LBRAC 0xc0   /* 0b 1100 0000 left bracket: 0,,NO_SECT,nesting level,address */
+#define N_EXCL 0xc2    /* 0b 1100 0010 deleted include file: name,,NO_SECT,0,sum */
+#define N_RBRAC 0xe0   /* 0b 1110 0000 right bracket: 0,,NO_SECT,nesting level,address */
+#define N_BCOMM 0xe2   /* 0b 1110 0010 begin common: name,,NO_SECT,0,0 */
+#define N_ECOMM 0xe4   /* 0b 1110 0100 end common: name,,n_sect,0,0 */
+#define N_ECOML 0xe8   /* 0b 1110 1000 end common (local name): 0,,n_sect,0,address */
+#define N_LENG  0xfe   /* 0b 1111 1110 second stab entry with length information */
+
+/*
+ * for the berkeley pascal compiler, pc(1):
+ */
+#define N_PC   0x30    /* 0b 0011 0000 global pascal symbol: name,,NO_SECT,subtype,line */
+
+#endif /* _MACHO_STAB_H_ */
+
+```
+
+&emsp;下面看一下 `n_type` 字段中的 `N_TYPE` 位域包含的 bit 可能出现的值。
+
+```c++
+#define N_UNDF 0x0   /* 0b 0000 0000 undefined, n_sect == NO_SECT 未定义 */
+#define N_ABS 0x2    /* 0b 0000 0010 absolute, n_sect == NO_SECT */
+
+// 这个 N_SECT 应该是 n_type 字段中 N_TYPE 位域中最常见的值，表示当前这个 符号 是定义在某个 section 中的
+#define N_SECT 0xe   /* 0b 0000 1110 defined in section number n_sect （在 n_sect 字段指定的 section 中定义） */
+
+#define N_PBUD 0xc   /* 0b 0000 1100 prebound undefined (defined in a dylib) 未定义的预绑定（在 dylib 中定义）*/
+#define N_INDR 0xa   /* 0b 0000 1010 indirect */
+```
+
+&emsp;如果类型为 `N_INDR`，则该符号被定义为与另一个符号相同。在这种情况下， `n_value` 字段是另一个符号名称的字符串表的索引。当定义另一个符号时，它们都采用定义的类型和值。
+
+&emsp;如果类型是 `N_SECT`，则 `nlist_64` 的 `n_sect` 字段的值便是该符号定义所在的 section 的序号。这些 sections 从 1 开始编号，并按照它们出现在它们所在的 image 的  Load command 中的顺序来依次递增，引用这些 sections。这意味着相同的 section 的序号很可能指的是不同 image 中的不同的 section。
+
+&emsp;所有符号表条目（包括 `N_STAB` ）的 `n_value` 字段由链接编辑器（link editor）根据它的 `n_sect` 字段的值以及节 `n_sect` 引用被重新定位的位置更新。如果 `n_sect` 字段的值是 `NO_SECT`，则链接编辑器不会更改它的 `n_value` 字段。
+
+```c++
+#define NO_SECT 0   /* symbol is not in any section */
+#define MAX_SECT 255   /* 1 thru 255 inclusive */
+```
+&emsp;符号表的内容就暂时看到这里，还有其它一些内容我看懂是表示什么😭。
 
 
-
-
-
-
-
-
-
-// 待补充：++++++++++++++++++++++++++++++
 ### 动态链接器–动态库链接信息
 
 &emsp;这里还有要补充的知识点............................：
-
 &emsp;dyld 内容的正式学习本来是准备放在后续文章的，但是上面既然看到了这么多与 dyld 相关的 Loac commands，所以这里我们先进行一些理论上的学习，后续文章则是直接进入源码进行学习。
-
 &emsp;上面我们基本列举了示例生成的可执行文件中所有的 Load commands 了，那么其中引用的动态库如何根据 Load commands 动态链接到该可执行文件启动后的进程的内存中的呢？下面总结一下这个动态过程。
-
 &emsp;系统通过
-++++++++++++++++++++++++++++++++++++++
-
-
-
-
-
-
-
-
 
 ### Data
 &emsp;至于 Data 部分，在上面 Load Command 部分中我们只看到了各个段以及包含有 section 的段中保存的区的头部信息（Section Header）（即各个段以及包含区的段，包含区的段中保存了区的头部信息），那么既然有了区的头部信息，那区的具体内容保存在哪里呢？正是保存在这个 Data 部分。通过上面的 Load Commands 的截图和下面的 Section 的截图，可看到 Load Commands 中的每个 Section64 Header 和下面的 Section64 是一一对应的。（这一部分 Section64 中的内容便被我们称之为 mach-o 文件中的 Data 部分！）
@@ -686,6 +749,7 @@ struct nlist_64 {
 
 ## 参考链接
 **参考链接:🔗**
++ [Mach-O 文件格式探索](https://www.desgard.com/iOS-Source-Probe/C/mach-o/Mach-O%20文件格式探索.html)
 + [Mach-O文件格式和程序从加载到执行过程](https://blog.csdn.net/bjtufang/article/details/50628310)
 + [MachOView工具](https://www.jianshu.com/p/2092d2d374e5)
 + [查看二进制文件](https://www.cnblogs.com/skydragon/p/7200173.html)
