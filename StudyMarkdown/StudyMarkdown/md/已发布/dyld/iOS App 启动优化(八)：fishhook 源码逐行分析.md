@@ -4,11 +4,11 @@
 
 &emsp;首先我们在学习 fishhook 实现原理之前一定要有 mach-o 的知识，可参考之前的文章：[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
 
-&emsp;fishhook 是 Facebook 开源的可以动态修改 mach-o
+&emsp;fishhook 是 Facebook 开源的可以动态修改进程（可执行文件 mach-o 中）中 Non-Lazy Symbol Pointers 和 Lazy Symbol Pointers 中的 Symbol Pointer 指向的库。已知的 Non-Lazy Symbol Pointers 和 Lazy Symbol Pointers 分别对应 `(__DATA_CONST, __got)` 和 `(__DATA, __la_symbol_ptr)` 两个 Section，fishhook 仅仅能 hook 的就是这两个分区中存在的 Symbol Pointer，而我们自己的自定义函数是没有对应的 Symbol Pointer 保存在这个两个 Section 中，那么自然我们自己自定义的函数是不会
 
 
 
-&emsp;Hook 的都是系统动态库中的 C 函数（注意仅仅是 C 函数，不包含系统动态库中的 OC 函数，如果再具体一点的话就是仅仅能 Hook `__DATA` 段中 `__la_symbol_ptr` 中包含的函数！）
+Hook 的都是系统动态库中的 C 函数（注意仅仅是 C 函数，不包含系统动态库中的 OC 函数，如果再具体一点的话就是仅仅能 Hook `__DATA` 段中 `__la_symbol_ptr` 中包含的函数！）
 
 
 
@@ -681,7 +681,8 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
         // #define S_LAZY_SYMBOL_POINTERS 0x7 /* section with only lazy symbol pointers */
         // #define S_NON_LAZY_SYMBOL_POINTERS 0x6 /* section with only non-lazy symbol pointers */
         
-        // 下面便是找到 lazy symbol pointers 和 non-lazy symbol pointers 两个区调用 perform_rebinding_with_section 函数  
+        // 下面便是找到 lazy symbol pointers 和 non-lazy symbol pointers 两个区调用 perform_rebinding_with_section 函数。
+        // 这里说的两个区便是：(__DATA_CONST, __got) 和 (__DATA, __la_symbol_ptr)
         
         if ((sect->flags & SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) {
           perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
