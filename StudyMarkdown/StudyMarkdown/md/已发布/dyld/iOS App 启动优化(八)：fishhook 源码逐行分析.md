@@ -188,6 +188,7 @@ int main(int argc, char * argv[])
 
 
 
+
 &emsp;首先在 `__DATA, __la_symbol_ptr` 中有一个指向 `_open` 的懒加载符号指针。当我们使用 open 函数时 dyld 才会对 open 这个符号指针进行正确的绑定。
 
 > &emsp;这里我们先看一下 `image` 指令的知识点，`image list` 指令可列出当前进程在内存中的地址以及本地路径，以及当前进程所依赖的 shared library image 在内存中的地址和本地路径。
