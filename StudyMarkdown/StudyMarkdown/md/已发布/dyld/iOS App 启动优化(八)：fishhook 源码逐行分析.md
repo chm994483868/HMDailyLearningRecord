@@ -178,16 +178,33 @@ int main(int argc, char * argv[])
 
 &emsp;下面我们通过 LLDB 调试一下 `(__DATA, __la_symbol_ptr)` 中指向 `_open` 这个符号的 Lazy Symbol Pointer 被绑定的过程，以及经过 fishhook 处理后这个 Lazy Symbol Pointer 指向发生变化的过程。
 
-&emsp;下面我们捋一下 `_open` 指针的一系列指向... 
+&emsp;下面我们捋一下 `_open` 指针的一系列指向，这样不仅可以帮助我们更好的理解 mach-o，同时还能提高我们对指针的认识！（开始之前我以为自己对指针已经极其熟悉了，妹想到，自己还是太年轻了！）
 
-![截屏2021-08-03 09.49.34.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e4d2c1f0afc0462eb69f566d0ca97a42~tplv-k3u1fbpfcp-watermark.image)
+![截屏2021-08-03 下午10.30.13.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d58de98c44404eceb844743f8140977f~tplv-k3u1fbpfcp-watermark.image)
 
+&emsp;首先是第一张图，位于 `(__DATA, __la_symbol_ptr)` 中的一个指针（Indirect Pointer 间接指针），其距 mach-o 二进制文件起始偏移 `0x000C0E0` 个字节，假设 mach-o 二进制文件的起始地址是 `0x100000000`，即此间接指针的地址是：`0x10000C0E0`，然后这个地址下连续 8 个字节内存放的值是 `0x000000010000609E`，到这里可以理解为：**一个起始地址是 0x10000C0E0 的指针，指向 0x10000609E 这个地址！**，那到这里有同学可能会问了，那这个 `_open` 是哪里来的呢？不急，我们下面慢慢看。首先我们把 MachOView 上翻一下，找找 `0x10000609E` 这个位置放的是什么，我们看到 `0x10000609E` 这个位置是在 `(__TEXT, __stub_helper)` 区中，到这里我们也验证了一个结论: `(__DATA, __la_symbol_ptr)` 区中的 Symbol Pointer 起始时是指向 `(__TEXT, __stub_helper)` 区的。
 
+![截屏2021-08-03 下午10.58.28.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0b602e1db1d346aba624e72bd209ef45~tplv-k3u1fbpfcp-watermark.image)
 
+&emsp;`(__TEXT, __stub_helper)` 区的知识点，我们暂时不往下延伸，它其实超重要的，我们暂时留在后面分析。这里我们先看上面一个问题：`0x10000C0E0` 这个地址的指针是怎么就和 `_open` 连接起来的呢？这里我们首先要看一下 `LC_DYSYMTAB` 这个 Load Command：
 
+![截屏2021-08-03 下午11.15.20.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/aa9eb57435b9485a9af38daea49e85c9~tplv-k3u1fbpfcp-watermark.image)
 
+&emsp;从图片中可以看到 `LC_DYSYMTAB` 这个 Loac Command 的 IndSym Table Offset 的值是 `0x00011D20`，那么可以计算得出 Dynamic Symbol Table 的位置应该是在 `0x100011d20` 处。果然我们从上往下看 mach-o 二进制文件，基本在最底部看到了 Dynamic Symbol Table，它的 Offset 的值正是 `0x0011D20` 和上图中看到的值一致，且 Dynamic Symbol Table 中存放的全都是 Indirect Symbols，此时我们可以在里面一通找，我们要找的便是位于 `(__DATA, __la_symbol_ptr)` 区中，且 Indirect Address 是 `0x10000COE0` 的一个 Symbol，如下图，我们真的找到了，并且我们又看到了我们熟悉的 `_open` 字符，我们看到此 Symbol 在 Symbol Table 中的 Index 是 `0x0000014C (#332)`。
 
+![截屏2021-08-03 下午11.27.30.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dfa7382ec5874f83b08d12790872306f~tplv-k3u1fbpfcp-watermark.image)
 
+&emsp;好了，这里我们也不墨迹，直接找到 Symbol Table 的索引 332 处，可发现这里是我们的 `_open` 符号的内容。那么这里的 `_open` 字符串到底来自哪里呢？这里我们也从图中看到了，Symbol Table 的 #332 处的这个符号的名字字符串在 String Table 的 Index 是 #1171。 
+
+![截屏2021-08-03 下午11.35.40.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/34e535cdea3b4da7befde5384d0de2e0~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;好了，这里我们也不啰嗦了，直接找到 String Table 的 #1171 这个索引处：
+
+![截屏2021-08-03 下午11.41.33.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/48011037acf7437197a7cb72b7a4dd01~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;舒服了，绕了一大圈，我们终于找到了位于 `(__DATA, __la_symbol_ptr)` 中的 `0x10000C0E0` 这个指针指向的是 `_open` 这个符号！而 `_open` 这个字符串也正是来自 String Table。
+
+&emsp;好了，`_open` 这个符号指针的 `_open` 字符串的来源我们搞清楚了，下面我们接着看 `_open` 这个符号指针怎么和符号绑定起来的。
 
 &emsp;首先在 `__DATA, __la_symbol_ptr` 中有一个指向 `_open` 的懒加载符号指针。当我们使用 open 函数时 dyld 才会对 open 这个符号指针进行正确的绑定。
 
@@ -284,7 +301,7 @@ int main(int argc, char * argv[]) {
 
 ![截屏2021-07-28 下午11.21.14.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/086e922516c649efa7867b36ddc9c8dc~tplv-k3u1fbpfcp-watermark.image)
 
-&emsp;这样我们就通过 LLDB 把 `open` Symbol Pointer 和 fishhook 实现 hook 的过程就都看完了，具体的执行细节，我们在下面的章节分析。
+&emsp;这样我们就通过 LLDB 把 `_open` 这个 Symbol Pointer 和 fishhook 实现 hook 的过程就都看完了，具体的执行细节，我们在下面的章节分析。
 
 ### 在 mach-o 文件中查找函数实现 
 
