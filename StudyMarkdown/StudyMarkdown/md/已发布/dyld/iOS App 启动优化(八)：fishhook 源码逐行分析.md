@@ -4,13 +4,33 @@
 
 &emsp;首先我们在学习 fishhook 实现原理之前一定要有 mach-o 的知识，可参考之前的文章：[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
 
-&emsp;[facebook/fishhook](https://github.com/facebook/fishhook) 是 Facebook 开源的一个 iOS 库，它可以动态修改进程（mach-o 格式的可执行文件在 iOS 上运行）中 Non-Lazy Symbol Pointers 和 Lazy Symbol Pointers 中的 Symbol Pointer 的指向。已知 Non-Lazy Symbol Pointers 和 Lazy Symbol Pointers 分别位于 `(__DATA_CONST, __got)` 和 `(__DATA, __la_symbol_ptr)` Section 中，fishhook 仅仅能 hook 的也就是这两个 Section 中存在的 Symbol Pointer，通过前面 Mach-0 知识的学习我们已知 `(__DATA_CONST, __got)` 和 `(__DATA, __la_symbol_ptr)` 中仅会存放我们引入到项目中的系统动态库的 C 函数，而我们自己的自定义函数（C/OC）是没有对应的 Symbol Pointer 保存在这两个 Section 中，它们的定义是存储在 `(__TEXT, __text)` Section 中，然后有对应的符号在 `Symbol Table` 中，那么看到这里我们自然也想到了 fishhook 的局限性，它仅仅能用来 hook 系统动态库中的 C 函数。
+&emsp;[facebook/fishhook](https://github.com/facebook/fishhook) 是 Facebook 开源的一个 iOS 库，它可以动态修改进程（进程：mach-o 格式的可执行文件在 iOS 上运行时）中 `(__DATA_CONST, __got)` 和 `(__DATA, __la_symbol_ptr)` 两个 Section 中的内容，已知这两个 Section 中存放的内容是 Non-Lazy Symbol Pointers 和 Lazy Symbol Pointers，而 fishhook 修改的便是其中 Symbol Pointer 的指向（指向我们自定义的函数或者其他任意函数）。
+
+### 不知道有用还是无用的知识点
+
+&emsp;关于 Non-Lazy Symbol Pointers，目前已知的在 `(__DATA, __got)`、`(__DATA, __nl_symbol_ptr)` 和 `(__DATA_CONST, __got)` 三个 Section 中存放，其中 `(__DATA, __got)`、`(__DATA, __nl_symbol_ptr)` 两个分区仅在 `main.m` 函数如下时才会在可执行文件中存在：
+
+```c++
+#import <stdio.h>
+
+int main(int argc, char * argv[]) {
+    printf("%s\n", "hello world");
+    printf("%s\n", "hello desgard");
+    return 0;
+}
+```
+
+&emsp;而我们 OC 项目的话，可执行文件中仅存在 `(__DATA_CONST, __got)` 这个分区用来存放 Non-Lazy Symbol Pointers。这些分区中的内容是 Non-Lazy Symbol Pointers，其实是通过它们对应的 Load command 的 `flags` 字段中的 `S_NON_LAZY_SYMBOL_POINTERS` 来标记识别的。作为对比 `(__DATA, __la_symbol_ptr)` 对应的 Load command 的 `flags` 字段中是 `S_LAZY_SYMBOL_POINTERS` 来标记的，预示了 `(__DATA, __la_symbol_ptr)` 中存放的是 Lazy Symbol Pointers。
 
 ### fishhook 的局限性
 
-&emsp;前面介绍了 fishhook 是用来 hook C 函数的，这里其实还有一个前提，就是它只能 hook 系统的 C 函数，并不能 hook 我们自己写的自定义 C 函数。C 函数是静态的，在编译时就已经确定了函数地址（函数实现地址在 mach-o 本地文件中），而系统的 C 函数则存在着动态的部分，那么为什么系统级别的 C 函数存在着的动态的部分是什么呢？这就要说到 PIC（position-independent code） 技术，又叫做 位置独立代码/位置无关代码，是为了系统 C 函数在编译时期能够确认一个地址的一种技术手段。
+&emsp;这里用的标题虽然是 “局限性”，不过也不能称之为局限性，毕竟每种工具都有其适用范围，这里大概应该称之为 fishhook 的使用范围，或者说是 fishhook 都能 hook 哪些函数。
 
-&emsp;编译时在 mach-o 文件中预留一段空间 -- 符号表（`__DATA` 段中），dyld 把应用加载到内存中时（此时在 load command 中会依赖 Foundation），在符号表中找到了 `NSLog` 函数，就会进行链接绑定 -- 将 Foundation 中 NSLog 的真实地址赋值到 `__DATA` 段的 `NSLog` 符号上。而自定义的 C 函数是不会生成符号表的，直接就是一个函数地址，所以 fishhook 的局限性就在于只有符号表内的符号才可以进行 hook（重新绑定符号）。
+&emsp;fishhook 仅仅能 hook 的也就是 `(__DATA_CONST, __got)` 和 `(__DATA, __la_symbol_ptr)` 这两个 Section 中存放的 Symbol Pointer，通过前面 Mach-0 知识的学习我们已知 `(__DATA_CONST, __got)` 和 `(__DATA, __la_symbol_ptr)` 中仅会存放我们引入到项目中的系统动态库的 C 函数，而我们自己的自定义函数（C/OC）是没有对应的 Symbol Pointer 保存在这两个 Section 中，它们的定义是存储在 `(__TEXT, __text)` Section 中，然后有对应的符号在 Symbol Table 中，那么看到这里我们自然也想到了 fishhook 的局限性，它仅仅能用来 hook 系统动态库中的 C 函数。
+
+~~&emsp;前面介绍了 fishhook 是用来 hook C 函数的，这里其实还有一个前提，就是它只能 hook 系统的 C 函数，并不能 hook 我们自己写的自定义 C 函数。C 函数是静态的，在编译时就已经确定了函数地址（函数实现地址在 mach-o 本地文件中），而系统的 C 函数则存在着动态的部分，那么为什么系统级别的 C 函数存在着的动态的部分是什么呢？这就要说到 PIC（position-independent code） 技术，又叫做 位置独立代码/位置无关代码，是为了系统 C 函数在编译时期能够确认一个地址的一种技术手段。~~
+
+~~&emsp;编译时在 mach-o 文件中预留一段空间 -- 符号表（`__DATA` 段中），dyld 把应用加载到内存中时（此时在 load command 中会依赖 Foundation），在符号表中找到了 `NSLog` 函数，就会进行链接绑定 -- 将 Foundation 中 NSLog 的真实地址赋值到 `__DATA` 段的 `NSLog` 符号上。而自定义的 C 函数是不会生成符号表的，直接就是一个函数地址，所以 fishhook 的局限性就在于只有符号表内的符号才可以进行 hook（重新绑定符号）。~~
 
 ## fishhook 解读
 
@@ -156,9 +176,19 @@ int main(int argc, char * argv[])
 
 ### 通过 LLDB 调试 Lazy Symbol Pointer 绑定过程以及 fishhook 进行 hook 的过程 
 
-&emsp;下面我们通过 LLDB 追踪一下 `__DATA, __la_symbol_ptr` 中的 `open` 这个 Lazy Symbol Pointer 被绑定的过程，以及经过 fishhook 后 `open` 这个 Lazy Symbol Pointer 指向发生变化的过程。
+&emsp;下面我们通过 LLDB 调试一下 `(__DATA, __la_symbol_ptr)` 中指向 `_open` 这个符号的 Lazy Symbol Pointer 被绑定的过程，以及经过 fishhook 处理后这个 Lazy Symbol Pointer 指向发生变化的过程。
 
-&emsp;首先在 `__DATA, __la_symbol_ptr` 中有一个名字是 `open` 的懒加载符号指针，当我们使用 open 函数时 dyld 才会对 open 这个符号指针进行正确的绑定。
+&emsp;下面我们捋一下 `_open` 指针的一系列指向... 
+
+![截屏2021-08-03 09.49.34.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e4d2c1f0afc0462eb69f566d0ca97a42~tplv-k3u1fbpfcp-watermark.image)
+
+
+
+
+
+
+
+&emsp;首先在 `__DATA, __la_symbol_ptr` 中有一个指向 `_open` 的懒加载符号指针。当我们使用 open 函数时 dyld 才会对 open 这个符号指针进行正确的绑定。
 
 > &emsp;这里我们先看一下 `image` 指令的知识点，`image list` 指令可列出当前进程在内存中的地址以及本地路径，以及当前进程所依赖的 shared library image 在内存中的地址和本地路径。
   
@@ -253,11 +283,11 @@ int main(int argc, char * argv[]) {
 
 ![截屏2021-07-28 下午11.21.14.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/086e922516c649efa7867b36ddc9c8dc~tplv-k3u1fbpfcp-watermark.image)
 
-&emsp;这样我们就通过 LLDB 把 open Symbol Pointer 和 fishhook 实现 hook 的过程就都看完了，具体的执行细节，我们在下面的章节分析。
+&emsp;这样我们就通过 LLDB 把 `open` Symbol Pointer 和 fishhook 实现 hook 的过程就都看完了，具体的执行细节，我们在下面的章节分析。
 
 ### 在 mach-o 文件中查找函数实现 
 
-&emsp;在下面看 fishhook 内部是怎么工作之前，我们首先看一个其它的知识点。我们在 `main` 函数中打印 `NSLog` 函数的地址（`NSLog(@"🎃🎃🎃 %p", NSLog);` 控制台输出：`🎃🎃🎃 0x7fff20805d0d`），我们多次打印，或者删除 APP 后重新运行打印，可看到 `NSLog` 函数的地址一直都是固定的。
+&emsp;在下面看 fishhook 内部是怎么工作之前，我们首先看一个其它的知识点。我们在 `main` 函数中打印 `NSLog` 函数的地址（`NSLog(@"🎃🎃🎃 %p", NSLog);` 控制台输出：`🎃🎃🎃 0x7fff20805d0d`），我们多次打印，或者删除 APP 后重新运行打印，可看到 `NSLog` 函数的地址一直都是固定的。（之所以不变，是因为 `NSLog` 函数是来自系统中名为 `Foundation` 的共享动态库，而 `Foundation` 这个系统的共享动态库位于共享缓存中，即使在另外一个项目中我们打印 `NSLog` 函数的地址，可以发现打印的地址都是一样的）
 
 &emsp;下面我们借助 [fangshufeng/MachOView](https://github.com/fangshufeng/MachOView) 来直面 mach-o 文件，在其中查找函数实现地址，这里以 `NSLog` 函数为例。
 
