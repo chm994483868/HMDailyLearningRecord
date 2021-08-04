@@ -628,7 +628,7 @@ static void _rebind_symbols_for_image(const struct mach_header *header,
 
 ![截屏2021-07-31 上午4.39.59.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c2f0a91da45940928c7940ff51584a4a~tplv-k3u1fbpfcp-watermark.image)
 
-&emsp;最后一张截图是 `String Table`（字符串表），用于记录符号表中
+&emsp;最后一张截图是 `String Table`（字符串表），用于记录符号表中符号的名字，`rebinding` 结构体中的 `name` 字符串就是要与 `String Table` 中的符号名字字符串来比较的。
 
 ![截屏2021-07-31 10.25.48.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d7a374664d6d4617bb8a5efdc614aac8~tplv-k3u1fbpfcp-watermark.image)
 
@@ -661,7 +661,7 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
     cur_seg_cmd = (segment_command_t *)cur;
     
     // #define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT_64
-    // 首先判断 Load command 的类型是 LC_SEGMENT_64，然后判断其 segname 是 __LINKEDIT，即找到 LC_SEGMENT_64(__LINKEDIT) 
+    // 首先判断 Load command 的类型是 LC_SEGMENT_64，然后判断其 segname 是否是 __LINKEDIT，如果是即找到了 LC_SEGMENT_64(__LINKEDIT)。 
     if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
     
       // #define SEG_LINKEDIT "__LINKEDIT"
@@ -675,11 +675,15 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
     } else if (cur_seg_cmd->cmd == LC_SYMTAB) {
       // #define LC_SYMTAB 0x2 /* link-edit stab symbol table info */
       // LC_SYMTAB：link-edit stab symbol table info
+      
+      // 记录 LC_SYMTAB 这条 Load command，它内部记录了 Symbol Table 和 String Table 的偏移量
       symtab_cmd = (struct symtab_command*)cur_seg_cmd;
       
     } else if (cur_seg_cmd->cmd == LC_DYSYMTAB) {
       // #define LC_DYSYMTAB 0xb /* dynamic link-edit symbol table info */
       // LC_DYSYMTAB：dynamic link-edit symbol table info
+      
+      // 记录 LC_DYSYMTAB 这条 Load command，它内部记录了 Dynamic Symbol Table 的偏移量
       dysymtab_cmd = (struct dysymtab_command*)cur_seg_cmd;
       
     }
@@ -694,19 +698,22 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
   // 找到 symbol/string table 的基址
   //（观察上面的 LC_SYMTAB 截图可看到其中的 Symbol Table Offset 和 String Table Offset 两个字段，我们便可以根据这两个字段的值，做地址偏移，便可找到下面的 Symbol Table 和 String Table 两个表）
   
-  // 这里有一个知识点，我们如何找到进程的起始地址，在上面 "通过 LLDB 调试验证 fishhook 实现 hook 的过程" 一节中，
+  // 这里有一个知识点，我们如何找到进程的起始地址，在上面 "通过 LLDB 调试 Lazy Symbol Pointer 绑定过程以及 fishhook 进行 hook 的结果" 一节中，
   // 我们在控制台通过 image list 可得当前进程在内存中的地址，那么这里的 linkedit_base 的值是什么呢？
   // 我们可以直接在此行打断点，然后和我们通过 image list 取得的地址进行比较，发现它们的值是相等的。（测试时同为：0x0000000106730000 这里就不截图了，小伙伴可以自己打印看一下）
   
   // 那么下面我们分析一下为什么通过：(uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff 就能得到当前进程的内存地址呢？
   // ⚠️⚠️⚠️ 其实这里完全多此一举，细心的小伙伴可能已经发现，
   
-  // uint64_t fileoff; /* file offset of this segment */ fileoff 字段表示 segment 在文件的偏移
+  // uint64_t fileoff; /* file offset of this segment */ fileoff 字段表示 segment 在 mach-o 二进制文件的偏移
   // 进程的起始地址 = __LINKEDIT.VM_Address - __LINKEDIT.File_Offset + silde 的改变值
   uintptr_t linkedit_base = (uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff;
   
-  // 符号表的地址 = 基址 + 符号表偏移量
+  // ⬇️⬇️⬇️ 下面三个局部变量纷纷对应了我们上面验证了多次的：Symbol Table、String Table、Dynamic Symbol Table，三张表！
+  
+  // 符号表的地址 = 基址 + 符号表偏移量（已知符号表就是一个 nlist_t 结构体数组）
   nlist_t *symtab = (nlist_t *)(linkedit_base + symtab_cmd->symoff);
+  
   // 字符串表的地址 = 基址 + 字符串表偏移量
   char *strtab = (char *)(linkedit_base + symtab_cmd->stroff);
 
@@ -714,24 +721,27 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
   // 动态符号表地址 = 基址 + 动态符号表偏移量
   uint32_t *indirect_symtab = (uint32_t *)(linkedit_base + dysymtab_cmd->indirectsymoff);
    
-  // cur 再次回到 segment load command 的起始处
+  // 指针偏移，越过 mach-o 的 mach header 部分，直接到达 load command 部分的首地址，并赋值给 cur
   cur = (uintptr_t)header + sizeof(mach_header_t);
   
-  // 再次对 segment load command 进行遍历
+  // 再次对 segment load command 进行遍历，这里便是查找 __DATA 和 __DATA_CONST 段中的 SECTION_TYPE 是 S_LAZY_SYMBOL_POINTERS 和 S_NON_LAZY_SYMBOL_POINTERS 的区，
+  // 已知的便是我们再熟悉不过的 (__DATA_CONST, __got)、(__DATA, __la_symbol_ptr)、(__DATA, __nl_symbol_ptr) 这三个 Section 符合要求。
   for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
     cur_seg_cmd = (segment_command_t *)cur;
     
-    // 遍历只需要查找类型是 LC_SEGMENT_64，名字是 __DATA 或者 __DATA_CONST 的 Load command 其它的 Load command 则直接跳过 
+    // 遍历只需要查找类型是 LC_SEGMENT_64 名字是 __DATA 或者 __DATA_CONST 的 Load command，其它的 Load command 则直接跳过 
     // #define LC_SEGMENT_ARCH_DEPENDENT LC_SEGMENT_64
+    
     if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
       
       // #define SEG_DATA "__DATA" /* the tradition UNIX data segment */
       // #define SEG_DATA_CONST  "__DATA_CONST"
+      
       if (strcmp(cur_seg_cmd->segname, SEG_DATA) != 0 && strcmp(cur_seg_cmd->segname, SEG_DATA_CONST) != 0) {
         continue;
       }
       
-      // 下面便是遍历 __DATA/__DATA_CONST 段中的 sections，找到其中的 _la_symbol_ptr 和 __nl_symbol_ptr 两个区
+      // 下面便是遍历 __DATA/__DATA_CONST 段中的 sections，便可找到其中的 _la_symbol_ptr、__nl_symbol_ptr、__got 三个区！
       
       for (uint j = 0; j < cur_seg_cmd->nsects; j++) {
         section_t *sect = (section_t *)(cur + sizeof(segment_command_t)) + j;
@@ -739,8 +749,7 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
         // #define S_LAZY_SYMBOL_POINTERS 0x7 /* section with only lazy symbol pointers */
         // #define S_NON_LAZY_SYMBOL_POINTERS 0x6 /* section with only non-lazy symbol pointers */
         
-        // 下面便是找到 lazy symbol pointers 和 non-lazy symbol pointers 两个区调用 perform_rebinding_with_section 函数。
-        // 这里说的两个区便是：(__DATA_CONST, __got) 和 (__DATA, __la_symbol_ptr)
+        // (__DATA_CONST, __got)、(__DATA, __la_symbol_ptr)、(__DATA_CONST, __got) 三个区调用 perform_rebinding_with_section 函数
         
         if ((sect->flags & SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) {
           perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
@@ -755,7 +764,7 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 }
 ```
 
-&emsp;`rebind_symbols_for_image` 函数的内部流程很清晰，就是找到 mach-o 文件的 `lazy symbol pointers` 和 `non-lazy symbol pointers` 两个区调用 `perform_rebinding_with_section` 函数。  
+&emsp;`rebind_symbols_for_image` 函数的内部流程很清晰，就是找到 mach-o 文件中的 `lazy symbol pointers` 和 `non-lazy symbol pointers` 符号指针去调用 `perform_rebinding_with_section` 函数。  
 
 &emsp;下面我们看一下 `perform_rebinding_with_section` 函数的内容。
 
@@ -766,8 +775,6 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 #define INDIRECT_SYMBOL_LOCAL    0x80000000
 #define INDIRECT_SYMBOL_ABS    0x40000000
 ```
-
-&emsp;间接符号表条目只是指向指针或存根所指符号的符号表中的 32 位索引。除非它是用于已定义符号的非惰性符号指针部分，其中 strip(1) 已删除。在这种情况下，它的值为 INDIRECT_SYMBOL_LOCAL。如果符号也是绝对的，则 INDIRECT_SYMBOL_ABS 与此相关。
 
 ##### perform_rebinding_with_section
 
@@ -781,12 +788,27 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
                                            
   // #define SEG_DATA_CONST "__DATA_CONST"
   // isDataConst 用于标记入参 section 是否是属于 __DATA_CONST 段的区
+  
   const bool isDataConst = strcmp(section->segname, SEG_DATA_CONST) == 0;
   
-  // nl_symbol_ptr 和 la_symbol_ptr section 中的 reserved1 字段指明对应的 indirect symbol table 起始的 index
+  // nl_symbol_ptr 和 la_symbol_ptr section 中的 reserved1 字段指明它们各自在 indirect symbol table 中的起始索引，
+  // 这里 indirect_symtab 就是 Indirect Symbols 的起始地址，我们前面讲过，Indirect Symbols 中的符号，便是 (__TEXT, __stubs) 中的 Symbol Stubs 和 (_DATA_CONST, __got) 中的 Non-Lazy Symbol Pointers 和 (__DATA, __la_symbol_ptr) 中的 Lazy Symbol Pointers 依次排列的。
+  // 例如上面一张图，在 Dynamic Symbol Table 中的 Indirect Symbols 中：
+  // [#0 ~ #33] 是 (__TEXT, __stubs) 中的 Symbol Stubs
+  // [#34 ~ #39] 是 (_DATA_CONST, __got) 中的 Non-Lazy Symbol Pointers
+  // [#40 ~ #73] 是 (__DATA, __la_symbol_ptr) 中的 Lazy Symbol Pointers
+  // 然后我们可以别看到 (_DATA_CONST, __got) Load command 中 reserved1 字段的值是 Indirect Sym Index 且值是 34，
+  // 然后 (__DATA, __la_symbol_ptr) Load command 中的 reserved1 字段的值是 Indirect Sym Index 且值是 40。
+  
+  // 以上面的知识点做铺垫，我们便可以理解下面的：indirect_symtab + section->reserved1 的值便是 (_DATA_CONST, __got) 或 (__DATA, __la_symbol_ptr) 中的符号指针在 Indirect Symbols 中的起始点，
+  // 而这里的每个起始点是一个 uint32_t 的数组，每 4 个字节存放的内容便是 (_DATA_CONST, __got) 或 (__DATA, __la_symbol_ptr) 中的一个符号指针对应的符号在 Symbol Table 中的索引。
+  
+  // 1⃣️1⃣️1⃣️
   uint32_t *indirect_symbol_indices = indirect_symtab + section->reserved1;
   
-  // slide + section-> addr 就是符号对应的存放函数实现的数组，也就是 __nl_symbol_ptr 和 __la_symbol_ptr 区相应的函数指针都在这里了，所以可以通过 indirect_symbol_bindings 寻找函数地址
+  // slide + section-> addr 就是 (_DATA_CONST, __got) 或 (__DATA, __la_symbol_ptr) 中的符号指针数组的起始地址，然后就可以通过 indirect_symbol_bindings 遍历所有的符号指针了
+  
+  // 2⃣️2⃣️2⃣️
   void **indirect_symbol_bindings = (void **)((uintptr_t)slide + section->addr);
   
   // typedef int vm_prot_t;
@@ -800,9 +822,12 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     mprotect(indirect_symbol_bindings, section->size, PROT_READ | PROT_WRITE);
   }
   
-  // 遍历 section 里的每一个符号
+  // 遍历  (_DATA_CONST, __got) 或 (__DATA, __la_symbol_ptr) section 里的每一个符号指针（即遍历 Lazy Symbol Pointers 和 Non-Lazy Symbol Pointers 中的每个 Symbol Pointer，for 循环中 sizeof(void *) 正是计算一个指针的长度） 
   for (uint i = 0; i < section->size / sizeof(void *); i++) {
-    // 找到符号在 indirect_symbol_indices 表中的值（符号表在 《程序员的自我修养中》看到，就是按顺序排列的一个一个以 \0 结尾的字符串，可以根据它们的 index 直接读取到它们，这个 index 并不是 0 1 2 按顺序这样，而是每个符号的首字母的下标）
+  
+    // 找到符号在符号表中的下标，Indirect Symbols 中内容的是符号在 Symbol Table 中的下标的数组，通过此下标，我们便能字 Symbols Table 中找到此下标对应的符号
+    
+    // 1⃣️1⃣️1⃣️
     uint32_t symtab_index = indirect_symbol_indices[i];
     
     if (symtab_index == INDIRECT_SYMBOL_ABS || symtab_index == INDIRECT_SYMBOL_LOCAL ||
@@ -810,16 +835,18 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
       continue;
     }
     
-    // 以 symtab_index 作为下标，访问 symbol table
+    // 以 symtab_index 作为下标，访问 symbol table，找到了对应的符号，然后 strtab_offset 值便是此符号的名字字符串在 String Table 中的首字符索引
     uint32_t strtab_offset = symtab[symtab_index].n_un.n_strx;
     
-    // 获取到 symbol_name
+    // String Table 的首地址偏移，便获取到 symbol_name
     char *symbol_name = strtab + strtab_offset;
     
-    // 判断是否函数的名称是否有两个字符，为啥是两个，因为函数前面有个 _，所以方法的名称最少要 1 个 
+    // 判断符号的名字字符串是否有两个字符，为啥是两个，因为前面有一个 _，所以符号的名字长度最少是 1  
     bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
     
-    // 下面开始遍历链表中的 rebinding 进行 hook，把链表的 头 赋值给 cur  
+    // 这里的双层循环，外层循环是遍历符号指针，内层循环则是遍历我们调用 rebind_symbols 函数构建的链表遍历链表中的 rebinding 数组，看看能不能找到我们要 hook 的函数
+    // 下面开始遍历链表中的 rebinding 进行 hook，把链表的 头 赋值给 cur
+    
     struct rebindings_entry *cur = rebindings;
     
     // 外层的 while 循环用来遍历 rebindings_entry 链表
@@ -828,20 +855,24 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
       // 内层的 for 循环遍历链表每个节点的 rebinding 数组
       for (uint j = 0; j < cur->rebindings_nel; j++) {
         
-        // 判断从 symbol_name[1] 两个函数的名字是否都是一致的，以及判断两个。找到与 rebinding 的 name 相同的符号
+        // 判断 符号名字长度超过 1，以及符号的名字与 rebinding 的 name 相同
         if (symbol_name_longer_than_1 && strcmp(&symbol_name[1], cur->rebindings[j].name) == 0) {
         
-          // 如果 rebinding 的 replaced 不为 NULL 并且方法的实现和 replacement 的方法不一致
+          // 如果 rebinding 的 replaced 不为 NULL，这里 cur->rebindings[j].replaced 是一个二维指针，要进行判空操作，
+          // 并且当前符号指针指向的符号和 hook 要替换的函数不一致，才有必要进行 hook。
           if (cur->rebindings[j].replaced != NULL && indirect_symbol_bindings[i] != cur->rebindings[j].replacement) {
           
             // rebinding 的 replaced 记录原始符号对应的函数实现（rebindings[j].replaced 保存 indirect_symbol_bindings[i] 的函数地址） 
+            
             *(cur->rebindings[j].replaced) = indirect_symbol_bindings[i];
           }
           
-          // 把原始符号对应的函数实现替换为我们 rebinding 中准备的替换函数 replacement 
+          // 把本次循环的符号指针指向的函数替换为我们 rebinding 中准备的替换函数 replacement 
+          
+          // 2⃣️2⃣️2⃣️
           indirect_symbol_bindings[i] = cur->rebindings[j].replacement;
           
-          // goto 语句，跳到下面的 symbol_loop 处
+          // goto 语句，跳到下面的 symbol_loop 处，这里是指当前这个 符号指针 已经被替换了，开始查找下一个 符号指针
           goto symbol_loop;
         }
         
@@ -872,9 +903,9 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
 }
 ```
 
-&emsp;`perform_rebinding_with_section` 函数内部就是取得 `rebinding` 的 `name` 对应的函数实现，然后记录在 `replaced` 中，并把原符号对应的实现，替换为 `replacement`。
+&emsp;`perform_rebinding_with_section` 函数内部就是取得 `rebinding` 的 `name` 对应的原始函数地址，然后记录在 `replaced` 中，并把原符号指针指向的函数，替换为 `replacement`。
 
-&emsp;至此 fishhook 的全部实现过程我们就看完了，这样我们在熟练使用 fishhook 来 hook C 函数的同时，也对其实现原理一目了然了。
+&emsp;至此 fishhook 的全部实现过程我们就看完了！🎉🎉🎉
 
 ## 参考链接
 **参考链接:🔗**
