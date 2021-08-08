@@ -120,27 +120,146 @@ static void hook_func(void) {
 
 &emsp;`0x23A0` 是 `(__TEXT, __stub_helper)` Section 的起始位置，其中的 `jmp qword ptr [rip + 0xec71]` 便是跳转到 `dyld_stub_binder`，`dyld_stub_binder` 便是 dyld 进行桩绑定，即 dyld 进行符号绑定。
 
-## Lazy Symbol Pointer 的动态绑定过程 dyld_stub_binder 
+## Lazy Symbol Pointer 的动态绑定过程（dyld_stub_binder） 
 
-&emsp;
+&emsp;已知在 `(__DATA, __got)/(__DATA_CONST, __got)`、`(__DATA, __la_symbol_ptr)`、`(__DATA, __nl_symbol_ptr)` 这些 Section 中保存的分别是 Lazy Symbol Pointers 和 Non-Lazy Symbol Pointers，即分别为 Lazy Binding 指针表和 Non Lazy Binding 指针表。其中的 Lazy Binding 指针表比较特殊，我们从名字可以看出它是一个懒绑定指针表，当 mach-o 二进制可执行文件通过 dyld 加载时并没有在加载  Lazy Binding 指针表的过程中直接对其中的符号指针进行绑定（确定它们指向的符号地址），而是在第一次调用该符号指针对应的函数时，通过 PLT(Procedure Linkage Table) 来进行一次 Lazy Binding。下面我们通过如下示例代码进行验证。
 
+```c++
+#include <stdio.h>
 
+int main(int argc, char * argv[]) {
+    
+    printf("♻️♻️♻️ %s \n", "hello world");
+    printf("♻️♻️♻️ %s \n", "hello desgard");
+    
+    return 0;
+}
+```
 
+&emsp;然后我们使用 Hopper Disassembler 查看其汇编实现如下：
 
+```c++
+_main:
+0000000100002160         push       rbp
+0000000100002161         mov        rbp, rsp
+0000000100002164         sub        rsp, 0x20
+0000000100002168         mov        dword [rbp+var_4], 0x0
+000000010000216f         mov        dword [rbp+var_8], edi
+0000000100002172         mov        qword [rbp+var_10], rsi
+0000000100002176         lea        rdi, qword [aXe2x99xbbxefxb] ; argument "format" for method imp___stubs__printf, "\\xE2\\x99\\xBB\\xEF\\xB8\\x8F\\xE2\\x99\\xBB\\xEF\\xB8\\x8F\\xE2\\x99\\xBB\\xEF\\xB8\\x8F %s \\n"
+000000010000217d         lea        rsi, qword [aHelloWorld]     ; "hello world"
+0000000100002184         mov        al, 0x0
+0000000100002186         call       imp___stubs__printf          ; printf
+000000010000218b         lea        rdi, qword [aXe2x99xbbxefxb] ; argument "format" for method imp___stubs__printf, "\\xE2\\x99\\xBB\\xEF\\xB8\\x8F\\xE2\\x99\\xBB\\xEF\\xB8\\x8F\\xE2\\x99\\xBB\\xEF\\xB8\\x8F %s \\n"
+0000000100002192         lea        rsi, qword [aHelloDesgard]   ; "hello desgard"
+0000000100002199         mov        dword [rbp+var_14], eax
+000000010000219c         mov        al, 0x0
+000000010000219e         call       imp___stubs__printf          ; printf
+00000001000021a3         xor        ecx, ecx
+00000001000021a5         mov        dword [rbp+var_18], eax
+00000001000021a8         mov        eax, ecx
+00000001000021aa         add        rsp, 0x20
+00000001000021ae         pop        rbp
+00000001000021af         ret
+   ; endp
+```
 
+&emsp;可看到调用 `printf` 函数的时候会触发 `call imp___stubs__printf ; printf` 指令，双击 `imp___stubs__printf` 进入其存储位置查看：
 
+```c++
+imp___stubs__printf:        // printf
+0000000100002452         jmp        qword [_printf_ptr] ; _printf_ptr, _printf_ptr,_printf, CODE XREF=_main+38, _main+62
+   ; endp
+```
 
+&emsp;然后再双击 `_printf_ptr` 可看到如下内容：
 
+```c++
+_printf_ptr:
+0000000100008028         extern     _printf ; DATA XREF=imp___stubs__printf
+```
 
+&emsp;通过上面的汇编指令，我们看到 `imp___stubs__printf` 指针指向了 `0x0000000100008028`，即可以知道我们的 `(__DATA, __la_symbol_ptr)` Section 中的 `_printf` 这个指针在 mach-o 二进制可执行文件的偏移值是 `0x8028`。下面我们在两个 `printf` 方法前加上断点，然后使用 LLDB 对其进行调试：
 
+&emsp;首先我们使用 `image list` 指令获得当前进程在内存中的首地址 `0x000000010b941000`。
 
+```c++
+(lldb) image list
+[  0] 7FE17B7A-D271-3133-9A56-A92A3780D8BC 0x000000010b941000 /Users/hmc/Library/Developer/Xcode/DerivedData/TEST_Fishhook-guvclcyaszalpmdldofnoxqksebw/Build/Products/Debug-iphonesimulator/TEST_Fishhook.app/TEST_Fishhook 
+...
+```
 
+&emsp;然后我们使用 `memory read 0x000000010b941000+0x8028` 指令查看 `_printf` 符号指针的指向内容，已知 iOS 是小端模式，可知 `_printf` 符号指针指向 `0x010b94349a`
 
+```c++
+(lldb) memory read 0x000000010b941000+0x8028
+0x10b949028: 9a 34 94 0b 01 00 00 00 81 00 00 00 28 00 00 00  .4..........(...
+0x10b949038: 28 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  (...............
+(lldb) 
+```
 
+&emsp;然后我们使用 `dis -s 0x010b94349a` 把此地址的数据转换为汇编指令，看到其中有一个 `jmp    0x10b943458` 指令跳转。
 
+```c++
+(lldb) dis -s 0x010b94349a
+    0x10b94349a: pushq  $0x91
+    0x10b94349f: jmp    0x10b943458
+    0x10b9434a4: jbe    0x10b94350f               ; ""
+    0x10b9434a6: ja     0x10b9434ed               ; "ector:"
+    0x10b9434a9: imull  $0x72006461, 0x6f(%rsp,%rcx,2), %esp ; imm = 0x72006461 
+    0x10b9434b1: outsl  (%rsi), %dx
+    0x10b9434b2: insb   %dx, %es:(%rdi)
+    0x10b9434b3: addb   %ch, %gs:0x6e(%rcx)
+(lldb) 
+```
 
+&emsp;然后我们使用 `dis -s 0x10b943458` 查看 `0x10b943458` 中的内容，可看到其中对 `dyld_stub_binder` 的调用， `dyld_stub_binder` 方法的作用简单来讲就是计算对应的函数地址进行绑定，之后进而调用对应函数。
 
+```c++
+(lldb) dis -s 0x10b943458
+    0x10b943458: leaq   0x7019(%rip), %r11        ; _dyld_private
+    0x10b94345f: pushq  %r11
+    0x10b943461: jmpq   *0x1ba9(%rip)             ; (void *)0x00007fff2025cbb4: dyld_stub_binder
+    0x10b943467: nop    
+    0x10b943468: pushq  $0x0
+    0x10b94346d: jmp    0x10b943458
+    0x10b943472: pushq  $0x12
+(lldb) 
+```
 
+&emsp;此时我们再单步执行，到达第二个断点，看到控制台输出了 `♻️♻️♻️ hello world ` 此时表示我们第一次调用 `printf` 函数结束了。此时我们再次调用 `memory read 0x000000010b941000+0x8028` 查看 `_printf` 符号指针指向的内容。 
+
+```c++
+(lldb) memory read 0x000000010b941000+0x8028
+0x10b949028: e8 f4 0b 20 ff 7f 00 00 81 00 00 00 28 00 00 00  ... ........(...
+0x10b949038: 28 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  (...............
+(lldb) 
+```
+
+&emsp;可看到此时 `_printf` 符号指针指向 `0x7fff200bf4e8`，然后我们使用 `dis -s 0x7fff200bf4e8` 查看内容，此时便可看到 `_printf` 符号指针此时便指向 `libsystem_c.dylib printf` 函数了。
+
+```c++
+(lldb) dis -s 0x7fff200bf4e8
+libsystem_c.dylib`printf:
+    0x7fff200bf4e8 <+0>:  pushq  %rbp
+    0x7fff200bf4e9 <+1>:  movq   %rsp, %rbp
+    0x7fff200bf4ec <+4>:  pushq  %r14
+    0x7fff200bf4ee <+6>:  pushq  %rbx
+    0x7fff200bf4ef <+7>:  subq   $0xd0, %rsp
+    0x7fff200bf4f6 <+14>: movq   %rdi, %r14
+    0x7fff200bf4f9 <+17>: testb  %al, %al
+    0x7fff200bf4fb <+19>: je     0x7fff200bf526            ; <+62>
+    0x7fff200bf4fd <+21>: movaps %xmm0, -0xb0(%rbp)
+(lldb) 
+```
+
+&emsp;即我们的 Lazy Binding 指针在第一调用时通过 `dyld_stub_binder` 函数对其进行正确的绑定，并进行调用，然后后续再对其调用就是直接调用 Lazy Symbol Pointer 所指向的函数了。 
+
+## ASLR 简述
+
+&emsp;ASLR(Address Space Layout Randomization，地址空间布局随机化)，是一种针对缓冲区溢出的安全保护技术。借助 ASLR，PE 文件每次加载到内存的起始地址都会随机变化。目前大部分主流操作系统都已经实现了 ASLR，如 Windows Vista、Linux 2.6.12、Mac OS X 10.7、iOS 4.3 以及 Android 4.0 均从此版本开始支持 ASLR。
+
+&emsp;简单说，ASLR 使得渗透（基于缓冲区溢出）攻击的难度明显提升，增加了系统的安全性。但是，对于不是搞安全/逆向的 Programmer 来说，在调试程序时这就略显蛋疼。控制变量是调试阶段的一大原则。
 
 ## 参考链接
 **参考链接:🔗**
@@ -149,3 +268,4 @@ static void hook_func(void) {
 + [十 iOS逆向- hopper disassembler](https://www.jianshu.com/p/20077ceb2f75)
 + [iOS逆向之Hopper进阶](https://www.jianshu.com/p/384dc5bc1cb4)
 + [一文读懂fishhook原理](https://juejin.cn/post/6857699952563978247)
++ [地址空间布局随机化ASLR](https://www.jianshu.com/p/d3f094b4443d)
