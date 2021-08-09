@@ -257,9 +257,29 @@ libsystem_c.dylib`printf:
 
 ## ASLR 简述
 
-&emsp;ASLR(Address Space Layout Randomization，地址空间布局随机化)，是一种针对缓冲区溢出的安全保护技术。借助 ASLR，PE 文件每次加载到内存的起始地址都会随机变化。目前大部分主流操作系统都已经实现了 ASLR，如 Windows Vista、Linux 2.6.12、Mac OS X 10.7、iOS 4.3 以及 Android 4.0 均从此版本开始支持 ASLR。
+&emsp;ASLR(Address Space Layout Randomization，地址空间布局随机化)，是一种针对缓冲区溢出的安全保护技术。借助 ASLR，mach-o 二进制可执行文件每次加载到内存的起始地址都会随机变化。目前大部分主流操作系统都已经实现了 ASLR，如 Windows Vista、Linux 2.6.12、Mac OS X 10.7、iOS 4.3 以及 Android 4.0 均从此版本开始支持 ASLR。
 
 &emsp;简单说，ASLR 使得渗透（基于缓冲区溢出）攻击的难度明显提升，增加了系统的安全性。但是，对于不是搞安全/逆向的 Programmer 来说，在调试程序时这就略显蛋疼。控制变量是调试阶段的一大原则。
+
+## PIC 简述
+
+&emsp;苹果为了能在 mach-O 二进制可执行文件中访问外部函数（系统动态链接库/共享缓存库 中的函数），采用了一个技术，叫做 PIC（Position-independent code 位置代码独立）技术。
+
+
+
+
+&emsp;**把相关链接里面的所有文章再阅读一遍，把之前理解模糊的地方再理解透彻!!**
+
+
+
+
+
+
+## 总结
+
+&emsp;至此，fishhook 相关的内容就全部搞懂了，说实话收获巨大，特别是对 mach-o 文件的了解更加深入了，说实话 fishhook 总共 200 行的源码并不复杂，复杂就复杂在对 mach-o 符号相关的部分的结构要了如指掌，以及对动态链接库的重绑定机制也要了如指掌，感谢 fishhook，感谢 facebook！
+
+&emsp;把 **运行时库的链接过程** 推迟到了 **运行时** 再进行，这就是 **动态链接（Dynamic Linking）** 的基本思想。
 
 ## 参考链接
 **参考链接:🔗**
