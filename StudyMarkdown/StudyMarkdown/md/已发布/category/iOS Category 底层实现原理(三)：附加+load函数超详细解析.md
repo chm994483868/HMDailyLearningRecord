@@ -3,13 +3,13 @@
 ## +load 函数分析
 &emsp;既然写到这里了，那我们就顺便把 `+load` 函数的调用流程分析一下吧。
 
-+ 实现 `+load` 函数的分类和类是非懒加载分类和非懒加载类，未实现 `+load` 函数的分类和类，是懒加载分类和懒加载类。懒加载类只有我们第一次用到它们的时候，才会执行实现。
-+ `+load` 函数执行是由其函数地址直接调用的，是不走 `objc_msgSend` 消息发送流程的，所以类和分类中的 `+load` 函数是完全不存在 “覆盖” 行为的。它们都会执行，执行的流程的话：首先是 类一定早于分类的，然后父类一定早于子类，分类之间则是谁先编译则谁先执行。（这里刚好和不同分类中的同名函数后编译的分类中的函数会 “覆盖” 先编译的分类相反。）
-+ 任何情况下我们都不应该自己手动调用 `+load` 函数，我们只要等待系统调用即可，且全局只会调用一次。
++ 实现 `+load` 函数的分类和类是非懒加载分类和非懒加载类，未实现 `+load` 函数的分类和类，是懒加载分类和懒加载类。懒加载类只有我们第一次用到它们的时候，才会进行实现。
++ `+load` 函数是根据其地址直接执行的，不同于其它 OC 函数通过 `objc_msgSend` 消息发送流程来执行的。类和分类中的 `+load` 函数是不存在原类与其 category 存在同名函数时的 “函数覆盖” 现象的。在恰当的时机类和分类中的 `+load` 都会得到执行，执行顺序的话：首先是 类一定早于分类的，然后父类一定早于子类，分类之间则是谁先编译则谁先执行。（这里刚好和不同分类中的同名函数后编译的分类中的函数会 “覆盖” 先编译的分类中的函数相反。）
++ 任何情况下我们都不应该自己手动调用 `+load` 函数，我们只要等待系统调用即可，且一个 `+load` 函数全局仅调用一次（何时都不应存在 `[super load]` 调用）。
 
 ### 再探 load_images
 
-&emsp;`load_images` 函数正是用来是负责调用指定的 `mach_header` 中的类和分类的 `+load` 函数的。比较 objc4-799.1，发现  objc4-781 中的 `load_images` 函数多了如下的一个判断。
+&emsp;`load_images` 函数正是用来是负责调用指定的 `mach_header` 中的类和分类的 `+load` 函数的。比较 objc4-779.1，发现  objc4-781 中的 `load_images` 函数多了如下的一个判断。
 
 ```c++
  if (!didInitialAttachCategories && didCallDyldNotifyRegister) {
@@ -18,20 +18,21 @@
  }
 ```
 
-&emsp;在 781 中 apple 把加载 category 的数据延后了，之前 799.1 中是在 `_read_images` 中加载的。前面我们已经对此过程分析过了，下面我们主要把目光聚焦它的下半部分：
+&emsp;在 objc4-781 中 Apple 把加载 category 的数据延后了，之前 objc4-779.1 中是在 `_read_images` 中就会进行加载的。前面我们已经对此过程分析过了，下面我们主要把目光聚焦在 `+load` 函数的执行上。
 
 ```c++
 /*
 * load_images
 * Process +load in the given images which are being mapped in by dyld.
-* 处理由 dyld 映射的给定的镜像中的类和分类中的 +load 函数。
+* 处理由 dyld 加载的指定 image（mh 参数）中的类和分类中的 +load 函数。
 * Locking: write-locks runtimeLock and loadMethodLock
 */
 
 // C 语言前向声明，这两个函数我们下面再一行一行分析 
 
-// 判断 mach_header 中是否包含非懒加载的类和分类（即实现了 load 函数的类和分类）
-// 即判断 mach-o 二进制可执行文件中 (__DATA_CONST, __objc_nlclslist) 
+// 判断 mach_header 中是否包含非懒加载的类和分类（实现了 load 函数的类和分类），
+// 方式是判断 mach-o 二进制可执行文件中是否有 (__DATA_CONST, __objc_nlclslist) 和 (__DATA_CONST, __objc_nlcatlist) Section，
+// 这两个区只有当我们自定义的源码中存在 +load 函数时，才会在 mach-o 二进制可执行文件中存在（很多系统类也实现了 +load 函数，但是并不会存在这两个分区，且这两个分区中只存储我们自定义的类和分类）
 
 extern bool hasLoadMethods(const headerType *mhdr);
 
