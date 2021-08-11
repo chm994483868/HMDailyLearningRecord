@@ -1,5 +1,7 @@
 # iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析
 
+&emsp;Objective-C 中的 Hook 又被称作 Method Swizzling，这是动态语言大都具有的特性。在 Objective-C 中经常会把 Hook 的逻辑写在 `+load` 方法中，这是利用它调用时机较提前的性质。
+
 ## Method Swizzle 简述
 
 &emsp;利用 OC 的 Runtime 特性，动态改变 `SEL`（选择子）和 `IMP`（方法实现）的对应关系，达到 OC 方法调用流程改变的目的。主要用于 OC 方法，常用的 API 有：

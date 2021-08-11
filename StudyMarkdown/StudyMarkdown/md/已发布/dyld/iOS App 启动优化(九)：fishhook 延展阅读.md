@@ -304,7 +304,6 @@ libsystem_c.dylib`printf:
 > &emsp;自定义 C 函数实际地址就在自己的 Mach-O 内 , 并没有符号指针和重绑定的过程。
 > &emsp;编译时就已经确定了，并没有办法操作。 [iOS 逆向 - Hook / fishHook 原理与符号表](https://juejin.cn/post/6844903992904908814)
 
-
 ## 总结
 
 &emsp;至此，fishhook 相关的内容就全部搞懂了，说实话收获巨大，特别是对 mach-o 文件的了解更加深入了，说实话 fishhook 总共 200 行的源码并不复杂，复杂就复杂在对 mach-o 符号相关的部分的结构要了如指掌，以及对动态链接库的重绑定机制也要了如指掌，感谢 fishhook，感谢 facebook！
