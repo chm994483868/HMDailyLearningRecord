@@ -68,6 +68,7 @@ void load_images(const char *path __unused, const struct mach_header *mh)
 ```
 
 ### hasLoadMethods
+
 ```c++
 // Quick scan for +load methods that doesn't take a lock.
 // 为了快速扫描 +load 函数没有进行加锁。
@@ -89,7 +90,28 @@ bool hasLoadMethods(const headerType *mhdr)
 }
 ```
 
+&emsp;`hasLoadMethods` 函数用于判断参数 `mhdr`（类型是 `mach_header_64` 结构体）中是否包含非懒加载的类和分类（实现了 load 函数的类和分类），方式是判断 mach-o 二进制可执行文件中 `(__DATA_CONST, __objc_nlclslist)` 和 `(__DATA_CONST, __objc_nlcatlist)` Section 中是否有数据，这两个区只有当我们自定义的源码中存在 `+load` 函数时，才会在 mach-o 二进制可执行文件中存在（系统类也实现了 `+load` 函数，但是它们并不会存在这两个分区中，且这两个分区中只存储我们自定义的类和分类）。
+
+&emsp;开启 `OBJC_PRINT_LOAD_METHODS` 环境变量，可看到控制台有如下打印:
+
+```c++
+objc[76876]: LOAD: category 'NSObject(NSObject)' scheduled for +load
+objc[76876]: LOAD: +[NSObject(NSObject) load]
+
+objc[76876]: LOAD: category 'NSObject(NSObject)' scheduled for +load
+objc[76876]: LOAD: +[NSObject(NSObject) load]
+
+objc[76876]: LOAD: category 'NSError(FPAdditions)' scheduled for +load
+objc[76876]: LOAD: +[NSError(FPAdditions) load]
+
+objc[76876]: LOAD: class '_DKEventQuery' scheduled for +load
+objc[76876]: LOAD: +[_DKEventQuery load]
+```
+
+&emsp;此时借助 MachOView 查看二进制可执行文件，并没有看到 `(__DATA_CONST, __objc_nlclslist)` 和 `(__DATA_CONST, __objc_nlcatlist)` 两个 Section 存在。
+
 ### prepare_load_methods
+
 ```c++
 void prepare_load_methods(const headerType *mhdr)
 {
@@ -149,6 +171,7 @@ void prepare_load_methods(const headerType *mhdr)
 ```
 
 ### schedule_class_load
+
 ```c++
 /*
 * prepare_load_methods
@@ -169,12 +192,12 @@ static void schedule_class_load(Class cls)
     ASSERT(cls->isRealized());  // _read_images should realize
 
     // #define RW_LOADED (1<<23)
-    // 如果 cls 的 +load 已被调用过了，则 return
-    // 系统只会自动对每个类的 load 函数调用一次
+    // 如果 cls 的 +load 已被调用过了，则 return。
+    // 判断类的 data()->flags 的 RW_LOADED 标识位，系统只会自动对每个类的 load 函数调用一次。
     if (cls->data()->flags & RW_LOADED) return;
 
     // Ensure superclass-first ordering
-    // 递归调度父类，保证父类的 load 函数先执行
+    // 递归调度父类，保证父类的 +load 函数先执行
     schedule_class_load(cls->superclass);
 
     // 把 cls 的 +load 函数放进一个全局的 loadable_class 数组中
@@ -187,6 +210,7 @@ static void schedule_class_load(Class cls)
 ```
 
 ### add_class_to_loadable_list
+
 ```c++
 
 struct loadable_class {
@@ -201,8 +225,10 @@ struct loadable_class {
 
 // 静态全局的 loadable_class 数组
 static struct loadable_class *loadable_classes = nil;
+
 // 记录 loadable_classes 数组已使用容量
 static int loadable_classes_used = 0;
+
 // 记录 loadable_classes 数组的总容量
 static int loadable_classes_allocated = 0;
 
@@ -247,12 +273,14 @@ void add_class_to_loadable_list(Class cls)
     // 然后把类和 +load 函数放在数组
     loadable_classes[loadable_classes_used].cls = cls;
     loadable_classes[loadable_classes_used].method = method;
+    
     // 自增 1
     loadable_classes_used++;
 }
 ```
 
 ### getLoadMethod
+
 ```c++
 /*
 * objc_class::getLoadMethod
@@ -278,6 +306,7 @@ objc_class::getLoadMethod()
     // 注意这里取的是 ro()->baseMethods() 的函数列表
     // 它里面保存的 +load 函数只会来自类定义时候的 +load 函数
     // 分类中的 +load 函数是被追加到 rw 中的
+    // （+load 函数是类方法，所以这里是 ISA()->data()->ro()，在其元类中查找。）
     
     mlist = ISA()->data()->ro()->baseMethods();
     
@@ -293,10 +322,11 @@ objc_class::getLoadMethod()
     return nil;
 }
 ```
-&emsp;注意这里取的是 `ro()->baseMethods()` 的函数列表
-它里面保存的 `+load` 函数只会来自类定义中的 `+load` 函数实现，分类中的 `+load` 函数是被追加到 `rw` 中的。
+
+&emsp;注意这里取的是 `ro()->baseMethods()` 的函数列表，它里面保存的 `+load` 函数只会来自类定义中的 `+load` 函数实现，分类中定义的 `+load` 函数是被追加到 `rw` 中的。
 
 ### add_category_to_loadable_list
+
 ```c++
 
 struct loadable_category {
@@ -305,10 +335,13 @@ struct loadable_category {
 };
 
 // List of categories that need +load called (pending parent class +load)
-// 需要 +load 调用的类别列表（待处理的父类 +load）
+// 需要 +load 调用的分类列表（待处理的父类 +load）
+
 static struct loadable_category *loadable_categories = nil;
+
 // 记录 loadable_categories 数组已使用的容量
 static int loadable_categories_used = 0;
+
 // 记录 loadable_categories 数组的总容量
 static int loadable_categories_allocated = 0;
 
@@ -355,7 +388,9 @@ void add_category_to_loadable_list(Category cat)
     loadable_categories_used++;
 }
 ```
+
 ### call_load_methods
+
 ```c++
 /*
 * call_load_methods
@@ -385,14 +420,18 @@ void add_category_to_loadable_list(Category cat)
 * Sequence:
 * 1. Repeatedly call class +loads until there aren't any more
 * 1. 重复调用 class 的 +loads，直到没有更多
+
 * 2. Call category +loads ONCE.
 * 2. 调用 category 中的 +load
+
 * 3. Run more +loads if:
 * 3. 运行 +load 函数的其他情况：
 *    (a) there are more classes to load, OR
 *    (a) 还有更多要加载的类，
+
 *    (b) there are some potential category +loads that have still never been attempted.
 *    (b) 有些潜在的类别 +load 函数没有被附加。
+
 * Category +loads are only run once to ensure "parent class first" ordering,
 * even if a category +load triggers a new loadable class and a new loadable category attached to that class. 
 * category 的 +load 函数调用不同于 class，直接一个 for 循环，category 这样（ ONCE ）是为了保证 class 的 load 函数优先于 category 的 load 函数。
@@ -441,6 +480,7 @@ void call_load_methods(void)
 ```
 
 ### call_class_loads
+
 ```c++
 /*
 * call_class_loads
@@ -461,6 +501,7 @@ static void call_class_loads(void)
     // 分离当前的可加载列表。
     // 用一个临时变量接收 loadable_classes
     struct loadable_class *classes = loadable_classes;
+    
     // 取出占用
     int used = loadable_classes_used;
     
@@ -473,13 +514,16 @@ static void call_class_loads(void)
     
     // Call all +loads for the detached list.
     // 循环调用 +load 函数
+    
     for (i = 0; i < used; i++) {
         // 取得所属类
         Class cls = classes[i].cls;
+        
         // 取得函数 IMP，并赋给一个函数指针
         load_method_t load_method = (load_method_t)classes[i].method;
         
-        if (!cls) continue; 
+        if (!cls) continue;
+        
         // log
         if (PrintLoading) {
             _objc_inform("LOAD: +[%s load]\n", cls->nameForLogging());
@@ -495,6 +539,7 @@ static void call_class_loads(void)
 ```
 
 ### call_category_loads
+
 ```c++
 /*
 * call_category_loads
@@ -510,7 +555,7 @@ static void call_class_loads(void)
 * If new categories become loadable, +load is NOT called, and they are
 * added to the end of the loadable list, and we return TRUE.
 * 如果新类别变为可加载，则不直接调用 +load，会将它们添加到可加载列表的末尾，并且返回 TRUE。
-* 
+
 * Return FALSE if no new categories became loadable.
 * 如果没有新类别可加载，则返回 FALSE。
 *
@@ -617,6 +662,7 @@ static bool call_category_loads(void)
     } else {
         // 如果没有到话，释放 cats
         if (cats) free(cats);
+        
         // 把 loadable_categories 置 nil 置 0
         loadable_categories = nil;
         loadable_categories_used = 0;
@@ -635,7 +681,8 @@ static bool call_category_loads(void)
     return new_categories_added;
 }
 ```
-&emsp;觉得把注释都读完，`+load` 的脉络能极其清晰，这里就不再总结了。
+
+&emsp;整体看下来就是收集类中的 `+load` 函数、收集分类中的 `+load` 函数，然后进行执行。
 
 ## 参考链接
 **参考链接:🔗**
