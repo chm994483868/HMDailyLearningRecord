@@ -126,53 +126,7 @@ class_replaceMethod(Class _Nullable cls, SEL _Nonnull name, IMP _Nonnull imp,
 
 
 
-```c++
-import UIKit
 
-class ViewController: UIViewController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        
-        let string = weekString([1, 2, 3, 4, 5])
-        print("♻️♻️♻️ \(string)")
-    }
-}
-
-extension ViewController {
-    func weekString(_ day: Array<NSNumber>?) -> String {
-        guard let dayArray = day else {
-            return ""
-        }
-        
-        let characterDic = ["1": "一", "2": "二", "3": "三", "4": "四", "5": "五", "6": "六", "7": "日" ]
-        
-        var rawData: Dictionary<String, String> = [:]
-        dayArray.forEach { rawData[$0.stringValue] = $0.stringValue }
-        
-        var resultString = ""
-        
-        var monToFri = true
-        var monToSun = true
-        
-        for index in 1...7 {
-            if ((rawData["\(index)"]) != nil) {
-                resultString = resultString.appending("周".appending(characterDic["\(index)"]!))
-            } else {
-                if index < 6 { monToFri = false }
-                monToSun = false
-            }
-        }
-        
-        if monToSun { return "每天" }
-        if monToFri { return "周一至周五"}
-        
-        return resultString
-        
-    }
-}
-```
 
 
 
