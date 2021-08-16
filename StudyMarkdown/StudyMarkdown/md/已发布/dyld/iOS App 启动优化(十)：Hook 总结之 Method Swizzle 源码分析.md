@@ -179,40 +179,81 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
     // 断言：types 参数不能为 nil，在前面的调用中可看到对 types 参数的处理：types ?: "" 即默认传递："" 空字符串 
     ASSERT(types);
     
-    // 断言： 
+    // 断言：cls 已经实现，这里需要两个条件为真：1. cls 不是 StubClass（isStubClass：1 <= isa && isa < 16） 2. data()->flags & RW_REALIZED 为真 
     ASSERT(cls->isRealized());
 
     method_t *m;
+    
+    // 下面分两种情况的处理：
+    // 1. cls 类中存在名字为 name 的函数则进行替换函数实现
+    // 2. cls 类中不存在名字为 name 的函数则进行添加函数
+    
     if ((m = getMethodNoSuper_nolock(cls, name))) {
+        // getMethodNoSuper_nolock 在 cls 类的函数列表中查找名为 name 的函数，注意这里仅在 cls 类的 cls->data()->methods() 中查找，并不会去 cls 的父类中查找
+        // 查找到 name 对应的函数会赋值给 m 这个局部变量。
+        
         // already exists
         if (!replace) {
+            // 如果 replace 参数为 NO 的话，仅将获取到的 m 的 imp 赋值给 result 作为 addMethod 函数的返回值
             result = m->imp;
         } else {
+            // 把查找到的 cls 类中名字为 name 的函数的 imp 替换为 addMethod 函数的入参 imp，并返回 name 函数的旧的 imp
+            // (还包含两个隐式操作：刷新 cls 类的方法缓存，更新 cls 类的自定义 AWZ 和 RR 的标记)
             result = _method_setImplementation(cls, m, imp);
         }
     } else {
+        // 下面便是为 cls 添加名为 name 的新函数。
+        
+        // 获取 cls 类的函数列表所在的位置，rwe 的类型是：class_rw_ext_t 或者 class_ro_t，记得当类实现以后，就从 ro 切换到 rw 去了
         auto rwe = cls->data()->extAllocIfNeeded();
 
-        // fixme optimize
+        // fixme optimize 优化
+        // 我们已知的类的函数列表大部分情况下是一个二维数组，下面就是往这个二维数组中追加内容
+        
         method_list_t *newlist;
+        
+        // calloc 在内存的动态存储区中分配 sizeof(*newlist) 个长度为 1 的连续空间，并返回此空间的起始地址。
+        //（或者理解为创建一个长度为 1 的 method_list_t 数组）
         newlist = (method_list_t *)calloc(sizeof(*newlist), 1);
-        newlist->entsizeAndFlags = 
-            (uint32_t)sizeof(method_t) | fixed_up_method_list;
+        
+        // 标记数组中每个元素所占用的内存长度
+        newlist->entsizeAndFlags = (uint32_t)sizeof(method_t) | fixed_up_method_list;
+        
+        // 当前数组的长度
         newlist->count = 1;
-        newlist->first.name = name;
-        newlist->first.types = strdupIfMutable(types);
-        newlist->first.imp = imp;
-
+        
+        // newlist 中第一个元素就是我们要给 cls 类添加的函数
+        newlist->first.name = name; // 函数选择子
+        //（strdupIfMutable 函数是对 types 字符串进行处理，如果 types 位于不可变的内存空间中，则不需要作任何处理，如果 types 所处内存空间是可变的，则对 types 字符串进行复制）
+        newlist->first.types = strdupIfMutable(types); // 函数类型
+        newlist->first.imp = imp; // 函数实现
+        
+        // 对 newlist 作一下准备工作（没有看懂😭）
         prepareMethodLists(cls, &newlist, 1, NO, NO);
+        
+        // 把 newlist 追加到 cls 的函数列表中去
         rwe->methods.attachLists(&newlist, 1);
+        
+        // 刷新 cls 类的方法缓存（刷新 cls 的缓存，它的元类，及其子类。如果 cls 为 nil 的话会刷新所有的类）
         flushCaches(cls);
-
+        
+        // 因为之前并不存在旧函数所以，result 赋值为 nil
         result = nil;
     }
-
+    
+    // 返回 result，如果 cls 类中存在名字为 name 的函数则返回 name 函数的旧实现，如果 cls 类中不存在名字为 name 的函数，则返回 nil 
     return result;
 }
 ```
+
+&emsp;到这里 `class_replaceMethod` 函数的实现过程就全部看完了，即如果类中存在要替换的函数的话则直接替换函数的实现，并把旧实现返回，如果类中不存在要替换的函数的话则直接为该类添加此函数。（注释已经超详细了，这里就不再重复其过程了。）
+
+
+
+
+
+
+
 
 
 
