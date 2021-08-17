@@ -10,11 +10,11 @@
 + `class_replaceMethod` 替换函数的 imp。
 + `method_getImplementation` 与 `method_setImplementation` 直接 get/set 函数的 imp。
 
-## 从源码梳理 runtime 函数
+## 从源码梳理 Method Swizzle 相关的函数
 
 &emsp;下面我们再次回到 objc4 源码中，对 Method Swizzle 涉及到的函数一探究竟。
 
-### Method 结构回顾
+### Method 数据结构回顾
 
 &emsp;首先我们再看一下 OC 函数的数据结构 `struct Method`：
 
@@ -40,7 +40,7 @@ struct method_t {
 
 &emsp;`struct method_t` 便是我们的 OC 函数对应的数据结构，`SEL name` 是函数的选择子（或者直接理解为函数名），选择子中是不包含参数类型以及返回值类型的。`const char *types` 是完整的函数类型描述，对函数的返回值、所有参数（包含参数类型、长度、顺序）进行描述。`MethodListIMP imp` 是方法实现（或者理解为函数的地址）。
 
-## method_exchangeImplementations
+### method_exchangeImplementations
 
 &emsp;下面是 `method_exchangeImplementations` 函数的一个标准用法，交换两个函数的 `imp`，即交换两个函数的实现地址。
 
@@ -100,7 +100,7 @@ void method_exchangeImplementations(Method m1, Method m2)
 
 &emsp;对两个 Method 的 `imp` 交换很简单，就是取值然后交换。`flushCaches(nil)` 则会清空当前所有类的方法缓存，这个操作还挺重的，所以这里也可理解为一个方法交换应尽早执行的原因。  
 
-## class_replaceMethod
+### class_replaceMethod
 
 ```c++
 /** 
@@ -248,11 +248,111 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
 
 &emsp;到这里 `class_replaceMethod` 函数的实现过程就全部看完了，即如果类中存在要替换的函数的话则直接替换函数的实现，并把旧实现返回，如果类中不存在要替换的函数的话则直接为该类添加此函数。（注释已经超详细了，这里就不再重复其过程了。）
 
+### method_getImplementation/method_setImplementation
 
+&emsp;`method_getImplementation` 和 `method_setImplementation` 函数看名字大概就能猜到它们的功能，分别是获取一个函数实现和设置一个函数的实现，且 `method_getImplementation` 的定义超级简单，就仅仅是返回 `Method` 结构体的 `imp` 成员变量。`method_setImplementation` 函数内容稍微多点：首先它是线程安全的，执行过程中使用 `runtimeLock` 进行加锁，然后为函数设置新的实现，并返回旧的实现，然后会刷新当前类的方法缓存，调整 RR/AWZ 函数的自定义标志。
 
+&emsp;`method_getImplementation` 函数声明：
 
+```c++
+/** 
+ * Returns the implementation of a method.
+ * 返回方法的实现。
+ * 
+ * @param m The method to inspect.
+ * 
+ * @return A function pointer of type IMP.
+ */
+OBJC_EXPORT IMP _Nonnull
+method_getImplementation(Method _Nonnull m) 
+    OBJC_AVAILABLE(10.5, 2.0, 9.0, 1.0, 2.0);
+```
 
+&emsp;`method_getImplementation` 函数定义： 
 
+```c++
+IMP 
+method_getImplementation(Method m)
+{
+    // 返回 imp
+    return m ? m->imp : nil;
+}
+```
+
+&emsp;`method_setImplementation` 函数声明：
+
+```c++
+/** 
+ * Sets the implementation of a method.
+ * 设置方法的实现。
+ * 
+ * @param m The method for which to set an implementation. 为其设置实现的方法。
+ * @param imp The implemention to set to this method. 要设置为此方法的实现。
+ * 
+ * @return The previous implementation of the method. 方法的先前实现。
+ */
+OBJC_EXPORT IMP _Nonnull
+method_setImplementation(Method _Nonnull m, IMP _Nonnull imp) 
+    OBJC_AVAILABLE(10.5, 2.0, 9.0, 1.0, 2.0);
+```
+
+&emsp;`method_setImplementation` 函数定义：
+
+```c++
+IMP 
+method_setImplementation(Method m, IMP imp)
+{
+    // Don't know the class - will be slow if RR/AWZ are affected
+    // 如果是 RR/AWZ 函数的实现受到影响，需要执行更多操作，需要调整类的 Custom RR/AWZ 的标记
+    
+    // fixme build list of classes whose Methods are known externally?
+    
+    // 加锁
+    mutex_locker_t lock(runtimeLock);
+    
+    // 调用 _method_setImplementation 函数，第一个所属类的参数传 nil 的话，会导致刷新当前所有类的方法缓存，调整当前类表中所有类的 RR/AWZ 标记
+    return _method_setImplementation(Nil, m, imp);
+}
+
+/***********************************************************************
+* method_setImplementation
+* Sets this method's implementation to imp.The previous implementation is returned.
+* 将此方法的实现设置为 imp。返回先前的实现。
+**********************************************************************/
+static IMP 
+_method_setImplementation(Class cls, method_t *m, IMP imp)
+{   
+    // 断言：调用前是否已经对 runtimeLock 加锁
+    runtimeLock.assertLocked();
+    
+    // 判空操作
+    if (!m) return nil;
+    if (!imp) return nil;
+
+    // 记录方法的旧实现，替换方法的新实现
+    IMP old = m->imp;
+    m->imp = imp;
+
+    // Cache updates are slow if cls is nil (i.e. unknown)
+    // 如果 cls 为 nil，则缓存更新很慢（需要对当前所有类刷新方法缓存）
+    
+    // RR/AWZ updates are slow if cls is nil (i.e. unknown)
+    // 如果 cls 为 nil，则 RR/AWZ 更新很慢
+    
+    // fixme build list of classes whose Methods are known externally?
+    // fixme 构建其方法在外部已知的类的列表？
+    
+    // 如果 cls 不为 nil，则只刷新 cls 以及 cls 已实现的子类的方法缓存
+    flushCaches(cls);
+    
+    // 当方法更改其 IMP 时更新自定义的 RR 和 AWZ 的标记
+    adjustCustomFlagsForMethodChange(cls, m);
+
+    return old;
+}
+```
+
+&emsp;在设置方法实现的过程中，涉及到的方法缓存刷新和调整 RR/AWZ 的函数标记可能会让我们有一点懵，这里需要我们对 OC 的方法缓存机制和 OC alloc 过程有一定的认识，前面的文章有分析这部分的内容，不熟悉的小伙伴可以去翻翻看一下。 
 
 
 
