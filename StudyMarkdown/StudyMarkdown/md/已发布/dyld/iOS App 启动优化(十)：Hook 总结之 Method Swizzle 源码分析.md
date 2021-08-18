@@ -359,6 +359,19 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 参考链接
 **参考链接:🔗**
 + [巧用符号表 - 探求 fishhook 原理（一）](https://www.desgard.com/iOS-Source-Probe/C/fishhook/%E5%B7%A7%E7%94%A8%E7%AC%A6%E5%8F%B7%E8%A1%A8%20-%20%E6%8E%A2%E6%B1%82%20fishhook%20%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%80%EF%BC%89.html)
@@ -375,7 +388,7 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 + [iOS逆向之Hopper进阶](https://www.jianshu.com/p/384dc5bc1cb4)
 + [十 iOS逆向- hopper disassembler](https://www.jianshu.com/p/20077ceb2f75?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation)
-+ [Objective-C Method Swizzling](http://yulingtianxia.com/blog/2017/04/17/Objective-C-Method-Swizzling/)
++ [Objective-C Method Swizzling](。 )
 + [iOS 界的毒瘤：Method Swizzle](https://juejin.cn/post/6844903517979672590)
 + [iOS微信内存监控](https://wetest.qq.com/lab/view/367.html)
 + [通过修改GOT表，hook glibc函数](https://zhougy0717.github.io/2020/01/05/通过修改GOT表，hook_glibc函数/)
@@ -395,4 +408,33 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 + [dyld背后的故事&源码分析](https://juejin.cn/post/6844903782833192968)
 + [非越狱下 iOS代码注入&HOOK微信登录](https://juejin.cn/post/6844903775518359560)
 + [fishhook使用场景&源码分析](https://juejin.cn/post/6844903793008574477)
+
+
+
+
+/////// 网页备份
+http://southpeak.github.io/2015/01/25/tool-lldb/
+http://yulingtianxia.com/blog/2017/04/17/Objective-C-Method-Swizzling/
+https://github.com/nygard/class-dump/commits/master
+https://zhuanlan.zhihu.com/p/304443154
+https://segmentfault.com/a/1190000007799086
+https://github.com/huanxsd?tab=repositories
+https://www.cnblogs.com/17bdw/p/12239505.html
+https://hex-rays.com/cgi-bin/quote.cgi
+https://github.com/aidansteele
+https://zhangbuhuai.com/post/macho-structure.html
+https://juejin.cn/post/6844903889523884039
+https://juejin.cn/user/3438928103236920/posts
+https://juejin.cn/post/6844903992904908814
+https://juejin.cn/post/6844903912147795982
+https://juejin.cn/post/6844903912143585288
+https://juejin.cn/post/6844903922654511112
+https://juejin.cn/post/6844903926051897358
+http://southpeak.github.io/2015/01/25/tool-lldb/
+https://developer.apple.com/library/archive/documentation/IDEs/Conceptual/gdb_to_lldb_transition_guide/document/Introduction.html#//apple_ref/doc/uid/TP40012917-CH1-SW1
+https://www.jianshu.com/p/e1e7c3c2e773
+https://blog.csdn.net/tobebetterprogrammer/article/details/51374046
+https://www.jianshu.com/p/0a27ab6ad5e1
+https://www.jianshu.com/p/cac59b17bb55
+https://juejin.cn/post/6844903582655840270
 
