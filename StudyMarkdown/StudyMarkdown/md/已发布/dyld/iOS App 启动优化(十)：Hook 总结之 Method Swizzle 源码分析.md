@@ -1,6 +1,6 @@
 # iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析
 
-&emsp;Objective-C 中的 Hook 又被称作 Method Swizzling，这是动态语言大都具有的特性。在 Objective-C 中经常会把 Hook 的逻辑写在 `+load` 方法中，这是利用它的调用时机较提前的性质。
+&emsp;Objective-C 中的 Hook 又被称作 Method Swizzling，这是动态语言大都具有的特性。在 Objective-C 中经常会把 Hook 的逻辑写在 `+load` 方法中，重写了 `+load` 方法的类和分类都被称为懒加载类、懒加载分类，它们会在 APP 启动时（这个时间阶段可以理解为：为 APP 启动做准备工作）、在 `main` 函数之前就会进行实现和加载（并调用 `+load` 方法），这个时机对 APP 启动而言是特别特别早的，这个阶段我们可以理解为 APP 正在启动或者正在为 APP 启动进行各项准备工作，此阶段 `+load` 方法被调用，其中我们添加的 Hook 逻辑也得到执行，然后等 APP 启动完成开始使用各个 OC 类、开始调用各个 OC 函数时，我们想要 Hook 的那些 OC 函数就都已经在我们的掌握了。
 
 ## Method Swizzle 简述
 
@@ -9,6 +9,7 @@
 + `method_exchangeImplementations` 交换函数的 imp。
 + `class_replaceMethod` 替换函数的 imp。
 + `method_getImplementation` 与 `method_setImplementation` 直接 get/set 函数的 imp。
++ `class_addMethod` 向一个指定的类添加函数（如果添加成功，返回 YES，否则返回 NO，如果当前类已经存在该函数，则返回 NO）。
 
 ## 从源码梳理 Method Swizzle 相关的函数
 
@@ -20,6 +21,7 @@
 
 ```c++
 typedef struct method_t *Method;
+
 using MethodListIMP = IMP;
 
 struct method_t {
@@ -38,7 +40,7 @@ struct method_t {
 };
 ```
 
-&emsp;`struct method_t` 便是我们的 OC 函数对应的数据结构，`SEL name` 是函数的选择子（或者直接理解为函数名），选择子中是不包含参数类型以及返回值类型的。`const char *types` 是完整的函数类型描述，对函数的返回值、所有参数（包含参数类型、长度、顺序）进行描述。`MethodListIMP imp` 是方法实现（或者理解为函数的地址）。
+&emsp;`struct method_t` 便是我们的 OC 函数对应的数据结构，`SEL name` 是函数的选择子（或者直接理解为函数名），选择子中是不包含参数类型以及返回值类型的（可以理解为参数标签字符串）。`const char *types` 是完整的函数类型描述，对函数的返回值、所有参数（包含参数类型、长度、顺序）进行描述。`SEL name` 和 `const char *types` 放在一起，我们便能完整推断出一个函数的名字、返回值类型、参数类型（或者理解为一个函数声明）。`MethodListIMP imp` 是方法实现（或者理解为函数的地址）。
 
 ### method_exchangeImplementations
 
@@ -354,13 +356,76 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 &emsp;在设置方法实现的过程中，涉及到的方法缓存刷新和调整 RR/AWZ 的函数标记可能会让我们有一点懵，这里需要我们对 OC 的方法缓存机制和 OC alloc 过程有一定的认识，前面的文章有分析这部分的内容，不熟悉的小伙伴可以去翻翻看一下。 
 
+### class_addMethod
+
+&emsp;向指定类添加一个函数，添加成功则返回 YES，
+
+```c++
+/** 
+ * Adds a new method to a class with a given name and implementation.
+ * 
+ * @param cls The class to which to add a method.
+ * @param name A selector that specifies the name of the method being added.
+ * @param imp A function which is the implementation of the new method. The function must take at least two arguments—self and _cmd.
+ * @param types An array of characters that describe the types of the arguments to the method. 
+ * 
+ * @return YES if the method was added successfully, otherwise NO 
+ *  (for example, the class already contains a method implementation with that name).
+ *
+ * @note class_addMethod will add an override of a superclass's implementation, 
+ *  but will not replace an existing implementation in this class. 
+ *  To change an existing implementation, use method_setImplementation.
+ */
+OBJC_EXPORT BOOL
+class_addMethod(Class _Nullable cls, SEL _Nonnull name, IMP _Nonnull imp, 
+                const char * _Nullable types) 
+    OBJC_AVAILABLE(10.5, 2.0, 9.0, 1.0, 2.0);
+```
 
 
 
 
 
+&emsp;上面我们对 Method Swizzle 使用到的 runtime 函数进行了完整的分析，下面我们看一下 Method Swizzle 的方案实践。
+
+## Method Swizzle 实践
+
+&emsp;这里分为两种情况，1): 要 Hook 的函数在类中不存在。2): 要 Hook 的函数在类中已存在。
+
+```c++
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class aClass = [self class];
+        
+        // 原函数的选择子
+        SEL originalSelector = @selector(method_original:);
+        // 要替换的
+        SEL swizzledSelector = @selector(method_swizzle:);
+        
+        Method originalMethod = class_getInstanceMethod(aClass, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(aClass, swizzledSelector);
+        
+        BOOL didAddMethod = class_addMethod(aClass,
+                                            originalSelector,
+                                            method_getImplementation(swizzledMethod),
+                                            method_getTypeEncoding(swizzledMethod));
+        // 
+        if (didAddMethod) {
+            class_replaceMethod(aClass,
+                                swizzledSelector,
+                                method_getImplementation(originalMethod),
+                                method_getTypeEncoding(originalMethod));
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod);
+        }
+    });
+}
+```
 
 
+
+ 
 
 
 
