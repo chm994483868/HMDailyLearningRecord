@@ -318,7 +318,7 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
         // 刷新 cls 类的方法缓存（刷新 cls 的缓存，它的元类，及其子类。如果 cls 为 nil 的话会刷新所有的类）
         flushCaches(cls);
         
-        // 因为之前并不存在旧函数所以，result 赋值为 nil
+        // 因为之前并不存在旧函数所以 result 赋值为 nil
         result = nil;
     }
     
@@ -327,11 +327,22 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
 }
 ```
 
-&emsp;到这里 `class_replaceMethod` 函数的实现过程就全部看完了，即如果类中存在要替换的函数的话则直接替换函数的实现，并把旧实现返回，如果类中不存在要替换的函数的话则直接为该类添加此函数。（注释已经超详细了，这里就不再重复其过程了。）
+&emsp;`addMethod` 函数注释的超详细，这里就不在展开了，下面我们再总结一下下面两个函数：
+
++ `class_replaceMethod`：`return addMethod(cls, name, imp, types ?: "", YES);`
++ `class_addMethod`：`return ! addMethod(cls, name, imp, types ?: "", NO);`
+
+&emsp;`class_replaceMethod`：如果类中存在要替换的函数的话则直接替换函数的实现，并把旧实现返回，如果类中不存在要替换的函数的话则直接为该类添加此函数并返回 nil，这个 nil 即可用来表示在调用 `class_replaceMethod` 之前，类中不存在要替换的函数。
+
+&emsp;`class_addMethod`：如果类中不存在要添加的函数，则直接添加到类中，最后返回 ture，如果类中已经存在要添加的函数了，则返回 false。
+
+&emsp;同时这里还有一个细节点，就是在查找函数在类中是否存在时，仅在该类的函数列表中去查找，并不会递归去查找其父类，这一点要谨记，然后上面提到的：**`class_addMethod` 将添加超类实现的覆盖，但不会替换此类中的现有实现，要更改现有实现，请使用 `method_setImplementation`（即 `class_addMethod` 函数要么添加完成返回 YES，要么该类已经存在此函数，直接返回 NO）。** 就可以得到解释了，首先 `class_addMethod` 函数仅在本类的方法列表中查找并不会去其父类中查找（这里一定要和消息的发送查找流程做出理解上区分），所以如果要添加的函数在本类中不存在，但是在其父类中存在同名函数的话，那么本类中依然会添加此函数，这样添加到本类中的函数便会覆盖了父类中的同名函数。
+
+&emsp;下面再顺便两个方法实现的 Set/Get 函数，一个进行读一个进行写。
 
 ### method_getImplementation/method_setImplementation
 
-&emsp;`method_getImplementation` 和 `method_setImplementation` 函数看名字大概就能猜到它们的功能，分别是获取一个函数实现和设置一个函数的实现，且 `method_getImplementation` 的定义超级简单，就仅仅是返回 `Method` 结构体的 `imp` 成员变量。`method_setImplementation` 函数内容稍微多点：首先它是线程安全的，执行过程中使用 `runtimeLock` 进行加锁，然后为函数设置新的实现，并返回旧的实现，然后会刷新当前类的方法缓存，调整 RR/AWZ 函数的自定义标志。
+&emsp;`method_getImplementation` 和 `method_setImplementation` 函数看名字大概就能猜到它们的功能，分别是获取一个函数实现和设置一个函数的实现，其中的读操作 `method_getImplementation` 的定义超级简单，就仅仅是返回 `Method` 结构体的 `imp` 成员变量。其中的写操作 `method_setImplementation` 函数内容稍微多点：首先它是线程安全的，执行过程中使用 `runtimeLock` 进行加锁，然后为函数设置新的实现，并返回旧的实现，然后会刷新当前类的方法缓存，调整 RR/AWZ 函数的自定义标志。
 
 &emsp;`method_getImplementation` 函数声明：
 
@@ -435,48 +446,54 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 &emsp;在设置方法实现的过程中，涉及到的方法缓存刷新和调整 RR/AWZ 的函数标记可能会让我们有一点懵，这里需要我们对 OC 的方法缓存机制和 OC alloc 过程有一定的认识，前面的文章有分析这部分的内容，不熟悉的小伙伴可以去翻翻看一下。 
 
-
-
-
-
-
 &emsp;上面我们对 Method Swizzle 使用到的 runtime 函数进行了完整的分析，下面我们看一下 Method Swizzle 的方案实践。
 
 ## Method Swizzle 实践
 
 &emsp;这里分为两种情况，1): 要 Hook 的函数在类中不存在。2): 要 Hook 的函数在类中已存在。
 
+&emsp;下面代码实现的功能就是在交换 original 函数和 swizzled 函数的实现。
+
 ```c++
+// 放在 +load 函数中进行，dispatch_once 保证全局只调用一次。
 + (void)load {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         Class aClass = [self class];
         
-        // 原函数的选择子
+        // original 选择子
         SEL originalSelector = @selector(method_original:);
-        // 要替换的
+        // swizzled 选择子
         SEL swizzledSelector = @selector(method_swizzle:);
         
+        // 查找 original 函数（注意：class_getInstanceMethod 会沿着继承链在当前类以及父类中递归查找实例函数结构体（类函数则是在元类中查找））
         Method originalMethod = class_getInstanceMethod(aClass, originalSelector);
+        // 查找 swizzled 函数（在当前类及其父类中查找函数结构体）
         Method swizzledMethod = class_getInstanceMethod(aClass, swizzledSelector);
         
+        // 在 aClass 中添加原函数，如果 didAddMethod 为 true 表示，在 aClass 中添加 original 函数成功（注意 original 函数直接添加的 swizzledMethod 函数的实现）
+        // 如果 didAddMethod 为 false 则表示在本类或者父类中已经存在 original 函数了。
         BOOL didAddMethod = class_addMethod(aClass,
                                             originalSelector,
                                             method_getImplementation(swizzledMethod),
                                             method_getTypeEncoding(swizzledMethod));
-        // 
+                                            
         if (didAddMethod) {
+        // 添加成功的话，仅剩下把 swizzled 函数的实现替换成 original 函数的实现
             class_replaceMethod(aClass,
                                 swizzledSelector,
                                 method_getImplementation(originalMethod),
                                 method_getTypeEncoding(originalMethod));
         } else {
+        
+            // 原本已经存在 original 和 swizzled 函数的话，直接交换它们俩的实现
             method_exchangeImplementations(originalMethod, swizzledMethod);
         }
     });
 }
 ```
 
+&emsp;
 
 
  
