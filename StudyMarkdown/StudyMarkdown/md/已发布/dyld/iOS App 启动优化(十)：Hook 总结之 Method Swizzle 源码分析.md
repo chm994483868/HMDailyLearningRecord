@@ -153,7 +153,73 @@ class_replaceMethod(Class cls, SEL name, IMP imp, const char *types)
 }
 ```
 
-&emsp;下面我们看一下 `addMethod` 函数的定义：
+&emsp;看到 `class_replaceMethod` 函数内部调用了 `addMethod` 函数，而这个 `addMethod` 函数是一个共用函数，在 `class_addMethod` 函数中也会调用 `addMethod`，不过它传递给 `addMethod` 函数的 `replace` 参数的值是 `NO`。
+
+&emsp;暂时撇开判空和加锁代码后，两者是如下调用：
+
++ `class_replaceMethod`：`return addMethod(cls, name, imp, types ?: "", YES);`
++ `class_addMethod`：`return ! addMethod(cls, name, imp, types ?: "", NO);`
+
+&emsp;`addMethod` 函数一个前面有 `!` 一个没有，是因为双方返回值不同，`class_replaceMethod` 返回函数的旧实现，`class_addMethod` 返回添加函数的结果 YES 或 NO。
+
+&emsp;我们再讲一下 `addMethod` 函数中 `replace` 参数的意义：
+
+&emsp;看到 `class_replaceMethod` 函数内部调用 `addMethod` 函数时，`addMethod` 函数的 `replace` 参数传递的是 `YES`，这里的 `replace` 参数表示的是：在 `addMethod` 函数内部如果 `cls` 已经存在 `name` 函数了，则是否要对 `name` 函数的旧实现进行替换。`class_replaceMethod` 函数自然就是为了替换函数，所以它调用 `addMethod` 函数时传的是 `YES`，表示如果 `cls` 类中已经存在 `name` 函数了则要把这个 `name` 函数的实现替换了，对比 `class_addMethod` 函数调用 `addMethod` 时 `replace` 参数传递的 `NO`，便是不进行替换。
+
+&emsp;然后对于 `class_replaceMethod` 函数和 `class_addMethod` 函数而言，如果当前 `cls` 类中都不存在 `name` 函数时，`class_replaceMethod` 函数和 `class_addMethod` 函数两者都是对 `cls` 类添加 `name` 函数，后面我们会对 `class_addMethod` 函数逐行分析。
+
+&emsp;下面看一下 `class_addMethod` 函数的声明和定义。
+
+### class_addMethod
+
+&emsp;向指定类添加一个函数，添加成功则返回 YES，否则返回 NO，如果当前类已经存在该函数，则返回 NO。
+
+```c++
+/** 
+ * Adds a new method to a class with a given name and implementation.
+ * 
+ * @param cls The class to which to add a method.
+ * @param name A selector that specifies the name of the method being added.
+ * @param imp A function which is the implementation of the new method. The function must take at least two arguments—self and _cmd.
+ * @param types An array of characters that describe the types of the arguments to the method. 
+ * 
+ * @return YES if the method was added successfully, otherwise NO 
+ *  (for example, the class already contains a method implementation with that name).
+ *
+ * @note class_addMethod will add an override of a superclass's implementation, 
+ *  but will not replace an existing implementation in this class. 
+ *  To change an existing implementation, use method_setImplementation.
+ */
+OBJC_EXPORT BOOL
+class_addMethod(Class _Nullable cls, SEL _Nonnull name, IMP _Nonnull imp, 
+                const char * _Nullable types) 
+    OBJC_AVAILABLE(10.5, 2.0, 9.0, 1.0, 2.0);
+```
+
+&emsp;根据给定的 `name` 选择子、`types` 方法类型和 `imp` 方法实现，把此方法添加到指定的 `cls` 类。`imp` 参数是新方法的实现，该函数必须至少接受两个参数 `self` 和 `_cmd`。`types` 是描述方法参数类型的字符数组。
+
+&emsp;`class_addMethod` 将添加超类实现的覆盖，但不会替换此类中的现有实现，要更改现有实现，请使用 `method_setImplementation`（即 `class_addMethod` 函数要么添加完成返回 YES，要么该类已经存在此函数，直接返回 NO）（这句话看完我们可能会有点懵，下面我们细致的分析一下）。
+
+&emsp;下面我们先看完 `class_addMethod` 函数的定义代码，然后再详细拆分一下：**`class_addMethod` 将添加超类实现的覆盖，但不会替换此类中的现有实现，要更改现有实现，请使用 `method_setImplementation`（即 `class_addMethod` 函数要么添加完成返回 YES，要么该类已经存在此函数，直接返回 NO）。**
+
+```c++
+BOOL 
+class_addMethod(Class cls, SEL name, IMP imp, const char *types)
+{
+    // 如果 cls 不存在则返回 NO
+    if (!cls) return NO;
+
+    // 加锁
+    mutex_locker_t lock(runtimeLock);
+    
+    // 调用 addMethod 函数，对返回值取反（addMethod 函数返回函数实现时取反为 NO，返回 nil 时取反为 YES） 
+    return ! addMethod(cls, name, imp, types ?: "", NO);
+}
+```
+
+&emsp;下面我们逐行分析 `addMethod` 函数的定义。
+
+### addMethod
 
 ```c++
 /**********************************************************************
@@ -166,8 +232,9 @@ class_replaceMethod(Class cls, SEL name, IMP imp, const char *types)
 static IMP 
 addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
 {
-    // 前面 class_replaceMethod 函数调用中 replace 参数传递的为 YES
-    
+    // 前面 class_replaceMethod 函数调用中 replace 参数传递的 YES
+    // 前面 class_addMethod 函数调用中 replace 参数传递的 NO
+     
     // 这个 IMP 类型的 result 临时变量用于记录原始的函数实现，作为 addMethod 的函数返回值 
     IMP result = nil;
     
@@ -175,23 +242,31 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
     runtimeLock.assertLocked();
     
     // 检查 cls 是否是一个已知类，根据所有已知类的列表检查给定的类。如果类未知，则会触发一个 _objc_fatal：Attempt to use unknown class。
-    // 如果 runtime 知道该类（位于共享缓存内、加载图像的数据段内，或已使用 obj_allocateClassPair 分配），则返回 true。此查找的结果会缓存在类中的 "witness"(cls->data()->witness) 值中，该值在快速路径中方便检查。
+    // 如果 runtime 知道该类（位于共享缓存内、加载映像的数据段内，或已使用 obj_allocateClassPair 分配），则返回 true。
+    // 此查找的结果会缓存在类的 "witness"(cls->data()->witness) 字段中，该值在快速路径中方便检查。
     checkIsKnownClass(cls);
     
     // 断言：types 参数不能为 nil，在前面的调用中可看到对 types 参数的处理：types ?: "" 即默认传递："" 空字符串 
     ASSERT(types);
     
-    // 断言：cls 已经实现，这里需要两个条件为真：1. cls 不是 StubClass（isStubClass：1 <= isa && isa < 16） 2. data()->flags & RW_REALIZED 为真 
+    // 断言：cls 已经实现，这里需要两个条件为真：
+    // 1. cls 不是 StubClass（isStubClass：1 <= isa && isa < 16） 
+    // 2. data()->flags & RW_REALIZED 为真 
     ASSERT(cls->isRealized());
 
     method_t *m;
     
-    // 下面分两种情况的处理：
-    // 1. cls 类中存在名字为 name 的函数则进行替换函数实现
+    // 下面分两种（三种）情况的处理：
+    // 1. cls 类中存在名字为 name 的函数则进行替换函数实现/取出函数的实现
+    //    1)：如果 replace 参数为 YES，则设置 name 函数的实现为新实现
+    //    2)：如果 replace 参数为 NO，则取得 name 函数的旧实现
     // 2. cls 类中不存在名字为 name 的函数则进行添加函数
     
     if ((m = getMethodNoSuper_nolock(cls, name))) {
-        // getMethodNoSuper_nolock 在 cls 类的函数列表中查找名为 name 的函数，注意这里仅在 cls 类的 cls->data()->methods() 中查找，并不会去 cls 的父类中查找
+        // getMethodNoSuper_nolock 在 cls 类的函数列表中查找名为 name 的函数，
+        // 注意这里仅在 cls 类的 cls->data()->methods() 中查找，并不会去 cls 的父类中查找，函数名中的 "NoSuper" 也指明了这一点，
+        // getMethod_nolock 不同于 getMethodNoSuper_nolock，它便是一直沿着 cls 的 superclass 继承链去查找函数。 
+        
         // 查找到 name 对应的函数会赋值给 m 这个局部变量。
         
         // already exists
@@ -199,18 +274,18 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
             // 如果 replace 参数为 NO 的话，仅将获取到的 m 的 imp 赋值给 result 作为 addMethod 函数的返回值
             result = m->imp;
         } else {
-            // 把查找到的 cls 类中名字为 name 的函数的 imp 替换为 addMethod 函数的入参 imp，并返回 name 函数的旧的 imp
-            // (还包含两个隐式操作：刷新 cls 类的方法缓存，更新 cls 类的自定义 AWZ 和 RR 的标记)
+            // 把查找到的 cls 类中名字为 name 的函数的 imp 替换为 addMethod 函数入参 imp，并返回 name 函数的旧的 imp
+            // (还包含两个隐式操作：刷新 cls 类的方法缓存 和 更新 cls 类的自定义 AWZ 和 RR 的标记)
             result = _method_setImplementation(cls, m, imp);
         }
     } else {
         // 下面便是为 cls 添加名为 name 的新函数。
         
-        // 获取 cls 类的函数列表所在的位置，rwe 的类型是：class_rw_ext_t 或者 class_ro_t，记得当类实现以后，就从 ro 切换到 rw 去了
+        // 获取 cls 类的函数列表所在的位置，rwe 的类型是：class_rw_ext_t 或者 class_ro_t，当类实现以后，就从 ro 切换到 rw 去了
         auto rwe = cls->data()->extAllocIfNeeded();
 
         // fixme optimize 优化
-        // 我们已知的类的函数列表大部分情况下是一个二维数组，下面就是往这个二维数组中追加内容
+        // 我们已知的类的函数列表大部分情况下是一个二维数组（当还是 ro 时是一维数组），下面就是往这个二维数组中追加内容
         
         method_list_t *newlist;
         
@@ -225,8 +300,12 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
         newlist->count = 1;
         
         // newlist 中第一个元素就是我们要给 cls 类添加的函数
-        newlist->first.name = name; // 函数选择子
-        //（strdupIfMutable 函数是对 types 字符串进行处理，如果 types 位于不可变的内存空间中，则不需要作任何处理，如果 types 所处内存空间是可变的，则对 types 字符串进行复制）
+        newlist->first.name = name; // 函数选择子赋值
+        
+        //（strdupIfMutable 函数是对 types 字符串进行处理，
+        // 如果 types 位于不可变的内存空间中，则不需要作任何处理，
+        // 如果 types 所处内存空间是可变的，则对 types 字符串进行复制）
+        
         newlist->first.types = strdupIfMutable(types); // 函数类型
         newlist->first.imp = imp; // 函数实现
         
@@ -356,31 +435,6 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 &emsp;在设置方法实现的过程中，涉及到的方法缓存刷新和调整 RR/AWZ 的函数标记可能会让我们有一点懵，这里需要我们对 OC 的方法缓存机制和 OC alloc 过程有一定的认识，前面的文章有分析这部分的内容，不熟悉的小伙伴可以去翻翻看一下。 
 
-### class_addMethod
-
-&emsp;向指定类添加一个函数，添加成功则返回 YES，
-
-```c++
-/** 
- * Adds a new method to a class with a given name and implementation.
- * 
- * @param cls The class to which to add a method.
- * @param name A selector that specifies the name of the method being added.
- * @param imp A function which is the implementation of the new method. The function must take at least two arguments—self and _cmd.
- * @param types An array of characters that describe the types of the arguments to the method. 
- * 
- * @return YES if the method was added successfully, otherwise NO 
- *  (for example, the class already contains a method implementation with that name).
- *
- * @note class_addMethod will add an override of a superclass's implementation, 
- *  but will not replace an existing implementation in this class. 
- *  To change an existing implementation, use method_setImplementation.
- */
-OBJC_EXPORT BOOL
-class_addMethod(Class _Nullable cls, SEL _Nonnull name, IMP _Nonnull imp, 
-                const char * _Nullable types) 
-    OBJC_AVAILABLE(10.5, 2.0, 9.0, 1.0, 2.0);
-```
 
 
 
