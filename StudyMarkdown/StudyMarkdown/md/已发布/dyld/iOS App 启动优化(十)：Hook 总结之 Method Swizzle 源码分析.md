@@ -309,7 +309,10 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
         newlist->first.types = strdupIfMutable(types); // 函数类型
         newlist->first.imp = imp; // 函数实现
         
-        // 对 newlist 作一下准备工作（没有看懂😭）
+        // 对 newlist 作一下准备工作：（如果需要修复的话）
+        // 1): 如果 选择子 不在共享缓存中，则把选择子注册到选择子的共享缓存中去
+        // 2): 对 newlist 中的函数根据其选择子进行排序（std::stable_sort(mlist->begin(), mlist->end(), sorter);）
+        
         prepareMethodLists(cls, &newlist, 1, NO, NO);
         
         // 把 newlist 追加到 cls 的函数列表中去
@@ -446,13 +449,21 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 &emsp;在设置方法实现的过程中，涉及到的方法缓存刷新和调整 RR/AWZ 的函数标记可能会让我们有一点懵，这里需要我们对 OC 的方法缓存机制和 OC alloc 过程有一定的认识，前面的文章有分析这部分的内容，不熟悉的小伙伴可以去翻翻看一下。 
 
-&emsp;上面我们对 Method Swizzle 使用到的 runtime 函数进行了完整的分析，下面我们看一下 Method Swizzle 的方案实践。
+&emsp;上面我们对 Method Swizzle 使用到的部分 runtime 函数进行了完整的分析，下面我们看一下 Method Swizzle 的方案实践。
+
+&emsp;其实看到这里的话，如果在  Method Swizzle  中不考虑继承关系，只是单纯的 修改/交换 当前类的一些函数，不考虑继承自父类函数的话，其实它们还蛮简单的，但是这样也就失去了 **继承的精髓**，前面我们学习 runtime 时，实例函数/类函数、子类/父类/元类、函数列表 等等，它们的关系一定要了然于胸，不然看后续的 Method Swizzle 实践会在理解上有一点吃力。
+
++ 实例函数位于类中。
++ 类函数位于元类中。
++ **子类继承了父类，在子类中不重写父类函数的话，那么子类可调用的父类的函数还是在位于父类的函数列表中，如果在子类的定义中重写了父类的函数，那么子类中便也有了一份和父类同名的函数。** （一定要谨记这句）
 
 ## Method Swizzle 实践
 
-&emsp;这里分为两种情况，1): 要 Hook 的函数在类中不存在。2): 要 Hook 的函数在类中已存在。
+&emsp;这里分为两种情况，1): 要 Hook 的函数在类中不存在（不存在时我们首先进行添加）。2): 要 Hook 的函数在类中已存在（则可直接进行 hook 交换）。
 
-&emsp;下面代码实现的功能就是在交换 original 函数和 swizzled 函数的实现。
+### 示例 1
+
+&emsp;下面代码实现的功能就是在交换 original 函数和 swizzled 函数的 imp。
 
 ```c++
 // 放在 +load 函数中进行，dispatch_once 保证全局只调用一次。
@@ -471,21 +482,22 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
         // 查找 swizzled 函数（在当前类及其父类中查找函数结构体）
         Method swizzledMethod = class_getInstanceMethod(aClass, swizzledSelector);
         
-        // 在 aClass 中添加原函数，如果 didAddMethod 为 true 表示，在 aClass 中添加 original 函数成功（注意 original 函数直接添加的 swizzledMethod 函数的实现）
-        // 如果 didAddMethod 为 false 则表示在本类或者父类中已经存在 original 函数了。
+        // 在 aClass 中添加原函数，如果 didAddMethod 为 true 表示在 aClass 中添加 original 函数成功（注意 original 函数直接添加的 swizzledMethod 函数的实现）
+        // 如果 didAddMethod 为 false 则表示在本类中已经存在 original 函数了。（注意这里是本类，class_addMethod 只是针对的本类，即使在父类中存在 original 同名的函数，
+        // class_addMethod 还是会往本类中添加 original 函数，此时便会覆盖了父类中的 original 函数）
+        
         BOOL didAddMethod = class_addMethod(aClass,
                                             originalSelector,
                                             method_getImplementation(swizzledMethod),
                                             method_getTypeEncoding(swizzledMethod));
                                             
         if (didAddMethod) {
-        // 添加成功的话，仅剩下把 swizzled 函数的实现替换成 original 函数的实现
+            // 添加成功的话，仅剩下把 swizzled 函数的实现替换成 original 函数的实现
             class_replaceMethod(aClass,
                                 swizzledSelector,
                                 method_getImplementation(originalMethod),
                                 method_getTypeEncoding(originalMethod));
         } else {
-        
             // 原本已经存在 original 和 swizzled 函数的话，直接交换它们俩的实现
             method_exchangeImplementations(originalMethod, swizzledMethod);
         }
@@ -493,8 +505,48 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 }
 ```
 
-&emsp;
+&emsp;首先查找 originalSelector 选择子和 swizzledSelector 选择子在 aClass 中对应的函数结构 originalMethod 和 swizzledMethod，然后调用 class_addMethod 函数向 aClass 中添加 originalSelector 选择子对应的函数，并且将其 imp 映射为 swizzledMethod 函数的 imp，class_addMethod 函数执行时，如果 aClass 中已经存在  originalSelector 选择子对应的函数，则不做任何操作 class_addMethod 函数的返回值为 false， 如果 aClass 中不存在 originalSelector 选择子对应的函数的话，则在 aClass 中添加 originalSelector 选择子对应的函数，函数 imp 是 swizzledMethod 函数的 imp，且 class_addMethod 函数的返回值为 true。接着如果 didAddMethod 为真，则需要把 aClass 中 swizzledSelector 选择子对应的函数的 imp 替换为 originalMethod 函数的 imp，如果 didAddMethod 为假，则表明 cClass 中原本已经有 originalMethod 和 swizzledMethod 函数了，则调用 method_exchangeImplementations 函数交换它俩的 imp。（例如在自定义 UIViewController 中有一个 viewDidLoad 函数和一个我们自定义的 swizzledViewDidLoad 函数，然后我们在自定义 UIViewController 的 +load 函数中交换 viewDidLoad 和 swizzledViewDidLoad 两个函数的 imp）
 
+> &emsp;有时为了避免方法命名冲突和参数 `_cmd` 被篡改，也会使用下面这种『静态方法版本』的 Method Swizzle。CaptainHook 中的宏定义也是采用这种方式，比较推荐：[Objective-C-Method-Swizzling](http://yulingtianxia.com/blog/2017/04/17/Objective-C-Method-Swizzling/) (这里大佬说的 **避免方法命名冲突和参数 `_cmd` 被篡改** 这两个点涉及的场景没有理解到，暂时只能把下面的的代码读通了😭)
+
+```c++
+// IMP 重命名
+typedef IMP *IMPPointer;
+
+// 函数声明
+static void MethodSwizzle(id self, SEL _cmd, id arg1);
+
+// 函数指针声明
+static void (*MethodOriginal)(id self, SEL _cmd, id arg1);
+
+static void MethodSwizzle(id self, SEL _cmd, id arg1) {
+    // do custom work
+    MethodOriginal(self, _cmd, arg1);
+}
+
+BOOL class_swizzleMethodAndStore(Class class, SEL original, IMP replacement, IMPPointer store) {
+    IMP imp = NULL;
+    Method method = class_getInstanceMethod(class, original);
+    if (method) {
+        const char *type = method_getTypeEncoding(method);
+        imp = class_replaceMethod(class, original, replacement, type);
+        if (!imp) {
+            imp = method_getImplementation(method);
+        }
+    }
+    if (imp && store) { *store = imp; }
+    return (imp != NULL);
+}
+
++ (BOOL)swizzle:(SEL)original with:(IMP)replacement store:(IMPPointer)store {
+    return class_swizzleMethodAndStore(self, original, replacement, store);
+}
+
++ (void)load {
+    // 
+    [self swizzle:@selector(originalMethod:) with:(IMP)MethodSwizzle store:(IMP *)&MethodOriginal];
+}
+```
 
  
 
@@ -524,7 +576,7 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 
 + [iOS逆向之Hopper进阶](https://www.jianshu.com/p/384dc5bc1cb4)
 + [十 iOS逆向- hopper disassembler](https://www.jianshu.com/p/20077ceb2f75?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation)
-+ [Objective-C Method Swizzling](。 )
++ [Objective-C Method Swizzling](http://yulingtianxia.com/blog/2017/04/17/Objective-C-Method-Swizzling/)
 + [iOS 界的毒瘤：Method Swizzle](https://juejin.cn/post/6844903517979672590)
 + [iOS微信内存监控](https://wetest.qq.com/lab/view/367.html)
 + [通过修改GOT表，hook glibc函数](https://zhougy0717.github.io/2020/01/05/通过修改GOT表，hook_glibc函数/)
