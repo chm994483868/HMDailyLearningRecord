@@ -510,55 +510,104 @@ _method_setImplementation(Class cls, method_t *m, IMP imp)
 > &emsp;有时为了避免方法命名冲突和参数 `_cmd` 被篡改，也会使用下面这种『静态方法版本』的 Method Swizzle。CaptainHook 中的宏定义也是采用这种方式，比较推荐：[Objective-C-Method-Swizzling](http://yulingtianxia.com/blog/2017/04/17/Objective-C-Method-Swizzling/) (这里大佬说的 **避免方法命名冲突和参数 `_cmd` 被篡改** 这两个点涉及的场景没有理解到，暂时只能把下面的的代码读通了😭)
 
 ```c++
-// IMP 重命名
+// 类型命名 IMPPointer 表示指向 IMP 的指针
 typedef IMP *IMPPointer;
 
-// 函数声明
+// swizzle 函数声明（原函数要替换为的函数）
 static void MethodSwizzle(id self, SEL _cmd, id arg1);
 
-// 函数指针声明
+// original 函数指针（用来记录替换发生后原函数的实现）
 static void (*MethodOriginal)(id self, SEL _cmd, id arg1);
 
+// 交换发生后，当调用 @selector(originalMethod:) 选择子对应的函数时，会调用 MethodSwizzle 函数
 static void MethodSwizzle(id self, SEL _cmd, id arg1) {
     // do custom work
+    // 这里可以放一些我们自己的自定义操作
+    
+    // 然后下面接着通过 MethodOriginal 这个 IMP 指针调用 @selector(originalMethod:) 选择子对应的原始的函数实现！
     MethodOriginal(self, _cmd, arg1);
 }
 
 BOOL class_swizzleMethodAndStore(Class class, SEL original, IMP replacement, IMPPointer store) {
     IMP imp = NULL;
+    
+    // 从 class 以及继承体系中获取 original 选择子对应的函数结构体
     Method method = class_getInstanceMethod(class, original);
+    
+    // 如果能找到的话，则把 original 选择子对应的函数结构体的 imp 替换为 replacement 这个 imp
     if (method) {
+        // method 的类型编码
         const char *type = method_getTypeEncoding(method);
+        
+        // 替换 original 选择子对应的函数结构体的 imp
         imp = class_replaceMethod(class, original, replacement, type);
+        
+        // 这里如果上面的 Method method = class_getInstanceMethod(class, original); 获得函数来自 class 的父类，则这个 imp 会是 nil，
+        // 如果这句没看懂的话应该回顾上面的 class_replaceMethod 函数定义，它替换的是当前类的函数列表中的函数，如果没找到的话则不会去递归其父类。
+        
+        // 如果 imp 为空的话，则把 class 父类中的 original 选择子对应的函数的 imp 赋值给 imp 局部变量 
         if (!imp) {
             imp = method_getImplementation(method);
         }
     }
+    
+    // 如果未找到 original 选择子对应的函数结构体的话，这个 if 内的赋值不会执行。
+    // 如果找到了 original 选择子对应的函数结构体的，这里可能是两种情况：
+    // 1): 在 class 中找到的
+    // 2): 在 class 的父类中找到的
+    // 然后不管是在哪里找到的，这里的 imp 变量记录的就是这个 original 选择子对应的函数结构体的 imp，然后把它赋值给 *store，
+    // 即把  original 选择子对应的函数的原始的实现记录在 MethodOriginal 指针中。 
     if (imp && store) { *store = imp; }
+    
+    // 如果 original 选择子对应的函数结构体不存在的话，这里会直接返回 NO，存在的话则是返回 YES
     return (imp != NULL);
 }
 
+// 返回 YES 表示替换成功，返回 NO 表示原函数不存在，无法进行替换
 + (BOOL)swizzle:(SEL)original with:(IMP)replacement store:(IMPPointer)store {
     return class_swizzleMethodAndStore(self, original, replacement, store);
 }
 
+// 在 +load 函数中进行
 + (void)load {
-    // 
+    // 把当前类的 originalMethod 选择子对应的函数替换为 MethodSwizzle，然后在 MethodOriginal 这个 IMP 指针中记录 originalMethod 选择子对应的函数的原始实现
+    // (IMP)MethodSwizzle 把函数地址强转为 IMP
     [self swizzle:@selector(originalMethod:) with:(IMP)MethodSwizzle store:(IMP *)&MethodOriginal];
 }
 ```
 
+&emsp;`[self swizzle:@selector(originalMethod:) with:(IMP)MethodSwizzle store:(IMP *)&MethodOriginal];` 函数，把当前类的 originalMethod 选择子对应的函数替换为 MethodSwizzle，然后在 MethodOriginal 这个 IMP 指针中记录 originalMethod 选择子对应的函数的原始实现。 
+
+### 示例 2
  
+&emsp;类似示例 1 中第一段示例代码，但是缺少了往本类中添加函数。
+ 
+```c++
++ (void)load
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class aClass = [self class];
+        
+        // method_original 和 method_swizzle 选择子
+        SEL originalSelector = @selector(method_original:);
+        SEL swizzledSelector = @selector(method_swizzle:);
+        
+        // 这里是拿着 originalSelector 和 swizzledMethod 两个选择子去 aClass 及其父类中查找函数，
+        // 注意 class_getInstanceMethod 函数是沿着继承链，去本类及其父类的函数列表中递归查找函数，
+        // 所以这里返回的 originalMethod 和 swizzledMethod 函数的位置都是不固定的，它们可能来自本类，可能来自父类。
+        Method originalMethod = class_getInstanceMethod(aClass, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(aClass, swizzledSelector);
+        
+        // 直接交换 originalMethod 和 swizzledMethod 两个函数的 imp
+        method_exchangeImplementations(originalMethod, swizzledMethod);
+    });
+}
+```
 
+&emsp;这段代码是直接交换 IMP，这样做是很危险的，危险的来源就如注释中所说：调用 `class_getInstanceMethod` 函数取得的函数结构体，我们根本不知道是来自本类还是父类，这段代码便直接对他们进行 IMP 交换了，这里和示例 1 中的第一段代码对比的话，缺少了 “函数来源” 的判断，示例 1 中的第一段代码借用 `class_addMethod` 函数来判断本类中有没有原始函数，如果没有的话会进行添加，这样就避免在 Hook 本类的原始函数的过程，不会影响到父类。当然如果本类中存在原始函数，则示例 1 和示例 2 执行结果就一模一样了。那么如果本类不存在原始函数，原始函数来自于父类呢：如果本类中没有实现原始函数，`class_getInstanceMethod` 返回的是其某个父类的 Method 对象，这样 `method_exchangeImplementations` 就把父类的原始函数的 imp 跟本类的 Swizzle 函数实现交换了。这样其它父类及其其他子类的原始函数调用就可能会出问题，甚至 Crash。
 
-
-
-
-
-
-
-
-
+&emsp;那么 Objective-C Method Swizzling 的背景知识就学到这里，后续涉及的使用场景，后续我们再进行分析。
 
 ## 参考链接
 **参考链接:🔗**
