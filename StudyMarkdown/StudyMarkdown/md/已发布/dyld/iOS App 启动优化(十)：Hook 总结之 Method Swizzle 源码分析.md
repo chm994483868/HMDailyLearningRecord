@@ -1,6 +1,6 @@
 # iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析
 
-&emsp;Objective-C 中的 Hook 又被称作 Method Swizzling，这是动态语言大都具有的特性。在 Objective-C 中经常会把 Hook 的逻辑写在 `+load` 方法中，重写了 `+load` 方法的类和分类都被称为懒加载类、懒加载分类，它们会在 APP 启动时（这个时间阶段可以理解为：为 APP 启动做准备工作）、在 `main` 函数之前就会进行实现和加载（并调用 `+load` 方法），这个时机对 APP 启动而言是特别特别早的，这个阶段我们可以理解为 APP 正在启动或者正在为 APP 启动进行各项准备工作，此阶段 `+load` 方法被调用，其中我们添加的 Hook 逻辑也得到执行，然后等 APP 启动完成开始使用各个 OC 类、开始调用各个 OC 函数时，我们想要 Hook 的那些 OC 函数就都已经在我们的掌握了。
+&emsp;Objective-C 中的 Hook 又被称作 Method Swizzling，这是动态语言大都具有的特性。在 Objective-C 中经常会把 Hook 的逻辑写在 `+load` 方法中，因为重写了 `+load` 方法的类和分类被归为非懒加载类、非懒加载分类，它们会在 APP 启动时（这个时间阶段可以理解为：为 APP 启动做准备工作）、在 `main` 函数之前就会进行实现和加载（并调用 `+load` 方法），这个时机对 APP 启动而言是特别特别早的，这个阶段我们可以理解为 APP 正在启动或者正在为 APP 启动进行各项准备工作，此阶段 `+load` 方法会被调用，其中我们添加的 Hook 逻辑也会得到执行，然后等 APP 启动完成开始使用各个 OC 类、开始调用各个 OC 函数时，我们想要 Hook 的那些 OC 函数就都已经在我们的掌握了。
 
 ## Method Swizzle 简述
 
