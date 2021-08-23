@@ -26,6 +26,7 @@
 		8E12B93026A6552900BC72AC /* iOS App 启动优化(八)：Hook 总结之 fishhook 源码逐行分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：Hook 总结之 fishhook 源码逐行分析.md"; sourceTree = "<group>"; };
 		8E12B93126A65B1900BC72AC /* 埋点.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "埋点.md"; sourceTree = "<group>"; };
 		8E2137B226D2365700CB9B03 /* iOS App 启动优化(十一)：LLDB 文档：LLDB Quick Start Guide.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十一)：LLDB 文档：LLDB Quick Start Guide.md"; sourceTree = "<group>"; };
+		8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记：第一个 Flutter 应用.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记：第一个 Flutter 应用.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
@@ -172,6 +173,7 @@
 		8E2137B326D2382E00CB9B03 /* Flutter */ = {
 			isa = PBXGroup;
 			children = (
+				8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记：第一个 Flutter 应用.md */,
 			);
 			path = Flutter;
 			sourceTree = "<group>";
