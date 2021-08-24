@@ -392,14 +392,93 @@ etc...
         <td>(lldb) settings set target.env-vars DEBUG=1 <br> (lldb) set se target.env-vars DEBUG=1</td>
     </tr>
         <td colspan="2">在一个命令中为进程和启动进程设置环境变量。</td>
-        <td></td>
     <tr>
         <td></td>
-        <td></td>
+        <td>(lldb) process launch -v DEBUG=1</td>
     </tr>
     <tr>
-        <td></td>
-        <td></td>
+        <td colspan="2">附加到进程 ID 为 123 的进程。</td>
+    </tr>
+    <tr>
+        <td>(gdb) attach 123</td>
+        <td>(lldb) process attach --pid 123 <br> (lldb) attach -p 123</td>
+    </tr>
+    <tr>
+        <td colspan="2">附加到名为 a.out 的进程。</td>
+    </tr>
+    <tr>
+        <td>(gdb) attach a.out</td>
+        <td>(lldb) process attach --name a.out <br> (lldb) pro at -n a.out</td>
+    </tr>
+    <tr>
+        <td colspan="2">等待名为 a.out 的进程启动并附加。</td>
+    </tr>
+    <tr>
+        <td>(gdb) attach -waitfor a.out</td>
+        <td>(lldb) process attach --name a.out --waitfor <br> (lldb) pro at -n a.out -w</td>
+    </tr>
+    <tr>
+        <td colspan="2">附加到在系统 eorgadd 上运行的远程 GDB 协议服务器，端口 8000。</td>
+    </tr>
+    <tr>
+        <td>(gdb) target remote eorgadd:8000</td>
+        <td>(lldb) gdb-remote eorgadd:8000</td>
+    </tr>
+    <tr>
+        <td colspan="2">附加到在本地系统上运行的远程 GDB 协议服务器，端口 8000。</td>
+    </tr>
+    <tr>
+        <td>(gdb) target remote localhost:8000</td>
+        <td>(lldb) gdb-remote 8000</td>
+    </tr>
+    <tr>
+        <td colspan="2">在系统 eorgadd 上以 kdp 模式附加到 Darwin 内核。</td>
+    </tr>
+    <tr>
+        <td>(gdb) kdp-reattach eorgadd</td>
+        <td>(lldb) kdp-remote eorgadd</td>
+    </tr>
+    <tr>
+        <td colspan="2">在当前选定的线程中执行源级单步。</td>
+    </tr>
+    <tr>
+        <td>(gdb) step <br> (gdb) s</td>
+        <td>(lldb) thread step-in <br> (lldb) step <br> (lldb) s</td>
+    </tr>
+    <tr>
+        <td colspan="2">在当前选定的线程中执行源级单步执行。</td>
+    </tr>
+    <tr>
+        <td>(gdb) next <br> (gdb) n</td>
+        <td colspan="2">(lldb) thread step-over <br> (lldb) next <br> (lldb) n</td>
+    </tr>
+    <tr>
+        <td colspan="2">在当前选定的线程中执行指令级单步。</td>
+    </tr>
+    <tr>
+        <td>(gdb) stepi <br> (gdb) si</td>
+        <td>(lldb) thread step-inst <br> (lldb) si</td>
+    </tr>
+    <tr>
+        <td>在当前选定的线程中执行指令级单步执行。</td>
+    </tr>
+    <tr>
+        <td>(gdb) nexti <br> (gdb) ni</td>
+        <td>(lldb) thread step-inst-over <br> (lldb) ni</td>
+    </tr>
+    <tr>
+        <td>跳出当前选定的 frame。</td>
+    </tr>
+    <tr>
+        <td>(gdb) finish</td>
+        <td>(lldb) thread step-out <br> (lldb) finish</td>
+    </tr>
+    <tr>
+        <td>每次停止时 backtrace 和 disassemble。</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) target stop-hook add <br> Enter your stop hook command(s). Type 'DONE' to end. <br> > bt <br> > disassemble --pc <br> > DONE <br> Stop hook #1 added.</td>
     </tr>
 </table>
 

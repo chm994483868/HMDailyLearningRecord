@@ -20,3 +20,4 @@ if let r = self as? MainDataViewReloadable {
 + [Swift笔记1：源码编译(5.3.1)](https://juejin.cn/post/6914265565540384782)
 + [Swift源码编译-让底层更清晰](https://www.jianshu.com/p/5cd66d7d2daf)
 + [Mac安装CMake](https://www.jianshu.com/p/7fff1f77dd9d)
++ [MacOS 下安装 autoconf 、 automake](https://www.jianshu.com/p/cbd651911434)

@@ -1,6 +1,6 @@
 #  Flutter 学习笔记：第一个 Flutter 应用
 
-## 入门: 在macOS上搭建Flutter开发环境
+## 入门: 在macOS上搭建 Flutter 开发环境
 
 ### 一、获取Flutter SDK
 
@@ -17,12 +17,12 @@ export PATH=`pwd`/flutter/bin:$PATH
 &emsp;此代码只能暂时针对当前命令行窗口设置 PATH 环境变量，要想永久将 Flutter 添加到 PATH 中需要更新环境变量，以便你可以运行 flutter 命令在任何终端会话中。
 
 1. 打开（或创建）`.bash_profile`，此文件在不同的机器上可能文件路径不同，例如在我的电脑上在此路径：`/Users/hmc/.bash_profile`。如果 `.bash_profile` 文件不存在的话可以使用 `vim .bash_profile` 指令自行创建一个。
-2. 往 `.bash_profile` 文件中添加以下行并更改 `PATH_TO_FLUTTER_GIT_DIRECTORY` 为下载 Flutter SDK 到本地的路径，例如我的 Flutter SDK 的本地路径是：`/Users/hmc/Documents/GitHub/flutter`。
+2. 往 `.bash_profile` 文件中添加以下行并更改 `PATH_TO_FLUTTER_GIT_DIRECTORY` 为下载 Flutter SDK 到本地的路径，例如我的 Flutter SDK 的本地路径是：`/Users/hmc/Documents/GitHub/flutter`，下面示例中的第 3 行则修改为：`export PATH=/Users/hmc/Documents/GitHub/flutter/bin:$PATH`。
 
 ```c++
 export PUB_HOSTED_URL=https://pub.flutter-io.cn // 国内用户需要设置
 export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn // 国内用户需要设置
-export PATH=PATH_TO_FLUTTER_GIT_DIRECTORY/flutter/bin:$PATH // 我的机器：export PATH=/Users/hmc/Documents/GitHub/flutter/bin:$PATH
+export PATH=PATH_TO_FLUTTER_GIT_DIRECTORY/flutter/bin:$PATH
 ```
 
 3. 打开一个终端窗口运行 `source /Users/hmc/.bash_profile`（`.bash_profile` 文件的实际路径大家以自己的机器为准）。
@@ -32,13 +32,14 @@ export PATH=PATH_TO_FLUTTER_GIT_DIRECTORY/flutter/bin:$PATH // 我的机器：ex
 touch .zshrc
 open -e .zshrc
 ```
+
 &emsp;然后在其中输入：`source ~/.bash_profile` 并保存，然后输入 `source .zshrc` 命令刷新环境使环境变量生效。
 
 ### 三、运行 flutter doctor
 
-&emsp;运行 `flutter doctor` 命令查看是否需要安装其它依赖项并完成 Flutter 环境的整体安装。`flutter doctor` 命令检查你的环境并在终端窗口中显示报告，Dart SDK 已经在捆绑在 Flutter 里了，没有必要单独安装 Dart。仔细检查命令行输出以获取可能需要安装的其他软件或进一步需要执行的任务（以粗体显示）。
+&emsp;运行 `flutter doctor` 命令查看是否需要安装其它依赖项并完成 Flutter 环境的整体安装。`flutter doctor` 命令检查你的环境并在终端窗口中显示报告，Dart SDK 已经捆绑在 Flutter 里了，没有必要单独安装 Dart。仔细检查命令行输出以获取可能需要安装的其他软件或进一步需要执行的任务（以粗体显示）。
 
-&emsp;如果大家当前已经有 iOS 开发环境的话，此时 Flutter 环境基本已经配置完成了，通过上述配置，我本机运行 `flutter doctor` 命令，输出如下：
+&emsp;如果大家当前已经有 iOS 开发环境的话，那么配置到这里，Flutter 环境基本就配置完成了，通过上述配置，我本机运行 `flutter doctor` 命令（此命令第一次执行会比较慢），输出如下：
 
 ```c++
 hmc@localhost ~ % flutter doctor
