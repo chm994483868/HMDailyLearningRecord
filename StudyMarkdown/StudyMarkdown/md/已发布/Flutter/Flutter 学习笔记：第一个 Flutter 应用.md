@@ -1,6 +1,6 @@
 #  Flutter 学习笔记：第一个 Flutter 应用
 
-## 入门: 在macOS上搭建 Flutter 开发环境
+## 入门: 在 macOS 上搭建 Flutter 开发环境
 
 ### 一、获取Flutter SDK
 
@@ -67,20 +67,126 @@ Doctor summary (to see all details, run flutter doctor -v):
 hmc@localhost ~ % 
 ```
 
-&emsp;看到 android 环境还需要配置，后续如果需要再进行。Flutter 的 iOS 环境便已经配好了。
+&emsp;看到 android 环境还需要配置，后续如果需要我们再进行。至此Flutter 的 iOS 环境便已经配好了。
 
 ## 起步: 配置编辑器
 
-&emsp;
+### 一、安装 Visual Studio Code
+&emsp;IDE 部分我们直接选择 [Visual Studio Code](https://code.visualstudio.com) 需要 1.20.1或更高版本，当前 VS Code 版本已经到 1.59，下载安装完 VS Code 以后我们需要安装 Flutter 插件。
+
+### 二、安装 Flutter 插件
+
+&emsp;启动 VS Code，shift + Command + p 调出 VS Code 的命令面板，输入 install，然后选择 Extensions: Install Extensions，在搜索框里输入 flutter，在搜索列表结果中选择：Flutter Flutter support and debugger for Visual Studio Code. 并点击 install 按钮，安装完成选择 OK 重新启动 VS Code。
+
+### 三、通过 Flutter Doctor 验证设置
+
+&emsp;shift + Command + p 调出 VS Code 的命令面板，输入 doctor，然后选择：Flutter: Run Flutter Doctor，这个指令需要执行一小会，然后查找输出，它会详细列出你的机器当前的 Flutter 版本、本地路径、来源、引擎版本、Dart 版本、Xcode 版本及位置、CocoaPods 版本、Chrome 位置、VS Code 版本及位置、插件版本、连接的设备 等等的详细信息。我的机器如下（没有安装安卓环境）
+
+```c++
+[flutter] flutter doctor -v
+[✓] Flutter (Channel master, 2.5.0-7.0.pre.185, on macOS 11.4 20F5046g darwin-x64, locale zh-Hans-CN)
+    • Flutter version 2.5.0-7.0.pre.185 at /Users/hmc/Documents/GitHub/flutter
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision 2526cb07cb (2 days ago), 2021-08-21 23:42:01 -0400
+    • Engine revision 4783663ee4
+    • Dart version 2.15.0 (build 2.15.0-41.0.dev)
+    • Pub download mirror https://pub.flutter-io.cn
+    • Flutter download mirror https://storage.flutter-io.cn
+
+[✗] Android toolchain - develop for Android devices
+    ✗ Unable to locate Android SDK.
+      Install Android Studio from: https://developer.android.com/studio/index.html
+      On first launch it will assist you in installing the Android SDK components.
+      (or visit https://flutter.dev/docs/get-started/install/macos#android-setup for detailed instructions).
+      If the Android SDK has been installed to a custom location, please use
+      `flutter config --android-sdk` to update to that location.
 
 
+[✓] Xcode - develop for iOS and macOS (Xcode 12.4)
+    • Xcode at /Applications/Xcode.app/Contents/Developer
+    • CocoaPods version 1.10.1
 
+[✓] Chrome - develop for the web
+    • Chrome at /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
+[!] Android Studio (not installed)
+    • Android Studio not found; download from https://developer.android.com/studio/index.html
+      (or visit https://flutter.dev/docs/get-started/install/macos#android-setup for detailed instructions).
 
+[✓] VS Code (version 1.42.1)
+    • VS Code at /Users/hmc/Downloads/Visual Studio Code-2.app/Contents
+    • Flutter extension version 3.8.1
 
+[✓] Connected device (3 available)
+    • iPhone 12 (mobile)     • FF9BFB96-8FF4-4AD6-98B8-1C8889653AF0 • ios            • com.apple.CoreSimulator.SimRuntime.iOS-14-4 (simulator)
+    • iPhone 12 Pro (mobile) • CC2922E4-A2DB-43DF-8B6F-D2987F683525 • ios            • com.apple.CoreSimulator.SimRuntime.iOS-14-4 (simulator)
+    • Chrome (web)           • chrome                               • web-javascript • Google Chrome 92.0.4515.159
 
+! Doctor found issues in 2 categories.
+exit code 0
+```
 
+&emsp;至此 IDE 配置完成。
 
+## 起步: 简单体验
+
+&emsp;本节从我们的模板创建一个新的 Flutter 应用程序，运行它，并学习如何使用 Hot Reload（热重载） 进行更新重载。
+
+### 一、创建 Flutter 新应用
+
+&emsp;shift + Command + p 调出 VS Code 的命令面板，输入 flutter，然后选择 Flutter: New Project，然后在输入框中输入项目名称（如：FirstFlutterDemo），然后按回车键，选择项目的本地路径，项目创建完成，VS Code 会默认选中并打开 main.dart 文件，确保在 VS Code 的右下角选择了目标设备，然后按 F5 键或调用 Debug > Start Debugging，等待应用程序启动，如果一切正常，在应用程序创建启动成功后，应该在设备或模拟器上看到应用程序截图如下：
+
+![截屏2021-08-24 下午9.53.42.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6a96395a6f904204b7b0a45c360f2cb1~tplv-k3u1fbpfcp-watermark.image)
+
+### 二、热重载
+
+&emsp;Flutter 可以通过 热重载（hot reload） 实现快速的开发周期，热重载就是无需重启应用程序（原生开发，修改任意一行代码都要重新编译运行才能生效）就能实时加载修改后的代码，并且不会丢失状态。简单的对代码进行更改，然后告诉 IDE 或命令行工具你需要重新加载（点击 Hot Reload 按钮），你就会在你的设备或模拟器上看到更改。如在 main.dart 文件中修改 `You have pushed the button this many times:` 字符串内容，然后点击 command + s 保存，此时便立刻能在模拟器上看到更新的字符串。
+
+## 正式编写第一个 Flutter App
+
+&emsp;新建一个命名为 startup_namer 的 Flutter 项目。直接删除 lib/main.dart 中的全部代码，然后替换为如下代码并运行，它仅仅显示一个标题是 `Welcome to Flutter` 的蓝色导航条和屏幕中心的 `Hello World` 文本。 
+
+```c++
+// 引入 material.dart
+import 'package:flutter/material.dart';
+
+// => 符号是 Dart 中单行函数/方法的简写，同 void main() { runApp(new MyApp()); }
+// runApp 函数的参数是一个 MyApp 实例
+void main() => runApp(new MyApp());
+
+// MyApp 类继承自 StatelessWidget
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new MaterialApp(
+      title: 'Welcome to Flutter',
+      
+      // Scaffold 是来自 Material 库中
+      home: new Scaffold(
+        // 导航条
+        appBar: new AppBar(
+          // 导航条标题
+          title: new Text('Welcome to Flutter'),
+        ),
+        
+        // 主屏幕内容
+        body: new Center(
+          // 文本 widget
+          child: new Text('Hello World'),
+        ),
+      ),
+    );
+  }
+}
+```
+
+&emsp;以上示例是创建了一个 Material APP。（Material 是一种标准的移动端和 web 端的视觉设计语言。 Flutter 提供了一套丰富的 Material widgets。）
+
+&emsp;`MyApp` 类继承自 `StatelessWidget`，这将会使应用本身也成为一个 widget。 在 Flutter 中，大多数东西都是 widget，包括对齐（`alignment`）、填充（`padding`）和布局（`layout`）。
+
+&emsp;`Scaffold` 是 Material library 库中提供的一个 widget，它提供了默认的导航栏（`appBar`）、标题（`title`）和包含主屏幕 widget 树的 `body` 属性。widget 树可以很复杂。widget 的主要工作是提供一个 `build()` 方法来描述如何根据其他较低级别的 widget 来显示自己。
+
+&emsp;示例中的 `body` 的 widget 树中包含了一个 Center widget，Center widget又包含一个 Text 子 widget。 Center widget 可以将其子 widget 树对齐到屏幕中心。
 
 
 
