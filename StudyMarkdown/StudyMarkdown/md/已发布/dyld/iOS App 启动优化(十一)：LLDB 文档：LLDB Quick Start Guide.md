@@ -736,20 +736,226 @@ etc...
         <td>(lldb) expr -d run-target -- [SomeClass returnAnObject] <br> (lldb) expr -d run-target -- someCPPObjectPtrOrReference <br> Or set dynamic type printing as default: <br> (lldb) settings set target.prefer-dynamic run-target</td>
     </tr>
     <tr>
+        <td colspan="2">调用函数以在函数的断点处停止。</td>
+    </tr>
+    <tr>
+        <td>(gdb) set unwindonsignal 0 <br> (gdb) p function_with_a_breakpoint()</td>
+        <td>(lldb) expr -u 0 -- function_with_a_breakpoint()</td>
+    </tr>
+</table>
+
+
+### Examining Thread State
+
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示当前线程的堆栈回溯。</td>
+    </tr>
+    <tr>
+        <td>(gdb) bt</td>
+        <td>(lldb) thread backtrace <br> (lldb) bt</td>
+    </tr>
+        <tr>
+        <td colspan="2">显示所有线程的堆栈回溯。</td>
+    </tr>
+    <tr>
+        <td>(gdb) thread apply all bt</td>
+        <td>(lldb) thread backtrace all <br> (lldb) bt all</td>
+    </tr>
+        <tr>
+        <td colspan="2">回溯当前线程的前五帧。</td>
+    </tr>
+    <tr>
+        <td>(gdb) bt 5</td>
+        <td>(lldb) thread backtrace -c 5 <br> (lldb) bt 5 (lldb-169 and later) <br> (lldb) bt -c 5 (lldb-168 and earlier)</td>
+    </tr>
+        <tr>
+        <td colspan="2">按索引为当前线程选择不同的堆栈帧。</td>
+    </tr>
+    <tr>
+        <td>(gdb) frame 12</td>
+        <td>(lldb) frame select 12 <br> (lldb) fr s 12 <br> (lldb) f 12</td>
+    </tr>
+        <tr>
+        <td colspan="2">列出有关当前线程中当前选定帧的信息。</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) frame info</td>
+    </tr>
+        <tr>
+        <td colspan="2">选择调用当前堆栈帧的堆栈帧。</td>
+    </tr>
+    <tr>
+        <td>(gdb) up</td>
+        <td>(lldb) up <br> (lldb) frame select --relative=1</td>
+    </tr>
+        <tr>
+        <td colspan="2">选择当前堆栈帧调用的堆栈帧。(下一个栈帧)</td>
+    </tr>
+    <tr>
+        <td>(gdb) down</td>
+        <td>(lldb) down <br> (lldb) frame select --relative=-1 <br> (lldb) fr s -r-1</td>
+    </tr>
+        <tr>
+        <td colspan="2">使用相对偏移量选择不同的堆栈帧。</td>
+    </tr>
+    <tr>
+        <td>(gdb) up 2 <br> (gdb) down 3</td>
+        <td>(lldb) frame select --relative 2 <br> (lldb) fr s -r2 <br> (lldb) frame select --relative -3 <br> (lldb) fr s -r-3</td>
+    </tr>
+        <tr>
+        <td colspan="2">显示当前线程的 general-purpose registers（读出 general-purpose 寄存器的值）。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info registers</td>
+        <td>(lldb) register read</td>
+    </tr>
+        <tr>
+        <td colspan="2">向当前线程寄存器 rax 写下新的十进制值 123。</td>
+    </tr>
+    <tr>
+        <td>(gdb) p $rax = 123</td>
+        <td>(lldb) register write rax 123</td>
+    </tr>
+        <tr>
+        <td colspan="2">在当前程序计数器（即 pc 寄存器）（指令指针）之前跳过 8 字节。（当前程序计数寄存器 pc 移动 8 个字节，到下一条指令）</td>
+    </tr>
+    <tr>
+        <td>(gdb) jump *$pc+8</td>
+        <td>(lldb) register write pc `$pc+8` <br> LLDB 命令使用背板来评估表达并插入缩放结果。</td>
+    </tr>
+        <tr>
+        <td colspan="2">显示以有符号小数（正负）格式格式的当前线程的通用寄存器。</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) register read --format i <br> (lldb) re r -f i <br> LLDB 现在支持 GDB 速记格式语法，但命令后不允许使用任何空间：<br> (lldb) register read/d <br> 注意：LLDB 尝试尽可能使用与 printf(3) 相同的格式字符。键入 help format 以查看格式指定器的完整列表。</td>
+    </tr>
+        <tr>
+        <td colspan="2">显示当前线程的所有寄存器集合中的所有寄存器。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info all-registers</td>
+        <td>(lldb) register read --all <br> (lldb) re r -a</td>
+    </tr>
+        <tr>
+        <td colspan="2">在当前线程中显示名为 rax、rsp 和 rbp 的寄存器的值。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info all-registers rax rsp rbp</td>
+        <td>(lldb) register read rax rsp rbp</td>
+    </tr>
+        <tr>
+        <td colspan="2">在以二进制格式的当前线程中显示名为 rax 的寄存器的值。</td>
+    </tr>
+    <tr>
+        <td>(gdb) p/t $rax</td>
+        <td>(lldb) register read --format binary rax <br> (lldb) re r -f b rax <br> LLDB 现在支持 GDB 速记格式语法，但命令后不允许使用任何空间： <br> (lldb) memory read/4xw 0xbffff3c0 <br> (lldb) x/4xw 0xbffff3c0 <br> (lldb) memory read --gdb-format 4xw 0xbffff3c0</td>
+    </tr>
+        <tr>
+        <td colspan="2">从表达 argv[0] 开始阅读内存。</td>
+    </tr>
+    <tr>
+        <td>(gdb) x argv[0]</td>
+        <td>(lldb) memory read `argv[0]` <br> 请注意，任何命令都可以使用任何表达的背板将缩放表达结果（只要 target 停止）与内联：<br> (lldb) memory read --size `sizeof(int)` `argv[0]`</td>
+    </tr>
+        <tr>
+        <td colspan="2">从地址 0xbffff3c0 中阅读 512 字节的内存，并将结果保存为文本中的本地文件。</td>
+    </tr>
+    <tr>
+        <td>(gdb) set logging on <br> (gdb) set logging file /tmp/mem.txt <br> (gdb) x/512bx 0xbffff3c0 <br> (gdb) set logging off</td>
+        <td>(lldb) memory read --outfile /tmp/mem.txt --count 512 0xbffff3c0 <br> (lldb) me r -o/tmp/mem.txt -c512 0xbffff3c0 <br> (lldb) me r -o/tmp/mem.txt -c512 0xbffff3c0 <br> (lldb) x/512bx -o/tmp/mem.txt 0xbffff3c0</td>
+    </tr>
+        <tr>
+        <td colspan="2">将二进制内存数据保存到从 0x1000 开始到 0x2000 结束的文件。</td>
+    </tr>
+    <tr>
+        <td>(gdb) dump memory /tmp/mem.bin 0x1000 0x2000</td>
+        <td>(lldb) memory read --outfile /tmp/mem.bin --binary 0x1000 0x1200 <br> (lldb) me r -o /tmp/mem.bin -b 0x1000 0x1200</td>
+    </tr>
+        <tr>
+        <td colspan="2">Disassemble 当前 frame 的当前 function。（打印当前函数的汇编指令，并指到当前在那个指令的位置）</td>
+    </tr>
+    <tr>
+        <td>(gdb) disassemble</td>
+        <td>(lldb) disassemble --frame <br> (lldb) di -f</td>
+    </tr>
+        <tr>
+        <td colspan="2">汇编所有类中名字为 main 的函数。</td>
+    </tr>
+    <tr>
+        <td>(gdb) disassemble main</td>
+        <td>(lldb) disassemble --name main <br> (lldb) di -n main</td>
+    </tr>
+        <tr>
+        <td colspan="2">Disassemble an address range. 对指定地址范围的代码转化为汇编。</td>
+    </tr>
+    <tr>
+        <td>(gdb) disassemble 0x1eb8 0x1ec3</td>
+        <td>(lldb) disassemble --start-address 0x1eb8 --end-address 0x1ec3 <br> (lldb) di -s 0x1eb8 -e 0x1ec3</td>
+    </tr>
+        <tr>
+        <td colspan="2">从给定地址汇编 20 条指令。</td>
+    </tr>
+    <tr>
+        <td>(gdb) x/20i 0x1eb8</td>
+        <td>(lldb) disassemble --start-address 0x1eb8 --count 20 <br> (lldb) di -s 0x1eb8 -c 20</td>
+    </tr>
+        <tr>
         <td colspan="2"></td>
     </tr>
     <tr>
         <td></td>
         <td></td>
     </tr>
-    <tr>
+        <tr>
         <td colspan="2"></td>
     </tr>
     <tr>
         <td></td>
         <td></td>
     </tr>
+        <tr>
+        <td colspan="2"></td>
+    </tr>
     <tr>
+        <td></td>
+        <td></td>
+    </tr>
+        <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+        <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+        <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+        <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+        <tr>
         <td colspan="2"></td>
     </tr>
     <tr>
@@ -757,9 +963,6 @@ etc...
         <td></td>
     </tr>
 </table>
-
-
-
 
 
 
