@@ -450,7 +450,7 @@ etc...
     </tr>
     <tr>
         <td>(gdb) next <br> (gdb) n</td>
-        <td colspan="2">(lldb) thread step-over <br> (lldb) next <br> (lldb) n</td>
+        <td>(lldb) thread step-over <br> (lldb) next <br> (lldb) n</td>
     </tr>
     <tr>
         <td colspan="2">在当前选定的线程中执行指令级单步。</td>
@@ -460,21 +460,21 @@ etc...
         <td>(lldb) thread step-inst <br> (lldb) si</td>
     </tr>
     <tr>
-        <td>在当前选定的线程中执行指令级单步执行。</td>
+        <td colspan="2">在当前选定的线程中执行指令级单步执行。</td>
     </tr>
     <tr>
         <td>(gdb) nexti <br> (gdb) ni</td>
         <td>(lldb) thread step-inst-over <br> (lldb) ni</td>
     </tr>
     <tr>
-        <td>跳出当前选定的 frame。</td>
+        <td colspan="2">跳出当前选定的 frame。</td>
     </tr>
     <tr>
         <td>(gdb) finish</td>
         <td>(lldb) thread step-out <br> (lldb) finish</td>
     </tr>
     <tr>
-        <td>每次停止时 backtrace 和 disassemble。</td>
+        <td colspan="2">每次停止时 backtrace 和 disassemble。</td>
     </tr>
     <tr>
         <td>—</td>
@@ -482,20 +482,281 @@ etc...
     </tr>
 </table>
 
+### Breakpoint Commands
 
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">在所有名为 main 的函数上设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) break main</td>
+        <td>(lldb) breakpoint set --name main <br> (lldb) br s -n main <br> (lldb) b main</td>
+    </tr>
+    <tr>
+        <td colspan="2">在文件 test.c 的第 12 行设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) break test.c:12</td>
+        <td>(lldb) breakpoint set --file test.c --line 12 <br> (lldb) br s -f test.c -l 12 <br> (lldb) b test.c:12</td>
+    </tr>
+    <tr>
+        <td colspan="2">在所有 basename 为 main 的 C++ 方法上设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) break main <br> （注意：这将中断任何名为 main 的 C 函数。）</td>
+        <td>(lldb) breakpoint set --method main <br> (lldb) br s -M main</td>
+    </tr>
+    <tr>
+        <td colspan="2">在 Objective-C 函数 -[NSString stringWithFormat:] 处设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) break -[NSString stringWithFormat:]</td>
+        <td>(lldb) breakpoint set --name "-[NSString stringWithFormat:]" <br> (lldb) b -[NSString stringWithFormat:]</td>
+    </tr>
+    <tr>
+        <td colspan="2">在所有选择子为 count 的 Objective-C 方法上设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) break count <br> （注意：这将中断任何名为 count 的 C 或 C++ 函数。）</td>
+        <td>(lldb) breakpoint set --selector count <br> (lldb) br s -S count</td>
+    </tr>
+    <tr>
+        <td colspan="2">通过函数名上的正则表达式设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) rbreak regular-expression</td>
+        <td>(lldb) breakpoint set --regex regular-expression <br> (lldb) br s -r regular-expression</td>
+    </tr>
+    <tr>
+        <td colspan="2">通过源文件内容的正则表达式设置断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) shell grep -e -n pattern source-file <br> (gdb) break source-file:CopyLineNumbers</td>
+        <td>(lldb) breakpoint set --source-pattern regular-expression --file SourceFile <br> (lldb) br s -p regular-expression -f file</td>
+    </tr>
+    <tr>
+        <td colspan="2">列出所有断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info break</td>
+        <td>(lldb) breakpoint list <br> (lldb) br l</td>
+    </tr>
+    <tr>
+        <td colspan="2">删除一个断点。</td>
+    </tr>
+    <tr>
+        <td>(gdb) delete 1</td>
+        <td>(lldb) breakpoint delete 1 <br> (lldb) br del 1</td>
+    </tr>
+</table>
 
+### Watchpoint Commands
 
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">在写入变量时在变量上设置 watchpoint。</td>
+    </tr>
+    <tr>
+        <td>(gdb) watch global_var</td>
+        <td>(lldb) watchpoint set variable global_var <br> (lldb) wa s v global_var</td>
+    </tr>
+    <tr>
+        <td colspan="2">写入时在内存位置上设置 watchpoint。</td>
+    </tr>
+    <tr>
+        <td>(gdb) watch -location g_char_ptr</td>
+        <td>(lldb) watchpoint set expression -- my_ptr <br> (lldb) wa s e -- my_ptr <br> 注意：如果未指定 -x byte_size，则要监视的区域大小默认为指针大小。此命令采用 "raw" 输入，作为表达式返回一个指向区域开头的无符号整数，在选项终止符 (--) 之后进行评估。</td>
+    </tr>
+    <tr>
+        <td colspan="2">在 watchpoint 上设置条件。</td>
+    </tr>
+    <tr>
+        <td>-</td>
+        <td>(lldb) watch set var global <br> (lldb) watchpoint modify -c '(global==5)' <br> c <br> ... <br> bt <br> * thread #1: tid = 0x1c03, 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16, stop reason = watchpoint 1 <br> frame #0: 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16 <br> frame #1: 0x0000000100000eac a.out`main + 108 at main.cpp:25 <br> frame #2: 0x00007fff8ac9c7e1 libdyld.dylib`start + 1 <br> (int32_t) global = 5</td>
+    </tr>
+    <tr>
+        <td colspan="2">列出所有 watchpoints。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info break</td>
+        <td>(lldb) watchpoint list <br> (lldb) watch l</td>
+    </tr>
+    <tr>
+        <td colspan="2">删除一个 watchpoint。</td>
+    </tr>
+    <tr>
+        <td>(gdb) delete 1</td>
+        <td>(lldb) watchpoint delete 1 <br> (lldb) watch del 1</td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
 
+### Examining Variables
 
+> &emsp;这里的帧（frame）是指方法的栈帧，例如在下面 -viewDidLoad 内。
+   ```c++
+  - (void)viewDidLoad {
+      [super viewDidLoad];
+      // Do any additional setup after loading the view.
+      int a = 123;
+      NSLog(@"%d", a);
+  }
+  
+  // 在 NSLog 下一个断点，使用如下 LLDB 命令：
+  
+  (lldb) frame variable
+  (ViewController *) self = 0x00007fc39a00a600
+  (SEL) _cmd = "viewDidLoad"
+  (int) a = 123
+  (lldb) frame variable --no-args
+  (int) a = 123
+  (lldb) frame variable --no-locals
+  (ViewController *) self = 0x00007fc39a00a600
+  (SEL) _cmd = "viewDidLoad"
+  (lldb) 
+  ```
 
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示当前帧的参数和局部变量。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info args <br> and <br> (gdb) info locals</td>
+        <td>(lldb) frame variable <br> (lldb) fr v</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示当前帧的局部变量。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info locals</td>
+        <td>(lldb) frame variable --no-args <br> (lldb) fr v -a</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示局部变量 bar 的内容。</td>
+    </tr>
+    <tr>
+        <td>(gdb) p bar</td>
+        <td>(lldb) frame variable bar <br> (lldb) fr v bar <br> (lldb) p bar</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示格式化为十六进制的局部变量 bar 的内容。</td>
+    </tr>
+    <tr>
+        <td>(gdb) p/x bar</td>
+        <td>(lldb) frame variable --format x bar <br> (lldb) fr v -f x bar</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示全局变量 baz 的内容。</td>
+    </tr>
+    <tr>
+        <td>(gdb) p baz</td>
+        <td>(lldb) target variable baz <br> (lldb) ta v baz</td>
+    </tr>
+    <tr>
+        <td colspan="2">显示当前源文件中定义的全局/静态变量。</td>
+    </tr>
+    <tr>
+        <td>-</td>
+        <td>(lldb) target variable <br> (lldb) ta v</td>
+    </tr>
+    <tr>
+        <td colspan="2">每次停止时显示变量 argc 和 argv。</td>
+    </tr>
+    <tr>
+        <td>(gdb) display argc <br> (gdb) display argv</td>
+        <td>(lldb) target stop-hook add --one-liner "frame variable argc argv" <br> (lldb) ta st a -o "fr v argc argv" <br> (lldb) display argc <br> (lldb) display argv</td>
+    </tr>
+    <tr>
+        <td colspan="2">仅在名为 main 的函数中停止时才显示变量 argc 和 argv。</td>
+    </tr>
+    <tr>
+        <td>-</td>
+        <td>(lldb) target stop-hook add --name main --one-liner "frame variable argc argv" <br> (lldb) ta st a -n main -o "fr v argc argv"</td>
+    </tr>
+    <tr>
+        <td colspan="2">仅当你停在名为 MyClass 的 C 类中时才显示变量 *this。</td>
+    </tr>
+    <tr>
+        <td>-</td>
+        <td>(lldb) target stop-hook add --classname MyClass --one-liner "frame variable *this" <br> (lldb) ta st a -c MyClass -o "fr v *this"</td>
+    </tr>
+</table>
 
+### Evaluating Expressions
 
-
-
-
-
-
-
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">评估当前帧中的广义表达式。</td>
+    </tr>
+    <tr>
+        <td>(gdb) print (int) printf ("Print nine: %d.", 4 + 5) <br> 或者，如果你不想看到 void 返回：<br> (gdb) call (int) printf ("Print nine: %d.", 4 + 5)</td>
+        <td>(lldb) expr (int) printf ("Print nine: %d.", 4 + 5) <br> 或者使用打印别名： <br> (lldb) print (int) printf ("Print nine: %d.", 4 + 5)</td>
+    </tr>
+    <tr>
+        <td colspan="2">创建便利变量并为其赋值。</td>
+    </tr>
+    <tr>
+        <td>(gdb) set $foo = 5 <br> (gdb) set variable $foo = 5 <br> Or use the print command: <br> (gdb) print $foo = 5 <br> Or use the call command: <br> (gdb) call $foo = 5 <br> To specify the type of the variable: <br> (gdb) set $foo = (unsigned int) 5</td>
+        <td>LLDB 评估变量声明表达式，就像你在 C 中编写的那样：<br> (lldb) expr unsigned int $foo = 5</td>
+    </tr>
+    <tr>
+        <td colspan="2">打印对象的 Objective-C 描述。</td>
+    </tr>
+    <tr>
+        <td>(gdb) po [SomeClass returnAnObject]</td>
+        <td>(lldb) expr -O -- [SomeClass returnAnObject] <br> Or use the po alias: <br> (lldb) po [SomeClass returnAnObject]</td>
+    </tr>
+    <tr>
+        <td colspan="2">打印表达式结果的动态类型。</td>
+    </tr>
+    <tr>
+        <td>(gdb) set print object 1 <br> (gdb) p someCPPObjectPtrOrReference <br> Note: Only for C++ objects.</td>
+        <td>(lldb) expr -d run-target -- [SomeClass returnAnObject] <br> (lldb) expr -d run-target -- someCPPObjectPtrOrReference <br> Or set dynamic type printing as default: <br> (lldb) settings set target.prefer-dynamic run-target</td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
 
 
 
