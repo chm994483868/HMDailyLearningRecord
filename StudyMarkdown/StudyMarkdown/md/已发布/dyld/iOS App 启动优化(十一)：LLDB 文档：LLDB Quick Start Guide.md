@@ -744,7 +744,6 @@ etc...
     </tr>
 </table>
 
-
 ### Examining Thread State
 
 <table>
@@ -907,68 +906,154 @@ etc...
         <td>(lldb) disassemble --start-address 0x1eb8 --count 20 <br> (lldb) di -s 0x1eb8 -c 20</td>
     </tr>
         <tr>
-        <td colspan="2"></td>
+        <td colspan="2">显示当前帧的当前函数的混合源和反汇编。（就是输出源码并输出对应的汇编函数）</td>
     </tr>
     <tr>
-        <td></td>
-        <td></td>
+        <td>—</td>
+        <td>(lldb) disassemble --frame --mixed <br> (lldb) di -f -m</td>
     </tr>
         <tr>
-        <td colspan="2"></td>
+        <td colspan="2">反汇编当前帧的当前函数并显示操作码字节。</td>
     </tr>
     <tr>
-        <td></td>
-        <td></td>
+        <td>—</td>
+        <td>(lldb) disassemble --frame --bytes <br> (lldb) di -f -b</td>
     </tr>
         <tr>
-        <td colspan="2"></td>
+        <td colspan="2">反汇编当前帧的当前源代码行。</td>
     </tr>
     <tr>
-        <td></td>
-        <td></td>
-    </tr>
-        <tr>
-        <td colspan="2"></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-    </tr>
-        <tr>
-        <td colspan="2"></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-    </tr>
-        <tr>
-        <td colspan="2"></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-    </tr>
-        <tr>
-        <td colspan="2"></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-    </tr>
-        <tr>
-        <td colspan="2"></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
+        <td>—</td>
+        <td>(lldb) disassemble --line <br> (lldb) di -l</td>
     </tr>
 </table>
 
+### Executable and Shared Library Query Commands
 
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">列出主要的可执行文件和所有相关的共享库。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info shared</td>
+        <td>(lldb) image list</td>
+    </tr>
+    <tr>
+        <td colspan="2">在可执行文件或任何共享库中查找原始地址的信息。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info symbol 0x1ec4</td>
+        <td>(lldb) image lookup --address 0x1ec4 <br> (lldb) im loo -a 0x1ec4</td>
+    </tr>
+    <tr>
+        <td colspan="2">在二进制文件中查找与正则表达式匹配的函数。</td>
+    </tr>
+    <tr>
+        <td>(gdb) info function <FUNC_REGEX></td>
+        <td>This one finds debug symbols: <br> (lldb) image lookup -r -n <FUNC_REGEX> <br> This one finds non-debug symbols: <br> (lldb) image lookup -r -s <FUNC_REGEX> <br> 提供二进制文件列表作为限制搜索的参数。</td>
+    </tr>
+    <tr>
+        <td colspan="2">仅在 a.out 中查找地址信息。</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) image lookup --address 0x1ec4 a.out <br> (lldb) im loo -a 0x1ec4 a.out</td>
+    </tr>
+    <tr>
+        <td colspan="2">按名称查找类型 Point 的信息。</td>
+    </tr>
+    <tr>
+        <td>(gdb) ptype Point</td>
+        <td>(lldb) image lookup --type Point <br> (lldb) im loo -t Point</td>
+    </tr>
+    <tr>
+        <td colspan="2">Dump 主可执行文件和任何共享库中的所有 sections。</td>
+    </tr>
+    <tr>
+        <td>(gdb) maintenance info sections</td>
+        <td>(lldb) image dump sections</td>
+    </tr>
+    <tr>
+        <td colspan="2">Dump a.out 模块的所有 sections</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) image dump sections a.out</td>
+    </tr>
+    <tr>
+        <td colspan="2">Dump 主可执行文件和任何共享库中的所有 symbols。</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) image dump symtab</td>
+    </tr>
+    <tr>
+        <td colspan="2">Dump a.out 和 liba.so 中的所有 symbols</td>
+    </tr>
+    <tr>
+        <td>—</td>
+        <td>(lldb) image dump symtab a.out liba.so</td>
+    </tr>
+</table>
 
+### Miscellaneous
 
+<table>
+    <tr>
+        <td>GDB</td>
+        <td>LLDB</td>
+    </tr>
+    <tr>
+        <td colspan="2">在屏幕上回显文本。</td>
+    </tr>
+    <tr>
+        <td>(gdb) echo Here is some text\n</td>
+        <td>(lldb) script print "Here is some text"</td>
+    </tr>
+    <tr>
+        <td colspan="2">重新映射调试会话的源文件路径名。</td>
+    </tr>
+    <tr>
+        <td>(gdb) set pathname-substitutions /buildbot/path /my/path</td>
+        <td>(lldb) settings set target.source-map /buildbot/path /my/path <br> 注意：如果你的源文件不再位于与程序构建时相同的位置——也许程序是在不同的计算机上构建的——你需要告诉调试器如何在本地文件路径而不是构建系统文件路径。</td>
+    </tr>
+    <tr>
+        <td colspan="2">提供一个 catchall 目录来搜索源文件。</td>
+    </tr>
+    <tr>
+        <td>(gdb) directory /my/path</td>
+        <td>(No equivalent command yet.)</td>
+    </tr>
+</table>
 
+## Using LLDB as a Standalone Debugger（使用 LLDB 作为独立调试器）
 
+&emsp;本章介绍基于终端（a basic Terminal）调试会话中的工作流程和操作。在适当的情况下，将 LLDB 操作与类似的 GDB 操作进行比较。
+
+&emsp;大多数情况下，你通过 Xcode 调试功能间接使用 LLDB 调试器，并使用 Xcode 控制台窗格发出 LLDB 命令。但是对于开源和其他基于非 GUI 的应用程序调试的开发，LLDB 在终端窗口中用作传统的命令行调试器。要将 LLDB 用作命令行调试器，你应该了解如何：
+
++ 加载调试进程
++ 将正在运行的进程附加到 LLDB
++ 设置 breakpoints 和 watchpoints
++ 控制进程执行
++ 在被调试的进程中导航
++ 检查变量的状态和值
++ 执行替代代码（alternative code）
+
+&emsp;Xcode IDE 通过将 LLDB 完全集成到带有图形控件的源代码编辑、构建和 "run for debugging" 循环中，使许多这些操作自动化。从命令行了解这些操作的工作方式还有助于你在 Xcode 控制台窗格中理解和使用 LLDB 调试器的全部功能。
+
+### Specifying the Program to Debug（指定要调试的程序）
+
+&emsp;首先，你需要将程序设置为调试。与 GDB 一样，你可以启动 LLDB 并使用命令行指定要调试的文件。键入：
+
+```c++
+$ lldb /Projects/Sketch/build/Debug/Sketch.app
+Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
+```
 
 
 
