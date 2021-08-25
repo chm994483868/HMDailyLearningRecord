@@ -163,9 +163,9 @@ class MyApp extends StatelessWidget {
       
       // Scaffold 是来自 Material 库中
       home: new Scaffold(
-        // 导航条
+        // 导航栏
         appBar: new AppBar(
-          // 导航条标题
+          // 导航栏标题
           title: new Text('Welcome to Flutter'),
         ),
         
@@ -186,11 +186,13 @@ class MyApp extends StatelessWidget {
 
 &emsp;`Scaffold` 是 Material library 库中提供的一个 widget，它提供了默认的导航栏（`appBar`）、标题（`title`）和包含主屏幕 widget 树的 `body` 属性。widget 树可以很复杂。widget 的主要工作是提供一个 `build()` 方法来描述如何根据其他较低级别的 widget 来显示自己。
 
-&emsp;示例中的 `body` 的 widget 树中包含了一个 Center widget，Center widget又包含一个 Text 子 widget。 Center widget 可以将其子 widget 树对齐到屏幕中心。
+&emsp;示例中的 `body` 的 widget 树中包含了一个 `Center` widget，`Center` widget又包含一个 `Text` widget 作为其子 widget。 `Center` widget 可以将其子 widget 树对齐到屏幕中心。
 
+### 使用外部包（package）
 
+&emsp;在上面的实例中，我们使用了 `flutter/material.dart` 这个 默认的 package，下面我们尝试导入其他自定义的 package。(本节以引入 english_words 4.0.0 package 为例，english_words 是用于处理英语单词的实用程序。计算音节，生成听起来不错的单词组合，并提供按用法排名前 5000 的英语单词。)
 
-
+&emsp;在 [pub.dartlang.org](https://pub.dev/flutter/packages) 中我们能看到有很多不同功能的 package，我们在其中搜索到：[english_words 4.0.0](https://pub.dev/packages/english_words)，
 
 
 
