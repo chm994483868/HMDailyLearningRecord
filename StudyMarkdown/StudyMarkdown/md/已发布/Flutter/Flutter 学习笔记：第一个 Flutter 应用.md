@@ -16,7 +16,7 @@ export PATH=`pwd`/flutter/bin:$PATH
 
 &emsp;此代码只能暂时针对当前命令行窗口设置 PATH 环境变量，要想永久将 Flutter 添加到 PATH 中需要更新环境变量，以便你可以运行 flutter 命令在任何终端会话中。
 
-1. 打开（或创建）`.bash_profile`，此文件在不同的机器上可能文件路径不同，例如在我的电脑上在此路径：`/Users/hmc/.bash_profile`。如果 `.bash_profile` 文件不存在的话可以使用 `vim .bash_profile` 指令自行创建一个。
+1. 打开（或创建）`.bash_profile`，此文件在不同的机器上可能文件路径不同，例如在我的电脑上在此路径：`/Users/hmc/.bash_profile`。如果 `.bash_profile` 文件不存在的话可以 `cd` 到 `Users/xxx(你当前的用户名)` 路径下，然后使用 `vim .bash_profile` 命令自行创建一个。
 2. 往 `.bash_profile` 文件中添加以下行并更改 `PATH_TO_FLUTTER_GIT_DIRECTORY` 为下载 Flutter SDK 到本地的路径，例如我的 Flutter SDK 的本地路径是：`/Users/hmc/Documents/GitHub/flutter`，下面示例中的第 3 行则修改为：`export PATH=/Users/hmc/Documents/GitHub/flutter/bin:$PATH`。
 
 ```c++
@@ -25,7 +25,7 @@ export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn // 国内用户需
 export PATH=PATH_TO_FLUTTER_GIT_DIRECTORY/flutter/bin:$PATH
 ```
 
-3. 打开一个终端窗口运行 `source /Users/hmc/.bash_profile`（`.bash_profile` 文件的实际路径大家以自己的机器为准）。
+3. 打开一个终端窗口执行 `source /Users/hmc/.bash_profile` 命令（`.bash_profile` 文件的实际路径大家以自己的机器为准）。
 4. 如果终端使用的是 zsh，则终端启动时 `~/.bash_profile` 文件将不会被加载，解决办法就是修改 `~/.zshrc`（我本机的路径：`/Users/hmc/.zshrc`），在其中添加：`source ~/.bash_profile`。如果 `.zshrc` 文件不存在的话，可使用如下命令创建：
 
 ```c++
