@@ -1055,6 +1055,95 @@ $ lldb /Projects/Sketch/build/Debug/Sketch.app
 Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
 ```
 
+![截屏2021-08-26 07.53.38.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1c549a216d4545d3b95636f5d8a57e16~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;或者，你可以在可执行文件已经运行后使用 file 命令指定要调试的可执行文件：
+
+```c++
+$ lldb
+(lldb) file /Projects/Sketch/build/Debug/Sketch.app
+Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
+```
+
+![截屏2021-08-26 07.53.42.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/19804ba1f39e41928c648297d31c7673~tplv-k3u1fbpfcp-watermark.image)
+
+### Setting Breakpoints
+
+&emsp;接下来，你可能希望设置断点以在进程启动后开始调试。LLDB Command Structure 中简要讨论了设置断点。要查看断点设置的所有选项，请使用 `help breakpoint set`。例如，键入以下内容以在任何使用名为 `alignLeftEdges:` 的方法时设置断点：
+
+```c++
+(lldb) breakpoint set --selector alignLeftEdges:
+Breakpoint created: 1: name = 'alignLeftEdges:', locations = 1, resolved = 1
+```
+
+&emsp;要找出你设置了哪些断点，请键入 `breakpoint list` 命令并检查它返回的内容，如下所示：
+
+```c++
+(lldb) breakpoint list
+Current breakpoints:
+1: name = 'alignLeftEdges:', locations = 1, resolved = 1
+  1.1: where = Sketch`-[SKTGraphicView alignLeftEdges:] + 33 at /Projects/Sketch/SKTGraphicView.m:1405, address = 0x0000000100010d5b, resolved, hit count = 0
+```
+&emsp;(下载了 [Sketch.app](https://www.sketch.com/apps/)，试了一下发现 `alignLeftEdges:` 这个函数已经不存在了，然后又用 MachOView 查看了 Sketch 的二进制文件，发现对其自定义的选择子加断点并不能找到，但是对它所使用到的系统库中的函数加断点可以正常加上。)
+
+```c++
+2: name = 'alignLeft:', locations = 6
+  2.1: where = WebKit`-[WKView alignLeft:], address = WebKit[0x00007fff3cad71f3], unresolved, hit count = 0 
+  2.2: where = WebKit`-[WKWebView(WKImplementationMac) alignLeft:], address = WebKit[0x00007fff3cadb9f7], unresolved, hit count = 0 
+  2.3: where = AppKit`-[NSText alignLeft:], address = AppKit[0x00007fff23320dbf], unresolved, hit count = 0 
+  2.4: where = AppKit`-[NSTextView alignLeft:], address = AppKit[0x00007fff23348112], unresolved, hit count = 0 
+  2.5: where = WebKitLegacy`-[WebHTMLView alignLeft:], address = WebKitLegacy[0x00007fff34fe7e60], unresolved, hit count = 0 
+  2.6: where = WebKitLegacy`-[WebView(WebViewEditingActions) alignLeft:], address = WebKitLegacy[0x00007fff350025f0], unresolved, hit count = 0 
+```
+
+![截屏2021-08-26 08.55.50.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/630b7268686b4abbb0c16b1f6c0b5273~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;在 LLDB 中，断点有两个部分：断点的逻辑规范，这是用户提供给 `breakpoint set` 命令的内容，以及代码中与该规范匹配的位置。例如，按选择子（`--selector`）中断在程序中的类中实现该选择子的所有方法上设置一个断点。类似地，如果文件和行被内联包含在代码的不同位置，则文件和行断点可能会导致多个位置。
+
+&emsp;`breakpoint list` 命令输出提供的一条信息是逻辑断点（logical breakpoint）的个数，以及每个逻辑断点（logical breakpoint）所处的类以及具体的内存地址以及命中次数。两者由句点 (.) 连接，例如上面：2: 和 2.1:~2.6: 中的内容，表明了断点名和断点个数，然后 2.1:~2.6: 中的全部内容。
+
+&emsp;因为逻辑断点仍然有效，如果加载另一个包含 `alignLeftEdges:` 选择子实现的共享库，新位置将添加到断点 1（即，在新加载的选择子上设置 1.2 断点）。
+
+&emsp;断点列表中的另一条信息是断点位置是否已解析。当一个位置对应的文件地址被加载到正在调试的程序中时，它就会被解析。例如，如果你在稍后卸载的共享库中设置断点，该断点位置将保留但不再解析。
+
+&emsp;LLDB acts like GDB with the command:
+
+```c++
+(gdb) set breakpoint pending on
+```
+
+&emsp;像 GDB 一样，LLDB 总是从你的规范中创建一个断点，即使它没有找到任何与规范匹配的位置。要确定表达式是否已解析，请使用 `breakpoint list` 检查位置字段。当你设置断点时，LLDB 会将断点报告为挂起（pending）。通过查看处于挂起（pending）状态的断点，你可以通过检查 `breakpoint set` 输出来确定在未找到任何位置时定义断点时是否存在拼写错误。例如：
+
+```c++
+(lldb) breakpoint set --file foo.c --line 12
+Breakpoint created: 2: file ='foo.c', line = 12, locations = 0 (pending)
+WARNING: Unable to resolve breakpoint to any actual locations.
+```
+
+&emsp;无论是在逻辑断点生成的所有位置上，还是在逻辑断点解析到的任何特定位置上，你都可以使用断点触发的命令删除、禁用、设置条件和忽略计数。例如，如果你想添加一个命令来在 LLDB 遇到编号为 1.1 的断点时打印回溯，请执行以下命令：
+
+```c++
+(lldb) breakpoint command add 1.1
+Enter your debugger command(s). Type 'DONE' to end.
+> bt
+> DONE
+```
+
+&emsp;默认情况下，`breakpoint command add` 命令采用 LLDB 命令行命令。要明确指定此默认值，请传递 `--command` 选项（`breakpoint command add --command ...`）。如果你使用 Python 脚本实现断点命令，请使用 `--script` 选项。 LLDB 帮助系统具有解释 `breakpoint command add` 的大量信息。
+
+&emsp;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
