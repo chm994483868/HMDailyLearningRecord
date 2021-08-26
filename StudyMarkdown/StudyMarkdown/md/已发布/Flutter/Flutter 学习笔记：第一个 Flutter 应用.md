@@ -25,8 +25,8 @@ export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn // 国内用户需
 export PATH=PATH_TO_FLUTTER_GIT_DIRECTORY/flutter/bin:$PATH
 ```
 
-3. 打开一个终端窗口执行 `source /Users/hmc/.bash_profile` 命令（`.bash_profile` 文件的实际路径大家以自己的机器为准）。
-4. 如果终端使用的是 zsh，则终端启动时 `~/.bash_profile` 文件将不会被加载，解决办法就是修改 `~/.zshrc`（我本机的路径：`/Users/hmc/.zshrc`），在其中添加：`source ~/.bash_profile`。如果 `.zshrc` 文件不存在的话，可使用如下命令创建：
+3. 打开一个终端窗口执行 `source /Users/hmc/.bash_profile` 命令进行刷新（`.bash_profile` 文件的实际路径大家以自己的机器为准）。
+4. 如果终端使用的是 zsh，则终端启动时 `~/.bash_profile` 文件将不会被加载，解决办法就是修改 `~/.zshrc`（我本机的路径是：`/Users/hmc/.zshrc`），在其中添加：`source ~/.bash_profile`。如果 `.zshrc` 文件不存在的话，可使用如下命令创建：
 
 ```c++
 touch .zshrc
@@ -192,28 +192,220 @@ class MyApp extends StatelessWidget {
 
 &emsp;在上面的实例中，我们使用了 `flutter/material.dart` 这个 默认的 package，下面我们尝试导入其他自定义的 package。(本节以引入 english_words 4.0.0 package 为例，english_words 是用于处理英语单词的实用程序。计算音节，生成听起来不错的单词组合，并提供按用法排名前 5000 的英语单词。)
 
-&emsp;在 [pub.dartlang.org](https://pub.dev/flutter/packages) 中我们能看到有很多不同功能的 package，我们在其中搜索到：[english_words 4.0.0](https://pub.dev/packages/english_words)，
+&emsp;在 [pub.dartlang.org](https://pub.dev/flutter/packages) 中我们能看到有很多不同功能的 package，我们在其中搜索到：[english_words 4.0.0](https://pub.dev/packages/english_words)。
+
+#### 一、修改 pubspec.yaml 文件指定要引入的 package 
+
+&emsp;pubspec.yaml 文件用来管理 Flutter 应用程序的 assets（资源，如图片、package 等）。下面我们在 pubspec.yaml 文件中，将 `english_words: ^4.0.0` 添加到 `dependencies:` 下面，作为当前程序的一个依赖项。当前 `startup_namer` 这个 Flutter 应用程序的 pubspec.yaml 文件的完整内容如下：
+
+```c++
+name: startup_namer
+description: A new Flutter project.
+
+# 以下行可防止使用 `flutter pub publish` 意外地将 package 发布到 pub.dev。这是 private packages 的首选项。
+publish_to: 'none' # 如果你希望发布到 pub.dev，请删除此行
+
+# 下面定义了应用程序的版本号和构建号。
+# 版本号是按点分隔的三个数字，如 1.2.43，后跟可选的构建号用一个 + 分开。
+# 版本和 builder 号都可以通过分别指定 --build-name 和 --build-number 来覆盖在 flutter 构建中。
+#
+# 在 Android 中，build-name 用作 versionName，而 build-number 用作 versionCode。
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+#
+# 在 iOS 中，build-name 用作 CFBundleShortVersionString，而 build-number 用作 CFBundleVersion。
+# Read more about iOS versioning at https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+# dependencies 指定你的 package 需要的其他 packages 才能工作。要自动将你的 package dependencies 升级到最新版本，请考虑运行：flutter pub upgrade --major-versions 指令。
+# 或者，可以通过将下面的版本编号更改为 pub.dev 上提供的最新版本来手动更新 dependencies。要查看哪些 dependencies 有较新的版本可用，请运行：flutter pub outdated 指令。
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 下面将 Cupertino Icons 字体添加到你的应用程序中。与 iOS 样式图标的 CupertinoIcons 类一起使用。
+  cupertino_icons: ^1.0.2
+  
+  # 引入 english_words
+  english_words: ^4.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  # 下面的 "flutter_lints" package 包含一组推荐的 lints，以鼓励良好的编码实践。
+  # package 提供的 lint set 在位于 package root 的 "analysis_options.yaml" 文件中激活。
+  # 有关停用特定 lint rules 和激活其他 rules 的信息，请参阅该文件。
+  flutter_lints: ^1.0.0
+
+# 有关此文件的通用 Dart 部分的信息，see the following page: https://dart.dev/tools/pub/pubspec
+
+# 以下部分特定于 Flutter。
+flutter:
+
+  # 以下行可确保将 Material Icons font 包含在你的应用程序中，以便你可以在 material Icons class 中使用 icons。
+  uses-material-design: true
+
+  # 要将 assets（一般是图片） 添加到你的应用程序，请添加 assets 部分，如下所示：
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+
+  # image asset 可以引用一个或多个特定于分辨率的 "variants"（变体），see https://flutter.dev/assets-and-images/#resolution-aware.
+
+  # 有关从 package dependencies 中添加 assets 的详细信息，see https://flutter.dev/assets-and-images/#from-packages 
+  
+  # 要在应用程序中添加自定义字体，请在此处添加此 "flutter" 部分的字体部分。此列表中的每个条目应有一个带有字体 family 的 "family" 键，以及一个带有列表的 "fonts" 键，该键提供字体的 asset 和其他描述符。
+  # For example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # 有关 package dependencies 中字体的详细信息 see https://flutter.dev/custom-fonts/#from-packages
+```
+
+&emsp;(analysis_options.yaml 文件后面再讲，此部分先把引入 package 讲完。)
+
+&emsp;在 `pubspec.yaml` 文件中引入了 `english_words: ^4.0.0`，除了可以引入依赖项之外，`pubspec.yaml` 还提供了许多其他的功能。
+
+&emsp;`english_words` 后面的 `^4.0.0` 直接指明了这个 package 的版本。当没有指定版本号时我们可以使用 `flutter pub upgrade --major-versions` 指令把依赖的 package 升级到最新版本，也可以手动修改版本号为一个指定版本，指定为当前最新版本来进行手动更新。要查看哪些依赖的 package 有较新的版本可用时可运行：`flutter pub outdated` 指令查看。我们当前是最新的，所以打印没有发现。
+
+```c++
+hmc@bogon startup_namer % flutter pub outdated
+Showing outdated packages.
+[*] indicates versions that are not the latest available.
+
+Found no outdated packages
+hmc@bogon startup_namer % 
+```
+
+&emsp;运行 `flutter pub upgrade --major-versions` 指令会有如下打印。看到 `cupertino_icons` 最新是 `1.0.3` 了，由于在 `pubspec.yaml` 文件中我们直接指定了 `^1.0.2` 所以它并没有被直接更新。还有 `flutter_lints` 最新的是 `1.0.4`，然后在 `pubspec.yaml` 文件中指定的是 `^1.0.0`，也不会进行强制更新。
+
+```c++
+hmc@bogon startup_namer % flutter pub upgrade --major-versions
+Resolving dependencies...
+  async 2.8.2
+  boolean_selector 2.1.0
+  characters 1.1.0
+  charcode 1.3.1
+  clock 1.1.0
+  collection 1.15.0
+  cupertino_icons 1.0.3
+  english_words 4.0.0
+  fake_async 1.2.0
+  flutter 0.0.0 from sdk flutter
+  flutter_lints 1.0.4
+  flutter_test 0.0.0 from sdk flutter
+  lints 1.0.1
+  matcher 0.12.11
+  meta 1.7.0
+  path 1.8.0
+  sky_engine 0.0.99 from sdk flutter
+  source_span 1.8.1
+  stack_trace 1.10.0
+  stream_channel 2.1.0
+  string_scanner 1.1.0
+  term_glyph 1.2.0
+  test_api 0.4.3
+  typed_data 1.3.0
+  vector_math 2.1.0
+No dependencies changed.
+
+No changes to pubspec.yaml!
+hmc@bogon startup_namer % 
+```
+
+&emsp;然后 `pubspec.yaml` 文件中也指定了版本号和构建号，然后还有引入图片资源、字体资源的内容。
+
+#### 二、获取 package
+
+&emsp;运行 `flutter packages get` / `flutter pub get` 来拉取 pubspec.yaml 文件中引入的 package，它们会被下载到 `/Users/hmc/.pub-cache/hosted/pub.flutter-io.cn` 路径中。可以看到有如下输出：
+
+```c++
+hmc@bogon startup_namer % flutter packages get
+Running "flutter pub get" in startup_namer...                      565ms
+hmc@bogon startup_namer % flutter pub get
+Running "flutter pub get" in startup_namer...                      579ms
+hmc@bogon startup_namer % 
+```
+
+#### 三、在代码中引入 package
+
+&emsp;在 `lib/main.dart` 文件的顶部我们可以引入要使用的 package，如下：
+
+```c++
+import 'package:flutter/material.dart';
+import 'package:english_words/english_words.dart';
+```
+
+&emsp;这里还有一个点，上面我们导入了 `english_words/english_words.dart` 当我们下面的代码不使用其中的内容时，它们会呈现为灰色的，它可以指示我们导入的库尚未使用（到目前为止）。
+
+#### 四、使用导入的 package
+
+&emsp;下面我们使用 `english_words` package 中的函数生成的英文单词字符串来替代 `Hello World`。
+
+> &emsp;Tip: **驼峰命名法**（称为 "upper camel case" 或 "Pascal case"）, 表示字符串中的每个单词（包括第一个单词）都以大写字母开头。所以，"uppercamelcase" 变成 "UpperCamelCase"。
+
+&emsp;代码修改如下：
+
+```dart
+import 'package:flutter/material.dart';
+// ⬇️ 引入 english_words 中的内容
+import 'package:english_words/english_words.dart';
+
+void main() { runApp(new MyApp()); }
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+  
+    // ⬇️ 调用 WordPair 类的 random 函数，生成一个随机单词对 
+    final wordPair = new WordPair.random();
+    
+    return new MaterialApp(
+      title: 'Welcome to Flutter',
+      home: new Scaffold(
+        appBar: new AppBar(
+          title: new Text('Welcome to Flutter'),
+        ),
+        body: new Center(
+        
+          // ⬇️ 把 "Hello World" 注释了，然后 wordPair 转换为驼峰命名法，显示到屏幕中心
+          // child: new Text('Hello World'),
+          child: new Text(wordPair.asPascalCase),
+          
+        ),
+      ),
+    );
+  }
+}
+```
+
+#### 五、热重载测试 package 的使用
+
+&emsp;如果应用程序正在运行，请使用热重载按钮 (lightning bolt icon) 更新正在运行的应用程序。每次单击热重载或保存项目时，都会在正在运行的应用程序中随机选择不同的单词对。 这是因为单词对是在 build 方法内部生成的。每次MaterialApp需要渲染时或者在Flutter Inspector中切换平台时 build 都会运行.
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```c++
+export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
+export PUB_HOSTED_URL=https://pub.flutter-io.cn
+export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
+export PATH=/Users/hmc/Documents/GitHub/flutter/bin:$PATH
+```
 
 
 ## 参考链接
