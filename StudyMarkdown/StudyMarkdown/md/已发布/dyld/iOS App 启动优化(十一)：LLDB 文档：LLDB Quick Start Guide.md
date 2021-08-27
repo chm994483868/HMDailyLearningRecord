@@ -1404,19 +1404,15 @@ $4 = (SKTGraphicView *) 0x0000000100135430
 
 ## 参考链接
 **参考链接:🔗**
-+ [iOS 启动优化 + 监控实践](https://juejin.cn/post/6844904194877587469) // [已读完]（有多处实践方法可借鉴使用，后续重读进行摘录总结实践）
-
-+ [哈啰出行iOS App首屏秒开优化](https://juejin.cn/post/6948990967324082183) // [已读完]（主要介绍了一些思想，极少的实践）
-+ [抖音研发实践：基于二进制文件重排的解决方案 APP启动速度提升超15%](https://mp.weixin.qq.com/s/Drmmx5JtjG3UtTFksL6Q8Q) // [正在进行中...]
-+ [iOS App冷启动治理：来自美团外卖的实践](https://juejin.cn/post/6844903733231353863)  // 未开始
-+ [APP启动时间最精确的记录方式](https://juejin.cn/post/6844903997153755150)  // 未开始
-+ [iOS如何获取当前时间--看我就够了](https://juejin.cn/post/6905671622037307405)  // 未开始
-+ [启动优化](https://juejin.cn/post/6983513854546444296)  // 未开始
-+ [iOS 优化篇 - 启动优化之Clang插桩实现二进制重排](https://juejin.cn/post/6844904130406793224#heading-29)  // 未开始
-+ [懒人版二进制重排](https://juejin.cn/post/6844904192193085448#heading-7)  // 未开始
-+ [我是如何让微博绿洲的启动速度提升30%的](https://juejin.cn/post/6844904143111323661)  // 未开始
-+ [App性能优化小结](https://juejin.cn/post/6844903704886247431)  // 未开始
-+ [美团 iOS 工程 zsource 命令背后的那些事儿](https://tech.meituan.com/2019/08/08/the-things-behind-the-ios-project-zsource-command.html) // 未开始
-+ [iOS美团同款"ZSource"二进制调试实现](https://juejin.cn/post/6847897745987125262)
-+ [iOS编译速度如何稳定提高10倍以上之一](https://juejin.cn/post/6903407900006449160)
-+ [iOS编译速度如何稳定提高10倍以上之二](https://juejin.cn/post/6903408514778497031#heading-35)
++ [LLDB Quick Start Guide](https://developer.apple.com/library/archive/documentation/IDEs/Conceptual/gdb_to_lldb_transition_guide/document/Introduction.html#//apple_ref/doc/uid/TP40012917-CH1-SW1)
++ [Advanced Debugging with Xcode and LLDB](https://developer.apple.com/videos/play/wwdc2018/412/)
++ [Xcode 10.2 Release Notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-10_2-release-notes)
++ [小笨狼的LLDB技巧:chisel](https://www.jianshu.com/p/afaaacc55460)
++ [iOS开发中如何调试更高效：LLDB与Chisel](https://juejin.cn/post/6844904017416421390)
++ [与调试器共舞 - LLDB 的华尔兹](https://objccn.io/issue-19-2/)
++ [Chisel-LLDB命令插件，让调试更Easy](https://blog.cnbluebox.com/blog/2015/03/05/chisel/)
++ [LLDB高级调试+Cycript](https://juejin.cn/post/6844903990296068110#heading-5)
++ [iOS逆向 玩转LLDB调试](https://juejin.cn/post/6847902223926722573)
++ [iOS 常用调试方法：LLDB命令](https://juejin.cn/post/6844903794493358093)
++ [LLDB学习笔记](https://www.jianshu.com/p/e5cc0f83a4f0)
++ [iOS调试之chisel](https://www.jianshu.com/p/3eef81bf146d)
