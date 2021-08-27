@@ -1370,31 +1370,37 @@ c = (NSUInteger) 0x00000001001253b0
 frame #9: 0x0000000100015ae3, where = Sketch`function1 + 33 at /Projects/Sketch/SKTFunctions.m:11
 ```
 
-&emsp;要在堆栈中上下移动进程的视图，请传递 `--relative` 选项（缩写 `-r`）。 LLDB 具有内置别名 `u` 和 `d`，它们的行为类似于它们的 GDB 等价物。
+&emsp;要在堆栈中上下移动进程的 view，请传递 `--relative` 选项（缩写 `-r`）。 LLDB 具有内置别名 `u` 和 `d`，它们的行为类似于它们的 GDB 等价物。
 
+&emsp;要查看更复杂的数据或更改程序数据，请使用通用 `expression` 命令。它接受一个表达式并在当前选定 frame 的范围内对其进行评估。例如：
 
+```c++
+(lldb) expr self
+$0 = (SKTGraphicView *) 0x0000000100135430
+(lldb) expr self = 0x00
+ $1 = (SKTGraphicView *) 0x0000000000000000
+(lldb) frame var self
+(SKTGraphicView *) self = 0x0000000000000000
+```
 
+### Executing Alternative Code
 
+&emsp;表达式也可用于调用函数，如下例所示：
 
+```c++
+(lldb) expr (int) printf ("I have a pointer 0x%llx.\n", self)
+$2 = (int) 22
+I have a pointer 0x0.
+```
 
+&emsp;`expression` 命令是原始命令（raw commands）之一。因此，你不必引用整个表达式或反斜杠保护引号等。
 
+&emsp;表达式的结果存储在持久变量（形式为 `$[0-9]+`）中，你可以在进一步的表达式中使用这些变量，例如：
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```c++
+(lldb) expr self = $0
+$4 = (SKTGraphicView *) 0x0000000100135430
+```
 
 ## 参考链接
 **参考链接:🔗**
