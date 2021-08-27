@@ -1104,7 +1104,7 @@ Current breakpoints:
 
 &emsp;因为逻辑断点仍然有效，如果加载另一个包含 `alignLeftEdges:` 选择子实现的共享库，新位置将添加到断点 1（即，在新加载的选择子上设置 1.2 断点）。
 
-&emsp;断点列表中的另一条信息是断点位置是否已解析。当一个位置对应的文件地址被加载到正在调试的程序中时，它就会被解析。例如，如果你在稍后卸载的共享库中设置断点，该断点位置将保留但不再解析。
+&emsp;断点列表中的另一条信息是断点位置是否已解析。当一个位置对应的文件地址被加载到正在调试的程序中时，它就会被解析。例如，如果你在稍后卸载的共享库中设置断点，该断点位置将保留但不再解析。（这个稍后卸载的意思是指使用 dyld 的 unmap 去卸载吗？）
 
 &emsp;LLDB acts like GDB with the command:
 
@@ -1112,7 +1112,7 @@ Current breakpoints:
 (gdb) set breakpoint pending on
 ```
 
-&emsp;像 GDB 一样，LLDB 总是从你的规范中创建一个断点，即使它没有找到任何与规范匹配的位置。要确定表达式是否已解析，请使用 `breakpoint list` 检查位置字段。当你设置断点时，LLDB 会将断点报告为挂起（pending）。通过查看处于挂起（pending）状态的断点，你可以通过检查 `breakpoint set` 输出来确定在未找到任何位置时定义断点时是否存在拼写错误。例如：
+&emsp;像 GDB 一样，LLDB 总是从你的规范中创建一个断点，即使它没有找到任何与规范匹配的位置（即即使我们要打断点的代码位置未找到，也会创建一个断点）。要确定表达式是否已解析，请使用 `breakpoint list` 检查位置字段。当你设置断点时，LLDB 会将断点报告为挂起（pending）。通过查看处于挂起（pending）状态的断点，你可以通过检查 `breakpoint set` 输出来确定在未找到任何位置时定义断点时是否存在拼写错误。例如：（WARNING: Unable to resolve breakpoint to any actual locations. 即告诉我们要打断点的位置在代码中根本找不到。）
 
 ```c++
 (lldb) breakpoint set --file foo.c --line 12
@@ -1120,7 +1120,7 @@ Breakpoint created: 2: file ='foo.c', line = 12, locations = 0 (pending)
 WARNING: Unable to resolve breakpoint to any actual locations.
 ```
 
-&emsp;无论是在逻辑断点生成的所有位置上，还是在逻辑断点解析到的任何特定位置上，你都可以使用断点触发的命令删除、禁用、设置条件和忽略计数。例如，如果你想添加一个命令来在 LLDB 遇到编号为 1.1 的断点时打印回溯，请执行以下命令：
+&emsp;无论是在逻辑断点生成的所有位置上，还是在逻辑断点解析到的任何特定位置上，你都可以使用 breakpoint-triggered 的命令删除、禁用、设置条件和忽略计数。例如，如果你想添加一个命令来在 LLDB 遇到编号为 1.1 的断点时打印回溯，请执行以下命令：
 
 ```c++
 (lldb) breakpoint command add 1.1
@@ -1131,7 +1131,252 @@ Enter your debugger command(s). Type 'DONE' to end.
 
 &emsp;默认情况下，`breakpoint command add` 命令采用 LLDB 命令行命令。要明确指定此默认值，请传递 `--command` 选项（`breakpoint command add --command ...`）。如果你使用 Python 脚本实现断点命令，请使用 `--script` 选项。 LLDB 帮助系统具有解释 `breakpoint command add` 的大量信息。
 
-&emsp;
+### Setting Watchpoints
+
+&emsp;除了断点之外，LLDB 还支持观察点（watchpoints）来监视变量而无需停止正在运行的进程。使用 `help watchpoint` 查看所有用于观察点操作的命令。例如，输入以下命令以监视名为 `global` 的变量以进行写操作，并仅在条件 `(global==5)` 为真时停止：
+
+```c++
+(lldb) watch set var global
+Watchpoint created: Watchpoint 1: addr = 0x100001018 size = 4 state = enabled type = w
+   declare @ '/Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/watchpoint_commands/condition/main.cpp:12'
+(lldb) watch modify -c '(global==5)'
+(lldb) watch list
+Current watchpoints:
+Watchpoint 1: addr = 0x100001018 size = 4 state = enabled type = w
+    declare @ '/Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/watchpoint_commands/condition/main.cpp:12'
+    condition = '(global==5)'
+(lldb) c
+Process 15562 resuming
+(lldb) about to write to 'global'...
+Process 15562 stopped and was programmatically restarted.
+Process 15562 stopped and was programmatically restarted.
+Process 15562 stopped and was programmatically restarted.
+Process 15562 stopped and was programmatically restarted.
+Process 15562 stopped
+* thread #1: tid = 0x1c03, 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16, stop reason = watchpoint 1
+    frame #0: 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16
+   13
+   14      static void modify(int32_t &var) {
+   15          ++var;
+-> 16      }
+   17
+   18      int main(int argc, char** argv) {
+   19          int local = 0;
+(lldb) bt
+* thread #1: tid = 0x1c03, 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16, stop reason = watchpoint 1
+    frame #0: 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16
+    frame #1: 0x0000000100000eac a.out`main + 108 at main.cpp:25
+    frame #2: 0x00007fff8ac9c7e1 libdyld.dylib`start + 1
+(lldb) frame var global
+(int32_t) global = 5
+(lldb) watch list -v
+Current watchpoints:
+Watchpoint 1: addr = 0x100001018 size = 4 state = enabled type = w
+    declare @ '/Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/watchpoint_commands/condition/main.cpp:12'
+    condition = '(global==5)'
+    hw_index = 0  hit_count = 5     ignore_count = 0
+(lldb)
+```
+
+### Launching the Program with LLDB
+
+&emsp;一旦你指定了要调试的程序并设置断点以在某个有趣的位置停止它，你就需要启动（或启动）它到正在运行的进程中。要使用 LLDB 启动程序，请使用 `process launch` 命令或其内置别名之一：
+
+```c++
+(lldb) process launch
+(lldb) run
+(lldb) r
+```
+
+&emsp;你还可以使用进程 ID 或进程名称将 LLDB 附加到已经运行的进程（运行你之前指定的可执行程序文件的进程）。当按名称附加到进程时，LLDB 支持 `--waitfor` 选项。此选项告诉 LLDB 等待下一个具有该名称的进程出现，然后附加到它。例如，这里是附加到 Sketch 进程的三个命令，假设进程 ID 为 123：
+
+```c++
+(lldb) process attach --pid 123
+(lldb) process attach --name Sketch
+(lldb) process attach --name Sketch --waitfor
+```
+
+&emsp;在你启动或将 LLDB 附加到进程后，该进程可能会因某种原因停止。例如：
+
+```c++
+(lldb) process attach -p 12345
+Process 46915 Attaching
+Process 46915 Stopped
+1 of 3 threads stopped with reasons:
+* thread #1: tid = 0x2c03, 0x00007fff85cac76a, where = libSystem.B.dylib`__getdirentries64 + 10,
+stop reason = signal = SIGSTOP, queue = com.apple.main-thread
+```
+
+&emsp;请注意 "1 of 3 threads stopped with reasons:" 的行及其后面的行。在多线程环境中，在内核实际将控制权返回给调试器之前，多个线程到达断点是很常见的。在这种情况下，你将看到由于停止消息中列出的原因而停止的所有线程。
+
+### Controlling Your Program
+
+&emsp;启动后，LLDB 允许程序继续运行，直到遇到断点。进程控制的原始命令（primitive commands for process control）都存在于 `thread` 命令层次结构下。这是一个例子：
+
+```c++
+(lldb) thread continue
+Resuming thread 0x2c03 in process 46915
+Resuming process 46915
+(lldb)
+```
+> &emsp;Note: 在目前的版本（lldb-300.2.24）中，LLDB 一次只能操作一个线程，但是它的设计支持说 "step over the function in Thread 1, and step into the function in Thread 2, and continue Thread 3"，以此类推。
+
+&emsp;为方便起见，所有 stepping commands （步进命令）都有简单的别名。例如，`thread continue` 只用 `c` 即可调用，其他步进程序命令也是如此——它们与 GDB 中的非常相似。例如：
+
+```c++
+(lldb) thread step-in // The same as "step" or "s" in GDB.
+(lldb) thread step-over // The same as "next" or "n" in GDB.
+(lldb) thread step-out // The same as "finish" or "f" in GDB.
+```
+
+&emsp;默认情况下，LLDB 为所有常见的 GDB 进程控制命令（例如，`s`、`step`、`n`、`next`、`finish`）定义了别名。如果你发现你习惯使用的 GDB 进程控制命令不存在，你可以使用 `command alias` 将它们添加到 `~/.lldbinit` 文件中。
+
+&emsp;LLDB 还支持 step by 指令版本：
+
+```c++
+(lldb) thread step-inst // The same as "stepi" / "si" in GDB.
+(lldb) thread step-over-inst // The same as "nexti" / "ni" in GDB.
+```
+
+&emsp;LLDB 运行直到行或帧（line or frame）退出步进模式：
+
+```c++
+(lldb) thread until 100
+```
+
+&emsp;该命令运行线程，直到当前 frame 到达第 100 行。如果代码在运行过程中跳过第 100 行，则当该帧从堆栈中弹出时停止执行。此命令与 GDB 的 `until` 命令非常接近。
+
+&emsp;默认情况下，LLDB 与正在调试的进程共享终端。在这种模式下，就像使用 GDB 调试一样，当进程正在运行时，你键入的任何内容都会转到被调试进程的 `STDIN`。要中断该进程程，请键入 `CTRL+C`。
+
+&emsp;但是，如果你使用 `--no-stdin` 选项附加到进程或启动进程，则命令解释器（command interpreter）始终可用于输入命令。一开始总是有 (lldb) 提示可能会让 GDB 用户有点不安，但它很有用。使用 `--no-stdin` 选项可以设置断点、观察点等，而无需显式中断正在调试的程序：
+
+```c++
+(lldb) process continue
+(lldb) breakpoint set --name stop_here
+```
+
+&emsp;当被调试的进程正在运行时，有许多 LLDB 命令将不起作用：命令解释器会在大多数情况下让你知道命令何时不合适。（如果你发现命令解释器没有标记问题案例的任何实例，请提交错误：bugreport.apple.com。）
+
+&emsp;在进程运行时起作用的命令包括中断进程停止执行（process interrupt）、获取进程状态（process status）、断点设置和清除（breakpoint [set|clear|enable|disable|list] ... )，以及内存读写（memory [read|write] ...）。
+
+&emsp;为在 LLDB 中运行的进程禁用 STDIN 的主题提供了一个很好的机会来展示如何设置调试器属性。例如，如果你始终希望以 `--no-stdin` 模式运行，请使用 LLDB `settings` 命令将其设置为通用进程属性。 LLDB `settings` 命令等效于 GDB `set` 命令。为此，请键入：
+
+```c++
+(lldb) settings set target.process.disable-stdio true
+```
+
+&emsp;在 LLDB 中，`settings` 是按层次组织的，使你可以轻松地发现它们。此外，几乎任何可以在通用实体（例如 threads）上指定设置的地方，也可以将该选项应用于特定实例。使用 `settings list` 命令查看当前的 LLDB 设置。你可以使用 `help settings` 命令详细了解 `settings` 命令的工作原理。
+
+### Examining Thread State
+
+&emsp;进程停止后，LLDB 选择当前线程和该线程中的当前帧（在停止时，这始终是最底部的帧）。许多用于检查状态的命令都在当前 thread 或 frame上工作。
+
+&emsp;要检查进程的当前状态，请从以下线程开始：
+
+```c++
+(lldb) thread list
+Process 46915 state is Stopped
+* thread #1: tid = 0x2c03, 0x00007fff85cac76a, where = libSystem.B.dylib`__getdirentries64 + 10, stop reason = signal = SIGSTOP, queue = com.apple.main-thread
+  thread #2: tid = 0x2e03, 0x00007fff85cbb08a, where = libSystem.B.dylib`kevent + 10, queue = com.apple.libdispatch-manager
+  thread #3: tid = 0x2f03, 0x00007fff85cbbeaa, where = libSystem.B.dylib`__workq_kernreturn + 10
+```
+
+&emsp;星号 (*) 表示 `thread #1` 是当前线程。要获取该线程的回溯，请输入 `thread backtrace` 命令：
+
+```c++
+(lldb) thread backtrace
+ 
+thread #1: tid = 0x2c03, stop reason = breakpoint 1.1, queue = com.apple.main-thread
+ frame #0: 0x0000000100010d5b, where = Sketch`-[SKTGraphicView alignLeftEdges:] + 33 at /Projects/Sketch/SKTGraphicView.m:1405
+ frame #1: 0x00007fff8602d152, where = AppKit`-[NSApplication sendAction:to:from:] + 95
+ frame #2: 0x00007fff860516be, where = AppKit`-[NSMenuItem _corePerformAction] + 365
+ frame #3: 0x00007fff86051428, where = AppKit`-[NSCarbonMenuImpl performActionWithHighlightingForItemAtIndex:] + 121
+ frame #4: 0x00007fff860370c1, where = AppKit`-[NSMenu performKeyEquivalent:] + 272
+ frame #5: 0x00007fff86035e69, where = AppKit`-[NSApplication _handleKeyEquivalent:] + 559
+ frame #6: 0x00007fff85f06aa1, where = AppKit`-[NSApplication sendEvent:] + 3630
+ frame #7: 0x00007fff85e9d922, where = AppKit`-[NSApplication run] + 474
+ frame #8: 0x00007fff85e965f8, where = AppKit`NSApplicationMain + 364
+ frame #9: 0x0000000100015ae3, where = Sketch`main + 33 at /Projects/Sketch/SKTMain.m:11
+ frame #10: 0x0000000100000f20, where = Sketch`start + 52
+```
+
+&emsp;提供要回溯的线程列表，或使用关键字 `all` 查看所有线程。
+
+```c++
+(lldb) thread backtrace all
+```
+
+&emsp;使用 `thread select` 命令设置选定的线程，在下一节的所有命令中将默认使用该线程，其中线程索引是 `thread list` 列表中显示的线程索引，使用:
+
+```c++
+(lldb) thread select 2
+```
+
+### Examining the Stack Frame State
+
+&emsp;检查 frame 的参数和局部变量的最方便的方法是使用 `frame variable` 命令。(frame 可以理解为我们在一个函数中的某一行打了一个断点，然后程序命中了这个断点，此时的执行状态，整个寄存器的状态，当前的函数的栈帧的状态)
+
+```c++
+(lldb) frame variable
+self = (SKTGraphicView *) 0x0000000100208b40
+_cmd = (struct objc_selector *) 0x000000010001bae1
+sender = (id) 0x00000001001264e0
+selection = (NSArray *) 0x00000001001264e0
+i = (NSUInteger) 0x00000001001264e0
+c = (NSUInteger) 0x00000001001253b0
+```
+
+&emsp;如果不指定任何变量名，则显示所有参数和局部变量。如果你调用 `frame variable`，传入特定局部变量的名称或名称，则仅打印这些变量。例如：
+
+```c++
+(lldb) frame variable self
+(SKTGraphicView *) self = 0x0000000100208b40
+```
+
+&emsp;你可以将路径传递到可用局部变量之一的某个子元素，然后打印该子元素。例如：
+
+```c++
+(lldb) frame variable self.isa
+(struct objc_class *) self.isa = 0x0000000100023730
+```
+
+&emsp;`frame variable` 命令不是完整的表达式解析器，但它确实支持一些简单的操作，例如 `&、*、->、[]`（无重载运算符）。数组括号可用于指针以将指针视为数组。例如：
+
+```c++
+(lldb) frame variable *self
+(SKTGraphicView *) self = 0x0000000100208b40
+(NSView) NSView = {
+(NSResponder) NSResponder = {
+...
+ 
+(lldb) frame variable &self
+(SKTGraphicView **) &self = 0x0000000100304ab
+ 
+(lldb) frame variable argv[0]
+(char const *) argv[0] = 0x00007fff5fbffaf8 "/Projects/Sketch/build/Debug/Sketch.app/Contents/MacOS/Sketch"
+```
+
+&emsp;`frame variable` 命令对变量执行 "object printing" 操作。目前，LLDB 仅支持 Objective-C 打印，使用对象的 `description` 方法。通过将 `-O` 标志传递给 `frame variable` 来打开此功能。
+
+```c++
+(lldb) frame variable -O self
+(SKTGraphicView *) self = 0x0000000100208b40 &lt;SKTGraphicView: 0x100208b40>
+```
+
+&emsp;要选择另一个 frame 进行查看，请使用 `frame select` 命令。
+
+```c++
+(lldb) frame select 9
+frame #9: 0x0000000100015ae3, where = Sketch`function1 + 33 at /Projects/Sketch/SKTFunctions.m:11
+```
+
+&emsp;要在堆栈中上下移动进程的视图，请传递 `--relative` 选项（缩写 `-r`）。 LLDB 具有内置别名 `u` 和 `d`，它们的行为类似于它们的 GDB 等价物。
+
+
+
+
+
+
 
 
 
