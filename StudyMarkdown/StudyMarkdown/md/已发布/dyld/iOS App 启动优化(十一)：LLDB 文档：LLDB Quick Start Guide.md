@@ -164,7 +164,7 @@ breakpoint set
 (lldb) breakpoint set --selector alignLeftEdges:
 ```
 
-&emsp;你可以使用 `--shlib <path>` 表达式将任何断点限制在特定的可执行静像内（`executable image`）。
+&emsp;你可以使用 `--shlib <path>` 表达式将任何断点限制在特定的可执行镜像内（`executable image`）。
 
 ```c++
 (lldb) breakpoint set --shlib foo.dylib --name foo
@@ -234,7 +234,7 @@ breakpoint set
   ...
   The following is a list of your current command abbreviations (see 'help command alias' for more info): ...
 
- ```
+  ```
 
 #### Using LLDB Help
 
@@ -596,18 +596,11 @@ etc...
         <td>(gdb) delete 1</td>
         <td>(lldb) watchpoint delete 1 <br> (lldb) watch del 1</td>
     </tr>
-    <tr>
-        <td colspan="2"></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-    </tr>
 </table>
 
 ### Examining Variables
 
-> &emsp;这里的帧（frame）是指方法的栈帧，例如在下面 -viewDidLoad 内。
+> &emsp;这里的帧（frame）是指方法的栈帧，例如在下面 `-viewDidLoad` 内。
    ```c++
   - (void)viewDidLoad {
       [super viewDidLoad];
@@ -615,16 +608,14 @@ etc...
       int a = 123;
       NSLog(@"%d", a);
   }
-  
-  // 在 NSLog 下一个断点，使用如下 LLDB 命令：
-  
+  // 在 NSLog 下一个断点，然后运行程序，命中断点，进入 LLDB 调试模式后，使用如下 LLDB 命令观察打印结果：
   (lldb) frame variable
   (ViewController *) self = 0x00007fc39a00a600
   (SEL) _cmd = "viewDidLoad"
   (int) a = 123
-  (lldb) frame variable --no-args
+  (lldb) frame variable --no-args // 不打印函数参数
   (int) a = 123
-  (lldb) frame variable --no-locals
+  (lldb) frame variable --no-locals // 仅打印函数参数
   (ViewController *) self = 0x00007fc39a00a600
   (SEL) _cmd = "viewDidLoad"
   (lldb) 
@@ -678,7 +669,7 @@ etc...
         <td>(lldb) target variable <br> (lldb) ta v</td>
     </tr>
     <tr>
-        <td colspan="2">每次停止时显示变量 argc 和 argv。</td>
+        <td colspan="2">每次停止时显示变量 argc 和 argv。（使用 target stop-hook）</td>
     </tr>
     <tr>
         <td>(gdb) display argc <br> (gdb) display argv</td>
@@ -699,6 +690,7 @@ etc...
         <td>(lldb) target stop-hook add --classname MyClass --one-liner "frame variable *this" <br> (lldb) ta st a -c MyClass -o "fr v *this"</td>
     </tr>
 </table>
+
 
 ### Evaluating Expressions
 
@@ -1053,17 +1045,17 @@ etc...
 ```c++
 $ lldb /Projects/Sketch/build/Debug/Sketch.app
 Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
-```
+  ```
 
 ![截屏2021-08-26 07.53.38.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1c549a216d4545d3b95636f5d8a57e16~tplv-k3u1fbpfcp-watermark.image)
 
 &emsp;或者，你可以在可执行文件已经运行后使用 file 命令指定要调试的可执行文件：
 
-```c++
+​```c++
 $ lldb
 (lldb) file /Projects/Sketch/build/Debug/Sketch.app
 Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
-```
+  ```
 
 ![截屏2021-08-26 07.53.42.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/19804ba1f39e41928c648297d31c7673~tplv-k3u1fbpfcp-watermark.image)
 
