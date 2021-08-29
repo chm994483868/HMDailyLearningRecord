@@ -399,6 +399,19 @@ class MyApp extends StatelessWidget {
 
 &emsp;在学习 `Stateful widget` 之前，我们再回顾一下上面的实例代码，其中最引我们瞩目的应该是 `class MyApp extends StatelessWidget {...}`，看到 `MyApp` 继承自 `StatelessWidget`，而我们这一小节的学习内容则主要与 `StatefulWidget` 类有关。  
 
+&emsp;Stateless widgets 是不可变的，这意味着它们的属性不能改变，所有的值都是最终的。Stateful widgets 持有的状态可能在 widget 生命周期中发生变化。
+
+&emsp;实现一个 Stateful widget 至少需要两个类：
+
+1. 一个 `StatefulWidget` 类。
+2. 一个 `State` 类。`StatefulWidget` 类本身是不变的，但是 `State` 类在 widget 生命周期中始终存在。
+
+
+&emsp;在本小节中我们将添加一个继承自 `StatefulWidget` 类的子类：`RandomWords`，重写 `RandomWords` 类的 `createState` 函数，返回一个 `State` 的子类 `RandomWordsState` 的实例对象。`State` 类将最终为 widget 来维护建议的和喜欢的单词对。（一个 `WordPair` 数组存放建议的单词对，一个 `WordPair` 集合存放喜欢的单词对。）
+
+&emsp;
+
+
 ```c++
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
