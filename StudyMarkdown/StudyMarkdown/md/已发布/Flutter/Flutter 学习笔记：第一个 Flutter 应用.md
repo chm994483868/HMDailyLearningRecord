@@ -358,7 +358,7 @@ import 'package:english_words/english_words.dart';
 
 &emsp;代码修改如下：
 
-```dart
+```c++
 import 'package:flutter/material.dart';
 // ⬇️ 引入 english_words 中的内容
 import 'package:english_words/english_words.dart';
@@ -393,21 +393,77 @@ class MyApp extends StatelessWidget {
 
 #### 五、热重载测试 package 的使用
 
-&emsp;如果应用程序正在运行，请使用热重载按钮 (lightning bolt icon) 更新正在运行的应用程序。每次单击热重载或保存项目时，都会在正在运行的应用程序中随机选择不同的单词对。 这是因为单词对是在 build 方法内部生成的。每次MaterialApp需要渲染时或者在Flutter Inspector中切换平台时 build 都会运行.
+&emsp;如果应用程序正在运行，请点击热重载按钮 (⚡️闪电图标：Hot Reload) 更新正在运行的应用程序。每次点击热重载或保存项目时，都会在正在运行的应用程序中随机选择不同的单词对，可看到模拟器中心显示不同的单词对。 这是因为 `wordPair` 变量是在 `build` 方法内部生成的，每次 `MaterialApp` 需要渲染时或者在 Flutter Inspector 中切换平台时 `build` 函数都会（重新）运行，此时 `final wordPair = new WordPair.random();` 便生成了新的 `wordPair` 变量。（我们可以把 `final wordPair = new WordPair.random();` 提出来，放到 `build` 函数的上面，再进行热重载，可发现模拟器屏幕中心的单词不再变化了。）
 
+### 添加一个 有状态的部件（Stateful widget）
 
-
-
-
+&emsp;在学习 `Stateful widget` 之前，我们再回顾一下上面的实例代码，其中最引我们瞩目的应该是 `class MyApp extends StatelessWidget {...}`，看到 `MyApp` 继承自 `StatelessWidget`，而我们这一小节的学习内容则主要与 `StatefulWidget` 类有关。  
 
 ```c++
-export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
-export PUB_HOSTED_URL=https://pub.flutter-io.cn
-export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
-export PATH=/Users/hmc/Documents/GitHub/flutter/bin:$PATH
+import 'package:flutter/material.dart';
+import 'package:english_words/english_words.dart';
+
+void main() { runApp(new MyApp()); }
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // final wordPair = new WordPair.random();
+    return new MaterialApp(
+      title: 'Welcome to Flutter',
+      home: new Scaffold(
+        appBar: new AppBar(
+          title: new Text('Welcome to Flutter'),
+        ),
+        body: new Center(
+          // child: new Text('Hello World'),
+          // child: new Text(wordPair.asPascalCase),
+          child: new RandomWords(),
+        ),
+      ),
+    );
+  }
+}
+
+class RandomWords extends StatefulWidget {
+  @override
+  createState() => new RandomWordsState();
+}
+
+class RandomWordsState extends State<RandomWords> {
+  @override
+  Widget build(BuildContext context) {
+    final wordPair = new WordPair.random();
+    return new Text(wordPair.asPascalCase);
+  }
+}
 ```
+
+
+### 创建一个无限滚动的 ListView
+
+
+
+
+### 添加交互
+
+
+
+### 使用主题更改UI
+
+
+
+
+
 
 
 ## 参考链接
 **参考链接:🔗**
 + [Mac pro 找不到zshrc文件](https://www.jianshu.com/p/6e9d776836ab)
+
++ [编写您的第一个 Flutter App](https://flutterchina.club/get-started/codelab/)
+
+
+
+
+

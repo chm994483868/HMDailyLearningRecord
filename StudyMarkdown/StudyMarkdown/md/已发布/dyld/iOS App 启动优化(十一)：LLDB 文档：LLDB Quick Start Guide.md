@@ -1045,17 +1045,17 @@ etc...
 ```c++
 $ lldb /Projects/Sketch/build/Debug/Sketch.app
 Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
-  ```
+```
 
 ![截屏2021-08-26 07.53.38.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1c549a216d4545d3b95636f5d8a57e16~tplv-k3u1fbpfcp-watermark.image)
 
 &emsp;或者，你可以在可执行文件已经运行后使用 file 命令指定要调试的可执行文件：
 
-​```c++
+```c++
 $ lldb
 (lldb) file /Projects/Sketch/build/Debug/Sketch.app
 Current executable set to '/Projects/Sketch/build/Debug/Sketch.app' (x86_64).
-  ```
+```
 
 ![截屏2021-08-26 07.53.42.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/19804ba1f39e41928c648297d31c7673~tplv-k3u1fbpfcp-watermark.image)
 
@@ -1076,7 +1076,8 @@ Current breakpoints:
 1: name = 'alignLeftEdges:', locations = 1, resolved = 1
   1.1: where = Sketch`-[SKTGraphicView alignLeftEdges:] + 33 at /Projects/Sketch/SKTGraphicView.m:1405, address = 0x0000000100010d5b, resolved, hit count = 0
 ```
-&emsp;(下载了 [Sketch.app](https://www.sketch.com/apps/)，试了一下发现 `alignLeftEdges:` 这个函数已经不存在了，然后又用 MachOView 查看了 Sketch 的二进制文件，发现对其自定义的选择子加断点并不能找到，但是对它所使用到的系统库中的函数加断点可以正常加上。)
+
+&emsp;(下载了 [Sketch.app](https://www.sketch.com/apps/)，试了一下发现 `alignLeftEdges:` 这个函数已经不存在了，然后又用 MachOView 查看了 Sketch 的二进制可执行文件，发现对其自定义的选择子加断点并不能找到，但是对它所使用到的系统库中的函数加断点可以正常加上。)
 
 ```c++
 2: name = 'alignLeft:', locations = 6
@@ -1238,7 +1239,7 @@ Resuming process 46915
 
 &emsp;该命令运行线程，直到当前 frame 到达第 100 行。如果代码在运行过程中跳过第 100 行，则当该帧从堆栈中弹出时停止执行。此命令与 GDB 的 `until` 命令非常接近。
 
-&emsp;默认情况下，LLDB 与正在调试的进程共享终端。在这种模式下，就像使用 GDB 调试一样，当进程正在运行时，你键入的任何内容都会转到被调试进程的 `STDIN`。要中断该进程程，请键入 `CTRL+C`。
+&emsp;默认情况下，LLDB 与正在调试的进程共享终端。在这种模式下，就像使用 GDB 调试一样，当进程正在运行时，你键入的任何内容都会转到被调试进程的 `STDIN`。要中断该进程，请键入 `CTRL+C`。
 
 &emsp;但是，如果你使用 `--no-stdin` 选项附加到进程或启动进程，则命令解释器（command interpreter）始终可用于输入命令。一开始总是有 (lldb) 提示可能会让 GDB 用户有点不安，但它很有用。使用 `--no-stdin` 选项可以设置断点、观察点等，而无需显式中断正在调试的程序：
 
@@ -1408,3 +1409,20 @@ $4 = (SKTGraphicView *) 0x0000000100135430
 + [iOS 常用调试方法：LLDB命令](https://juejin.cn/post/6844903794493358093)
 + [LLDB学习笔记](https://www.jianshu.com/p/e5cc0f83a4f0)
 + [iOS调试之chisel](https://www.jianshu.com/p/3eef81bf146d)
++ [iOS调试进阶-更高效的使用Xcode和LLDB](https://juejin.cn/post/6844903866345996296)
++ [Xcode10.2中LLDB增加的新特性](https://juejin.cn/post/6844903848771846157)
+
+https://developer.apple.com/documentation/xcode-release-notes/xcode-10_2-release-notes
+https://juejin.cn/post/6847902223926722573
+https://juejin.cn/post/6844903647277481998
+https://www.jianshu.com/p/7e2a61585352
+https://www.jianshu.com/p/b2371dd4443b
+https://www.jianshu.com/p/afaaacc55460
+https://www.jianshu.com/p/e5cc0f83a4f0
+https://www.jianshu.com/p/3eef81bf146d
+https://juejin.cn/post/6844904017416421390#heading-27
+https://lldb.llvm.org/use/map.html
+https://objccn.io/issue-19-2/
+https://juejin.cn/post/6844903990296068110#heading-5
+https://github.com/facebook/chisel
+https://blog.cnbluebox.com/blog/2015/03/05/chisel/

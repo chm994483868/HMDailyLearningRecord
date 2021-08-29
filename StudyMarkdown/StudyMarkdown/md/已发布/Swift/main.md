@@ -21,3 +21,17 @@ if let r = self as? MainDataViewReloadable {
 + [Swift源码编译-让底层更清晰](https://www.jianshu.com/p/5cd66d7d2daf)
 + [Mac安装CMake](https://www.jianshu.com/p/7fff1f77dd9d)
 + [MacOS 下安装 autoconf 、 automake](https://www.jianshu.com/p/cbd651911434)
+
+
+[Swift CI 页面](https://ci.swift.org)
+macOS 11.4(20F71) [下载介绍页面](https://mrmacintosh.com/macos-big-sur-full-installer-database-download-directly-from-apple/) 下载地址：[macOS 11.4(20F71)](http://swcdn.apple.com/content/downloads/55/59/071-00696-A_4T69TQR1VO/9psvjmwyjlucyg708cqjeaiylrvb0xph94/InstallAssistant.pkg)
+
+[Xcode_13_beta_4](https://download.developer.apple.com/Developer_Tools/Xcode_13_beta_4/Xcode_13_beta_4.xip)
+
+https://cloud.tencent.com/developer/article/1744552
+https://xcodereleases.com
+https://mrmacintosh.com/macos-big-sur-full-installer-database-download-directly-from-apple/
+
++ [Swift笔记1：源码编译(5.3.1)](https://juejin.cn/post/6914265565540384782)
++ [Swift(5.3.2) 源码编译](https://github.com/ShenYj/ShenYj.github.io/wiki/Swift-源码编译)
+https://forums.swift.org/t/failure-when-building-swift-project/46964
