@@ -406,11 +406,79 @@ class MyApp extends StatelessWidget {
 1. 一个 `StatefulWidget` 类。
 2. 一个 `State` 类。`StatefulWidget` 类本身是不变的，但是 `State` 类在 widget 生命周期中始终存在。
 
-
 &emsp;在本小节中我们将添加一个继承自 `StatefulWidget` 类的子类：`RandomWords`，重写 `RandomWords` 类的 `createState` 函数，返回一个 `State` 的子类 `RandomWordsState` 的实例对象。`State` 类将最终为 widget 来维护建议的和喜欢的单词对。（一个 `WordPair` 数组存放建议的单词对，一个 `WordPair` 集合存放喜欢的单词对。）
 
-&emsp;
+&emsp;下面我们开始本小节的内容。
 
+1. 添加有状态的 `RandomWords widget` 到 main.dart 文件的底部。它可以在 MyApp 之外的文件的任何位置使用，但是本示例将它放到了 main.dart 文件的底部。在 `RandomWords widget` 内部仅重写了它的 `createState` 函数，创建 `State` 类，其他没有做任何事情。下面我们分析一下 `createState` 函数。 
+
+```c++
+class RandomWords extends StatefulWidget {
+  @override
+  createState() => new RandomWordsState();
+}
+```
+
+&emsp;`State<StatefulWidget> createState()` 函数用于在 widget 树的给定位置创建可变 `State`（函数返回值是 `State<StatefulWidget>`）。`StatefulWidget` 子类应重写此方法，并返回一个它们关联的 `State` 子类的新创建的实例。
+
+```c++
+@override
+State<MyWidget> createState() => _MyWidgetState();
+```
+
+&emsp;framework 可以在 `StatefulWidget` 的生命周期内多次调用此方法。例如，如果 `widget` 在多个位置插入到 `widget` 树中，framework 将为每个位置创建一个单独的 `State` 对象。类似的，如果 `widget` 从树中移除并稍后再次插入到树中，framework 将再次调用 `createState` 函数，以创建新的 `State` 对象，从而简化 `State` 对象的生命周期。
+
+2. 添加 `RandomWordsState` 类。该应用程序的大部分代码都在该类中，该类持有 `RandomWords widget` 的状态。这个类将保存随着用户滚动而无限增长的生成的随机单词对，以及用户点击选中的单词对，用户通过重复点击心形 ❤️ 图标来将单词对从列表中添加或删除。首先定义 `RandomWordsState` 类，下面我们会一步一步为其添加内容。
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+    // ...
+}
+```
+
+3. 声明了 `RandomWordsState` 类以后，IDE 会提示我们 `RandomWordsState` 类缺少 `build` 方法，我们重写 `build` 方法，并把之前在 `MyApp` 中生成随机单词对的代码移动到 `RandomWordsState` 中来生成单词对。示例代码如下：
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  @override
+  Widget build(BuildContext context) {
+    final wordPair = new WordPair.random();
+    return new Text(wordPair.asPascalCase);
+  }
+}
+```
+
+4. 如下示例代码，修改之前的旧代码，把生成随机单词对的代码从 `MyApp` 移动到 `RandomWordsState` 中。
+
+```c++
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+  
+    // ⬇️ 把此行创建 wordPair 局部变量注释掉
+    // final wordPair = new WordPair.random();
+    
+    return new MaterialApp(
+      title: 'Welcome to Flutter',
+      home: new Scaffold(
+        appBar: new AppBar(
+          title: new Text('Welcome to Flutter'),
+        ),
+        body: new Center(
+          // child: new Text('Hello World'),
+          
+          // ⬇️ 注释此行，使用下面的 RandomWords 实例对象，来返回一个随机单词对
+          // child: new Text(wordPair.asPascalCase),
+          child: new RandomWords(),
+          
+        ),
+      ),
+    );
+  }
+}
+```
+
+&emsp;重新启动应用程序，应用程序还是会和之前一样，每次热重载或者 command + s 保存程序，屏幕中心都会显示一个新的单词对。
 
 ```c++
 import 'package:flutter/material.dart';

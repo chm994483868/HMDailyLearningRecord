@@ -34,4 +34,12 @@ https://mrmacintosh.com/macos-big-sur-full-installer-database-download-directly-
 
 + [Swift笔记1：源码编译(5.3.1)](https://juejin.cn/post/6914265565540384782)
 + [Swift(5.3.2) 源码编译](https://github.com/ShenYj/ShenYj.github.io/wiki/Swift-源码编译)
-https://forums.swift.org/t/failure-when-building-swift-project/46964
++ [swift源码调试操作指引](https://juejin.cn/post/6901191690510565383)
++ [Failure when building Swift project](https://forums.swift.org/t/failure-when-building-swift-project/46964)
++ [How to Set Up an Edit-Build-Test-Debug Loop](https://github.com/apple/swift/blob/main/docs/HowToGuides/GettingStarted.md#using-both-ninja-and-xcode)
++ [Swift 入门：编译 Swift 源码（1）](https://cloud.tencent.com/developer/article/1744552)
+
+
+`utils/build-script --swift-darwin-supported-archs "x86_64" --reconfigure -x -R --debug-swift`
+`Xcode 12.4(12D4e)`
+`macOS Big Sur 11.4`
