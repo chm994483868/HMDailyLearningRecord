@@ -1,8 +1,39 @@
 # iOS App 启动优化(十二)：LLDB 进阶
 
-## Go Go Go !!!
+## po 和 p
 
-&emsp;
+&emsp;`po` 是 `expression -O  --` 的缩写，`p` 是 `expression --` 的缩写。
+
+```c++
+(lldb) help po
+     Evaluate an expression on the current thread.  Displays any returned value
+     with formatting controlled by the type's author.  Expects 'raw' input (see
+     'help raw-input'.)
+
+Syntax: po <expr>
+
+Command Options Usage:
+  po <expr>
+
+
+'po' is an abbreviation for 'expression -O  --'
+```
+
+```c++
+(lldb) help p
+     Evaluate an expression on the current thread.  Displays any returned value
+     with LLDB's default formatting.  Expects 'raw' input (see 'help
+     raw-input'.)
+
+Syntax: p <expr>
+
+Command Options Usage:
+  p <expr>
+
+
+'p' is an abbreviation for 'expression --'
+(lldb) 
+```
 
 
 ## 参考链接

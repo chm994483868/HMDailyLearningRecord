@@ -480,6 +480,8 @@ class MyApp extends StatelessWidget {
 
 &emsp;重新启动应用程序，应用程序还是会和之前一样，每次热重载或者 command + s 保存程序，屏幕中心都会显示一个新的单词对。
 
+&emsp;下面这一段是上面示例的完整代码：
+
 ```c++
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
@@ -489,7 +491,9 @@ void main() { runApp(new MyApp()); }
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+  
     // final wordPair = new WordPair.random();
+    
     return new MaterialApp(
       title: 'Welcome to Flutter',
       home: new Scaffold(
@@ -499,6 +503,7 @@ class MyApp extends StatelessWidget {
         body: new Center(
           // child: new Text('Hello World'),
           // child: new Text(wordPair.asPascalCase),
+          
           child: new RandomWords(),
         ),
       ),
@@ -519,7 +524,6 @@ class RandomWordsState extends State<RandomWords> {
   }
 }
 ```
-
 
 ### 创建一个无限滚动的 ListView
 
