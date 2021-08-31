@@ -527,25 +527,377 @@ class RandomWordsState extends State<RandomWords> {
 
 ### 创建一个无限滚动的 ListView
 
+&emsp;在上一节中，在 `RandomWordsState` 类的内部我们仅重写了它的 `build` 函数，来返回一个随机单词对。而在这一节中，我们继续扩展 `RandomWordsState` 类，以生成并显示单词对列表。当我们向上滑动时，`ListView` 将无限增长显示随机生成的单词对。
 
+&emsp;`ListView` 的 `builder` 工厂构造函数允许我们按需创建一个懒加载的列表视图（`return new ListView.builder(...);`）。
 
+1. 首先我们向上一节创建的 `RandomWordsState` 类中添加一个 `final _suggestions = <WordPair>[];` 数组用以保存建议的单词对，该变量名用下划线开头，在 Dart 语言中使用下划线做前缀标识符，会强制其变成私有的。另外添加一个 `_biggerFont` 变量来增大字体大小。
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  final _suggestions = <WordPair>[];
+
+  final TextStyle _biggerFont = const TextStyle(fontSize: 18.0);
+  ...
+}
+```
+
+2. 向 `RandomWordsState` 类中添加一个 `_buildSuggestions()` 函数，此方法用来构建显示建议单词对的 `ListView`。`ListView` 类提供了一个 `builder` 属性，`itemBuilder` 值是一个匿名回调函数，它接受两个参数 `BuildContext, int`，`(context, i)`，`i` 是指行迭代器，迭代器从 0 开始，每调用一次该函数，`i` 就会自增 1，对于每个建议的单词对都会执行一次，该模型允许建议的单词对列表在用户滚动时无限增长。
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  ...
+  Widget _buildSuggestions() {
+    return new ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      
+      // 对于每个建议的单词对都会调用一次 itemBuilder，然后将单词对添加到 ListTile 行中，
+      // 在偶数行，该函数会为单词对添加一个 ListTile row，
+      // 在奇数行，该函数会添加一个分割线 widget，来分隔相邻的词对。
+      // 注意，在小屏幕上，分割线看起来可能比较吃力。
+      //（这里对比 iOS 中的 TableView，分割线是位于一个 Cell 上的，这里的则是 分割线 和 每个单词对都是一个 cell）
+      
+      itemBuilder: (context, i) {
+        // 在每一列之前，添加一个 1 像素高的分隔线 widget（从 0 开始，isOdd 判断是否是奇数）
+        if (i.isOdd) return new Divider();
+        
+        // 语法 `i ~/ 2` 表示 i 除以 2 的商（向下取整），返回值是整形（向下取整），比如 i 为：1，2，3，4，5 时结果则是：0，1，1，2，2，
+        // 由此可以计算出 ListView 中减去分隔线后的实际单词对数量。
+        final index = i ~/ 2;
+        
+        // 如果是建议单词列表中最后一个单词对，则进行扩容。
+        if (index >= _suggestions.length) {
+          // 接着再生成 10 个单词对，然后添加到 _suggestions 中。
+          _suggestions.addAll(generateWordPairs().take(10));
+        }
+        
+        // _buildRow 在下面进行解析。
+        return _buildRow(_suggestions[index]);
+      },
+    );
+  }
+  ...
+}
+
+```
+
+3. 对于每一个单词对，`_buildSuggestions` 函数都会调用一次 `_buildRow` 函数。这个函数在 `ListTile` 中显示每个新的单词对，这可以使我们在 `ListView` 中生成每个显示行，下面在 `RandomWordsState` 类中添加 `_buildRow` 函数。
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  ...
+  Widget _buildRow(WordPair pair) {
+    return new ListTile(
+      title: new Text(
+        
+        // 每行显示的文字，单词对转为驼峰命名形式
+        pair.asPascalCase,
+        // 字号是 18（`final TextStyle _biggerFont = const TextStyle(fontSize: 18.0);`）
+        style: _biggerFont,
+      ),
+    );
+  }
+}
+```
+
+4. 下面我们更新 `RandomWordsState` 类的 `build` 函数中的内容，让其使用我们上面编写的 `_buildSuggestions()` 函数，不再直接仅仅生成一个单词对。
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  ...
+  @override
+  Widget build(BuildContext context) {
+    // final wordPair = new WordPair.random();
+    // return new Text(wordPair.asPascalCase);
+    
+    // 这里返回 Sacffold 实例，把之前 MyApp 中的内容接管过来。
+    return new Scaffold(
+      // 导航条
+      appBar: new AppBar(
+        // 标题
+        title: new Text('Startup Name Generator'),
+      ),
+      
+      // body 这里则是调用 _buildSuggestions() 函数来构建一个 ListView
+      body: _buildSuggestions(),
+    );
+  }
+  
+}
+```
+
+5. 更新 `MyApp` 类中 `build` 函数的内容。从 `MyApp` 中删除 `Scaffold` 和 `AppBar` 实例。这些将由 `RandomWordsState` 类来接管，这也使得在下一步中从一个屏幕导航到另一个屏幕时，可以更轻松的更改导航栏中的路由名称（导航条标题）。
+
+```c++
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // final wordPair = new WordPair.random();
+    return new MaterialApp(
+      // title: 'Welcome to Flutter',
+      // home: new Scaffold(
+      //   appBar: new AppBar(
+      //     title: new Text('Welcome to Flutter'),
+      //   ),
+      //   body: new Center(
+      //     // child: new Text('Hello World'),
+      //     // child: new Text(wordPair.asPascalCase),
+      //     child: new RandomWords(),
+      //   ),
+      // ),
+
+      title: 'Startup Name Generator',
+      home: new RandomWords(),
+    );
+  }
+}
+```
+
+&emsp;重启应用程序，我们将看到一个单词对列表，尽可能的向下滚动，我们可以无限滑动，能一直看到新的单词对生成。
 
 ### 添加交互
 
+&emsp;在这一步中，我们将为 `ListView` 的每一行添加一个可点击的心形 ❤️ 图标。当我们点击 `ListView` 的条目时，会切换此条目的 “收藏” 状态，将该单词对添加或移除出 “收藏夹”。
 
+1. 添加一个 `final _saved = new Set<WordPair>();` 集合到 `RandomWordsState` 类中，这个集合用来存储用户点击喜欢的单词对。使用 `Set` 比 `List` 更合适，`Set` 可以保证元素的唯一性。
 
-### 使用主题更改UI
+```c++
+class RandomWordsState extends State<RandomWords> {
+  final _suggestions = <WordPair>[];
 
+  final _saved = new Set<WordPair>();
 
+  final TextStyle _biggerFont = const TextStyle(fontSize: 18.0);
+  ...
+}
+```
 
+2. 在 `_buildRow()` 方法中添加一个 `final alreadySaved = _saved.contains(pair);` 来检查确保单词对还没有被添加到收藏夹中。
 
+```c++
+Widget _buildRow(WordPair pair) {
+  final alreadySaved = _saved.contains(pair);
+  ...
+}
+```
 
+3. 同时在 `_buildRow()` 中，添加一个心形 ❤️ 图标到 `ListView` 以启用收藏功能。接下来就可以给心形 ❤️ 图标添加交互能力了。
 
+```c++
+Widget _buildRow(WordPair pair) {
+  final alreadySaved = _saved.contains(pair);
+
+  return new ListTile(
+    title: new Text(
+      pair.asPascalCase,
+      style: _biggerFont,
+    ),
+    
+    // 添加心形图标
+    trailing: new Icon(
+      // 并根据当前的单词对是否已经被收藏，心形图标显示为不同的样子（空心的表示未收藏，实心红色表示已经收藏）
+      alreadySaved ? Icons.favorite : Icons.favorite_border,
+      color: alreadySaved ? Colors.red : null,
+    ),
+  );
+}
+```
+
+4. 重启应用，可看到每一行单词对的右边都有一个空心的心形图标，此时它们还没有交互事件。
+
+5. 在 `_buildRow` 中让心形图标变的可以点击（注意这里的交互事件是添加在 ListView 的每一行上面的）。如果单词对已经添加到收藏中，再次点击将其从收藏夹中删除。当每行单词对被点击时，函数调用 `setState()` 通知框架状态已经改变。
+
+```c++
+Widget _buildRow(WordPair pair) {
+  final alreadySaved = _saved.contains(pair);
+
+  return new ListTile(
+    title: new Text(
+      pair.asPascalCase,
+      style: _biggerFont,
+    ),
+    
+    // 添加心形图标
+    trailing: new Icon(
+      // 并根据当前的单词对是否已经被收藏，心形图标显示为不同的样子（空心的表示未收藏，实心红色表示已经收藏）
+      alreadySaved ? Icons.favorite : Icons.favorite_border,
+      color: alreadySaved ? Colors.red : null,
+    ),
+    
+    // ListView 的每行添加交互事件
+    onTap: () {
+      setState(() {
+        // 点击事件，如果当前单词对已经被收藏了则把其从 _saved 集合中移除，否则添加到 _saved 集合中
+        if (alreadySaved) {
+        
+          // 移除
+          _saved.remove(pair);
+        } else {
+        
+          // 添加
+          _saved.add(pair);
+        }
+      });
+    },
+  );
+}
+```
+
+> &emsp;Note: 在 Flutter 的响应式风格的框架中，调用 `setState()` 函数会为 `State` 对象触发 `build` 方法，从而导致对 UI 的更新。
+
+### 导航到新页面
+
+&emsp;在这一节中，我们将添加一个显示收藏夹内容的页面（在 Flutter 中称为路由（route）），并将学习如何在主路由和新路由之间导航（切换页面）。
+
+&emsp;在 Flutter 中，导航器管理应用程序的路由栈，将路由推入（push）到导航器的栈中，将会显示更新为该路由页面。从导航器的栈中弹出（pop）路由，将显示返回到前一个路由。
+
+1. 在 `RandomWordsState` 类的 `build` 方法中为 `AppBar` 添加一个列表图标，当用户点击列表图标时，包含收藏夹的新路由页面入栈显示。
+
+> &emsp;Note: 某些 widget 属性需要单个 widget（child），而其它一些属性，如果 action，需要一组 widgets（children），用方括号 [] 表示。
+
+&emsp;将该图标及其相应的操作添加到 `build` 方法中：
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  ...
+  @override
+  Widget build(BuildContext context) {
+    // final wordPair = new WordPair.random();
+    // return new Text(wordPair.asPascalCase);
+
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text('Startup Name Generator'),
+        
+        // actions 是一组交互，我们这里仅需要一个跳转到收藏夹路由的交互图标
+        actions: <Widget>[
+          // 收藏夹按钮，点击时调用 _pushSaved 函数，它的图标样式是 Icons.list
+          new IconButton(onPressed: _pushSaved, icon: new Icon(Icons.list)),
+        ],
+        
+      ),
+      body: _buildSuggestions(),
+    );
+  }
+  ...
+}
+```
+
+2. 向 `RandomWordsState` 类中添加 `_pushSaved()` 函数。
+
+```c++
+class RandomWordsState extends State<RandomWords> {
+  ...
+  void _pushSaved() {
+    // ...
+  }
+}
+```
+
+&emsp;热重载应用，导航栏右侧会显示一个列表按钮样子的图标，现在点击它还不会有任何反应，因为 `_pushSaved()` 函数还没有添加内容。
+
+3. 当用户点击导航栏中右侧的列表图标时，建立一个路由并将其推入到导航管理器的栈中，此操作会切换页面以显示新路由。新页面的内容在 `MaterialPageRoute` 的 `builder` 属性中构建，`builder` 是一个匿名函数。添加 `Navigator.push` 调用，这会使路由入栈（以后路由入栈均指推入到导航管理器的栈）。
+
+```c++
+void _pushSaved() {
+    Navigator.of(context).push(
+    );
+}
+```
+
+4. 添加 `MaterialPageRoute` 及其 `builder`。现在，添加生成 `ListTile` 行的代码。`ListTile` 的 `divideTiles()` 方法在每个 `ListTile` 之间添加 1 像素的分割线。该 `divided` 变量持有最终的列表项。
+
+```c++
+void _pushSaved() {
+  Navigator.of(context).push(
+  
+    new MaterialPageRoute(
+      builder: (context) {
+      
+        // 遍历 _saved 中收集的每个单词对
+        final tiles = _saved.map(
+          (pair) {
+            // 根据每个单词对构建一个 ListTile 行
+            return new ListTile(
+              title: new Text(
+                pair.asPascalCase,
+                style: _biggerFont,
+              ),
+            );
+            
+          },
+        );
+        
+        // 在每个 ListTile 之间添加 1 像素的分割线
+        final divided = ListTile.divideTiles(
+          context: context,
+          
+          // 上面构建的内容
+          tiles: tiles,
+        ).toList();
+      },
+    ),
+    
+  );
+}
+```
+
+5. `builder` 返回一个 `Scaffold`，其中包含名为 `Saved Suggestions` 的新路由的导航条。新路由的 `body` 由包含 `ListTiles` 行的 `ListView` 组成，每行之间通过一个分隔线分隔。
+
+```c++
+void _pushSaved() {
+  Navigator.of(context).push(
+  
+    new MaterialPageRoute(
+      builder: (context) {
+      
+        // 遍历 _saved 中收集的每个单词对
+        final tiles = _saved.map(
+          (pair) {
+            // 根据每个单词对构建一个 ListTile 行
+            return new ListTile(
+              title: new Text(
+                pair.asPascalCase,
+                style: _biggerFont,
+              ),
+            );
+            
+          },
+        );
+        
+        // 在每个 ListTile 之间添加 1 像素的分割线
+        final divided = ListTile.divideTiles(
+          context: context,
+          
+          // 上面构建的内容
+          tiles: tiles,
+        ).toList();
+        
+        // 新路由页面
+        return new Scaffold(
+          appBar: new AppBar(
+            title: new Text('Saved Suggestions'),
+          ),
+          
+          // ListView 
+          body: new ListView(children: divided),
+        );
+      },
+    ),
+    
+  );
+}
+```
+
+6. 热重载应用程序，收藏一些单词对，并点击导航栏上的列表图标，在新路由页面中显示收藏的内容。注意，导航器会在导航栏中添加一个 “返回” 按钮，我们不必显式实现 `Navigator.pop`，点击返回按钮时便能回到主页路由。
+
+### 总结
+
+&emsp;至此我们便学会了一个简单的可滚动、可交互、可路由的 Flutter 应用程序了，同时我们对 Flutter 应该也有一个大致的了解了，相比原生而言它的开发效率可太高了，热重载也太爱了，原生动辄该一行代码都要重新编译运行实在太“拉胯”了！那么本篇就到这里吧， 后续我们开始深入学习 Flutter！⛽️⛽️ 🎉🎉🎉
 
 ## 参考链接
 **参考链接:🔗**
 + [Mac pro 找不到zshrc文件](https://www.jianshu.com/p/6e9d776836ab)
-
 + [编写您的第一个 Flutter App](https://flutterchina.club/get-started/codelab/)
 
 
