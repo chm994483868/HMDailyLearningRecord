@@ -1,4 +1,4 @@
-#  Flutter 学习笔记：第一个 Flutter 应用
+# Flutter 学习笔记（一）：第一个 Flutter 应用.md
 
 ## 入门: 在 macOS 上搭建 Flutter 开发环境
 
@@ -899,6 +899,7 @@ void _pushSaved() {
 **参考链接:🔗**
 + [Mac pro 找不到zshrc文件](https://www.jianshu.com/p/6e9d776836ab)
 + [编写您的第一个 Flutter App](https://flutterchina.club/get-started/codelab/)
++ [Libraries and visibility](https://dart.dev/guides/language/language-tour#libraries-and-visibility)
 
 
 
