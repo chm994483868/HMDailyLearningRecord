@@ -9,7 +9,19 @@
 &emsp;[GDB to LLDB command map](https://lldb.llvm.org/use/map.html) 中的一组表格向我们非常好的介绍了 LLDB 调试器可用的命令总览（常规用法，估计大家都已经掌握了）。除此之外我们可以安装 [Chisel](https://github.com/facebook/chisel/wiki) 来体验 LLDB 更 “高级” 的用法，Chisel 是 facebook 开源的一组  LLDB 命令合集，用于协助我们调试 iOS 应用程序。Chisel 里面的命令正是基于 LLDB 支持的 Python 脚本来做的，每条命令对应的 Python 文件保存在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，熟悉 Python 的小伙伴可以试着读一下这些文件的内容（具体路径可能各人机器不同会有所区别，例如 Intel 的 mac 在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，m1 的 mac 在 `/opt/homebrew/Cellar/chisel/2.0.1/libexec` 路径下）。   
 
 
+## LLDB 基础命令使用
 
+&emsp;日常我们更多的可能是在 Xcode 内使用 LLDB，今天我们先在 终端熟悉一下 LLDB 的命令，然后再去 Xcode 中实践。
+
+&emsp;熟悉 LLDB 的小伙伴应该都用过 `help` 命令，如果有哪个命令不太懂的话，我们直接一个 `help <command>`，LLDB 便会打印出该命令的用途，甚至 `help help` 能教我们怎么使用 `help` 命令。
+
+&emsp;下面我们启动终端，然后输入 `LLDB` 并回车，此时便会进入 `LLDB` 环境，然后我们输入 `help` 命令并回车，便会列出当前机器内的的
+
+
+### help
+&emsp;
+
+&emsp;
 
 
 ## 内容规划
