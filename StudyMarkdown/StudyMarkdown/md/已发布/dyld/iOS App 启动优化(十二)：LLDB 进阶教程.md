@@ -4,14 +4,13 @@
 
 > &emsp;什么是 REPL？R(read)、E(evaluate)、P(print)、L(loop)。“读取-求值-输出” 循环（英语：Read-Eval-Print Loop，简称 REPL），也被称作交互式顶层构件（英语：interactive toplevel），是一个简单的，交互式的编程环境。这个词常常用于指代一个 [Lisp](https://zh.wikipedia.org/wiki/LISP) 的交互式开发环境，也能指代命令行的模式。REPL 使得探索性的编程和调试更加便捷，因为 “读取-求值-输出” 循环通常会比经典的 “编辑-编译-运行-调试” 模式要更快。（有时候翻译成交互式解释器。就是你往 REPL 里输入一行代码，它立即给你执行结果。而不用像 C++, Java 那样通常需要编译才能看到运行结果，像 Python Ruby Scala 都是自带 REPL 的语言。）[读取﹣求值﹣输出循环 维基百科](https://zh.wikipedia.org/wiki/读取﹣求值﹣输出循环) [什么是REPL？](https://www.zhihu.com/question/53865469)
 
-&emsp;[LLDB](https://lldb.llvm.org/resources/contributing.html) 是一个有着 REPL 的特性和 C++、Python 插件的开源调试器。LLDB 绑定在 Xcode 内部，存在于主窗口底部的控制台中。调试器允许你在程序运行的特定时暂停它，你可以查看变量的值、执行自定的指令，并且按照你所认为合适的步骤来操作程序的进展。(这里有一个关于调试器如何工作的总体的解释。) 相信每个人或多或少都在用 LLDB 来调试，比如 po 一个对象。LLDB 是非常强大的，且有内建的，完整的 Python 支持。今天我们主要介绍一个 facebook 开源的 lldb 插件 Chisel。可以让你的调试更 Easy。
+&emsp;[LLDB](https://lldb.llvm.org/resources/contributing.html) 是一个有着 REPL 特性并支持 C++、Python 插件的 **开源调试器**，LLDB 已被内置在 Xcode 中，Xcode 主窗口底部的控制台便是我们与 LLDB 交互的区域。LLDB 允许你在程序运行的特定时刻（某行代码、某个函数）暂停它（`br`），你可以查看变量的值（`p/po/wa`）、执行自定的指令（`e`），并且按照你所认为合适的步骤来操作程序（函数）的执行顺序，对程序进行流程控制。（这里有一个关于调试器如何工作的总体的解释。）相信每个人或多或少都在用 LLDB 来调试，比如 po 一个对象。LLDB 是非常强大的，且有内建的，完整的 Python 支持。今天我们除了介绍 LLDB 的一些进阶用法之外，还会详细介绍一下 facebook 开源的 lldb 插件 Chisel，它可以让你的调试更加高效，更加 Easy。
 
-&emsp;[GDB to LLDB command map](https://lldb.llvm.org/use/map.html) 中的一组表格向我们非常好的介绍了 LLDB 调试器可用的命令总览（常规用法，估计大家都已经掌握了）。除此之外我们可以安装 [Chisel](https://github.com/facebook/chisel/wiki) 来体验 LLDB 更 “高级” 的用法，Chisel 是 facebook 开源的一组  LLDB 命令合集，用于协助我们调试 iOS 应用程序。Chisel 里面的命令正是基于 LLDB 支持的 Python 脚本来做的，每条命令对应的 Python 文件保存在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，熟悉 Python 的小伙伴可以试着读一下这些文件的内容（具体路径可能各人机器不同会有所区别，例如 Intel 的 mac 在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，m1 的 mac 在 `/opt/homebrew/Cellar/chisel/2.0.1/libexec` 路径下）。   
-
+&emsp;[GDB to LLDB command map](https://lldb.llvm.org/use/map.html) 中的一组表格向我们非常好的介绍了 LLDB 调试器提供的几大块命令的总览（常规用法，估计大家都已经掌握了）。除此之外我们可以安装 [Chisel](https://github.com/facebook/chisel/wiki) 来体验 LLDB 更 “高级” 的用法，Chisel 是 facebook 开源的一组  LLDB 命令合集，用于协助我们 **调试 iOS 应用程序**。Chisel 里面的命令正是基于 LLDB 能支持 Python 脚本运行来做的，Chisel 每条命令对应的 Python 文件保存在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，熟悉 Python 的小伙伴可以试着读一下这些文件的内容（具体路径可能各人机器不同会有所区别，例如 Intel 的 mac 在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，m1 的 mac 在 `/opt/homebrew/Cellar/chisel/2.0.1/libexec` 路径下）。   
 
 ## LLDB 基础命令使用
 
-&emsp;日常我们更多的可能是在 Xcode 内使用 LLDB，今天我们先在 终端熟悉一下 LLDB 的命令，然后再去 Xcode 中实践。
+&emsp;日常我们更多的可能是在 Xcode 中使用 LLDB，今天我们先在 **终端** 熟悉一下 LLDB 一些命令，然后再去 Xcode 中对部分 LLDB 命令实践。
 
 &emsp;熟悉 LLDB 的小伙伴应该都用过 `help` 命令，如果有哪个命令不太懂的话，我们直接一个 `help <command>`，LLDB 便会打印出该命令的用途，甚至 `help help` 能教我们怎么使用 `help` 命令。
 
@@ -94,7 +93,10 @@ Command Options Usage:
 + [iOS调试进阶-更高效的使用Xcode和LLDB](https://juejin.cn/post/6844903866345996296)
 + [Xcode10.2中LLDB增加的新特性](https://juejin.cn/post/6844903848771846157)
 
-
++ [WWDC 2018：效率提升爆表的 Xcode 和 LLDB 调试技巧](https://juejin.cn/post/6844903620329078791#heading-28)
++ [lldb-入坑指北（1）-给xcode添加批量启用禁用断点功能](https://cloud.tencent.com/developer/article/1729078)
++ [XCode LLDB调试小技巧基础篇提高篇汇编篇](https://cloud.tencent.com/developer/article/1013359)
++ [(轉)Xcode中LLDB的基本命令的使用（Swift）](https://www.itread01.com/p/357976.html)
 + [facebook/chisel](https://github.com/facebook/chisel/tree/master)
 
 https://developer.apple.com/documentation/xcode-release-notes/xcode-10_2-release-notes
