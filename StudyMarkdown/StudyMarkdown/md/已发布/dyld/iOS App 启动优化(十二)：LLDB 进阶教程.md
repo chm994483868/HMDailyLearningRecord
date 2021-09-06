@@ -76,6 +76,8 @@ Help requested with ambiguous command name, possible completions:
 
 &emsp;分别通过 `help print`、`help p`、`help po` 输出的帮助信息，我们可以看到 `print/p` 是作用完全一样的命令，`print/p` 都是 `expression --` 命令的缩写，它们都是根据 LLDB 的默认格式来进行打印操作，而 `po` 则是 `expression -O  --` 的缩写，如果大家阅读的认真的话，应该还记得 `--` 是用来标记命令的选项结束的，`--` 前面是命令的选项，`--` 后面是命令的参数。`expression -O  --` 中的 `-O` 选项是 `--object-description` 的缩写：`-O ( --object-description ) Display using a language-specific description API, if possible.` 针对 Objective-C 的话，便是调用 `description` 实例函数或者类函数，即使用 `po` 命令进行打印时，它是根据当前语言环境，调用 `description` API 返回的结果进行打印操作。（在 OC 中我们可以通过重写 `+/-description` 函数便可得到自定义的打印结果）   
 
+&emsp;即看到这里面我们便明白了 `print/prin/pri/po/p` 都是调用 `expression` 命令，执行表达式（变量也是一个表达式）并输出表达式的返回值。
+
 ```c++
 print    -- Evaluate an expression on the current thread.  Displays any returned value with LLDB's default formatting.
 p        -- Evaluate an expression on the current thread.  Displays any returned value with LLDB's default formatting.
@@ -326,8 +328,72 @@ Examples:
      Important Note: Because this command takes 'raw' input, if you use any command options you must use ' -- ' between the end of the command options and the beginning of the raw input.
 ```
 
-### 
+### process  continue/continue/c
 
+&emsp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```c++
+(lldb) apropos continue
+The following commands may relate to 'continue':
+  process continue -- Continue execution of all threads in the current process.
+  thread continue  -- Continue execution of the current target process.  One or more threads may be specified, by default all
+                      threads continue.
+  thread until     -- Continue until a line number or address is reached by the current or specified thread.  Stops when returning
+                      from the current function as a safety measure.  The target line number(s) are given as arguments, and if
+                      more than one is provided, stepping will stop when the first one is hit.
+  c                -- Continue execution of all threads in the current process.
+  continue         -- Continue execution of all threads in the current process.
+
+The following settings variables may relate to 'continue': 
+
+
+  target.process.thread.step-out-avoid-nodebug -- If true, when step-in/step-out/step-over leave the current frame, they will
+                                                  continue to step out till they come to a function with debug information.
+                                                  Passing a frame argument to step-out will override this option.
+```
+
++ `n         -- Source level single step, stepping over calls.  Defaults to current thread unless specified.`
++ `next      -- Source level single step, stepping over calls.  Defaults to current thread unless specified.`
+
++ `ni        -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.`
++ `nexti     -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.`
+
++ `s         -- Source level single step, stepping into calls.  Defaults to current thread unless specified.`
++ `step      -- Source level single step, stepping into calls.  Defaults to current thread unless specified.`
+
++ `si        -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.`
++ `stepi     -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.`
+
+
+
+
+
+
+
++ `Activate breakpoints`
++ `Deactivate breakpoints`
++ `Pause program execution`
++ `Continue Program execution`
++ `Step over Step over instruction(hold Control) Step over thread(hold Control-Shift)`
++ `Step into Step into instruction(hold Control) Step into thread(hold Control-Shift)`
++ `Step out`
 
 
 
