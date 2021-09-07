@@ -16,7 +16,7 @@
 
 ## LLDB 基础命令
 
-&emsp;日常我们更多的可能是在 Xcode 中使用 LLDB，今天我们通过 **终端** 与 Xcode 结合使用来对 LLDB 进行学习。熟悉 LLDB 的小伙伴应该都用过 `help`，如果有哪个命令不太熟悉的话，我们直接一个 `help <command>` 回车，LLDB 便会打印出该命令的详细信息，甚至 `help help` 能教我们怎么使用 `help` 命令。下面我们启动终端，然后输入 `LLDB` 并回车，此时便会进入 `LLDB` 环境，然后我们再输入 `help` 命令并回车，便会列出一大组当前机器内可用的 LLDB 命令，看到我的机器把所有的 LLDB 命令分了三组：
+&emsp;日常我们更多的可能是在 Xcode 中使用 LLDB，今天我们通过 **终端** 与 Xcode 两种方式来对 LLDB 进行学习。熟悉 LLDB 的小伙伴应该都用过 `help`，如果有哪个命令不太熟悉的话，我们直接一个 `help <command>` 回车，LLDB 便会打印出该命令的详细信息，甚至 `help help` 能教我们怎么使用 `help` 命令。下面我们启动终端，然后输入 `LLDB` 并回车，此时便会进入 `LLDB` 环境，然后我们再输入 `help` 命令并回车，便会列出一大组当前机器内可用的 LLDB 命令，看到我的机器把所有的 LLDB 命令分了三组：
 
 + Debugger commands
 + Current command abbreviations (type 'help command alias' for more info)（Debugger commands 中的一些命令的别名或缩写）
@@ -330,9 +330,15 @@ Examples:
 
 ### process  continue/continue/c
 
-&emsp;
+&emsp;当我们在 Xcode 中运行程序，并命中我们添加的断点时，Xcode 底部的控制台便会进入 LLDB 调试模式，此时程序执行便暂停到我们的断点处，此时调试条上会出现四个你可以用来控制程序的执行流程的按钮。
 
-
++ `Activate breakpoints`
++ `Deactivate breakpoints`
++ `Pause program execution`
++ `Continue Program execution`
++ `Step over Step over instruction(hold Control) Step over thread(hold Control-Shift)`
++ `Step into Step into instruction(hold Control) Step into thread(hold Control-Shift)`
++ `Step out`
 
 
 
@@ -387,13 +393,7 @@ The following settings variables may relate to 'continue':
 
 
 
-+ `Activate breakpoints`
-+ `Deactivate breakpoints`
-+ `Pause program execution`
-+ `Continue Program execution`
-+ `Step over Step over instruction(hold Control) Step over thread(hold Control-Shift)`
-+ `Step into Step into instruction(hold Control) Step into thread(hold Control-Shift)`
-+ `Step out`
+
 
 
 
