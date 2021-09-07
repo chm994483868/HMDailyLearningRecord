@@ -244,7 +244,312 @@ widget 是一种强大的技术，可以让你创建各种复杂的 widget。最
 
 ## 使用 Material 组件
 
-&emsp;
+&emsp;Flutter 提供了许多 widgets，可帮助我们构建遵循 Material Design 的应用程序。Material 应用程序以 MaterialApp widget 开始，该 widget 在应用程序的根部创建了一些有用的 widget，其中包括一个 [Navigator](https://api.flutter.dev/flutter/widgets/Navigator-class.html)（使用堆栈规则管理一组子 widget 的 widget），它管理由字符串标识的 widget 栈（即页面路由栈）。Navigator 可以让你的应用程序在页面之间平滑的过渡。是否使用 MaterialApp 完全是可选的，但是使用它是一个很好的做法。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(new MaterialApp(
+    title: 'Flutter Tutorial',
+    home: new TutorialHome(),
+  ));
+}
+
+class TutorialHome extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Scaffold 是 Material 中主要的布局组件.
+    return new Scaffold(
+      // 顶部的导航条
+      appBar: new AppBar(
+        // 导航条左边的菜单按钮 
+        leading: new IconButton(
+          icon: new Icon(Icons.menu),
+          tooltip: 'Navigation menu',
+          onPressed: null,
+        ),
+
+        // 导航条标题
+        title: new Text('Example title'),
+
+        // 导航条右边的搜索按钮
+        actions: <Widget>[
+          new IconButton(
+            icon: new Icon(Icons.search),
+            tooltip: 'Search',
+            onPressed: null,
+          ),
+        ],
+      ),
+
+      // body 占屏幕的大部分（中间的一个 Hello, world! 文本）
+      body: new Center(
+        child: new Text('Hello, world!'),
+      ),
+
+      // 右下角浮动的加号按钮
+      floatingActionButton: new FloatingActionButton(
+        tooltip: 'Add', // used by assistive technologies
+        child: new Icon(Icons.add),
+        onPressed: null,
+      ),
+      
+    );
+  }
+}
+```
+
+&emsp;现在我们已经从 MyAppBar 和 MyScaffold 切换到 [AppBar](https://api.flutter.dev/flutter/material/AppBar-class.html) 和 [Scaffold](https://api.flutter.dev/flutter/material/Scaffold-class.html) widget，我们的应用程序现在看起来已经有一些 Material 了！例如，导航条有一个阴影，标题文本会自动继承正确的样式。我们还在右下角添加了一个浮动操作按钮，以便进行相应的操作处理。
+
+&emsp;我们再次将 widget 作为参数传递给其他 widget。该 Scaffold widget 需要许多不同的 widget 作为命名参数，其中的每一个被放置在 Scaffold 布局中相应的位置。同样，AppBar 中，我们给参数 leading、actions、title 分别传一个 widget。这种模式在整个 Flutter 框架中会经常出现。
+
+## 处理手势
+
+&emsp;大多数应用程序包括某种形式与系统的交互。构建交互式应用程序的第一步是检测输入手势。让我们通过一个简单的按钮来了解它的工作原理：
+
+```c++
+class MyButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new GestureDetector(
+      // 点击事件，打印 MyButton was tapped!
+      onTap: () {
+        print('MyButton was tapped!');
+      },
+
+      // widget 容器
+      child: new Container(
+        height: 36.0,
+        padding: const EdgeInsets.all(8.0),
+        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+        decoration: new BoxDecoration(
+          borderRadius: new BorderRadius.circular(5.0),
+          color: Colors.lightGreen[500],
+        ),
+
+        child: new Center(
+          child: new Text('Engage'),
+        ),
+      ),
+    );
+  }
+}
+```
+
+&emsp;该 [GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html)（检测手势的 Widget）widget 并不具有显示效果，而是检测由用户做出的手势。当用户点击 [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)（一个方便的 widget，结合了常见的绘画、定位和大小调整 widget）时，GestureDetector 会调用它的 onTap 回调，在回调中，将消息打印到控制台。你可以使用 GestureDetector 来检测各种输入手势，包括点击、拖动和缩放。
+
+&emsp;许多 widget 都会使用一个 GestureDetector 为其他 widget 提供可选的回调。例如，IconButton、RaisedButton、和 FloatingActionButton，它们都有一个 onPressed 回调，它会在用户点击该 widget 时被触发。
+
+## 根据用户输入改变 widget
+
+&emsp;到目前为止，我们只使用了无状态的 widget。无状态 widget 从它们的父 widget 接收参数，它们被存储在 [final](https://www.dartlang.org/docs/dart-up-and-running/ch02.html#final-and-const) 修饰的成员变量中。当一个 widget 被要求构建时，它使用这些存储的值作为参数来构建 widget。
+
+&emsp;下面我们对 final 和 const 关键字进行延展：
+
+&emsp;如果你从不打算更改变量，请使用 final 或 const，而不是 var 或除了类型之外。 final 变量只能设置一次； const 变量是编译时常量。 （const 变量是隐式 final 的。）final top-level 或类变量在第一次使用时被初始化。
+
+> &emsp;Note: Instance variables 可以是 final，但不能是 const。
+
+&emsp;这是创建和设置 final 变量的示例：
+
+```c++
+final name = 'Bob'; // Without a type annotation
+final String nickname = 'Bobby';
+```
+
+&emsp;你不能更改 final 变量的值：
+
+```c++
+name = 'Alice'; // Error: a final variable can only be set once.
+```
+
+&emsp;将 const 用于要成为编译时常量的变量（compile-time constants）。如果 const 变量在类级别，则将其标记为 static const。在声明变量的地方，将值设置为编译时常量，例如数字或字符串字面量、const 变量或对常量进行算术运算的结果：
+
+```c++
+const bar = 1000000; // Unit of pressure (dynes/cm2)
+const double atm = 1.01325 * bar; // Standard atmosphere
+```
+
+&emsp;const 关键字不仅仅用于声明常量变量。你还可以使用它来创建常量值，以及声明创建常量值的构造函数。任何变量都可以有一个常数值。
+
+```c++
+var foo = const [];
+final bar = const [];
+const baz = []; // Equivalent to `const []`
+```
+
+&emsp;你可以从 const 声明的初始化表达式中省略 const，就像上面的 baz 一样。有关详细信息，请参阅 [see DON’T use const redundantly](https://dart.dev/guides/language/effective-dart/usage#dont-use-const-redundantly)。
+
+&emsp;你可以更改 non-final、non-const 变量的值，即使它曾经有一个 const 值：
+
+```c++
+foo = [1, 2, 3]; // Was const []
+```
+
+&emsp;你不能改变 const 变量的值：
+
+```c++
+baz = [42]; // Error: Constant variables can't be assigned a value.
+```
+
+&emsp;你可以定义使用 [type checks and casts](https://dart.dev/guides/language/language-tour#type-test-operators)（is 和 as）的常量，[collection if](https://dart.dev/guides/language/language-tour#collection-operators) 和 [spread operators](https://dart.dev/guides/language/language-tour#spread-operator)（... and ...?）：
+
+```c++
+const Object i = 3; // Where i is a const Object with an int value...
+const list = [i as int]; // Use a typecast.
+const map = {if (i is int) i: 'int'}; // Use is and collection if.
+const set = {if (list is List<int>) ...list}; // ...and a spread.
+```
+
+> &emsp;Note: 尽管无法修改 final 对象，但可以更改其字段。相比之下，const 对象及其字段不能改变：它们是不可变的。
+
+&emsp;下面我们继续：
+
+&emsp;为了构建更复杂的体验，例如，以更有趣的方式对用户输入做出反应，应用程序通常会携带一些状态。Flutter 使用 StatefulWidgets 来满足这种需求。StatefulWidgets 是特殊的 widget，它知道如何生成 State 对象，然后用它来保持状态。思考下面这个简单的例子，其中使用了前面提到的 RaisedButton：
+
+```c++
+class Counter extends StatefulWidget {
+  // This class is the configuration for the state. It holds the values (in this nothing) provided by the parent and used by the build method of the State. Fields in a Widget subclass are always marked "final".
+  // 这个类是 state 的 configuration。它保存由父级提供并由 State 的 build 方法使用的值（在此无）。Widget 子类中的字段始终标记为 final。   
+  
+  @override
+  _CounterState createState() => new _CounterState();
+}
+
+class _CounterState extends State<Counter> {
+  int _counter = 0;
+
+  void _increment() {
+    setState(() {
+      // This call to setState tells the Flutter framework that something has changed in this State, which causes it to rerun the build method below so that the display can reflect the updated values.
+      // If we changed _counter without calling setState(), then the build method would not be called again, and so nothing would appear to happen.
+      
+      // 这个对 setState 的调用告诉 Flutter 框架在这个 State 中发生了一些变化，这会导致它重新运行下面的 build 方法，以便显示可以反映更新后的值。如果我们在不调用 setState() 的情况下更改 _counter，则不会再次调用 build 方法，因此似乎什么也不会发生。
+      
+      _counter++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done by the _increment method above.
+    // The Flutter framework has been optimized to make rerunning build methods fast, so that you can just rebuild anything that needs updating rather than having to individually change instances of widgets.
+    
+    // 每次调用 setState 时都会重新运行此方法，例如上面的 _increment 方法。
+    // Flutter 框架已经过优化，可以快速重新运行 build 方法，这样你就可以重新构建任何需要更新的东西，而不必单独更改 widget 的实例。
+    
+    return new Row(
+      children: <Widget>[
+        // 按钮点击调用上面的 _increment 函数，内部调用 setState  
+        new RaisedButton(
+          onPressed: _increment,
+          child: new Text('Increment'),
+        ),
+        
+        // Text widget 中显示 _counter 的值
+        new Text('Count: $_counter'),
+      ],
+    );
+  }
+}
+```
+
+&emsp;你可能想知道为什么 StatefulWidget 和 State 是单独的对象。在 Flutter 中，这两种类型的对象具有不同的生命周期：widget 是临时对象，用于构建当前状态下的应用程序，而 State 对象在多次 build 之间保持不变，允许它们记录信息（状态）。
+
+&emsp;上面的例子接受用户点击，并在点击时使用 _counter 自增，然后直接在其 build 方法中使用 _counter 值。在更复杂的应用程序中，widget 结构层次的不同部分可能有不同的职责；例如，一个 widget 可能呈现一个复杂的用户界面，其目标是收集特定信息（如日期或位置），而另一个 widget 可能会使用该信息来更改整体的显示。
+
+&emsp;在 Flutter 中，事件流是 "向上" 传递的，而状态流是 "向下" 传递的（这类似于  React/Vue 中父子组件通信的方式：子 widget 到父 widget 是通过事件通信，而父到子是通过状态），重定向这一流程的共同父元素是 State。让我们看这个稍微复杂的例子是如何工作的：
+
+```c++
+// 一个 StatelessWidget，用于显示 count 的值（count 是用 final 修饰的，即只能记录 CounterDisplay 初始化时传进来的 count）
+class CounterDisplay extends StatelessWidget {
+  CounterDisplay({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Text('Count: $count');
+  }
+}
+
+// 同上，也是 StatelessWidget，onPressed 仅只能记录初始化传进来的值
+class CounterIncrementor extends StatelessWidget {
+  CounterIncrementor({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return new RaisedButton(
+      onPressed: onPressed,
+      child: new Text('Increment'),
+    );
+  }
+}
+
+// 使用上面两个 StatelessWidget 
+class Counter extends StatefulWidget {
+  @override
+  _CounterState createState() => new _CounterState();
+}
+
+class _CounterState extends State<Counter> {
+  int _counter = 0;
+
+  // 每次调用 _increment 函数都会导致调用下面的 build 函数
+  void _increment() {
+    setState(() {
+      ++_counter;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new Row(children: <Widget>[
+      new CounterIncrementor(onPressed: _increment),
+      new CounterDisplay(count: _counter),
+    ]);
+  }
+}
+```
+
+&emsp;注意我们是如何创建了两个新的无状态 widget 的。我们清晰的分离了显示计数器（CounterDisplay）和更改计数器（CounterIncrementor）的逻辑。尽管最终效果与前一个示例相同，但责任分离允许将复杂性逻辑封装在各个 widget 中，同时保持父项的简单性。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
