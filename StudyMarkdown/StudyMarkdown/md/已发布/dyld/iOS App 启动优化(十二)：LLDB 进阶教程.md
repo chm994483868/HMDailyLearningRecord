@@ -330,16 +330,65 @@ Examples:
 
 ### process  continue/continue/c
 
-&emsp;当我们在 Xcode 中运行程序，并命中我们添加的断点时，Xcode 底部的控制台便会进入 LLDB 调试模式，此时程序执行便暂停到我们的断点处，此时调试条上会出现四个你可以用来控制程序的执行流程的按钮。
+&emsp;当我们在 Xcode 中运行程序，并命中我们添加的断点时，此时程序执行便暂停到我们的断点处。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 Continue 状态，点击它我们便会继续执行我们的程序直到命中下一个断点，然后此时它右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
 
-+ `Activate breakpoints`
-+ `Deactivate breakpoints`
-+ `Pause program execution`
-+ `Continue Program execution`
-+ `Step over Step over instruction(hold Control) Step over thread(hold Control-Shift)`
-+ `Step into Step into instruction(hold Control) Step into thread(hold Control-Shift)`
-+ `Step out`
+1. `Activate breakpoints/Deactivate breakpoints`
+2. `Pause program execution/Continue Program execution`
+3. `Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`
+4. `Step into Step into instruction(hold Control) Step into thread(hold Control-Shift)`
+5. `Step out`
 
+&emsp;`Activate breakpoints/Deactivate breakpoints`：激活/失活 全部断点，例如当我们想要关闭所有断点想要程序直接执行下去，看它最终呈现的页面效果时，我们可以先使用此按钮失活所有断点，然后点击 `Continue Program execution` 按钮即可。在 LLDB 调试器中我们可以使用 `breakpoint disable` 和 `breakpoint enable` 达到同样的效果（有一点细微差别，感兴趣的小伙伴可以自己试一下）。
+
+```c++
+(lldb) breakpoint enable
+All breakpoints enabled. (7 breakpoints)
+(lldb) breakpoint disable
+All breakpoints disabled. (7 breakpoints)
+```
+
+&emsp;`Pause program execution/Continue Program execution`：暂停/继续 执行程序，当程序处于暂停状态时，点击此按钮可使程序继续执行下去，直到遇到下一个断点，或者没有下一个断点的话程序一直执行下去。在 LLDB 调试器中我们可以使用 `process continue/continue/c` 可达到同样的效果（`continue/c` 是 `process continue` 的缩写）。它们后还可以跟一个 `-i` 选项：
+
+```c++
+(lldb) help c
+     Continue execution of all threads in the current process.
+     继续执行当前进程中的所有线程。
+
+Syntax: c <cmd-options>
+
+Command Options Usage:
+  c [-i <unsigned-integer>]
+
+       -i <unsigned-integer> ( --ignore-count <unsigned-integer> )
+            Ignore <N> crossings of the breakpoint (if it exists) for the currently selected thread.
+            忽略当前选定线程的断点（如果存在）的 <N> 个交叉点。
+
+'c' is an abbreviation for 'process continue'
+```
+
+&emsp;`-i` 参数没看太懂什么意思，只找到一个链接：[Repeating Command in LLDB](https://stackoverflow.com/questions/64639184/repeating-command-in-lldb)，大概是跳过指定个数的断点，例如代码使用示例：
+
+```c++
+int j = 0;
+
+while (true) {
+    j++;
+    NSLog(@"%d", j);
+}
+
+// 我们在 while 处打一个断点，然后运行程序后断点被命中，在 LLDB 调试器中输入: c -i 3
+
+// 控制台打印：
+(lldb) c -i 3
+Process 85687 resuming
+2021-09-08 09:44:24.859226+0800 TEST_Fishhook[85687:1017243] 1
+2021-09-08 09:44:24.866394+0800 TEST_Fishhook[85687:1017243] 2
+2021-09-08 09:44:24.873266+0800 TEST_Fishhook[85687:1017243] 3
+2021-09-08 09:44:24.878565+0800 TEST_Fishhook[85687:1017243] 4
+(lldb) 
+```
+
+&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`：步进
 
 
 
