@@ -834,3 +834,6 @@ https://objccn.io/issue-19-2/
 https://juejin.cn/post/6844903990296068110#heading-5
 https://github.com/facebook/chisel
 https://blog.cnbluebox.com/blog/2015/03/05/chisel/
+
++ [Step Over Thread和Step Into Thread命令有什么用处？](http://cn.voidcc.com/question/p-tjpujtpj-bez.html)
++ [对 Xcode 菜单选项的详细探索](https://blog.csdn.net/zhanglizhi111/article/details/52326744)
