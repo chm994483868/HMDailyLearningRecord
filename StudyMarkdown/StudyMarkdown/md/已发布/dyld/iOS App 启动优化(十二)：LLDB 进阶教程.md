@@ -335,7 +335,7 @@ Examples:
 1. `Activate breakpoints/Deactivate breakpoints`
 2. `Pause program execution/Continue Program execution`
 3. `Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`
-4. `Step into Step into instruction(hold Control) Step into thread(hold Control-Shift)`
+4. `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)`
 5. `Step out`
 
 &emsp;`Activate breakpoints/Deactivate breakpoints`：激活/失活 全部断点，例如当我们想要关闭所有断点想要程序直接执行下去，看它最终呈现的页面效果时，我们可以先使用此按钮失活所有断点，然后点击 `Continue Program execution` 按钮即可。在 LLDB 调试器中我们可以使用 `breakpoint disable` 和 `breakpoint enable` 达到同样的效果（有一点细微差别，感兴趣的小伙伴可以自己试一下）。
@@ -388,7 +388,9 @@ Process 85687 resuming
 (lldb) 
 ```
 
-&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`：步进
+&emsp;接下来看下一个按钮：
+
+&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)` 会以黑盒的方式执行一行代码。即使这行代码是一个函数调用的话也是直接执行，并不会跳进函数内部，对比 `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)` 的话，它可以跳进所调用的函数内部，当然仅限于我们自己的自定义的函数，系统那些闭源的函数我们是无法进入的。在 LLDB 调试器中我们可以使用 ` thread step-over` 可达到同样的效果，
 
 
 
