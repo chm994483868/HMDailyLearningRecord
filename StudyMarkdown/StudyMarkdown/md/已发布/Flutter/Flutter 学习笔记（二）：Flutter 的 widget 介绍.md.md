@@ -658,56 +658,33 @@ void main() {
 
 &emsp;要访问当前 ShoppingList 的属性，_ShoppingListState 可以使用它的 widget 属性。 如果父级重建并创建一个新的 ShoppingList，_ShoppingListState 不会重新构建，但其 widget 的属性会更新为新构建的 widget。 如果希望在 widget 属性更改时收到通知，则可以重写 didUpdateWidget 函数，以便将旧的 old Widget 与当前 widget 进行比较。
 
-&emsp;处理 onCartChanged 回调时，_ShoppingListState 通过添加或删除产品来改变其内部 _shoppingCart 状态。 为了通知框架它改变了它的内部状态，需要调用 setState。调用 setState 将该 widget 标记为 "dirty" (脏的)，并且计划在下次应用程序需要更新屏幕时重新构建它。如果在修改 widget 的内部状态后忘记调用 setState，框架将不知道你的 widget 是 "dirty" (脏的)，并且可能不会调用 widget 的 build 方法，这意味着用户界面可能不会更新以展示新的状态。
+&emsp;处理 onCartChanged 回调时，_ShoppingListState 通过添加或删除 product 来改变其内部 _shoppingCart 状态。 为了通知框架它改变了它的内部状态，需要调用 setState。调用 setState 将该 widget 标记为 "dirty" (脏的)，并且计划在下次应用程序需要更新屏幕时重新构建它。如果在修改 widget 的内部状态后忘记调用 setState，框架将不知道你的 widget 是 "dirty" (脏的)，并且可能不会调用 widget 的 build 方法，这意味着用户界面可能不会更新以展示新的状态。
 
 &emsp;通过以这种方式管理状态，你不需要编写用于创建和更新子 widget 的单独代码。相反，你只需实现可以处理这两种情况的 build 函数。
 
 ## 响应 widget 生命周期事件
 
-&emsp;在StatefulWidget调用createState之后，框架将新的状态对象插入树中，然后调用状态对象的initState。 子类化State可以重写initState，以完成仅需要执行一次的工作。 例如，您可以重写initState以配置动画或订阅platform services。initState的实现中需要调用super.initState。
+&emsp;在 StatefulWidget 调用 createState 之后，框架将新的状态对象插入树中，然后调用状态对象的 initState。 子类化 State 可以重写 initState，以完成仅需要执行一次的工作。 例如，你可以重写 initState 以配置动画或订阅 platform services。initState 的实现中需要调用 super.initState。
 
-当一个状态对象不再需要时，框架调用状态对象的dispose。 您可以覆盖该dispose方法来执行清理工作。例如，您可以覆盖dispose取消定时器或取消订阅platform services。 dispose典型的实现是直接调用super.dispose。
+&emsp;当一个状态对象不再需要时，框架调用状态对象的 dispose。你可以覆盖该 dispose 方法来执行清理工作。例如，你可以覆盖 dispose 取消定时器或取消订阅 platform services。 dispose 典型的实现是直接调用 super.dispose。
 
+## Key
 
+&emsp;你可以使用 key 来控制框架将在 widget 重建时与哪些其他 widget 匹配。默认情况下，框架根据它们的 runtimeType（描述元素的配置）和它们的显示顺序来匹配。使用 key（控制一个 widget 如何替换树中的另一个 widget）时，框架要求两个 widget 具有相同的 key 和 runtimeType。
 
+&emsp;key 在构建相同类型 widget 的多个实例时很有用。例如，ShoppingList 构建足够的 ShoppingListItem 实例以填充其可见区域：
 
++ 如果没有 key，当前构建中的第一个条目将始终与前一个构建中的第一个条目同步，即使在语义上，列表中的第一个条目如果滚动出屏幕，那么它将不会再在窗口中可见。
 
++ 通过给列表中的每个条目分配为 "语义" key，无限列表可以更高效，因为框架将同步条目与匹配的语义 key 并因此具有相似（或相同）的可视外观。此外，语义上同步条目意味着在有状态子 widget 中，保留的状态将附加到相同的语义条目上，而不是附加到相同数字位置上的条目。 
 
+## GlobalKey
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;你可以使用 GlobalKey 来唯一标识子 widget。GlobalKey 在整个 widget 层次结构中必须是全局唯一的，这与局部 key 不同，后者只需要在同级中唯一。由于它们是全局唯一的，因此可以使用 globalKey 来检索与 widget 关联的状态。
 
 ## 参考链接
 **参考链接:🔗**
-+ [Mac pro 找不到zshrc文件](https://www.jianshu.com/p/6e9d776836ab)
 + [编写您的第一个 Flutter App](https://flutterchina.club/get-started/codelab/)
 + [Libraries and visibility](https://dart.dev/guides/language/language-tour#libraries-and-visibility)
-
-
-
++ [Flutter Widget框架概述](https://flutterchina.club/widgets-intro/)
 + [深入浅出 Flutter Framework 之 Widget](https://juejin.cn/post/6844904152905023496)
