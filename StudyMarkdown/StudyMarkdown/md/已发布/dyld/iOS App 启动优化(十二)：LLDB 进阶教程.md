@@ -334,8 +334,8 @@ Examples:
 
 1. `Activate breakpoints/Deactivate breakpoints`
 2. `Pause program execution/Continue Program execution`
-3. `Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`
-4. `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)`
+3. `Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`（源码级别、汇编指令级别、仅执行当前线程的内容）
+4. `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)`（源码级别、汇编指令级别、仅执行当前线程的内容）
 5. `Step out`
 
 &emsp;`Activate breakpoints/Deactivate breakpoints`：激活/失活 全部断点，例如当我们想要关闭所有断点想要程序直接执行下去，看它最终呈现的页面效果时，我们可以先使用此按钮失活所有断点，然后点击 `Continue Program execution` 按钮即可。在 LLDB 调试器中我们可以使用 `breakpoint disable` 和 `breakpoint enable` 达到同样的效果（有一点细微差别，感兴趣的小伙伴可以自己试一下）。
@@ -347,7 +347,9 @@ All breakpoints enabled. (7 breakpoints)
 All breakpoints disabled. (7 breakpoints)
 ```
 
-&emsp;`Pause program execution/Continue Program execution`：暂停/继续 执行程序，当程序处于暂停状态时，点击此按钮可使程序继续执行下去，直到遇到下一个断点，或者没有下一个断点的话程序一直执行下去。在 LLDB 调试器中我们可以使用 `process continue/continue/c` 可达到同样的效果（`continue/c` 是 `process continue` 的缩写）。它们后还可以跟一个 `-i` 选项：
+&emsp;`Pause program execution/Continue Program execution`：暂停/继续 执行程序，当程序处于暂停状态时，点击此按钮可使程序继续执行下去，直到遇到下一个断点，或者没有下一个断点的话程序一直执行下去。在 LLDB 调试器中我们可以使用 `process continue/continue/c` 可达到同样的效果（`continue/c` 是 `process continue` 的缩写）。它们后还可以跟一个 `-i` 选项，下面是 `c` 命令的帮助信息：
+
+&emsp;（下面帮助信息中指出了 `c` 是继续执行当前进程的 **所有线程**，那有没有只执行当前线程的命令呢？答案是有的，下面我们会揭晓）
 
 ```c++
 (lldb) help c
@@ -366,7 +368,7 @@ Command Options Usage:
 'c' is an abbreviation for 'process continue'
 ```
 
-&emsp;`-i` 参数没看太懂什么意思，只找到一个链接：[Repeating Command in LLDB](https://stackoverflow.com/questions/64639184/repeating-command-in-lldb)，大概是跳过指定个数的断点，例如代码使用示例：
+&emsp;`-i` 参数没看太懂什么意思，只找到一个链接：[Repeating Command in LLDB](https://stackoverflow.com/questions/64639184/repeating-command-in-lldb)，大概是跳过指定个数的（重复的）断点，例如代码使用示例：
 
 ```c++
 int j = 0;
@@ -388,10 +390,20 @@ Process 85687 resuming
 (lldb) 
 ```
 
-&emsp;接下来看下一个按钮：
+&emsp;接下来我们看下一个按钮的功能：
 
-&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)` 会以黑盒的方式执行一行代码。即使这行代码是一个函数调用的话也是直接执行，并不会跳进函数内部，对比 `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)` 的话，它可以跳进所调用的函数内部，当然仅限于我们自己的自定义的函数，系统那些闭源的函数我们是无法进入的。在 LLDB 调试器中我们可以使用 ` thread step-over` 可达到同样的效果，
+&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)` 会以黑盒的方式执行一行代码。即使这行代码是一个函数调用的话也是直接执行，并不会跳进函数内部，对比 `Step into（单行源码执行）/Step into instruction(hold Control)/Step into thread(hold Control-Shift)` 的话，它则是可以跳进（单行代码）所调用的函数内部，当然仅限于我们自己的自定义的函数，系统那些闭源的函数我们是无法进入的。在 LLDB 调试器中我们可以使用 `thread step-over/next/n` 命令（`next/n` 是 `thread step-over` 的缩写）达到同样的效果。
 
+```c++
+n         -- Source level single step, stepping over calls.  Defaults to current thread unless specified.
+next      -- Source level single step, stepping over calls.  Defaults to current thread unless specified.
+nexti     -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.
+ni        -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.
+```
+
+&emsp;
+
+&emsp;可看到 `next/nexti` 直接使用更简单的缩写 `n/ni`。
 
 
 
@@ -437,43 +449,6 @@ The following settings variables may relate to 'continue':
 
 + `si        -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.`
 + `stepi     -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 &emsp;
