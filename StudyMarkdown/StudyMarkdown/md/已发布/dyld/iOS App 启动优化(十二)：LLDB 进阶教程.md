@@ -68,7 +68,7 @@ Command Options Usage（help 命令后面可跟的命令选项用法）:
 + `p a` （a 是一个变量名，这里便是执行 a 这个表达式并输出结果，即为 a 的值）
 + `p a + 2` （这里便是执行 a + 2 这个表达式并输出结果，即为 a + 2 的值）
 
-&emsp;LLDB 实际上会作前缀匹配，所以我们使用 `print/prin/pri/p` 是完全一样的，但是我们不能使用 `pr`，因为 LLDB 不能消除 `print` 和 `process` 两者的歧义，不过幸运的是我们可以直接使用 `p`（大概在 LLDB 调试时 `p` 打印命令用的是最多的），LLDB 把 `p` 这个最简单的缩写/别名归给了 **打印命令** 使用。（如下我们使用 `help pr` 命令，会提示我们使用了不明确的命令名称，并列出了所有以 `pr` 开头的命令，来提示我们具体想要查看哪个命令的详细信息。）
+&emsp;LLDB 实际上会作前缀匹配，所以我们使用 `print/prin/pri/p` 是完全一样的，但是我们不能使用 `pr`，因为 LLDB 不能消除 `print` 和 `process` 两者的歧义，不过幸运的是我们可以直接使用 `p`（大概在 LLDB 调试时 `p` 打印命令用的是最多的），LLDB 把 `p` 这个最简单的 缩写/别名 归给了 **打印命令** 使用。（如下我们使用 `help pr` 命令，会提示我们使用了不明确的命令名称，并列出了所有以 `pr` 开头的命令，来提示我们具体想要查看哪个命令的详细信息。）
 
 ```c++
 (lldb) help pr
@@ -122,9 +122,29 @@ Command Options Usage:
 'po' is an abbreviation for 'expression -O  --'
 ```
 
-&emsp;根据帮助信息我们可以看到 `p/po` 仅能在当前线程使用（`expression` 仅用于当前线程），也就是说我们仅能打印当前线程的表达式的返回值，如果我们打印其它线程的表达式的话会得到一个未定义的错误：`error: <user expression 0>:1:1: use of undeclared identifier 'xxx'`。（例如 xxx 代指我们要打印的变量名）
+&emsp;根据帮助信息我们可以看到 `p/po` 仅能在当前线程使用（`expression` 仅用于当前线程），也就是说我们仅能打印当前线程的表达式的返回值，如果我们打印其它线程的表达式的话会得到一个未定义的错误：`error: <user expression 0>:1:1: use of undeclared identifier 'xxx'`，`xxx` 代指我们要打印的变量名。如下示例代码：
 
-&emsp;如果我们使用过 `p` 命令的话，一定还记得每次 `p` 命令打印的结果中都会直接输出一个以 `$` 开头的变量，此变量的值便是我们要打印的表达式的返回值，即我们可以把此 `$` 开头的变量理解为我们使用 `p` 命令打印的结果值的变量，这些以 `$` 开头的变量都是存在于 LLDB 的命名空间中的，我们可以直接使用它（如果有看过之前文章的话，在类结构一章中，我们正是根据 `p` 命令输出的 `$` 开头的变量，一层一层根据 `$` 开头的变量的值进行强制转换来查看类的结构的）。
+```c++
+...
+int main_a = 10;
+NSLog(@"%d", main_a);
+
+dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    int local_variable = 11;
+    NSLog(@"🎉🎉🎉 local_variable = %d", local_variable);
+});
+...
+
+// 我们在 dispatch_async 内部定义一个断点，执行程序，命中断点时，我们执行 p main_a 命令，便打印如下错误：
+
+(lldb) p main_a
+error: <user expression 0>:1:1: use of undeclared identifier 'main_a'
+main_a
+^
+
+```
+
+&emsp;如果我们使用过 `p` 命令的话，一定还记得每次 `p` 命令打印的结果中都会直接输出一个以 `$` 开头的变量，此变量的值便是我们要打印的表达式的返回值，即我们可以把此 `$` 开头的变量理解为我们使用 `p` 命令打印的结果值的变量，这些以 `$` 开头的变量都是存在于 LLDB 的命名空间中的，在后续的命令操作中我们可以直接根据它们的名字使用它们（如果有看过之前文章的话，在类结构一章中，我们正是根据 `p` 命令输出的 `$` 开头的变量，一层一层根据 `$` 开头的变量的值进行强制转换来查看类的结构的）。这里的变量名之所以使用 `$` 开头也对应了，下面要讲的在 LLDB 的命名空间中自定义变量，变量名需要以 `$` 开头。
 
 ```c++
 (lldb) p 123
@@ -243,7 +263,7 @@ error: <user expression 5>:1:28: no known method '-characterAtIndex:'; cast the 
 
 #### Single and multi-line expressions（单行/多行表达式）
 
-&emsp;关于单行和多行表达式，当我们要输入多行表达式时，我可以首先输入 `expression/expr/e` 命令，然后回车，即可进入 LLDB 多行表达式编辑模式，然后我们便开始输入自己想要的表达式，然后当我们要结束表达式时，我们在一个空行数输入回车，即结束多行表达式的编辑并执行。
+&emsp;关于单行和多行表达式，当我们要输入多行表达式时，我们可以首先输入 `expression/expr/e` 命令，然后回车，即可进入 LLDB 多行表达式编辑模式，然后我们便开始输入自己想要的表达式，然后当我们要结束表达式时，我们在一个空行处输入回车，即结束多行表达式的编辑并执行我们输入的多行表达式。
 
 ```c++
 Single and multi-line expressions:
@@ -337,7 +357,7 @@ Examples:
 
 ### process  continue/continue/c
 
-&emsp;当我们在 Xcode 中运行程序，并命中我们在程序中添加的断点时，此时进程执行便暂停到我们的断点处（此时进程中的所有线程都会暂停）。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 Continue 状态，点击它我们便会继续执行我们的程序直到命中下一个断点，然后此时它右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
+&emsp;当我们在 Xcode 中运行程序，并命中我们在程序中添加的断点时，此时进程执行便暂停到我们的断点处（此时进程中的所有线程都会暂停）。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上的  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 `Continue` 状态，点击它我们的进程便会继续无休止的执行下去直到结束，或者再次命中我们的程序中的下一个断点。当我们的进程进入 LLDB 调试状态时，暂停/继续按钮右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
 
 1. `Activate breakpoints/Deactivate breakpoints`
 2. `Pause program execution/Continue Program execution`
