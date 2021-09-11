@@ -2,15 +2,15 @@
 
 ## LLDB Debugger (LLDB) 简述
 
-> &emsp;什么是 REPL？R(read)、E(evaluate)、P(print)、L(loop)。“读取-求值-输出” 循环（英语：Read-Eval-Print Loop，简称 REPL），也被称作交互式顶层构件（英语：interactive toplevel），是一个简单的，交互式的编程环境。这个词常常用于指代一个 [Lisp](https://zh.wikipedia.org/wiki/LISP) 的交互式开发环境，也能指代命令行的模式。REPL 使得探索性的编程和调试更加便捷，因为 “读取-求值-输出” 循环通常会比经典的 “编辑-编译-运行-调试” 模式要更快。（有时候翻译成交互式解释器。就是你往 REPL 里输入一行代码，它立即给你执行结果。而不用像 C++, Java 那样通常需要编译才能看到运行结果，像 Python Ruby Scala 都是自带 REPL 的语言。）[读取﹣求值﹣输出循环 维基百科](https://zh.wikipedia.org/wiki/读取﹣求值﹣输出循环) [什么是REPL？](https://www.zhihu.com/question/53865469)
+> &emsp;什么是 REPL？R(read)、E(evaluate)、P(print)、L(loop)。“读取-求值-输出” 循环（英语：Read-Eval-Print Loop，简称 REPL），也被称作交互式顶层构件（interactive toplevel），是一个简单的、交互式的编程环境。这个词常常用于指代一个 [Lisp](https://zh.wikipedia.org/wiki/LISP) 的交互式开发环境，也能指代命令行的模式。REPL 使得 **探索性的编程和调试** 更加便捷，因为 “读取-求值-输出” 循环通常会比经典的 “编辑-编译-运行-调试” 模式要更快。（有时候翻译成交互式解释器。就是你往 REPL 里输入一行代码，它立即给你执行结果。而不用像 C++, Java 那样通常需要编译才能看到运行结果，像 Python Ruby Scala 都是自带 REPL 的语言。）[读取﹣求值﹣输出循环 维基百科](https://zh.wikipedia.org/wiki/读取﹣求值﹣输出循环) [什么是REPL？](https://www.zhihu.com/question/53865469)
 
-&emsp;[LLDB Debugger (LLDB)](https://lldb.llvm.org/resources/contributing.html) 是一个有着 REPL 特性并支持 C++、Python 插件的 **开源调试器**，LLDB 已被内置在 Xcode 中，Xcode 主窗口底部的控制台便是我们与 LLDB 交互的区域。LLDB 允许你在程序运行的特定时刻（如执行到某行代码、某个函数、某个变量被修改、target stop-hook 命中时）暂停它（`breakpoint/br/b/watchpoint/watch/wa`），你可以查看变量的值（`p/po/wa/frame/fr/target/ta`）、执行自定的指令（`expression/expr`），并且按照你所认为合适的步骤来操作程序（函数）的执行过程，对程序进行流程控制。（[How debuggers work: Part 1 - Basics](https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1.html) 是一个关于调试器如何工作的总体的解释。）
+&emsp;[LLDB Debugger (LLDB)](https://lldb.llvm.org/resources/contributing.html) 是一个有着 REPL 特性并支持 C++、Python 插件的 **开源调试器**，LLDB 已被内置在 Xcode 中，Xcode 主窗口底部的控制台便是我们与 LLDB 交互的区域。LLDB 允许你在程序运行的特定时刻（如执行到某行代码、某个函数，某个变量被修改、target stop-hook 命中时）暂停它（`breakpoint/br/b/watchpoint/watch/wa`），你可以查看变量的值（`p/po/wa/frame/fr/target/ta`）、执行自定的表达式（`expression/expr`），并且按照你所认为合适的步骤来操作程序（函数）的执行过程，对进程进行流程控制。（[How debuggers work: Part 1 - Basics](https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1.html) 是一个关于调试器如何工作的总体的解释。）
 
 &emsp;[GDB to LLDB command map](https://lldb.llvm.org/use/map.html) 中的一组表格向我们非常好的介绍了 LLDB 调试器提供的几大块命令的总览（常规用法，估计大家都已经掌握了）。除此之外我们可以安装 [Chisel](https://github.com/facebook/chisel/wiki) 来体验 LLDB 更 “高级” 的用法，Chisel 是 facebook 开源的一组  LLDB 命令合集，用于协助我们 **调试 iOS 应用程序**。Chisel 里面的命令正是基于 LLDB 支持 Python 脚本解释器来运行的，Chisel 每条命令对应的 Python 文件保存在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，熟悉 Python 的小伙伴可以试着读一下这些文件的内容（具体路径可能各人机器不同会有所区别，例如 Intel 的 mac 在 `/usr/local/Cellar/chisel/2.0.1/libexec` 路径下，m1 的 mac 在 `/opt/homebrew/Cellar/chisel/2.0.1/libexec` 路径下）。
 
 &emsp;上面我们说到 LLDB 已被内置在 Xcode 中，它是作为一个共享库放在 Xcode 的 SharedFrameworks 下面的，其完整路径是：`/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework`。
 
-> &emsp;LLDB 的调试接口本质上是一个 C++ 共享库，在 Mac 系统上，它被打包为 `LLDB.framework`（正常情况下，它存在于 `/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework` 路径下），在类 unix 系统上，它是 `lldb.so`。 这些调试接口可以在 lldb 的脚本解释器内直接使用，或者可以被引入 lldb.py 模块 的 Python 脚本 使用。LLDB 本身支持用户自定义命令，比如通过脚本可以自定义一个 `pviews` 命令，该命令可以打印 APP 所有的视图（该命令已经在 Chisel 中实现）。[lldb-入坑指北（1）-给xcode添加批量启用禁用断点功能](https://cloud.tencent.com/developer/article/1729078)
+> &emsp;LLDB 的调试接口本质上是一个 C++ 共享库，在 Mac 系统上，它被打包为 `LLDB.framework`（正常情况下，它存在于 `/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework` 路径下），在类 unix 系统上，它是 `lldb.so`（so 是此类系统的共享对象的后缀，so 大概是 shared object 的缩写，在 iOS 和 macOS 中把它们称作系统库、共享库（shared library），在 《程序员的自我修养》那本书中都称作的是：共享对象，所表达的意义是一样的）。 这些调试接口可以在 lldb 的脚本解释器内直接使用，或者可以被引入 lldb.py 模块 的 Python 脚本 使用。LLDB 本身支持用户自定义命令，比如通过脚本可以自定义一个 `pviews` 命令，该命令可以打印 APP 当前的所有视图（该命令已经在 Chisel 中实现）。[lldb-入坑指北（1）-给xcode添加批量启用禁用断点功能](https://cloud.tencent.com/developer/article/1729078)
 
 &emsp;下面我们从 LLDB 的基础命令开始，一步一步深入学习 LLDB 调试器。
 
@@ -18,15 +18,17 @@
 
 &emsp;日常我们更多的可能是在 Xcode 中使用 LLDB，今天我们通过 **终端** 与 Xcode 两种方式来对 LLDB 进行学习。熟悉 LLDB 的小伙伴应该都用过 `help`，如果有哪个命令不太熟悉的话，我们直接一个 `help <command>` 回车，LLDB 便会打印出该命令的详细信息，甚至 `help help` 能教我们怎么使用 `help` 命令。下面我们启动终端，然后输入 `LLDB` 并回车，此时便会进入 `LLDB` 环境，然后我们再输入 `help` 命令并回车，便会列出一大组当前机器内可用的 LLDB 命令，看到我的机器把所有的 LLDB 命令分了三组：
 
-+ Debugger commands
-+ Current command abbreviations (type 'help command alias' for more info)（Debugger commands 中的一些命令的别名或缩写）
-+ Current user-defined commands（用户自定义命令，由于我的机器已经安装了 Chisel，所以这里也直接列出来了 Chisel 提供的命令）
++ Debugger commands（LLDB 原始支持的几大块调试命令（例如：breakpoint 断点相关、process 进程相关、thread 线程相关、watchpoint 变量观察点相关））
++ Current command abbreviations (type 'help command alias' for more info)（Debugger commands 中的一些命令或者子命令的别名或缩写）
++ Current user-defined commands（用户自定义调试命令，由于我的机器已经安装了 Chisel，所以这里也直接列出来了 Chisel 提供的调试命令（python 脚本））
 
 &emsp;下面我们就从最简单的 `help` 命令开始学习。
 
 ### help
 
 &emsp;直接输入 `help` 命令，可显示所有 LLDB 命令的列表，输入 `help [<cmd-name>]` 便可列出 `<cmd-name>` 这个特定命令的详细信息。例如输入 `help help` 命令并回车，可看到如下描述：
+
+&emsp;下面 `-a`、`-h`、`-u` 选项的用法可直接忽略，感觉没啥实际用处。
 
 ```c++
 help help
@@ -43,15 +45,15 @@ Command Options Usage（help 命令后面可跟的命令选项用法）:
 
        -a ( --hide-aliases )( -a 是 --hide-aliases 选项的缩写)
             Hide aliases in the command list.
-            (相对 help 命令打印所有的命令列表，help -a 会隐藏 Current command abbreviations 分组的命令)
+            (相对 help 命令打印所有的命令列表，help -a 会隐藏 help 列出的三组命令中的 Current command abbreviations 组的命令)
 
        -h ( --show-hidden-commands )(-h 是 --show-hidden-commands 选项的缩写)
             Include commands prefixed with an underscore.
-            (同 help -h 和 help 相同，会把所有命令列出来)
+            (help -h 和 help 相同，会把所有命令列出来)
 
        -u ( --hide-user-commands )(--hide-user-commands 是 -u 选项的缩写)
             Hide user-defined commands from the list.
-            (相对 help 命令打印所有的命令列表，help -u 会隐藏 Current user-defined commands 分组的命令)
+            (相对 help 命令打印所有的命令列表，help -u 会隐藏 help 列出的三组命令中的 Current user-defined commands 分组的命令)
      
      This command takes options and free-form arguments.  If your arguments resemble option specifiers (i.e., they start with a - or --), you
      must use ' -- ' between the end of the command options and the beginning of the arguments.
@@ -61,7 +63,12 @@ Command Options Usage（help 命令后面可跟的命令选项用法）:
 
 ### print/po/p
 
-&emsp;在 LLDB 调试过程中，打印命令大概是我们用的最多的命令了，`print/prin/pri/p/po` 都能进行打印操作（打印表达式的返回值，变量名也是一个表达式），LLDB 实际上会作前缀匹配，所以我们使用 `print/prin/pri/p` 是完全一样的，但是我们不能使用 `pr`，因为 LLDB 不能消除 `print` 和 `process` 的歧义，不过幸运的是我们可以直接使用 `p`，大概是打印命令用的比较多吧，LLDB 把 `p` 这个最简单的缩写/别名归给了打印命令使用。（如下我们使用 `help pr` 命令，会提示我们使用了不明确的命令名称，并列出了所有以 `pr` 开头的命令，来提示我们具体想要哪个命令。）
+&emsp;在 LLDB 调试过程中，打印命令大概是我们用的最多的命令了，`print/prin/pri/p  /po` 都是打印命令，打印命令的本质是执行打印命令后面的表达式并输出执行结果，任意的一个变量名也是一个表达式，例如我们在 LLDB 调试窗口中执行如下命令:
+
++ `p a` （a 是一个变量名，这里便是执行 a 这个表达式并输出结果，即为 a 的值）
++ `p a + 2` （这里便是执行 a + 2 这个表达式并输出结果，即为 a + 2 的值）
+
+&emsp;LLDB 实际上会作前缀匹配，所以我们使用 `print/prin/pri/p` 是完全一样的，但是我们不能使用 `pr`，因为 LLDB 不能消除 `print` 和 `process` 两者的歧义，不过幸运的是我们可以直接使用 `p`（大概在 LLDB 调试时 `p` 打印命令用的是最多的），LLDB 把 `p` 这个最简单的缩写/别名归给了 **打印命令** 使用。（如下我们使用 `help pr` 命令，会提示我们使用了不明确的命令名称，并列出了所有以 `pr` 开头的命令，来提示我们具体想要查看哪个命令的详细信息。）
 
 ```c++
 (lldb) help pr
@@ -74,7 +81,7 @@ Help requested with ambiguous command name, possible completions:
 
 &emsp;下面我们区分一下 `print/prin/pri/p` 和 `po`，虽然它们都是打印命令，但是它们的打印格式并不相同。
 
-&emsp;分别通过 `help print`、`help p`、`help po` 输出的帮助信息，我们可以看到 `print/p` 是作用完全一样的命令，`print/p` 都是 `expression --` 命令的缩写，它们都是根据 LLDB 的默认格式来进行打印操作，而 `po` 则是 `expression -O  --` 的缩写，如果大家阅读的认真的话，应该还记得 `--` 是用来标记命令的选项结束的，`--` 前面是命令的选项，`--` 后面是命令的参数。`expression -O  --` 中的 `-O` 选项是 `--object-description` 的缩写：`-O ( --object-description ) Display using a language-specific description API, if possible.` 针对 Objective-C 的话，便是调用 `description` 实例函数或者类函数，即使用 `po` 命令进行打印时，它是根据当前语言环境，调用 `description` API 返回的结果进行打印操作。（在 OC 中我们可以通过重写 `+/-description` 函数便可得到自定义的打印结果）   
+&emsp;分别通过 `help print`、`help p`、`help po` 输出的帮助信息，我们可以看到 `print/p` 是作用完全一样的命令，`print/p` 都是 `expression --` 命令的缩写，它们都是根据 LLDB 的默认格式来进行打印操作，而 `po` 则是 `expression -O  --` 的缩写，如果大家阅读的认真的话，应该还记得 `--` 是用来标记命令的选项结束的，`--` 前面是命令的选项，`--` 后面是命令的参数。`expression -O  --` 中的 `-O` 选项是 `--object-description` 的缩写：`-O ( --object-description ) Display using a language-specific description API, if possible.` 即针对 Objective-C 的话，便是调用 `description` 实例函数或者类函数，即使用 `po` 命令进行打印时，它是根据当前语言环境，调用 `description` API 返回的结果进行打印操作。（在 OC 中我们可以通过重写 `+/-description` 函数便可得到自定义的打印结果。）   
 
 &emsp;即看到这里面我们便明白了 `print/prin/pri/po/p` 都是调用 `expression` 命令，执行表达式（变量也是一个表达式）并输出表达式的返回值。
 
@@ -330,7 +337,7 @@ Examples:
 
 ### process  continue/continue/c
 
-&emsp;当我们在 Xcode 中运行程序，并命中我们添加的断点时，此时程序执行便暂停到我们的断点处。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 Continue 状态，点击它我们便会继续执行我们的程序直到命中下一个断点，然后此时它右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
+&emsp;当我们在 Xcode 中运行程序，并命中我们在程序中添加的断点时，此时进程执行便暂停到我们的断点处（此时进程中的所有线程都会暂停）。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 Continue 状态，点击它我们便会继续执行我们的程序直到命中下一个断点，然后此时它右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
 
 1. `Activate breakpoints/Deactivate breakpoints`
 2. `Pause program execution/Continue Program execution`
