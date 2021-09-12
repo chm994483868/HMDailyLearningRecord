@@ -888,9 +888,51 @@ The following subcommands are supported:
 For more help on any particular subcommand, type 'help <command> <subcommand>'.
 ```
 
- &emsp;至此断点相关的命令就看到这里，下面我们看一些 LLDB 更高级的用法。
+ &emsp;至此断点相关的命令就看到这里，下面我们看一些 LLDB 在 iOS App 的视图层级的一些用法。
  
- &emap;前面我们学习了 LLDB 调试条上的 暂停/继续 执行程序按钮，其中我们主要关注点是在继续按钮上，现在我们试试运行程序后点击暂停按钮试试，
+ ## 在 iOS App 中进行 LLDB 调试
+ 
+ &emap;前面我们学习了 LLDB 调试条上的 暂停/继续 执行程序的按钮，其中我们的主要关注点放在了继续按钮上，现在我们试试运行 iOS App 后点击暂停按钮试试。
+ 
+ ### 打印当前 App 视图层级  
+ 
+ &emsp;点击暂停按钮后可看到我们的 iOS App 定位到了主线程的 `mach_msg_trap` 处，并且我们的 Xcode 的控制台进入了 LLDB 调试模式。点击暂停按钮后会暂停 iOS App 的运行，就如同执行了 `process interrupt` 命令，因为 LLDB 总是在 Xcode 背后运行的。虽然此时也进入了 LLDB 调试模式，但是我们的 iOS App 并没有暂停在我们自己编写的特定的函数或者特定的代码处，所以我们能做的事情并不多，但是我们可以试着去访问 iOS App 的全局变量。如下，我们可以通过 `keyWindow` 来访问我们 iOS App 的视图层级：
+
+```c++
+(lldb) po [[[UIApplication sharedApplication] keyWindow] recursiveDescription]
+<UIWindow: 0x7fb4555062a0; frame = (0 0; 428 926); gestureRecognizers = <NSArray: 0x600000164ab0>; layer = <UIWindowLayer: 0x600000f665c0>>
+   | <UITransitionView: 0x7fb457005d60; frame = (0 0; 428 926); autoresize = W+H; layer = <CALayer: 0x600000f41140>>
+   |    | <UIDropShadowView: 0x7fb457006680; frame = (0 0; 428 926); autoresize = W+H; layer = <CALayer: 0x600000f41da0>>
+   |    |    | <UILayoutContainerView: 0x7fb45720a9e0; frame = (0 0; 428 926); clipsToBounds = YES; autoresize = W+H; gestureRecognizers = <NSArray: 0x60000011fea0>; layer = <CALayer: 0x600000f08740>>
+   |    |    |    | <UINavigationTransitionView: 0x7fb45720b7e0; frame = (0 0; 428 926); clipsToBounds = YES; autoresize = W+H; layer = <CALayer: 0x600000f08880>>
+   |    |    |    |    | <UIViewControllerWrapperView: 0x7fb457509d60; frame = (0 0; 428 926); autoresize = W+H; layer = <CALayer: 0x600000f51d40>>
+   |    |    |    |    |    | <UIView: 0x7fb4575092e0; frame = (0 0; 428 926); autoresize = W+H; layer = <CALayer: 0x600000f51e00>>
+   |    |    |    |    |    |    | <UILabel: 0x7fb457509450; frame = (182 453; 64.3333 20.3333); text = 'CENTER'; opaque = NO; autoresize = RM+BM; userInteractionEnabled = NO; layer = <_UILabelLayer: 0x600002c506e0>>
+   |    |    |    | <UINavigationBar: 0x7fb45741dce0; frame = (0 47; 428 44); opaque = NO; autoresize = W; layer = <CALayer: 0x600000f31480>>
+   |    |    |    |    | <_UIBarBackground: 0x7fb45740af90; frame = (0 -47; 428 91); userInteractionEnabled = NO; layer = <CALayer: 0x600000f315e0>>
+   |    |    |    |    |    | <UIVisualEffectView: 0x7fb45700f790; frame = (0 0; 428 91); layer = <CALayer: 0x600000f12060>> effect=none
+   |    |    |    |    |    |    | <_UIVisualEffectBackdropView: 0x7fb45700ff30; frame = (0 0; 428 91); autoresize = W+H; userInteractionEnabled = NO; layer = <UICABackdropLayer: 0x600000f12300>>
+   |    |    |    |    |    | <_UIBarBackgroundShadowView: 0x7fb45700fb60; frame = (0 91; 428 0.333333); layer = <CALayer: 0x600000f12160>> clientRequestedContentView effect=none
+   |    |    |    |    |    |    | <_UIBarBackgroundShadowContentImageView: 0x7fb4557180d0; frame = (0 0; 428 0.333333); autoresize = W+H; userInteractionEnabled = NO; layer = <CALayer: 0x600000f3bf40>>
+   |    |    |    |    | <_UINavigationBarContentView: 0x7fb457415480; frame = (0 0; 428 44); layer = <CALayer: 0x600000f31600>> layout=0x7fb45741ac30
+   |    |    |    |    | <UIView: 0x7fb45700ce70; frame = (0 0; 0 0); userInteractionEnabled = NO; layer = <CALayer: 0x600000f10040>>
+```
+
+### 更新 App UI 
+
+&emsp;通过上面视图层级的输出我们可以直接通过内存地址获得我们的 text 是 CENTER 的 UILabel，下面我们在 LLDB  命名空间中创建一个变量来取得此 UILabel：
+
+```c++
+(lldb) expression UILabel *$myLabel = (UILabel *)0x7fb457509450
+```
+
+&emsp;然后我们改变 myLabel 的背景颜色：
+
+```c++
+(lldb) expression [$myLabel setBackgroundColor: [UIColor blueColor]]
+```
+
+&emsp;执行完此命令，我们的 Label 的背景颜色并没有发生变化，此时需要我们可以再次点击 LLDB 调试条上的 暂停/继续 按钮，继续执行我们的 iOS App，我们的 App 界面才能得到刷新，我们的 Label 的背景色才能变成蓝色。 
  
  
  
