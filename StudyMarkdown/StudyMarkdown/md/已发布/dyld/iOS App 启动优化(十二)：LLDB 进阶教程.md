@@ -355,15 +355,20 @@ Examples:
      Important Note: Because this command takes 'raw' input, if you use any command options you must use ' -- ' between the end of the command options and the beginning of the raw input.
 ```
 
-### process  continue/continue/c
+### thread/process/frame
 
-&emsp;当我们在 Xcode 中运行程序，并命中我们在程序中添加的断点时，此时进程执行便暂停到我们的断点处（此时进程中的所有线程都会暂停）。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上的  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 `Continue` 状态，点击它我们的进程便会继续无休止的执行下去直到结束，或者再次命中我们的程序中的下一个断点。当我们的进程进入 LLDB 调试状态时，暂停/继续按钮右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
+&emsp;当我们在 Xcode 中运行程序，并命中我们在程序中添加的断点时，此时进程执行便暂停到我们的断点处（此时进程中的其他线程都会暂停，`thread list` 可列出当前所有线程，其中标星的是当前线程）。Xcode 底部的控制台便会进入 LLDB 调试模式，调试条上的  `Pause program execution/Continue Program execution`：暂停/继续 按钮，此时会处于 `Continue` 状态，点击它我们的进程便会继续无休止的执行下去直到结束或者再次命中我们的程序中的下一个断点。当我们的进程进入 LLDB 调试状态时，暂停/继续 按钮右边的三个按钮也会变成高亮的可点击状态（这三个按钮只有程序进入 LLDB 调试模式后才会变成可点击状态，程序正常运行时它们都是灰色不可点击的） ，此时我们便有了四个可以用来控制程序执行流程的按钮（如果加上旁边的 激活/关闭 所有断点的按钮的话，那我们便有了 5 个可以控制程序执行流程的按钮）。依次如下按钮：
 
-1. `Activate breakpoints/Deactivate breakpoints`
-2. `Pause program execution/Continue Program execution`
-3. `Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`（源码级别、汇编指令级别、仅执行当前线程的内容）
-4. `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)`（源码级别、汇编指令级别、仅执行当前线程的内容）
+1. `Activate breakpoints/Deactivate breakpoints`（激活/失活所有断点）
+2. `Pause program execution/Continue Program execution`（暂停/继续 程序执行，对应的 LLDB 命令是：`process interrupt/process continue` ）
+3. `Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)`
+  + `Step over`：直接点击按钮进行源码级别的单行代码步进
+  + `Step over instruction(hold Control)`：按住键盘上的 Control 按钮点击此按钮进行汇编指令级别的单行指令步进，且其它线程也都会执行。
+  + `Step over thread(hold Control-Shift)`：同时按住键盘上的 Control 和 Shift 按钮点击此按钮进行源码级别的单行代码步进，仅执行当前线程并继续暂停其他的线程，上面的两者则都是继续执行所有线程，所以这个 `thread` 级别的 `Step over` 可以保证调试只在当前线程进行，屏蔽其他线程对当前线程的影响。
+4. `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)`（同上，源码级别、汇编指令级别、仅执行当前线程。和 `Step over` 不同的是，当单行代码是一个函数调用时，点击此按钮会进入函数内部，其他则基本和 `Step over` 相同。）
 5. `Step out`
+
+&emsp;下面我们对这些按钮进行详细学习：
 
 &emsp;`Activate breakpoints/Deactivate breakpoints`：激活/失活 全部断点，例如当我们想要关闭所有断点想要程序直接执行下去，看它最终呈现的页面效果时，我们可以先使用此按钮失活所有断点，然后点击 `Continue Program execution` 按钮即可。在 LLDB 调试器中我们可以使用 `breakpoint disable` 和 `breakpoint enable` 达到同样的效果（有一点细微差别，感兴趣的小伙伴可以自己试一下）。
 
@@ -374,9 +379,9 @@ All breakpoints enabled. (7 breakpoints)
 All breakpoints disabled. (7 breakpoints)
 ```
 
-&emsp;`Pause program execution/Continue Program execution`：暂停/继续 执行程序，当程序处于暂停状态时，点击此按钮可使程序继续执行下去，直到遇到下一个断点，或者没有下一个断点的话程序一直执行下去。在 LLDB 调试器中我们可以使用 `process continue/continue/c` 可达到同样的效果（`continue/c` 是 `process continue` 的缩写）。它们后还可以跟一个 `-i` 选项，下面是 `c` 命令的帮助信息：
+&emsp;`Pause program execution/Continue Program execution`：暂停/继续 执行程序（对应的 LLDB 命令是：`process interrupt/process continue`）。当程序处于暂停状态时，点击此按钮可使程序继续执行下去，直到遇到下一个断点，或者没有下一个断点的话程序一直执行下去。在 LLDB 调试器中我们可以使用 `process continue/continue/c` 可达到同样的效果（`continue/c` 是 `process continue` 的缩写）。它们后面还可以跟一个 `-i` 选项，下面是 `c` 命令的帮助信息：
 
-&emsp;（下面帮助信息中指出了 `c` 是继续执行当前进程的 **所有线程**，那有没有只执行当前线程的命令呢？答案是有的，下面我们会揭晓）
+&emsp;（下面帮助信息中指出了 `c` 是继续执行当前进程的 **所有线程**，那有没有只执行当前线程的命令呢？答案是有的，下面我们会揭晓。）
 
 ```c++
 (lldb) help c
@@ -419,7 +424,7 @@ Process 85687 resuming
 
 &emsp;接下来我们看下一个按钮的功能：
 
-&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)` 会以黑盒的方式执行一行代码。即使这行代码是一个函数调用的话也是直接执行，并不会跳进函数内部，对比 `Step into（单行源码执行）/Step into instruction(hold Control)/Step into thread(hold Control-Shift)` 的话，它则是可以跳进（单行代码）所调用的函数内部，当然仅限于我们自己的自定义的函数，系统那些闭源的函数我们是无法进入的。在 LLDB 调试器中我们可以使用 `thread step-over/next/n` 命令（`next/n` 是 `thread step-over` 的缩写）达到同样的效果。
+&emsp;`Step over/Step over instruction(hold Control)/Step over thread(hold Control-Shift)` 会以黑盒的方式执行一行代码。即使这行代码是一个函数调用的话也是直接执行，并不会跳进函数内部，对比 `Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)` 的话，它则是可以跳进（单行代码）所调用的函数内部，当然仅限于我们自己的自定义的函数，系统那些闭源的函数我们是无法进入的。在 LLDB 调试中我们可以使用 `thread step-over/next/n` 命令（`next/n` 是 `thread step-over` 的缩写）达到同样的效果。
 
 ```c++
 n         -- Source level single step, stepping over calls.  Defaults to current thread unless specified.
@@ -428,362 +433,478 @@ nexti     -- Instruction level single step, stepping over calls.  Defaults to cu
 ni        -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.
 ```
 
-&emsp;
+&emsp;`n/next` 是源码级别，且会跳过函数调用。`nexti/ni` 是汇编指令级别的，且同样会跳过函数调用。  
 
-&emsp;可看到 `next/nexti` 直接使用更简单的缩写 `n/ni`。
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;`Step into/Step into instruction(hold Control)/Step into thread(hold Control-Shift)` 对比上面的一个按钮，如果你想跳进一个函数调用进行调试或者查看它内部的执行情况便可以使用此按钮，如果当前行不是函数调用时，`Step over/Step into` 的执行效果是一样的。在 LLDB 调试中我们可以使用 `thread step-in/thread step-inst/step-inst-over/s/step/si/stepi` 命令达到同样的效果。
 
 ```c++
-(lldb) apropos continue
-The following commands may relate to 'continue':
-  process continue -- Continue execution of all threads in the current process.
-  thread continue  -- Continue execution of the current target process.  One or more threads may be specified, by default all
-                      threads continue.
-  thread until     -- Continue until a line number or address is reached by the current or specified thread.  Stops when returning
-                      from the current function as a safety measure.  The target line number(s) are given as arguments, and if
-                      more than one is provided, stepping will stop when the first one is hit.
-  c                -- Continue execution of all threads in the current process.
-  continue         -- Continue execution of all threads in the current process.
+thread step-in        -- Source level single step, stepping into calls.  Defaults to current thread unless specified.
+thread step-inst      -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.
+thread step-inst-over -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.
 
-The following settings variables may relate to 'continue': 
-
-
-  target.process.thread.step-out-avoid-nodebug -- If true, when step-in/step-out/step-over leave the current frame, they will
-                                                  continue to step out till they come to a function with debug information.
-                                                  Passing a frame argument to step-out will override this option.
+s                     -- Source level single step, stepping into calls.  Defaults to current thread unless specified.
+step                  -- Source level single step, stepping into calls.  Defaults to current thread unless specified.
+si                    -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.
+stepi                 -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.
 ```
 
-+ `n         -- Source level single step, stepping over calls.  Defaults to current thread unless specified.`
-+ `next      -- Source level single step, stepping over calls.  Defaults to current thread unless specified.`
-
-+ `ni        -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.`
-+ `nexti     -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.`
-
-+ `s         -- Source level single step, stepping into calls.  Defaults to current thread unless specified.`
-+ `step      -- Source level single step, stepping into calls.  Defaults to current thread unless specified.`
-
-+ `si        -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.`
-+ `stepi     -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.`
-
-
-&emsp;
-
-
-&emsp;
-
-&emsp;
-
-
-| 命令 | 用途 | 示例 |
-| --- | --- | --- |
-| apropos | List debugger commands related to a word or subject.（列出与 search-word 相关的调试命令） | Syntax: apropos <search-word> |
-
+&emsp;`Step out` 如果我们使用 `Step into` 进入了一个函数调用，但是它的内容特别长，我们不想一次一次重复点击 `Step into/Step over` 按钮直到函数执行完成，我们想快速把当前这个函数执行完成，那么我们就可以点击 `Step out` 按钮来完成此操作。`Step out` 会继续执行到下一个返回语句（直到一个堆栈帧结束）然后再次停止。在 LLDB 调试中我们可以使用 `thread step-out/finish` 命令达到同样的效果。
 
 ```c++
-help
-Debugger commands:
-  apropos           -- List debugger commands related to a word or subject.（列出与单词或主题相关的调试器命令）
-  breakpoint        -- Commands for operating on breakpoints (see 'help b' for
-                       shorthand.)（用于操作断点的命令）
-  command           -- Commands for managing custom LLDB commands.（用于管理自定义 LLDB commands 的命令。）
-  disassemble       -- Disassemble specified instructions in the current
-                       target.  Defaults to the current function for the
-                       current thread and stack frame.（当前反汇编指定指令目标。默认为当前函数 当前线程和堆栈帧。）
-  expression        -- Evaluate an expression on the current thread.  Displays
-                       any returned value with LLDB's default formatting.
-  frame             -- Commands for selecting and examing the current thread's
-                       stack frames.
-  gdb-remote        -- Connect to a process via remote GDB server.  If no host
-                       is specifed, localhost is assumed.
-  gui               -- Switch into the curses based GUI mode.
-  help              -- Show a list of all debugger commands, or give details
-                       about a specific command.
-  kdp-remote        -- Connect to a process via remote KDP server.  If no UDP
-                       port is specified, port 41139 is assumed.
-  language          -- Commands specific to a source language.
-  log               -- Commands controlling LLDB internal logging.
-  memory            -- Commands for operating on memory in the current target
-                       process.
-  platform          -- Commands to manage and create platforms.
-  plugin            -- Commands for managing LLDB plugins.
-  process           -- Commands for interacting with processes on the current
-                       platform.
-  quit              -- Quit the LLDB debugger.
-  register          -- Commands to access registers for the current thread and
-                       stack frame.
-  reproducer        -- Commands for manipulating reproducers. Reproducers make
-                       it possible to capture full debug sessions with all its
-                       dependencies. The resulting reproducer is used to replay
-                       the debug session while debugging the debugger.
-                       Because reproducers need the whole the debug session
-                       from beginning to end, you need to launch the debugger
-                       in capture or replay mode, commonly though the command
-                       line driver.
-                       Reproducers are unrelated record-replay debugging, as
-                       you cannot interact with the debugger during replay.
-  script            -- Invoke the script interpreter with provided code and
-                       display any results.  Start the interactive interpreter
-                       if no code is supplied.
-  settings          -- Commands for managing LLDB settings.
-  source            -- Commands for examining source code described by debug
-                       information for the current target process.
-  statistics        -- Print statistics about a debugging session
-  target            -- Commands for operating on debugger targets.
-  thread            -- Commands for operating on one or more threads in the
-                       current process.
-  type              -- Commands for operating on the type system.
-  version           -- Show the LLDB debugger version.
-  watchpoint        -- Commands for operating on watchpoints.
-Current command abbreviations (type 'help command alias' for more info):
-  add-dsym  -- Add a debug symbol file to one of the target's current modules
-               by specifying a path to a debug symbols file, or using the
-               options to specify a module to download symbols for.
-  attach    -- Attach to process by ID or name.
-  b         -- Set a breakpoint using one of several shorthand formats.
-  bt        -- Show the current thread's call stack.  Any numeric argument
-               displays at most that many frames.  The argument 'all' displays
-               all threads.
-  c         -- Continue execution of all threads in the current process.
-  call      -- Evaluate an expression on the current thread.  Displays any
-               returned value with LLDB's default formatting.
-  continue  -- Continue execution of all threads in the current process.
-  detach    -- Detach from the current target process.
-  di        -- Disassemble specified instructions in the current target. 
-               Defaults to the current function for the current thread and
-               stack frame.
-  dis       -- Disassemble specified instructions in the current target. 
-               Defaults to the current function for the current thread and
-               stack frame.
-  display   -- Evaluate an expression at every stop (see 'help target
-               stop-hook'.)
-  down      -- Select a newer stack frame.  Defaults to moving one frame, a
-               numeric argument can specify an arbitrary number.
-  env       -- Shorthand for viewing and setting environment variables.
-  exit      -- Quit the LLDB debugger.
-  f         -- Select the current stack frame by index from within the current
-               thread (see 'thread backtrace'.)
-  file      -- Create a target using the argument as the main executable.
-  finish    -- Finish executing the current stack frame and stop after
-               returning.  Defaults to current thread unless specified.
-  image     -- Commands for accessing information for one or more target
-               modules.
-  j         -- Set the program counter to a new address.
-  jump      -- Set the program counter to a new address.
-  kill      -- Terminate the current target process.
-  l         -- List relevant source code using one of several shorthand formats.
-  list      -- List relevant source code using one of several shorthand formats.
-  n         -- Source level single step, stepping over calls.  Defaults to
-               current thread unless specified.
-  next      -- Source level single step, stepping over calls.  Defaults to
-               current thread unless specified.
-  nexti     -- Instruction level single step, stepping over calls.  Defaults to
-               current thread unless specified.
-  ni        -- Instruction level single step, stepping over calls.  Defaults to
-               current thread unless specified.
-  p         -- Evaluate an expression on the current thread.  Displays any
-               returned value with LLDB's default formatting.
-  parray    -- parray <COUNT> <EXPRESSION> -- lldb will evaluate EXPRESSION to
-               get a typed-pointer-to-an-array in memory, and will display
-               COUNT elements of that type from the array.
-  po        -- Evaluate an expression on the current thread.  Displays any
-               returned value with formatting controlled by the type's author.
-  poarray   -- poarray <COUNT> <EXPRESSION> -- lldb will evaluate EXPRESSION to
-               get the address of an array of COUNT objects in memory, and will
-               call po on them.
-  print     -- Evaluate an expression on the current thread.  Displays any
-               returned value with LLDB's default formatting.
-  q         -- Quit the LLDB debugger.
-  r         -- Launch the executable in the debugger.
-  rbreak    -- Sets a breakpoint or set of breakpoints in the executable.
-  re        -- Commands to access registers for the current thread and stack
-               frame.
-  repl      -- Evaluate an expression on the current thread.  Displays any
-               returned value with LLDB's default formatting.
-  run       -- Launch the executable in the debugger.
-  s         -- Source level single step, stepping into calls.  Defaults to
-               current thread unless specified.
-  shell     -- Run a shell command on the host.
-  si        -- Instruction level single step, stepping into calls.  Defaults to
-               current thread unless specified.
-  sif       -- Step through the current block, stopping if you step directly
-               into a function whose name matches the TargetFunctionName.
-  step      -- Source level single step, stepping into calls.  Defaults to
-               current thread unless specified.
-  stepi     -- Instruction level single step, stepping into calls.  Defaults to
-               current thread unless specified.
-  t         -- Change the currently selected thread.
-  tbreak    -- Set a one-shot breakpoint using one of several shorthand formats.
-  undisplay -- Stop displaying expression at every stop (specified by stop-hook
-               index.)
-  up        -- Select an older stack frame.  Defaults to moving one frame, a
-               numeric argument can specify an arbitrary number.
-  v         -- Show variables for the current stack frame. Defaults to all
-               arguments and local variables in scope. Names of argument,
-               local, file static and file global variables can be specified.
-               Children of aggregate variables can be specified such as
-               'var->child.x'.  The -> and [] operators in 'frame variable' do
-               not invoke operator overloads if they exist, but directly access
-               the specified element.  If you want to trigger operator
-               overloads use the expression command to print the variable
-               instead.
-               It is worth noting that except for overloaded operators, when
-               printing local variables 'expr local_var' and 'frame var
-               local_var' produce the same results.  However, 'frame variable'
-               is more efficient, since it uses debug information and memory
-               reads directly, rather than parsing and evaluating an
-               expression, which may even involve JITing and running code in
-               the target program.
-  var       -- Show variables for the current stack frame. Defaults to all
-               arguments and local variables in scope. Names of argument,
-               local, file static and file global variables can be specified.
-               Children of aggregate variables can be specified such as
-               'var->child.x'.  The -> and [] operators in 'frame variable' do
-               not invoke operator overloads if they exist, but directly access
-               the specified element.  If you want to trigger operator
-               overloads use the expression command to print the variable
-               instead.
-               It is worth noting that except for overloaded operators, when
-               printing local variables 'expr local_var' and 'frame var
-               local_var' produce the same results.  However, 'frame variable'
-               is more efficient, since it uses debug information and memory
-               reads directly, rather than parsing and evaluating an
-               expression, which may even involve JITing and running code in
-               the target program.
-  vo        -- Show variables for the current stack frame. Defaults to all
-               arguments and local variables in scope. Names of argument,
-               local, file static and file global variables can be specified.
-               Children of aggregate variables can be specified such as
-               'var->child.x'.  The -> and [] operators in 'frame variable' do
-               not invoke operator overloads if they exist, but directly access
-               the specified element.  If you want to trigger operator
-               overloads use the expression command to print the variable
-               instead.
-               It is worth noting that except for overloaded operators, when
-               printing local variables 'expr local_var' and 'frame var
-               local_var' produce the same results.  However, 'frame variable'
-               is more efficient, since it uses debug information and memory
-               reads directly, rather than parsing and evaluating an
-               expression, which may even involve JITing and running code in
-               the target program.
-  x         -- Read from the memory of the current target process.
-Current user-defined commands:
-  alamborder    -- Put a border around views with an ambiguous layout
-  alamunborder  -- Removes the border around views with an ambiguous layout
-  bdisable      -- Disable a set of breakpoints for a regular expression
-  benable       -- Enable a set of breakpoints for a regular expression
-  binside       -- Set a breakpoint for a relative address within the
-                   framework/library that's currently running. This does the
-                   work of finding the offset for the framework/library and
-                   sliding your address accordingly.
-  bmessage      -- Set a breakpoint for a selector on a class, even if the
-                   class itself doesn't override that selector. It walks the
-                   hierarchy until it finds a class that does implement the
-                   selector and sets a conditional breakpoint there.
-  border        -- Draws a border around <viewOrLayer>. Color and width can be
-                   optionally provided. Additionally depth can be provided in
-                   order to recursively border subviews.
-  caflush       -- Force Core Animation to flush. This will 'repaint' the UI
-                   but also may mess with ongoing animations.
-  copy          -- Copy data to your Mac.
-  dcomponents   -- Set debugging options for components.
-  dismiss       -- Dismiss a presented view controller.
-  fa11y         -- Find the views whose accessibility labels match labelRegex
-                   and puts the address of the first result on the clipboard.
-  findinstances -- Find instances of specified ObjC classes.
-  flicker       -- Quickly show and hide a view to quickly help visualize where
-                   it is.
-  fv            -- Find the views whose class names match classNameRegex and
-                   puts the address of first on the clipboard.
-  fvc           -- Find the view controllers whose class names match
-                   classNameRegex and puts the address of first on the
-                   clipboard.
-  heapfrom      -- Show all nested heap pointers contained within a given
-                   variable.
-  hide          -- Hide a view or layer.
-  mask          -- Add a transparent rectangle to the window to reveal a
-                   possibly obscured or hidden view or layer's bounds
-  mwarning      -- simulate a memory warning
-  pa11y         -- Print accessibility labels of all views in hierarchy of
-                   <aView>
-  pa11yi        -- Print accessibility identifiers of all views in hierarchy of
-                   <aView>
-  pactions      -- Print the actions and targets of a control.
-  paltrace      -- Print the Auto Layout trace for the given view. Defaults to
-                   the key window.
-  panim         -- Prints if the code is currently execution with a UIView
-                   animation block.
-  pbcopy        -- Print object and copy output to clipboard
-  pblock        -- Print the block`s implementation address and signature
-  pbundlepath   -- Print application's bundle directory path.
-  pcells        -- Print the visible cells of the highest table view in the
-                   hierarchy.
-  pclass        -- Print the inheritance starting from an instance of any class.
-  pcomponents   -- Print a recursive description of components found starting
-                   from <aView>.
-  pcurl         -- Print the NSURLRequest (HTTP) as curl command.
-  pdata         -- Print the contents of NSData object as string.
-  pdocspath     -- Print application's 'Documents' directory path.
-  pinternals    -- Show the internals of an object by dereferencing it as a
-                   pointer.
-  pinvocation   -- Print the stack frame, receiver, and arguments of the
-                   current invocation. It will fail to print all arguments if
-                   any arguments are variadic (varargs).
-  pivar         -- Print the value of an object's named instance variable.
-  pjson         -- Print JSON representation of NSDictionary or NSArray object
-  pkp           -- Print out the value of the key path expression using
-                   -valueForKeyPath:
-  pmethods      -- Print the class and instance methods of a class.
-  poobjc        -- Print the expression result, with the expression run in an
-                   ObjC++ context. (Shortcut for "expression -O -l ObjC++ -- " )
-  pproperties   -- Print the properties of an instance or Class
-  present       -- Present a view controller.
-  presponder    -- Print the responder chain starting from a specific responder.
-  psjson        -- Print JSON representation of Swift Dictionary or Swift Array
-                   object
-  ptv           -- Print the highest table view in the hierarchy.
-  pvc           -- Print the recursion description of <aViewController>.
-  pviews        -- Print the recursion description of <aView>.
-  rcomponents   -- Synchronously reflow and update all components.
-  sequence      -- Run commands in sequence, stopping on any error.
-  setinput      -- Input text into text field or text view that is first
-                   responder.
-  settext       -- Set text on text on a view by accessibility id.
-  show          -- Show a view or layer.
-  slowanim      -- Slows down animations. Works on the iOS Simulator and a
-                   device.
-  taplog        -- Log tapped view to the console.
-  uikit         -- Imports the UIKit module to get access to the types while in
-                   lldb.
-  unborder      -- Removes border around <viewOrLayer>.
-  unmask        -- Remove mask from a view or layer
-  unslowanim    -- Turn off slow animations.
-  visualize     -- Open a UIImage, CGImageRef, UIView, CALayer, or
-                   CVPixelBuffer in Preview.app on your Mac.
-  vs            -- Interactively search for a view by walking the hierarchy.
-  wivar         -- Set a watchpoint for an object's instance variable.
-  xdebug        -- Print debug description the XCUIElement in human readable
-                   format.
-  xnoid         -- Print XCUIElement objects with label but without identifier.
-  xobject       -- Print XCUIElement details.
-  xtree         -- Print XCUIElement subtree.
-  zzz           -- Executes specified lldb command after delay.
-For more information on any command, type 'help <command-name>'.
+thread step-out       -- Finish executing the current stack frame and stop after returning.  Defaults to current thread unless specified.
+finish                -- Finish executing the current stack frame and stop after returning.  Defaults to current thread unless specified.
+```
+
+&emsp;除了上面 Xcode 直接提供的调试按钮所对应的调试命令外，还有一个特别有用的命令：`thread return`，它有一个可选参数，在执行时它会把可选参数加载进返回寄存器中，然后立刻执行返回命令，跳出当前栈帧。这意味着这函数的剩余部分 **不会被执行**。这会给 ARC 的引用计数造成一些问题，或者会使函数内的清理部分失效。但是在函数开头执行这个命令，是个非常好的隔离这个函数、伪造函数返回值的方式。
+
+```c++
+(lldb) help thread return
+     Prematurely return from a stack frame, short-circuiting execution of newer frames and optionally yielding a specified value.  Defaults to the exiting the current stack frame.  Expects 'raw' input
+     (see 'help raw-input'.)
+
+Syntax: thread return
+
+Command Options Usage:
+  thread return [-x] -- [<expr>]
+  thread return [<expr>]
+
+       -x ( --from-expression )
+            Return from the innermost expression evaluation.
+     
+     Important Note: Because this command takes 'raw' input, if you use any command options you must use ' -- ' between the end of the command options and the beginning of the raw input.
 (lldb) 
-
 ```
 
+&emsp;上面我们使用到的命令基本都是位于 `thread` 命令下的，其中还涉及到 `frame` 命令（如查看当前函数调用栈帧内容等）、`process` 命令（控制进程继续执行等）。下面我们直接列出它们的子命令以加深学习印象。
+
+#### thread
+
+&emsp;`thread`：用于在当前进程中的一个或多个线程上操作的命令。
+
+```c++
+(lldb) help thread
+     Commands for operating on one or more threads in the current process.
+
+Syntax: thread <subcommand> [<subcommand-options>]
+
+The following subcommands are supported:
+
+      backtrace      -- Show thread call stacks.  Defaults to the current thread, thread indexes can be specified as arguments.
+                        Use the thread-index "all" to see all threads.
+                        Use the thread-index "unique" to see threads grouped by unique call stacks.
+                        Use 'settings set frame-format' to customize the printing of frames in the backtrace and 'settings set thread-format' to customize the thread header.
+                        显示线程调用堆栈。默认为当前线程，也可以指定线程，使用线程索引作为参数。
+                        使用线程索引 "all" 查看所有线程。
+                        使用线程索引 "unique" 查看按唯一调用堆栈分组的线程。
+                        使用 'settings set frame-format' 自定义回溯中帧的打印，使用 'settings set thread-format' 自定义线程标题。
+                        
+      continue       -- Continue execution of the current target process.  One or more threads may be specified, by default all threads continue.
+                        继续执行当前目标进程。可以指定一个或多个线程，默认情况下所有线程都继续执行。(thread continue <thread-index> [<thread-index> [...]])
+                    
+      exception      -- Display the current exception object for a thread. Defaults to the current thread.
+                        显示线程的当前异常对象。默认为当前线程。
+    
+      info           -- Show an extended summary of one or more threads.  Defaults to the current thread.
+                        显示一个或多个线程的扩展摘要。默认为当前线程。
+                        
+      jump           -- Sets the program counter to a new address.
+                        将程序计数器(pc 寄存器)设置为新地址。
+                        
+      list           -- Show a summary of each thread in the current target process.  Use 'settings set thread-format' to customize the individual thread listings.
+                        显示当前目标进程中每个线程的摘要。使用 'settings set thread-format' 来自定义单个线程列表。
+                        
+      plan           -- Commands for managing thread plans that control execution.
+                        用于管理控制执行的线程计划的命令。
+      
+      return         -- Prematurely return from a stack frame, short-circuiting execution of newer frames and optionally yielding a specified value.  Defaults to the exiting the current stack frame. 
+                        Expects 'raw' input (see 'help raw-input'.)
+                        过早地从栈帧返回，短路执行较新的栈帧，并可选指定返回值。 默认退出当前栈帧。（例如我们使用 thread step-in 命令进入了一个返回值是 bool 的函数，此时我们直接输入 thread return NO 命令回车，那么这次函数调用便立即结束，且返回 NO。）
+                        
+      select         -- Change the currently selected thread.
+                        更改当前选定的线程。
+                        
+      step-in        -- Source level single step, stepping into calls.  Defaults to current thread unless specified.
+                        源级单步，步入函数调用。 除非指定，否则默认在当前线程。
+      
+      step-inst      -- Instruction level single step, stepping into calls.  Defaults to current thread unless specified.
+                        指令级别单步，步入函数调用。 除非指定，否则默认在当前线程。
+      
+      step-inst-over -- Instruction level single step, stepping over calls.  Defaults to current thread unless specified.
+                        指令级别单步，跨过函数调用。 除非指定，否则默认在当前线程。
+      
+      step-out       -- Finish executing the current stack frame and stop after returning.  Defaults to current thread unless specified.
+                        完成执行当前栈帧（函数调用）并在返回后停止。 除非指定，否则默认在当前线程。
+      
+      step-over      -- Source level single step, stepping over calls.  Defaults to current thread unless specified.
+                        源级单步，跨过函数调用。 除非指定，否则默认在当前线程。
+      
+      step-scripted  -- Step as instructed by the script class passed in the -C option.  You can also specify a dictionary of key (-k) and value (-v) pairs that will be used to populate an
+                        SBStructuredData Dictionary, which will be passed to the constructor of the class implementing the scripted step.  See the Python Reference for more details.
+                        按照 -C 选项中通过的脚本类指示的步骤。还可以指定 key（-k）和 value（-v）对的 dictionary，用于填充 SBStructuredData Dictionary，它将被传递给实现脚本化步骤的类的构造函数。
+                        
+      until          -- Continue until a line number or address is reached by the current or specified thread.  Stops when returning from the current function as a safety measure.  The target line
+                        number(s) are given as arguments, and if more than one is provided, stepping will stop when the first one is hit.
+                        继续，直到当前或指定线程到达行号或地址。作为安全措施，从当前函数返回时停止。target 行号作为参数给出，如果提供了多个行号，则当第一个行号被击中时，步进将停止。
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+#### process
+
+&emsp;`process` 与当前平台上的进程进行交互的命令。
+
+```c++
+(lldb) help process
+     Commands for interacting with processes on the current platform.
+
+Syntax: process <subcommand> [<subcommand-options>]
+
+The following subcommands are supported:
+
+      attach    -- Attach to a process.
+                   附加到进程。
+                   
+      connect   -- Connect to a remote debug service.
+                   连接到远程调试服务。
+                   
+      continue  -- Continue execution of all threads in the current process.
+                   继续执行当前进程中的所有线程。
+                   
+      detach    -- Detach from the current target process.
+                   分离当前目标进程。
+      
+      handle    -- Manage LLDB handling of OS signals for the current target process.  Defaults to showing current policy.
+                   管理当前目标进程的操作系统信号的 LLDB 处理。 默认显示当前策略。
+      
+      interrupt -- Interrupt the current target process.
+                   中断当前目标进程。
+      
+      kill      -- Terminate the current target process.
+                   终止当前目标进程。
+      
+      launch    -- Launch the executable in the debugger.
+                   在调试器中启动可执行程序。
+      
+      load      -- Load a shared library into the current process.
+                   将共享库加载到当前进程中。
+      
+      plugin    -- Send a custom command to the current target process plug-in.
+                   将自定义命令发送到当前目标进程插件。
+      
+      save-core -- Save the current process as a core file using an appropriate file type.
+                   使用适当的文件类型将当前进程保存为 core file。
+      
+      signal    -- Send a UNIX signal to the current target process.
+                   向当前目标进程发送 UNIX 信号。
+      
+      status    -- Show status and stop location for the current target process.
+                   显示当前目标进程的状态和停止位置。
+      
+      unload    -- Unload a shared library from the current process using the index returned by a previous call to "process load".
+                   使用以前调用的 "process load" 返回的索引从当前进程卸载共享库。
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+#### frame
+
+&emsp;`frame` 用于选择和检查当前线程堆栈帧的命令。
+
+```c++
+(lldb) help frame
+     Commands for selecting and examing the current thread's stack frames.
+
+Syntax: frame <subcommand> [<subcommand-options>]
+
+The following subcommands are supported:
+
+      info       -- List information about the current stack frame in the current thread.
+                    列出当前线程中当前堆栈帧的信息。
+      
+      recognizer -- Commands for editing and viewing frame recognizers.
+                    用于编辑和查看帧识别器的命令。
+      
+      select     -- Select the current stack frame by index from within the current thread (see 'thread backtrace'.)
+                    从当前线程中按索引选择当前堆栈帧（参见 'thread backtrace'）。
+      
+      variable   -- Show variables for the current stack frame. Defaults to all arguments and local variables in scope. Names of argument, local, file static and file global variables can be specified.
+                    Children of aggregate variables can be specified such as 'var->child.x'.  The -> and [] operators in 'frame variable' do not invoke operator overloads if they exist, but directly
+                    access the specified element.  If you want to trigger operator overloads use the expression command to print the variable instead.
+                    It is worth noting that except for overloaded operators, when printing local variables 'expr local_var' and 'frame var local_var' produce the same results.  However, 'frame
+                    variable' is more efficient, since it uses debug information and memory reads directly, rather than parsing and evaluating an expression, which may even involve JITing and running
+                    code in the target program.
+                    显示当前堆栈帧的变量。默认是作用域内的所有参数和局部变量。可以指定 argument、local、file static 和 file global 变量的名称。可以指定聚合变量的子级，例如 'var->child.x'。'frame variable' 中的 -> 和 [] 运算符如果存在，则不会调用运算符重载，而是直接访问指定的元素。如果你想触发操作符重载，请使用 'expression' 命令打印变量。值得注意的是，除了重载操作符外，打印本地变量 'expr local_var' 和 'frame var local_var' 时也会产生相同的结果。然而，'frame
+                    variable' 更有效，因为它直接使用调试信息和内存读取，而不是解析和计算表达式，甚至可能涉及 JITing 和运行目标程序中的代码。
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+### breakpoint
+
+&emsp;在日常开发中，我们把断点作为一个停止程序运行，检查当前状态，追踪 bug 的方式。在 Xcode 中进行可视化的断点调试非常的方便，感觉比使用 LLDB 的命令要方便很多，那么我们接下来看一下 Xcode 中的可视化的断点操作与 LLDB 调试器中断点命令的对应关系。
+
+#### breakpoint list/disable/enable/delete
+
+&emsp;点击 Xcode 左侧面板的 Show the Breakpoint navigator 按钮，我们便切换到了一个可以快速管理所有断点（仅限于我们在 Xcode 中使用图形界面添加的断点，不包含我们使用 LLDB 命令添加的断点）的面板。在 LLDB 调试窗口中我们可以使用 `breakpoint list/br li` 命令列出所有的断点，包括我们使用 Xcode 图形界面添加的和使用 LLDB 命令添加的所有断点。还有如下的 LLDB breakpoint 命令，在 Xcode 中清点按钮即可做到同样的效果：
+
++ `breakpoint disable [<breakpt-id | breakpt-id-list>]` 关闭断点
++ `breakpoint enable [<breakpt-id | breakpt-id-list>]` 打开断点
++ `breakpoint delete <cmd-options> [<breakpt-id | breakpt-id-list>]` 删除断点
+
+&emsp;如下使用示例：
+
+```c++
+(lldb) br li
+Current breakpoints:
+1: file = '/Users/hmc/Documents/iOSSample/TEST_Fishhook/TEST_Fishhook/main.m', line = 29, exact_match = 0, locations = 1, resolved = 1, hit count = 1
+
+  1.1: where = TEST_Fishhook`main + 34 at main.m:29:29, address = 0x0000000102a2df32, resolved, hit count = 1 
+
+2: file = '/Users/hmc/Documents/iOSSample/TEST_Fishhook/TEST_Fishhook/main.m', line = 30, exact_match = 0, locations = 1, resolved = 1, hit count = 0
+
+  2.1: where = TEST_Fishhook`main + 56 at main.m:30:29, address = 0x0000000102a2df48, resolved, hit count = 0 
+
+(lldb) br dis 1
+1 breakpoints disabled.
+(lldb) br li
+Current breakpoints:
+
+// ⬇️ 看到断点 1 已经被置为 disabled
+
+1: file = '/Users/hmc/Documents/iOSSample/TEST_Fishhook/TEST_Fishhook/main.m', line = 29, exact_match = 0, locations = 1 Options: disabled 
+
+  1.1: where = TEST_Fishhook`main + 34 at main.m:29:29, address = 0x0000000102a2df32, unresolved, hit count = 1 
+
+2: file = '/Users/hmc/Documents/iOSSample/TEST_Fishhook/TEST_Fishhook/main.m', line = 30, exact_match = 0, locations = 1, resolved = 1, hit count = 0
+
+  2.1: where = TEST_Fishhook`main + 56 at main.m:30:29, address = 0x0000000102a2df48, resolved, hit count = 0 
+
+(lldb) br del 1
+1 breakpoints deleted; 0 breakpoint locations disabled.
+(lldb) br li
+Current breakpoints:
+
+// ⬇️ 看到断点 1 已经被删除
+ 
+2: file = '/Users/hmc/Documents/iOSSample/TEST_Fishhook/TEST_Fishhook/main.m', line = 30, exact_match = 0, locations = 1, resolved = 1, hit count = 0
+
+  2.1: where = TEST_Fishhook`main + 56 at main.m:30:29, address = 0x0000000102a2df48, resolved, hit count = 0 
+
+(lldb) 
+```
+
+#### 创建断点
+
+&emsp;在 LLDB 调试器中设置断点，可以使用 `breakpoint set <cmd-options>` 命令，如下示例在 main.m 文件的 35 行设置一个断点（`br` 是 `breakpoint` 的缩写形式）：
+
+```c++
+(lldb) breakpoint set -f main.m -l 35
+Breakpoint 3: where = TEST_Fishhook`main + 146 at main.m:35:29, address = 0x0000000102a2dfa2
+
+(lldb) br set -f main.m -l 35
+Breakpoint 5: where = TEST_Fishhook`main + 146 at main.m:35:29, address = 0x0000000102a2dfa2
+```
+
+&emsp;我们也可以使用 `b` 命令：
+
+```c++
+(lldb) help b
+     Set a breakpoint using one of several shorthand formats.  Expects 'raw' input (see 'help raw-input'.)
+
+Syntax: 
+_regexp-break <filename>:<linenum>
+              main.c:12             // Break at line 12 of main.c
+
+_regexp-break <linenum>
+              12                    // Break at line 12 of current file
+
+_regexp-break 0x<address>
+              0x1234000             // Break at address 0x1234000
+
+_regexp-break <name>
+              main                  // Break in 'main' after the prologue
+
+_regexp-break &<name>
+              &main                 // Break at first instruction in 'main'
+
+_regexp-break <module>`<name>
+              libc.so`malloc        // Break in 'malloc' from 'libc.so'
+
+_regexp-break /<source-regex>/
+              /break here/          // Break on source lines in current file
+                                    // containing text 'break here'.
+
+
+'b' is an abbreviation for '_regexp-break'
+```
+
+&emsp;`b main.c:35`  同样也是在 main.m 文件的 35 行设置一个断点：
+
+```c++
+(lldb) b main.m:35
+Breakpoint 6: where = TEST_Fishhook`main + 146 at main.m:35:29, address = 0x0000000102a2dfa2
+```
+
+&emsp;`b isEven` 在一个符号（C 语言函数）上创建断点，完全不用指定在哪一行：
+
+```c++
+(lldb) b isEven
+Breakpoint 7: where = TEST_Fishhook`isEven + 11 at main.m:12:9, address = 0x0000000102a2e08b
+```
+
+&emsp;OC 方法也可以：
+
+```c++
+(lldb) breakpoint set -F "-[NSArray objectAtIndex:]"
+Breakpoint 8: where = CoreFoundation`-[NSArray objectAtIndex:], address = 0x00007fff204a2f77
+
+(lldb) b -[NSArray objectAtIndex:]
+Breakpoint 9: where = CoreFoundation`-[NSArray objectAtIndex:], address = 0x00007fff204a2f77
+
+(lldb) breakpoint set -F "+[NSSet setWithObject:]"
+Breakpoint 10: where = CoreFoundation`+[NSSet setWithObject:], address = 0x00007fff20434b0f
+
+(lldb) b +[NSSet setWithObject:]
+Breakpoint 11: where = CoreFoundation`+[NSSet setWithObject:], address = 0x00007fff20434b0f
+```
+
+&emsp;下面我们看一下在 Xcode 的图形界面上如何添加断点，我们可以点击 Breakpoint navigator 底部的 + 按钮，然后选择 Symbolic Breakpoint...，然后我们可以给此断点设置需要命中的符号、所属模块、命中条件、忽略次数（如第几次调用该符号时才命中此断点）、断点命中时的活动、以及断点命中后执行完活动后是否继续执行进程：
+
+![截屏2021-09-12 下午8.54.24.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ed3083f34f3e40ad9ad05fda440ab015~tplv-k3u1fbpfcp-watermark.image?)
+
+![截屏2021-09-12 下午9.02.15.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7db17f991c2941adb51475cd08f1dd0c~tplv-k3u1fbpfcp-watermark.image?)
+
+&emsp;例如我们在上面的弹框中的 Symbol 输入框中输入 `-[NSArray objectAtIndex:]`，那么进程每次调用此函数时都会命中这个断点，包括我们自己的调用以及系统的调用。
+
+&emsp;其中命中条件和忽略次数，如下代码，我们在 `if (i % 2 == 0) {` 行添加一个断点，那么命中条件我们可以添加 `i == 99`，当 i 等于 99 的时候才命中此断点，忽略次数初始值是 0，表示不忽略，如输入 5，可表示前 5 次调用都忽略，后续调用才会命中此断点。
+
+```c++
+static BOOL isEven(int i) {
+    if (i % 2 == 0) {
+        NSLog(@"✳️✳️✳️ %d is even!", i);
+        return YES;
+    }
+    
+    NSLog(@"✳️✳️✳️ %d is odd!", i);
+    return NO;
+}
+```
+
+&emsp;断点命中时的活动，例如每次命中时打印 i 的值（执行 `p i` 命令）:
+
+![截屏2021-09-12 下午9.15.28.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4b60cfdd0edc4eb2acaaabfbe429851d~tplv-k3u1fbpfcp-watermark.image?)
+
+&emsp;除了断点命中时执行 LLDB 命令，我们还可以添加别的一些活动：执行 shell 命令、在控制台打印 log 信息或者直接用语音读出 log 信息、执行 Apple 脚本、捕捉 GPU 栈帧、以及播放声音（播放声音这个可太搞笑了）。
+
+![截屏2021-09-12 下午9.16.26.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/47f2e3ae44b044bdaa6d122bced1dcaf~tplv-k3u1fbpfcp-watermark.image?)
+
+&emsp;在 LLDB 中使用命令也可以这样做，如下：
+
+```c++
+(lldb) breakpoint set -F isEven
+Breakpoint 2: where = TEST_Fishhook`isEven + 11 at main.m:12:9, address = 0x0000000107ee508b
+(lldb) breakpoint modify -c 'i == 99' 2
+(lldb) breakpoint command add 2
+Enter your debugger command(s).  Type 'DONE' to end.
+> p i
+> DONE
+(lldb) br li 2
+2: name = 'isEven', locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      p i
+
+Condition: i == 99
+
+  2.1: where = TEST_Fishhook`isEven + 11 at main.m:12:9, address = 0x0000000107ee508b, resolved, hit count = 0 
+
+(lldb) 
+```
+
+&emsp;看编辑断点弹出窗口的底部，会看到一个选项： Automatically continue after evaluation actions 。它仅仅是一个选择框，但是却很强大。选中它，调试器会运行断点中所有的命令，然后继续运行。看起来就像没有执行任何断点一样 (除非断点太多，运行需要一段时间，拖慢了程序执行)。
+
+&emsp;这个选项框的效果和让最后断点的最后一个行为是 `process continue` 一样。选框只是让这个操作变得更简单。使用 LLDB 命令也可以达到同样的效果：
+
+```c++
+(lldb) breakpoint set -F isEven
+Breakpoint 3: where = TEST_Fishhook`isEven + 11 at main.m:12:9, address = 0x0000000107ee508b
+(lldb) breakpoint command add 3
+Enter your debugger command(s).  Type 'DONE' to end.
+> continue
+> DONE
+(lldb) br li 3
+3: name = 'isEven', locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      continue
+
+  3.1: where = TEST_Fishhook`isEven + 11 at main.m:12:9, address = 0x0000000107ee508b, resolved, hit count = 0 
+
+(lldb) 
+```
+
+&emsp;执行断点后自动继续运行，允许你完全通过断点来修改程序！你可以在某一行停止，运行一个 `expression` 命令来改变变量，然后继续运行。或者在某个函数第一行添加断点，然后运行一个 `thread return 9` 命令，直接结束此函数的调用并返回一个自己设定的值。
+
+```c++
+(lldb) help breakpoint
+     Commands for operating on breakpoints (see 'help b' for shorthand.)
+
+Syntax: breakpoint <subcommand> [<command-options>]
+
+The following subcommands are supported:
+
+      clear   -- Delete or disable breakpoints matching the specified source file and line.
+                 删除或禁用与指定源文件和行匹配的断点。
+      
+      command -- Commands for adding, removing and listing LLDB commands executed when a breakpoint is hit.
+                 当断点被命中时 执行添加、删除和列出 LLDB 命令的 命令。（即添加当断点被命中时，我们想要执行的命令）
+      
+      delete  -- Delete the specified breakpoint(s).  If no breakpoints are specified, delete them all.
+                 删除指定的断点。 如果没有指定断点，则删除全部断点。
+      
+      disable -- Disable the specified breakpoint(s) without deleting them.  If none are specified, disable all breakpoints.
+                 在不删除它们的情况下禁用指定的断点。 如果没有指定，则禁用所有断点。
+      
+      enable  -- Enable the specified disabled breakpoint(s). If no breakpoints are specified, enable all of them.
+                 启用指定的禁用断点。如果没有指定断点，则启用所有断点。
+      
+      list    -- List some or all breakpoints at configurable levels of detail.
+                 将部分或全部断点列在可配置的细节级别。
+      
+      modify  -- Modify the options on a breakpoint or set of breakpoints in the executable.  If no breakpoint is specified, acts on the last created breakpoint.  With the exception of -e, -d and -i,
+                 passing an empty argument clears the modification.
+                 修改可执行中的断点或一组断点上的选项。 如果没有指定断点，则在最后创建的断点上起作用。 除了 -e， -d 和 -i 通过一个空的参数清除修改。
+                 
+      name    -- Commands to manage name tags for breakpoints.
+                 管理断点 名称标签 的命令。
+      
+      read    -- Read and set the breakpoints previously saved to a file with "breakpoint write".
+                 阅读并设置以前保存到 "breakpoint write" 的文件中的断点。
+      
+      set     -- Sets a breakpoint or set of breakpoints in the executable.
+                 在可执行程序中设置一个断点或一组断点。
+      
+      write   -- Write the breakpoints listed to a file that can be read in with "breakpoint read".  If given no arguments, writes all breakpoints.
+                 将列出的断点写入可用 "breakpoint read" 读取的文件中。 如果没有参数，则编写所有断点。
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+ &emsp;至此断点相关的命令就看到这里，下面我们看一些 LLDB 更高级的用法。
+ 
+ &emap;前面我们学习了 LLDB 调试条上的 暂停/继续 执行程序按钮，其中我们主要关注点是在继续按钮上，现在我们试试运行程序后点击暂停按钮试试，
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 ## 内容规划
 
 1. 介绍 chisel 安装、使用细节、官方提供的命令列表[wiki](https://github.com/facebook/chisel/wiki)、Custom Commands如何进行自定义命令。[chisel](https://github.com/facebook/chisel/blob/master/README.md)
@@ -800,6 +921,7 @@ For more information on any command, type 'help <command-name>'.
 
 ## 参考链接
 **参考链接:🔗**
++ [Debugging with Xcode](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/debugging_with_xcode/chapters/about_debugging_w_xcode.html#//apple_ref/doc/uid/TP40015022-CH10-SW1)
 + [LLDB Quick Start Guide](https://developer.apple.com/library/archive/documentation/IDEs/Conceptual/gdb_to_lldb_transition_guide/document/Introduction.html#//apple_ref/doc/uid/TP40012917-CH1-SW1)
 + [Advanced Debugging with Xcode and LLDB](https://developer.apple.com/videos/play/wwdc2018/412/)
 + [Xcode 10.2 Release Notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-10_2-release-notes)
