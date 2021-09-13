@@ -666,7 +666,7 @@ void main() {
 
 &emsp;在 StatefulWidget 调用 createState 之后，框架将新的状态对象插入树中，然后调用状态对象的 initState。 子类化 State 可以重写 initState，以完成仅需要执行一次的工作。 例如，你可以重写 initState 以配置动画或订阅 platform services。initState 的实现中需要调用 super.initState。
 
-&emsp;当一个状态对象不再需要时，框架调用状态对象的 dispose。你可以覆盖该 dispose 方法来执行清理工作。例如，你可以覆盖 dispose 取消定时器或取消订阅 platform services。 dispose 典型的实现是直接调用 super.dispose。
+&emsp;当一个状态对象不再需要时，框架调用状态对象的 dispose。你可以重载该 dispose 方法来执行清理工作。例如，你可以重载 dispose 取消定时器或取消订阅 platform services。 dispose 典型的实现是直接调用 super.dispose。
 
 ## Key
 

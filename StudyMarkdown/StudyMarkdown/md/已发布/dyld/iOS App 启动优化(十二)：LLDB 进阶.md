@@ -950,15 +950,215 @@ error: <user expression 3>:1:16: no known method '+flush'; cast the message send
  
 &emsp;下面我们再做一个更大的更新，我们在当前 VC push 出一个新的 VC。
  
+```c++
+// 取得当前程序的根控制器（导航控制器）
+(lldb) expression id $nvc = [[[UIApplication sharedApplication] keyWindow] rootViewController]
+
+// 创建一个新控制器
+(lldb) expression id $vc = [UIViewController new]
+(lldb) expression (void)[[$vc view] setBackgroundColor: [UIColor yellowColor]]
+(lldb) expression (void)[$vc setTitle:@"New!"]
+
+(lldb) expression (void)[$nvc pushViewController:$vc animated:YES]
+
+// 渲染服务
+(lldb) expression (void)[CATransaction flush]
+```
+
+&emsp;下面我们通过 LLDB 调试查找一个按钮的点击事件。
+
+&emsp;首先取得一个 $myButton 变量，可以通过 `po [[[UIApplication sharedApplication] keyWindow] recursiveDescription]` 在 UI 层取出，或者是停在一个断点时取得的一个局部变量，接下来我们找到 $myButton 按钮的点击事件： 
+
+```c++
+(lldb) expression id $myButton = (id)0x7ff1e9412bc0
+
+(lldb) po [$myButton allTargets]
+{(
+    <ViewController: 0x7ff1ec0087c0>
+)}
+
+(lldb) po [$myButton actionsForTarget:(id)0x7ff1ec0087c0 forControlEvent:0]
+<__NSArrayM 0x6000022dd050>(
+buttonAction:
+)
+```
+
+&emsp;然后我们可以在 `-[ViewController buttonAction:]` 设置一个符号断点，当按钮被点击时就会命中此断点。
  
+ &emsp;观察实例变量的变化，假设我们的一个 UIView，不知道为什么它的 `_layer` 实例变量被重写了 (糟糕)。因为有可能并不涉及到方法，我们不能使用符号断点。相反的，我们想监视什么时候这个地址被写入。首先，我们需要找到 `_layer` 这个变量在对象上的相对位置：
  
- 
- 
- 
- 
- 
- 
- 
+```c++
+ (lldb) p (ptrdiff_t)ivar_getOffset((CALayer *)class_getInstanceVariable([UIView class], "_layer"))
+ (ptrdiff_t) $3 = 40
+``` 
+
+&emsp;现在我们知道 `$myView + 40` 是 `_layer` 实例变量的内存地址：
+
+```c++
+ (lldb) expression id $myView = (id)0x7ff1e9412340
+ (lldb) watchpoint set expression -- (int *)$myView + 40
+ Watchpoint created: Watchpoint 1: addr = 0x7ff1e94123e0 size = 8 state = enabled type = w
+     new value: 0x0000000000000000
+ (lldb) watchpoint list
+ Number of supported hardware watchpoints: 4
+ Current watchpoints:
+ Watchpoint 1: addr = 0x7ff1e94123e0 size = 8 state = enabled type = w
+     new value: 0x0000000000000000
+``` 
+
+&emsp;非重写方法的符号断点：
+
+> &emsp;假设你想知道 -[ViewController viewDidAppear:] 什么时候被调用。如果这个方法并没有在 MyViewController 中实现，而是在其父类中实现的，该怎么办呢？试着设置一个断点，会出现以下结果：
+  ```c++
+  (lldb) b -[ViewController viewDidAppear:]
+  Breakpoint 2: no locations (pending).
+  WARNING:  Unable to resolve breakpoint to any actual locations.
+  ```
+  因为 LLDB 会查找一个符号，但是实际在这个类上却找不到，所以断点也永远不会触发。你需要做的是为断点设置一个条件 [self isKindOfClass:[MyViewController class]]，然后把断点放在 UIViewController 上。正常情况下这样设置一个条件可以正常工作。但是这里不会，因为我们没有父类的实现。viewDidAppear: 是苹果实现的方法，因此没有它的符号；在方法内没有 self 。如果想在符号断点上使用 self，你必须知道它在哪里 (它可能在寄存器上，也可能在栈上；在 x86 上，你可以在 $esp+4 找到它)。但是这是很痛苦的，因为现在你必须至少知道四种体系结构 (x86，x86-64，armv7，armv64)。想象你需要花多少时间去学习命令集以及它们每一个的调用约定，然后正确的写一个在你的超类上设置断点并且条件正确的命令。幸运的是，这个在 Chisel 被解决了。这被成为 bmessage：
+  ```c++
+  (lldb) bmessage -[ViewController viewDidAppear:]
+  Setting a breakpoint at -[UIViewController viewDidAppear:] with condition (void*)object_getClass((id)$rdi) == 0x0000000105154570
+  Breakpoint 1: where = UIKitCore`-[UIViewController viewDidAppear:], address = 0x00007fff23f6968e
+  ```
+
+## chisel 概述
+
+&emsp;chisel 可以使用 `brew install chisel` 安装，然后根据提示把一行类似 `command script import /usr/local/opt/chisel/libexec/fbchisellldb.py` 的命令添加到 `~/.lldbinit` 文件中，如果 `.lldbinit` 文件不存在的话，我们可以自己创建一个（路径类似：/Users/hmc/.lldbinit），`.lldbinit` 中的内容会在 Xcode 启动时执行，上面一行便是在 Xcode 启动时加载 chisel。 
+
+![截屏2021-09-02 下午10.35.11.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b70fa058010847499da535b95c4ba883~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;`command script import /usr/local/opt/chisel/libexec/fbchisellldb.py` 中的 `command` 正是 LLDB 中的一个命令，它是用来管理 LLDB 自定义命令的命令。
+
+```c++
+(lldb) command
+     Commands for managing custom LLDB commands.
+
+Syntax: command <subcommand> [<subcommand-options>]
+
+The following subcommands are supported:
+
+      alias   -- Define a custom command in terms of an existing command. 
+                 Expects 'raw' input (see 'help raw-input'.)
+                 根据现有命令定义自定义命令。（为一个命令起个别名）
+                 
+      delete  -- Delete one or more custom commands defined by 'command regex'.
+                 删除由 'command regex' 定义的一个或多个自定义命令。
+      
+      history -- Dump the history of commands in this session.
+                 Commands in the history list can be run again using
+                 "!<INDEX>".   "!-<OFFSET>" will re-run the command that is
+                 <OFFSET> commands from the end of the list (counting the
+                 current command).
+                 
+      regex   -- Define a custom command in terms of existing commands by matching regular expressions.
+                 通过匹配常规表达式，根据现有命令定义自定义命令。
+                 
+      script  -- Commands for managing custom commands implemented by interpreter scripts.
+                 由 interpreter scripts 实施的自定义命令管理命令。
+      
+      source  -- Read and execute LLDB commands from the file <filename>.
+                 从文件中读取和执行 LLDB 命令<filename>。
+      
+      unalias -- Delete one or more custom commands defined by 'command alias'.
+                 删除由 'command alias' 定义的一个或多个自定义命令。
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+&emsp;`command script import` 用来在 LLDB 中导入脚本模块。
+
+```c++
+(lldb) help command script import
+     Import a scripting module in LLDB.
+
+Syntax: command script import <cmd-options> <filename> [<filename> [...]]
+
+Command Options Usage:
+  command script import [-r] <filename> [<filename> [...]]
+
+       -r ( --allow-reload )
+            Allow the script to be loaded even if it was already loaded before.
+            This argument exists for backwards compatibility, but reloading is always allowed, whether you specify it or not.
+            即使脚本以前已经加载，也允许加载脚本。此参数存在向后兼容性，但无论你是否指定，重加载始终允许。
+```
+
+&emsp;`command script import /usr/local/opt/chisel/libexec/fbchisellldb.py` 此行命令的作用便是把 `/usr/local/opt/chisel/libexec/fbchisellldb.py` 中的脚本导入到 LLDB 中。那么 chisel 提供了多少命令呢，如下：
+
+```c++
+Current user-defined commands:
+  alamborder    -- Put a border around views with an ambiguous layout
+  alamunborder  -- Removes the border around views with an ambiguous layout
+  bdisable      -- Disable a set of breakpoints for a regular expression
+  benable       -- Enable a set of breakpoints for a regular expression
+  binside       -- Set a breakpoint for a relative address within the framework/library that's currently running. This does the work of finding the offset for the framework/library and sliding your
+                   address accordingly.
+  bmessage      -- Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector. It walks the hierarchy until it finds a class that does implement the selector
+                   and sets a conditional breakpoint there.
+  border        -- Draws a border around <viewOrLayer>. Color and width can be optionally provided. Additionally depth can be provided in order to recursively border subviews.
+  caflush       -- Force Core Animation to flush. This will 'repaint' the UI but also may mess with ongoing animations.
+  copy          -- Copy data to your Mac.
+  dcomponents   -- Set debugging options for components.
+  dismiss       -- Dismiss a presented view controller.
+  fa11y         -- Find the views whose accessibility labels match labelRegex and puts the address of the first result on the clipboard.
+  findinstances -- Find instances of specified ObjC classes.
+  flicker       -- Quickly show and hide a view to quickly help visualize where it is.
+  fv            -- Find the views whose class names match classNameRegex and puts the address of first on the clipboard.
+  fvc           -- Find the view controllers whose class names match classNameRegex and puts the address of first on the clipboard.
+  heapfrom      -- Show all nested heap pointers contained within a given variable.
+  hide          -- Hide a view or layer.
+  mask          -- Add a transparent rectangle to the window to reveal a possibly obscured or hidden view or layer's bounds
+  mwarning      -- simulate a memory warning
+  pa11y         -- Print accessibility labels of all views in hierarchy of <aView>
+  pa11yi        -- Print accessibility identifiers of all views in hierarchy of <aView>
+  pactions      -- Print the actions and targets of a control.
+  paltrace      -- Print the Auto Layout trace for the given view. Defaults to the key window.
+  panim         -- Prints if the code is currently execution with a UIView animation block.
+  pbcopy        -- Print object and copy output to clipboard
+  pblock        -- Print the block`s implementation address and signature
+  pbundlepath   -- Print application's bundle directory path.
+  pcells        -- Print the visible cells of the highest table view in the hierarchy.
+  pclass        -- Print the inheritance starting from an instance of any class.
+  pcomponents   -- Print a recursive description of components found starting from <aView>.
+  pcurl         -- Print the NSURLRequest (HTTP) as curl command.
+  pdata         -- Print the contents of NSData object as string.
+  pdocspath     -- Print application's 'Documents' directory path.
+  pinternals    -- Show the internals of an object by dereferencing it as a pointer.
+  pinvocation   -- Print the stack frame, receiver, and arguments of the current invocation. It will fail to print all arguments if any arguments are variadic (varargs).
+  pivar         -- Print the value of an object's named instance variable.
+  pjson         -- Print JSON representation of NSDictionary or NSArray object
+  pkp           -- Print out the value of the key path expression using -valueForKeyPath:
+  pmethods      -- Print the class and instance methods of a class.
+  poobjc        -- Print the expression result, with the expression run in an ObjC++ context. (Shortcut for "expression -O -l ObjC++ -- " )
+  pproperties   -- Print the properties of an instance or Class
+  present       -- Present a view controller.
+  presponder    -- Print the responder chain starting from a specific responder.
+  psjson        -- Print JSON representation of Swift Dictionary or Swift Array object
+  ptv           -- Print the highest table view in the hierarchy.
+  pvc           -- Print the recursion description of <aViewController>.
+  pviews        -- Print the recursion description of <aView>.
+  rcomponents   -- Synchronously reflow and update all components.
+  sequence      -- Run commands in sequence, stopping on any error.
+  setinput      -- Input text into text field or text view that is first responder.
+  settext       -- Set text on text on a view by accessibility id.
+  show          -- Show a view or layer.
+  slowanim      -- Slows down animations. Works on the iOS Simulator and a device.
+  taplog        -- Log tapped view to the console.
+  uikit         -- Imports the UIKit module to get access to the types while in lldb.
+  unborder      -- Removes border around <viewOrLayer>.
+  unmask        -- Remove mask from a view or layer
+  unslowanim    -- Turn off slow animations.
+  visualize     -- Open a UIImage, CGImageRef, UIView, CALayer, or CVPixelBuffer in Preview.app on your Mac.
+  vs            -- Interactively search for a view by walking the hierarchy.
+  wivar         -- Set a watchpoint for an object's instance variable.
+  xdebug        -- Print debug description the XCUIElement in human readable format.
+  xnoid         -- Print XCUIElement objects with label but without identifier.
+  xobject       -- Print XCUIElement details.
+  xtree         -- Print XCUIElement subtree.
+  zzz           -- Executes specified lldb command after delay.
+```
+
+&emsp;那么我们下一节再详细列举 chisel 提供的命令的作用吧！
+
  
 ## 内容规划
 
