@@ -918,7 +918,7 @@ For more help on any particular subcommand, type 'help <command> <subcommand>'.
    |    |    |    |    | <UIView: 0x7fb45700ce70; frame = (0 0; 0 0); userInteractionEnabled = NO; layer = <CALayer: 0x600000f10040>>
 ```
 
-### 更新 App UI 
+### 在 LLDB 中调试 App UI 
 
 &emsp;通过上面视图层级的输出我们可以直接通过内存地址获得我们的 text 是 CENTER 的 UILabel，下面我们在 LLDB  命名空间中创建一个变量来取得此 UILabel：
 
@@ -932,10 +932,23 @@ For more help on any particular subcommand, type 'help <command> <subcommand>'.
 (lldb) expression [$myLabel setBackgroundColor: [UIColor blueColor]]
 ```
 
-&emsp;执行完此命令，我们的 Label 的背景颜色并没有发生变化，此时需要我们可以再次点击 LLDB 调试条上的 暂停/继续 按钮，继续执行我们的 iOS App，我们的 App 界面才能得到刷新，我们的 Label 的背景色才能变成蓝色。 
+&emsp;执行完此命令，我们的 Label 的背景颜色并没有发生变化，因为改变的内容需要被发送到渲染服务中，这样我们屏幕上的显示的内容才能得到刷新，此时需要我们可以再次点击 LLDB 调试条上的 继续 按钮，继续运行我们的 iOS App，我们的 App 界面才能得到刷新，我们的 Label 的背景色才能变成蓝色。 
+
+&emsp;渲染服务实际上是另外一个进程（被称作：backboardd），这就是说即使我们当前的 App 进程被暂停了，但是 backboardd 还是在继续运行着，这意味着我们可以运行下面的命令，而不是继续运行我们的程序：
+
+```c++
+(lldb) expression [CATransaction flush]
+
+error: <user expression 3>:1:16: no known method '+flush'; cast the message send to the method's return type
+[CATransaction flush]
+~~~~~~~~~~~~~~~^~~~~~
+
+(lldb) expression (void)[CATransaction flush] // ⬅️ 需要在函数调用前添加一个返回值类型，否则会报错
+```
+
+&emsp;执行 `expression (void)[CATransaction flush]` 后，我们的 iOS App 仍处于暂停状态，我们仍处于 LLDB 调试模式，但是不管是在模拟器上还是真机上我们都能看到我们的 Label 的背景颜色变为了蓝色，即我们的 iOS App 的 UI 得到了实时更新。
  
- 
- 
+&emsp;下面我们再做一个更大的更新，我们在当前 VC push 出一个新的 VC。
  
  
  
