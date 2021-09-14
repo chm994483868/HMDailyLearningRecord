@@ -693,7 +693,7 @@ Current breakpoints:
 (lldb) 
 ```
 
-#### 创建断点
+#### breakpoint set
 
 &emsp;在 LLDB 调试器中设置断点，可以使用 `breakpoint set <cmd-options>` 命令，如下示例在 main.m 文件的 35 行设置一个断点（`br` 是 `breakpoint` 的缩写形式）：
 
@@ -888,15 +888,20 @@ The following subcommands are supported:
 For more help on any particular subcommand, type 'help <command> <subcommand>'.
 ```
 
- &emsp;至此断点相关的命令就看到这里，下面我们看一些 LLDB 在 iOS App 的视图层级的一些用法。
+&emsp;下面这两个命令需要补充:
+
+### apropos
+### target
+
+
  
- ## 在 iOS App 中进行 LLDB 调试
+## 在 iOS App 中进行 LLDB 调试
  
- &emap;前面我们学习了 LLDB 调试条上的 暂停/继续 执行程序的按钮，其中我们的主要关注点放在了继续按钮上，现在我们试试运行 iOS App 后点击暂停按钮试试。
+&emap;前面我们学习了 LLDB 调试条上的 暂停/继续 执行程序的按钮，其中我们的主要关注点放在了继续按钮上，现在我们试试运行 iOS App 后点击暂停按钮试试。
  
- ### 打印当前 App 视图层级  
+### 打印当前 App 视图层级  
  
- &emsp;点击暂停按钮后可看到我们的 iOS App 定位到了主线程的 `mach_msg_trap` 处，并且我们的 Xcode 的控制台进入了 LLDB 调试模式。点击暂停按钮后会暂停 iOS App 的运行，就如同执行了 `process interrupt` 命令，因为 LLDB 总是在 Xcode 背后运行的。虽然此时也进入了 LLDB 调试模式，但是我们的 iOS App 并没有暂停在我们自己编写的特定的函数或者特定的代码处，所以我们能做的事情并不多，但是我们可以试着去访问 iOS App 的全局变量。如下，我们可以通过 `keyWindow` 来访问我们 iOS App 的视图层级：
+&emsp;点击暂停按钮后可看到我们的 iOS App 定位到了主线程的 `mach_msg_trap` 处，并且我们的 Xcode 的控制台进入了 LLDB 调试模式。点击暂停按钮后会暂停 iOS App 的运行，就如同执行了 `process interrupt` 命令，因为 LLDB 总是在 Xcode 背后运行的。虽然此时也进入了 LLDB 调试模式，但是我们的 iOS App 并没有暂停在我们自己编写的特定的函数或者特定的代码处，所以我们能做的事情并不多，但是我们可以试着去访问 iOS App 的全局变量。如下，我们可以通过 `keyWindow` 来访问我们 iOS App 的视图层级：
 
 ```c++
 (lldb) po [[[UIApplication sharedApplication] keyWindow] recursiveDescription]
@@ -1023,9 +1028,11 @@ buttonAction:
 
 ## chisel 概述
 
-&emsp;chisel 可以使用 `brew install chisel` 安装，然后根据提示把一行类似 `command script import /usr/local/opt/chisel/libexec/fbchisellldb.py` 的命令添加到 `~/.lldbinit` 文件中，如果 `.lldbinit` 文件不存在的话，我们可以自己创建一个（路径类似：/Users/hmc/.lldbinit），`.lldbinit` 中的内容会在 Xcode 启动时执行，上面一行便是在 Xcode 启动时加载 chisel。 
+&emsp;chisel 可以使用 `brew install chisel` 安装，然后根据提示把一行类似 `command script import /usr/local/opt/chisel/libexec/fbchisellldb.py` 的命令添加到 `~/.lldbinit` 文件中，如果 `.lldbinit` 文件不存在的话，我们可以自己创建一个（路径类似：/Users/hmc/.lldbinit），`.lldbinit` 中的内容会在 Xcode 启动时执行，上面一行便是在 Xcode 启动时加载 chisel。
 
 ![截屏2021-09-02 下午10.35.11.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b70fa058010847499da535b95c4ba883~tplv-k3u1fbpfcp-watermark.image)
+
+&emsp;安装完成后，我们重启 Xcode，此时我们便可以愉快的使用 chisel 提供的 LLDB 自定义命令了。 
 
 &emsp;`command script import /usr/local/opt/chisel/libexec/fbchisellldb.py` 中的 `command` 正是 LLDB 中的一个命令，它是用来管理 LLDB 自定义命令的命令。
 
@@ -1157,9 +1164,8 @@ Current user-defined commands:
   zzz           -- Executes specified lldb command after delay.
 ```
 
-&emsp;那么我们下一节再详细列举 chisel 提供的命令的作用吧！
+&emsp;那么我们下一节再详细列举 chisel 提供的这些命令的作用吧！
 
- 
 ## 内容规划
 
 1. 介绍 chisel 安装、使用细节、官方提供的命令列表[wiki](https://github.com/facebook/chisel/wiki)、Custom Commands如何进行自定义命令。[chisel](https://github.com/facebook/chisel/blob/master/README.md)
