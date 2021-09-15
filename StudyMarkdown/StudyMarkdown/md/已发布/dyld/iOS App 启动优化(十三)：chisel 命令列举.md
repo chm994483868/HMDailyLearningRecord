@@ -107,9 +107,11 @@ Current user-defined commands:
 For more information on any command, type 'help <command-name>'.
 ```
 
-&emsp;首先我们需要对 Auto Layout 的一个知识点进行学习：[Ambiguous Layouts](https://developer.apple.com/library/archive/documentation/UserExperience/Conceptual/AutolayoutPG/AmbiguousLayouts.html#//apple_ref/doc/uid/TP40010853-CH18-SW1)。
+## Ambiguous Layouts
 
-&emsp;熟悉使用 Auto Layout 的小伙伴大概会在 Xcode 控制台见过约束添加存在歧义时打印的一些警告信息。 
+&emsp;首先我们对 Auto Layout 中的 Ambiguous Layouts 知识点进行学习：[Ambiguous Layouts](https://developer.apple.com/library/archive/documentation/UserExperience/Conceptual/AutolayoutPG/AmbiguousLayouts.html#//apple_ref/doc/uid/TP40010853-CH18-SW1)。
+
+&emsp;熟悉使用 Auto Layout 的小伙伴大概会在 Xcode 控制台见过约束添加存在歧义时打印的一些警告信息（一般在 TableView 和 CollectionView 的 cell 布局中比较常见约束不全的问题）。 
 
 &emsp;[hasAmbiguousLayout](https://developer.apple.com/documentation/uikit/uiview/1622517-hasambiguouslayout?language=objc)
 
@@ -145,8 +147,11 @@ For more information on any command, type 'help <command-name>'.
 @end
 ```
 
-## alamborder
+## alamborder/alamunborder
 
+&emsp;如果熟悉 Python 的话可以直接在 /opt/homebrew/Cellar/chisel/2.0.1/libexec/commands/FBAutoLayoutCommands.py 路径（）下找到 `alamborder/alamunborder` 对应的 python 脚本，
+
+&emsp;首先我们打开自己的终端，然后输入 lldb 回车，此时进入 lldb 环境，然后我们输入：`help alamborder` 可看到如下帮助信息，alamborder 命令的功能是递归 `[[UIApplication sharedApplication] keyWindow]` 的子 View，并为 `hasAmbiguousLayout` 返回 YES 的子 View 添加一个边框，同时我们可以使用 `--color/-c` 和 `--width/-w` 选项为边框设置颜色和宽度。
 
 ```c++
 (lldb) help alamborder
@@ -166,6 +171,31 @@ This command is implemented as FBAutolayoutBorderAmbiguous in
 ```
 
 &emsp;ambiguous：adj. 引起歧义的；模棱两可的，含糊不清的。
+
+```c++
+def setBorderOnAmbiguousViewRecursive(view, width, color):
+    if not fb.evaluateBooleanExpression(
+        "[(id)%s isKindOfClass:(Class)[UIView class]]" % view
+    ):
+        return
+
+    isAmbiguous = fb.evaluateBooleanExpression("(BOOL)[%s hasAmbiguousLayout]" % view)
+    if isAmbiguous:
+        layer = viewHelpers.convertToLayer(view)
+        fb.evaluateEffect("[%s setBorderWidth:(CGFloat)%s]" % (layer, width))
+        fb.evaluateEffect(
+            "[%s setBorderColor:(CGColorRef)[(id)[UIColor %sColor] CGColor]]"
+            % (layer, color)
+        )
+
+    subviews = fb.evaluateExpression("(id)[%s subviews]" % view)
+    subviewsCount = int(fb.evaluateExpression("(int)[(id)%s count]" % subviews))
+    if subviewsCount > 0:
+        for i in range(0, subviewsCount):
+            subview = fb.evaluateExpression("(id)[%s objectAtIndex:%i]" % (subviews, i))
+            setBorderOnAmbiguousViewRecursive(subview, width, color)
+```
+
 
 ## 参考链接
 **参考链接:🔗**
