@@ -4,9 +4,23 @@
 
 ## DWARF
 
-&emsp;DWARF 是一种被广泛使用的标准化 [Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)（调试数据格式）。DWARF 最初是与 [Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 一起设计的，尽管它是一种独立于 [object file](https://en.wikipedia.org/wiki/Object_file) 的格式。DWARF 这个名字是对 “ELF” 的 [medieval fantasy](https://en.wikipedia.org/wiki/Historical_fantasy#Medieval_fantasy) 补充，没有官方意义，尽管后来提出是 "Debugging With Arbitrary Record Formats" 或 "Debugging With Attributed Record Formats" 的首字母缩写（使用任意记录格式调试/使用属性化记录格式调试）。[Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)
+&emsp;DWARF 是一种被广泛使用的标准化 [Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)（调试数据格式）。DWARF 最初是与 [Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 一起设计的，尽管它独立于 [object file](https://en.wikipedia.org/wiki/Object_file) 格式（ELF 是类 Unix 操作系统的二进制文件标准格式，如 Linux 的主要可执行文件格式就是 ELF。这里的意思是即使 DWARF 最初是与 ELF 一起设计的，但是 DWARF 是独立与目标文件格式的，即它并不是和 ELF 绑定的。）。DWARF 这个名字是对 “ELF” 的 [medieval fantasy](https://en.wikipedia.org/wiki/Historical_fantasy#Medieval_fantasy) 补充，没有官方意义，尽管后来提出是 "Debugging With Arbitrary Record Formats" 或 "Debugging With Attributed Record Formats" 的首字母缩写（使用任意记录格式调试/使用属性化记录格式调试）。[Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)
 
 &emsp;DWARF 是许多 **编译器** 和 **调试器** 用于支持源码级调试的 **调试文件格式**（debugging file format）。它满足了许多过程语言的要求，如 C、C++ 和 Fortran，并且可以扩展到其他语言。DWARF 是独立于架构的，适用于任何处理器或操作系统。它广泛应用于 Unix、Linux 和其他操作系统，以及单机环境中（stand-alone environments）。[The DWARF Debugging Standard](http://dwarfstd.org)
+
+&emsp;DWARF 是指的一个文件内部的存储数据的格式。
+
+
+
+
+
+
+
+
+
+
+
+
 
 &emsp;调试数据格式是存储有关汇编计算机程序的信息供高级调试者使用的一种手段。现代调试数据格式存储了足够的信息，以便进行源级调试。
 
