@@ -1,10 +1,12 @@
-# iOS App Crash 分析：(一)：dsym文件讲解
+# iOS App Crash 分析：(一)：dsym 文件讲解
+
+> &emsp;本篇我们学习 DWARF 格式，这里我们可以对比前面的 mach-o 来一起学习。觉得大家首先要区分开文件格式和文件类型，以前大都根据文件的后缀来判别文件类型，那文件格式指什么呢？它指的是文件内部的二进制数据是根据某种格式来存储的。而今天要学习的 DWARF 便是一个文件格式，针对程序调试信息的一种文件格式。
 
 ## DWARF
 
-&emsp;DWARF 是一种被广泛使用的标准化 [Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)（调试数据格式）。DWARF 最初是与 [Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 一起设计的，尽管它独立于 [object file](https://en.wikipedia.org/wiki/Object_file) 格式。DWARF 这个名字是对 “ELF” 的 [medieval fantasy](https://en.wikipedia.org/wiki/Historical_fantasy#Medieval_fantasy) 补充，没有官方意义，尽管后来提出是 "Debugging With Arbitrary Record Formats" 或 "Debugging With Attributed RecordFormats" 的首字母缩写（使用任意记录格式调试/使用属性化记录格式调试）。[Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)
+&emsp;DWARF 是一种被广泛使用的标准化 [Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)（调试数据格式）。DWARF 最初是与 [Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 一起设计的，尽管它是一种独立于 [object file](https://en.wikipedia.org/wiki/Object_file) 的格式。DWARF 这个名字是对 “ELF” 的 [medieval fantasy](https://en.wikipedia.org/wiki/Historical_fantasy#Medieval_fantasy) 补充，没有官方意义，尽管后来提出是 "Debugging With Arbitrary Record Formats" 或 "Debugging With Attributed Record Formats" 的首字母缩写（使用任意记录格式调试/使用属性化记录格式调试）。[Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)
 
-&emsp;Dwarf 是许多 **编译器** 和 **调试器** 用于支持源码级调试的 **调试文件格式**（debugging file format）。它满足了许多过程语言的要求，如 C、C++ 和 Fortran，并且可以扩展到其他语言。DWARF 是独立于架构的，适用于任何处理器或操作系统。它广泛应用于 Unix、Linux 和其他操作系统，以及单机环境中（stand-alone environments）。[The DWARF Debugging Standard](http://dwarfstd.org)
+&emsp;DWARF 是许多 **编译器** 和 **调试器** 用于支持源码级调试的 **调试文件格式**（debugging file format）。它满足了许多过程语言的要求，如 C、C++ 和 Fortran，并且可以扩展到其他语言。DWARF 是独立于架构的，适用于任何处理器或操作系统。它广泛应用于 Unix、Linux 和其他操作系统，以及单机环境中（stand-alone environments）。[The DWARF Debugging Standard](http://dwarfstd.org)
 
 &emsp;调试数据格式是存储有关汇编计算机程序的信息供高级调试者使用的一种手段。现代调试数据格式存储了足够的信息，以便进行源级调试。
 
