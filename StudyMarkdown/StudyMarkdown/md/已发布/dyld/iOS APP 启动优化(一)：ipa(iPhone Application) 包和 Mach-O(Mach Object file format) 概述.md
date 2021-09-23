@@ -8,9 +8,11 @@
 
 &emsp;相信每一位 iOS 开发者都进行过打包测试，当我们把 Ad Hoc 或者 App Store Connect 的包导出到本地时会看到一个 xxx.ipa 文件，ipa 是 iPhone Application Archive 的缩写。实际上 xxx.ipa 只是一个变相的 zip 压缩包，我们可以把 xxx.ipa 文件直接通过 unzip 命令进行解压。
 
-&emsp;我们直接新建一个命名为 Test_ipa_Simple 的空白 iOS App，直接进行 Archive 后并导出 Test_ipa_Simple.ipa 文件查看它的内部结构。在终端执行 unzip Test_ipa_Simple.ipa 解压之后，会有一个 Payload 目录，而 Payload 里则是一个看似是文件的 Test_ipa_Simple.app，而实际上它又是一个目录（文件夹），或者说是一个完整的 App Bundle。其中 Base.lproj 中是我们的 Main.storyboard 和 LaunchScreen.storyboard 的内容，然后是 embedded.mobileprovision（描述文件）和 PkgInfo、Info.plist、_CodeSignature 用于描述 App 的一些信息，然后我们要重点关注的便是当前这个目录里面体积最大的文件 Test_ipa_Simple，它是和我们的 ipa 包同名的一个[二进制文件](https://www.zhihu.com/question/19971994)，然后用 file 命令查看它的文件类型是一个在 arm64 处理器架构下的可执行（executable）文件，格式则是 Mach-O，其他还存在 FAT 格式的 Mach-O 文件（可直白的理解为胖的 Mach-O 文件），它们是支持多个架构的二进制文件的顺序组合，例如这里取 `/bin/ls` 路径下的系统文件 `ls` 作为示例，使用 file 命令对它进行查看，可看到它是一个 FAT 文件，它包含 x86_64 和 arm64e 两个架构（这里是 m1 Mac 下的 `ls` 文件），即这里的 `ls` 是一个支持 x86_64 和 arm64e 两种处理器架构的通用二进制文件，里面包含的两部分都是 Mach-O 格式的 64-bit 可执行文件。
+&emsp;我们直接新建一个命名为 Test_ipa_Simple 的空白 iOS App，直接进行 Archive 后并导出 Test_ipa_Simple.ipa 文件查看它的内部结构。在终端执行 unzip Test_ipa_Simple.ipa 解压之后，会有一个 Payload 目录，而 Payload 里则是一个看似是文件的 Test_ipa_Simple.app，而实际上它又是一个目录（文件夹），或者说是一个完整的 App Bundle。其中 Base.lproj 中是我们的 Main.storyboard 和 LaunchScreen.storyboard 的内容，然后是 embedded.mobileprovision（描述文件）和 PkgInfo、Info.plist、_CodeSignature 用于描述 App 的一些信息，然后我们要重点关注的便是当前这个目录里面体积最大的文件 Test_ipa_Simple，它是和我们的 ipa 包同名的一个[二进制文件](https://www.zhihu.com/question/19971994)，然后用 file 命令查看它的文件类型是一个在 arm64 处理器架构下的可执行（executable）文件，格式则是 Mach-O，其他还存在 FAT 格式的 Mach-O 文件（可直白的理解为胖的 Mach-O 文件），它们是支持多个架构的二进制文件的顺序组合，例如这里取 `/bin/ls` 路径下的系统文件 `ls` 作为示例，使用 `file` 命令对它进行查看，可看到它是一个 FAT 文件，它包含 x86_64 和 arm64e 两个架构（这里是 m1 Mac 下的 `ls` 文件），即这里的 `ls` 是一个支持 x86_64 和 arm64e 两种处理器架构的通用二进制文件，里面包含的两部分都是 Mach-O 格式的 64-bit 可执行文件。
 
-&emsp;能同时适用多种架构的二进制文件，同一个程序包中同时为多种架构提供最理想的性能，因为需要储存多种代码，通用二进制应用程序通常比单一平台二进制的程序要大，但是由于两种架构有共通的非执行资源(代码以外的)，所以并不会达到单一版本的两倍之多，而且由于执行中只调用一部分代码，运行起来也不需要额外的内存。在了解了二进制文件的数据结构以后，一切就都显得没有秘密了。（下面是终端执行记录，可大致浏览一下）
+&emsp;能同时适用多种架构的二进制文件，同一个程序包中同时为多种架构提供最理想的性能，因为需要储存多种代码，通用二进制应用程序通常比单一平台二进制的程序要大，但是由于两种架构有共通的非执行资源(代码以外的)，所以并不会达到单一版本的两倍之多，而且由于执行中只调用一部分代码，运行起来也不需要额外的内存。
+
+&emsp;在了解了二进制文件的数据结构以后，一切就都显得没有秘密了。（下面是终端执行记录，可大致浏览一下）
 
 ```c++
 // file 指令可看出 ls 的文件类型：
