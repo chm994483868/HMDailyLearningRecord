@@ -240,7 +240,7 @@ Row(
 
 ### Appbar
 
-&emsp;[AppBar class](https://api.flutter.dev/flutter/material/AppBar-class.html) 一个Material Design 应用程序栏，由工具栏和其他可能的widget（如 TabBar 和 FlexibleSpaceBar ）组成。
+&emsp;[AppBar class](https://api.flutter.dev/flutter/material/AppBar-class.html) 一个 Material Design 应用程序栏，由工具栏和其他可能的widget（如 TabBar 和 FlexibleSpaceBar ）组成。
 
 &emsp;[具有自定义底部widget的AppBar](https://flutterchina.club/catalog/samples/app-bar-bottom/)
 
@@ -252,13 +252,24 @@ Row(
 
 &emsp;[Placeholder class](https://api.flutter.dev/flutter/widgets/Placeholder-class.html) 一个绘制了一个盒子的 widget，代表日后有 widget 将会被添加到该盒子中。这个 widget 在开发过程中很有用，可以指示界面尚未完成。
 
+## Material Components Widgets
 
+&emsp;实现了Material Design 指南的视觉、效果、motion-rich 的 widget。
 
+### BottomNavigationBar
 
+&emsp;[BottomNavigationBar class](https://api.flutter.dev/flutter/material/BottomNavigationBar-class.html) 底部导航条，可以很容易地在 tap 之间切换和浏览顶级视图。（类似 iOS 的底部 UITabBarController 的功能）
 
+&emsp;显示在应用底部的 material widget，用于在少量视图中进行选择，通常在三到五个视图之间。底部导航栏由 text labels、icons 或两者兼有的形式的多个 items 组成，它们都铺在 material 的顶部。底部导航栏提供了应用程序的顶级视图之间的快速导航。对于较大的屏幕，侧导航可能更合适。
 
+&emsp;底部导航栏通常与 Scaffold 结合使用，它作为 Scaffold.bottomNavigationBar 参数提供。
 
+&emsp;底部导航栏的 type 会更改其 items 显示方式。如果未指定，则在少于四个 items 时自动设置为 BottomNavigationBarType.fixed，否则设置为 BottomNavigationBarType.shifting。
 
+&emsp;items 的长度必须至少为两个，并且每个 item 的 icon 和 title/label 不得为空。
+
++ BottomNavigationBarType.fixed，少于四个 items 时的默认值。如果所选 item 不为 null，则使用 selectedItemColor 颜色进行渲染，否则主题的 ColorScheme.primary 颜色用于 Brightness.light 主题，ColorScheme.secondary 用于 Brightness.dark 主题。如果 backgroundColor 为 null，则导航栏的背景色默认为 Material 背景色 ThemeData.canvasColor（本质上是不透明的白色）。
++ BottomNavigationBarType.shifting，有四个或更多 items 时的默认值。如果 selectedItemColor 是 null，则所有 items 均以白色渲染。导航栏的背景颜色与所选项目的底导航巴里特姆.背景颜色相同。在这种情况下，假设每个项目将具有不同的背景颜色，背景颜色将与白色形成鲜明对比。
 
 
 
