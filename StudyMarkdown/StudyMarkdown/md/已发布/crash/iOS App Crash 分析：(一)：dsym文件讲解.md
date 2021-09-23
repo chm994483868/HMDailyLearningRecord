@@ -6,11 +6,15 @@
 
 &emsp;DWARF 是许多 **编译器** 和 **调试器** 用于支持源码级调试的 **调试文件格式**（debugging file format）（在开发中除了源码级调试还有汇编指令级调试）。它满足了许多过程语言的要求，如 C、C++ 和 Fortran，并且可以扩展到其他语言。DWARF 是独立于架构的，适用于任何处理器或操作系统。它广泛应用于 Unix、Linux 和其他操作系统，以及单机环境中（stand-alone environments）。[The DWARF Debugging Standard](http://dwarfstd.org)
 
-> &emsp;一个调试器的任务是尽可能以自然、可理解的方式，向程序员提供执行程序的一个概观，同时允许对其执行进行多样各种不同的控制。这意味着在本质上，调试器必须逆向许多编译器精心制作的变换，把程序的数据及状态转换回到这个程序源代码里程序员原来使用的措辞（terms）。
+> &emsp;一个调试器的任务是尽可能以自然、可理解的方式，向程序员提供执行程序的一个概观，同时允许对其执行进行多样各种不同的控制。这意味着在本质上，调试器必须 **逆向许多编译器精心制作的变换**，把程序的数据及状态转换回到这个程序源代码里程序员原来使用的措辞（terms）。
 
-&emsp;关于 DWARF 调试格式的内容还有很多。例如它的发展历程，当前已经到达 DWARF 5（2017 年发布）。例如它的设计模型它内部的块结构，它是如何描述几乎任何机器架构上的过程编程语言的，它是如何紧凑的表示可执行程序与源代码关系的。等等内容，这里我们不再详细展开，毕竟网络上有大篇的相关文档。本篇的重心我们则放在 Xcode 中 Build Options 中 Debug Information Format 中的 DWARF with dSYM File 选项中，下面我们通过 dSYM 文件来一起学习 DWARF 和 dSYM 文件的内容，然后学习如何从 crash log 中追踪解析错误日志。
+&emsp;关于 DWARF 调试格式的内容还有很多。例如它的发展历程，当前已经到达 DWARF 5（2017 年发布）。例如它的设计模型它内部的块结构，它是如何描述几乎任何机器架构上的过程编程语言的，它是如何紧凑的表示可执行程序与源代码关系的。等等内容，这里我们不再详细展开，毕竟网络上有大篇的相关文档。下面我们主要把关注点放在在 iOS 日常开发中与 DWARF 的一些联系。
 
+&emsp;本篇的重心我们则放在 Xcode 中 Build Options 中 Debug Information Format 中的 DWARF with dSYM File 选项中，下面我们通过 dSYM 文件来一起学习 DWARF 和 dSYM 文件的内容，然后学习如何从 crash log 中追踪解析错误日志。
 
+## Debug Information Format
+
+&emsp;我们首先创建一个名为 dSYMDemo 的 iOS 项目，在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认是 DWARF，在 Release 模式下默认是 DWARF with dSYM File，然后我们可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们则主要来研究 dSYMDemo.app.dSYM。
 
 
 
