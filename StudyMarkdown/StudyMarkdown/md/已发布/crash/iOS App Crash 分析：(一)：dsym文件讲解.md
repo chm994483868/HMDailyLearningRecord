@@ -88,7 +88,7 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 **参考链接:🔗**
 + [DWARF调试格式的简介](https://blog.csdn.net/wuhui_gdnt/article/details/7283483/)
 + [iOS查看UUID](https://blog.csdn.net/bianhuanshizhe/article/details/50338797)
-
++ [使用 Setfile 命令修改 MacOS 文件创建时间 (creation date)，（非 touch 命令），附 Linux 文件时间属性介绍](https://ld246.com/article/1592910201129)
 
 
 
