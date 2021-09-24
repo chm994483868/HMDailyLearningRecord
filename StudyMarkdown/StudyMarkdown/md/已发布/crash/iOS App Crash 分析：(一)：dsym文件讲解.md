@@ -14,13 +14,27 @@
 
 ## Debug Information Format
 
-&emsp;我们首先创建一个名为 dSYMDemo 的 iOS 项目，在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认是 DWARF，在 Release 模式下默认是 DWARF with dSYM File，然后我们可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们则主要来研究 dSYMDemo.app.dSYM。
+&emsp;我们首先创建一个名为 dSYMDemo 的 iOS 项目，在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认值是 DWARF，在 Release 模式下默认值是 DWARF with dSYM File，然后我们也可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们主要来研究 dSYMDemo.app.dSYM。
 
+&emsp;除了分别以 Debug 和 Release 模式运行 dSYMDemo 项目能分别在 Debug-iphonesimulator/Debug-iphonesimulator 路径下生成 dSYMDemo.app.dSYM 文件外，直接 Archive dSYMDemo 项目，然后选中 dSYMDemo 2021-9-24, 08.2512.xcarchive 文件右键显示包内容，在其 dSYMs 路径下也会生成一份 dSYMDemo.app.dSYM 文件。下面我们使用 macOS 下的 file 命令来看一下这个 dSYMDemo.app.dSYM 文件到底是个什么文件。
 
+&emsp;这里我们以 Release-iphonesimulator 下的 dSYMDemo.app.dSYM 文件为例：
 
+```c++
+hmc@bogon Release-iphonesimulator % file dSYMDemo.app.dSYM 
+dSYMDemo.app.dSYM: directory
+```
 
+&emsp;乍一看觉得 .dSYM 后缀很特别，可看到它其实和 .app 后缀一样，也就仅是一个文件夹而已。那么我们直接右键 dSYMDemo.app.dSYM 显示包内容，在其 DWARF 路径下有一个 dSYMDemo 文件，它便是 dSYMDemo.app.dSYM 的核心，我们同样使用 file 命令查看它的文件类型。
 
+```c++
+hmc@bogon DWARF % file dSYMDemo 
+dSYMDemo: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit dSYM companion file x86_64] [arm64:Mach-O 64-bit dSYM companion file arm64]
+dSYMDemo (for architecture x86_64):    Mach-O 64-bit dSYM companion file x86_64
+dSYMDemo (for architecture arm64):    Mach-O 64-bit dSYM companion file arm64
+```
 
+&emsp;可看到它是一个 Fat Mach-O 文件，分别对应 x86_64 和 arm64 两个架构。
 
 
 
@@ -43,7 +57,9 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 &emsp;某些对象文件格式包括调试信息，但其他对象可以使用通用调试数据格式，如 stabs 和 DWARF。
 
 &emsp;一般来说，debug 模式构建的 App 会把 Debug 符号表存储在编译好的二进制中，而 release 模式构建的 App 会把 Debug 符号表存储在 dSYM 文件中以节省二进制体积。
+
 &emsp;在每一次的编译中，Debug符号表和App的二进制通过构建时的UUID相互关联。每次构建时都会生成新的唯一标识UUID，不论源码是否相同。仅有UUID保持一致的dSYM文件，才能用于解析其堆栈信息。
+
 &emsp;DWARF，即 Debug With Arbitrary Record Format ，是一个标准调试信息格式，即调试信息。单独保存下来就是dSYM文件，即 Debug Symbol File 。使用MachOView打开一个二进制文件，就能看到很多DWARF的section，如 __DWARF,__debug_str, __DWARF,__debug_info, __DWARF,__debug_names 等。
 
 ## dSYM 文件概述
@@ -71,7 +87,7 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 ## 参考链接
 **参考链接:🔗**
 + [DWARF调试格式的简介](https://blog.csdn.net/wuhui_gdnt/article/details/7283483/)
-
++ [iOS查看UUID](https://blog.csdn.net/bianhuanshizhe/article/details/50338797)
 
 
 
