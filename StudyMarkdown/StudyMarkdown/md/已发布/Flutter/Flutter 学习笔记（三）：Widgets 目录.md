@@ -10,7 +10,7 @@
 
 &emsp;[Container class](https://api.flutter.dev/flutter/widgets/Container-class.html) 将 common 绘制、定位和大小 widget 相结合的便利 widget。
 
-&emsp;你是否有 widget 需要一些背景样式？也许是背景颜色或形状？还是一些尺寸限制？尝试将其包装在 Container widget 中。Container widget 可帮助你组成、装饰和定位子 widget。如果将 widget 包装在没有任何其他参数的 Container 小部件中，则不会发现外观上的任何差异。但是，如果添加 Color 参数，则你的子窗口 widget 将获得背景色。没有任何其他内容，Container 将根据其子 widget 自行调整大小。使用 Container 的 padding 属性在子 widget 和 Container 边界之间添加空白，并使用 margin 属性添加围绕 widget 的空白。使用 Decoration 属性可以在 Container 中添加一个形状，例如圆形。默认情况下 decoration 的大小是根据 Container 的*子项。在这种情况下，Container 对准圆形装饰最窄的参数--文本 widget 的高度。你可以像以前一样使用 padding 和 margin 来设计 decoration。使用 Alignment 属性，可以使子 widget 在 container 中对齐。设置对齐方式后，container 将展开以填充其父级的宽度和高度。你可以通过设置 container 的宽度和高度属性。或使用箱式布局模型来覆盖此设置。例如，使用 BoxConstraints，你的 container 可以扩展以填充给定的大小。你甚至可以将 transform 应用于 container。 
+&emsp;你是否有 widget 需要一些背景样式？也许是背景颜色或形状？还是一些尺寸限制？尝试将其包装在 Container widget 中。Container widget 可帮助你组成、装饰和定位子 widget。如果将 widget 包装在没有任何其他参数的 Container 小部件中，则不会发现外观上的任何差异。但是，如果添加 Color 参数，则你的子窗口 widget 将获得背景色。没有任何其他内容，Container 将根据其子 widget 自行调整大小。使用 Container 的 padding 属性在子 widget 和 Container 边界之间添加空白，并使用 margin 属性添加围绕 widget 的空白。使用 Decoration 属性可以在 Container 中添加一个形状，例如圆形。默认情况下 decoration 的大小是根据 Container 的子项。在这种情况下，Container 对准圆形装饰最窄的参数--文本 widget 的高度。你可以像以前一样使用 padding 和 margin 来设计 decoration。使用 Alignment 属性，可以使子 widget 在 container 中对齐。设置对齐方式后，container 将展开以填充其父级的宽度和高度。你可以通过设置 container 的宽度和高度属性。或使用箱式布局模型来覆盖此设置。例如，使用 BoxConstraints，你的 container 可以扩展以填充给定的大小。你甚至可以将 transform 应用于 container。 
 
 ```c++
 Container(
@@ -77,7 +77,7 @@ Column(
 
 &emsp;[Image class](https://api.flutter.dev/flutter/widgets/Image-class.html) 显示图像的 widget。
 
-&emsp;有时 App 需要显示图片，好在 Flutter 有个叫 Image 的 widget 正好派上用场。这 widget 能让图片显示于屏幕。Flutter 提取显示图像的方式有很多种。这图像可能来自你的 App 所保存的 Asset Bundle 使用 Image.asset，并提供 asset 名称。Image.asset 会根据设备的像素密度自动以适当版本显示文件。你只需要提供其他版本，并在 pubspec.yaml 加列。你也可以显示来自网络的图像。这得用上 Image.network()，并提供一个 URL。Flutter 将以加载缓存的方式显示图片（Web images are cached  automatically）。请记住，网络图片的加载速度，可能不及 Asset 中的图片且用户得联网才能看到初始图像。你可提交 loadingBuilder 让框架反复调用以便从网络下载图片。loadingBuilder 内含下载进度参数 progress，你可用来让用户知道实际图像还要多久才会下载完毕并显示。你还可以选择显示来自用户设备的图档，这部分可利用 Image.file，而且以字节数组存于内存的图像，也可藉此显示于屏幕，用 Image.memory 就可办到。无论图像档来源为何，都可用参数加以配置。设定属性 width and/or height，便能确定图像的显示规格，且能避免加载布局时出现难看的抖动。设置图片的 fit 属性以分配其刻入布局的空间。默认选项为 contain 但还有其他选项，包括可拉伸图片的 fill，而 cover 就是不拉伸。你还可以使用 color 和 colorBlendMode 为图像来套色（类似原生的 tint color）。有很多选择。别忘了为图像加上语义化标签 semanticLabel。这些将显示在辅助技术中，并使你的应用更易于访问。Flutter 支持 JPEG、PNG、GIF、WebP、位图和 WBMP。你也可以显示 GIF 和 WebP 动画。
+&emsp;有时 App 需要显示图片，好在 Flutter 有个叫 Image 的 widget 正好派上用场。这 widget 能让图片显示于屏幕。Flutter 提取显示图像的方式有很多种。这图像可能来自你的 App 所保存的 Asset Bundle 使用 Image.asset，并提供 asset 名称。Image.asset 会根据设备的像素密度自动以适当版本显示文件。你只需要提供其他版本，并在 pubspec.yaml 加列。你也可以显示来自网络的图像。这得用上 Image.network()，并提供一个 URL。Flutter 将以加载缓存的方式显示图片（Web images are cached  automatically）。请记住，网络图片的加载速度，可能不及 Asset 中的图片且用户得联网才能看到初始图像。你可提交 loadingBuilder 让框架反复调用以便从网络下载图片。loadingBuilder 内含下载进度参数 progress，你可用来让用户知道实际图像还要多久才会下载完毕并显示。你还可以选择显示来自用户设备的图档，这部分可利用 Image.file，而且以字节数组存于内存的图像，也可藉此显示于屏幕，用 Image.memory 就可办到。无论图像档来源为何，都可用参数加以配置。设定属性 width and/or height，便能确定图像的显示规格，且能避免加载布局时出现难看的抖动。设置图片的 fit 属性以分配其刻入布局的空间。默认选项为 contain 但还有其他选项，包括可拉伸图片的 fill，而 cover 就是不拉伸。你还可以使用 color 和 colorBlendMode 为图像来套色（类似原生的 tint color）。有很多选择。别忘了为图像加上语义化标签 semanticLabel。这些将显示在辅助技术中（类似 iOS 中的旁白），并使你的应用更易于访问。Flutter 支持 JPEG、PNG、GIF、WebP、位图和 WBMP。你也可以显示 GIF 和 WebP 动画。
 
 ```c++
 Image.network(
@@ -141,7 +141,7 @@ Image.network(
 
 &emsp;图像是使用 paintImage 绘制的，它更详细地描述了这个类上各个字段的含义。
 
-&emsp;默认构造函数可以与任何 ImageProvider 一起使用，例如 NetworkImage，以显示来自 Internet 的图像
+&emsp;默认构造函数可以与任何 ImageProvider 一起使用，例如 NetworkImage，以显示来自 Internet 的图像。
 
 ```c++
 const Image(
@@ -184,19 +184,17 @@ const Text.rich(
 )
 ```
 
-&emsp;交互性：
+&emsp;Text 的交互性：
 
-&emsp;要使 Text 对触摸事件作出反应，请将其包装在 GestureDetector.onTap 处理程序的 GestureDetector 小部件中。
-
-&emsp;在 material design 应用程序中，请考虑使用 TextButton，或者如果这不合适，至少使用 InkWell 而不是 GestureDetector。
-
-&emsp;要使文本部分具有交互性，请使用 RichText 并指定 TapGestureRecognizer 作为文本相关部分的 TextSpan.recognizer。
++ 要使 Text 对触摸事件作出反应，请将其包装在 GestureDetector.onTap 处理程序的 GestureDetector widget 中。
++ 在 material design 应用程序中，请考虑使用 TextButton，或者如果这不合适，至少使用 InkWell 而不是 GestureDetector。
++ 要使文本部分具有交互性，请使用 RichText 并指定 TapGestureRecognizer 作为文本相关部分的 TextSpan.recognizer。
 
 ### Icon
 
 &emsp;[Icon class](https://api.flutter.dev/flutter/widgets/Icon-class.html) 使用 IconData 中描述的字体的字形绘制的图形图标 widget，例如 Icons 中 material 的预定义 IconData。 
 
-&emsp;Icons 不是交互式的。对于交互式图标，请考虑材质的 IconButton。
+&emsp;Icons 不是交互式的。对于交互式图标，请考虑 Material 中的 IconButton。
 
 ```c++
 Row(
@@ -240,7 +238,7 @@ Row(
 
 ### Appbar
 
-&emsp;[AppBar class](https://api.flutter.dev/flutter/material/AppBar-class.html) 一个 Material Design 应用程序栏，由工具栏和其他可能的widget（如 TabBar 和 FlexibleSpaceBar ）组成。
+&emsp;[AppBar class](https://api.flutter.dev/flutter/material/AppBar-class.html) 一个 Material Design 应用程序栏，由工具栏和其他可能的 widget（如 TabBar 和 FlexibleSpaceBar ）组成。
 
 &emsp;[具有自定义底部widget的AppBar](https://flutterchina.club/catalog/samples/app-bar-bottom/)
 
@@ -260,16 +258,289 @@ Row(
 
 &emsp;[BottomNavigationBar class](https://api.flutter.dev/flutter/material/BottomNavigationBar-class.html) 底部导航条，可以很容易地在 tap 之间切换和浏览顶级视图。（类似 iOS 的底部 UITabBarController 的功能）
 
-&emsp;显示在应用底部的 material widget，用于在少量视图中进行选择，通常在三到五个视图之间。底部导航栏由 text labels、icons 或两者兼有的形式的多个 items 组成，它们都铺在 material 的顶部。底部导航栏提供了应用程序的顶级视图之间的快速导航。对于较大的屏幕，侧导航可能更合适。
+&emsp;显示在应用底部的 material widget，用于在少量视图中进行选择，通常在三到五个视图之间（类似 iOS 中程序首页底部 3 到 5 个 tabbar）。底部导航栏由 text labels、icons 或两者兼有的形式的多个 items 组成，它们都铺在 material 的顶部。底部导航栏提供了应用程序的顶级视图之间的快速导航。对于较大的屏幕，侧导航可能更合适。
 
 &emsp;底部导航栏通常与 Scaffold 结合使用，它作为 Scaffold.bottomNavigationBar 参数提供。
 
-&emsp;底部导航栏的 type 会更改其 items 显示方式。如果未指定，则在少于四个 items 时自动设置为 BottomNavigationBarType.fixed，否则设置为 BottomNavigationBarType.shifting。
+&emsp;底部导航栏的 type 会更改其 items 显示方式。如果未指定，则在少于四个 items 时自动设置为 BottomNavigationBarType.fixed，否则设置为 BottomNavigationBarType.shifting。items 的长度必须至少为两个，并且每个 item 的 icon 和 title/label 不得为空。
 
-&emsp;items 的长度必须至少为两个，并且每个 item 的 icon 和 title/label 不得为空。
++ BottomNavigationBarType.fixed，少于四个 items 时的默认值。如果 selected item 不为 null，则使用 selectedItemColor 颜色对其进行渲染，否则主题的 ColorScheme.primary 颜色用于 Brightness.light 主题，ColorScheme.secondary 用于 Brightness.dark 主题。如果 backgroundColor 为 null，则导航栏的背景色默认为 Material 背景色 ThemeData.canvasColor（本质上是不透明的白色）。
++ BottomNavigationBarType.shifting，当有四个或更多 items 时的默认值。如果 selectedItemColor 为 null，则所有 items 都呈现为白色。导航栏的背景颜色与 selected item 的 BottomNavigationBarItem.backgroundColor 相同。在这种情况下，假设每个 item 将具有不同的背景颜色，并且该背景颜色将与白色形成鲜明对比。
 
-+ BottomNavigationBarType.fixed，少于四个 items 时的默认值。如果所选 item 不为 null，则使用 selectedItemColor 颜色进行渲染，否则主题的 ColorScheme.primary 颜色用于 Brightness.light 主题，ColorScheme.secondary 用于 Brightness.dark 主题。如果 backgroundColor 为 null，则导航栏的背景色默认为 Material 背景色 ThemeData.canvasColor（本质上是不透明的白色）。
-+ BottomNavigationBarType.shifting，有四个或更多 items 时的默认值。如果 selectedItemColor 是 null，则所有 items 均以白色渲染。导航栏的背景颜色与所选项目的底导航巴里特姆.背景颜色相同。在这种情况下，假设每个项目将具有不同的背景颜色，背景颜色将与白色形成鲜明对比。
+```c++
+int _selectedIndex = 0;
+
+static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+
+static const List<Widget> _widgetOptions = <Widget>[
+  Text(
+    'Index 0: Home',
+    style: optionStyle,
+  ),
+  Text(
+     'Index 1: Business',
+     style: optionStyle,
+  ),
+  Text(
+     'Index 2: School',
+     style: optionStyle,
+  ),
+];
+
+void _onItemTapped(int index) {
+  setState(() {
+    _selectedIndex = index;
+  });
+}
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('BottomNavigationBar Sample'),
+    ),
+    body: Center(
+      child: _widgetOptions.elementAt(_selectedIndex),
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.business),
+          label: 'Business',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.school),
+          label: 'School',
+        ),
+      ],
+      currentIndex: _selectedIndex,
+      selectedItemColor: Colors.amber[800],
+      onTap: _onItemTapped,
+    ),
+  );
+}
+```
+
+```c++
+int _selectedIndex = 0;
+
+static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+
+static const List<Widget> _widgetOptions = <Widget>[
+  Text(
+    'Index 0: Home',
+    style: optionStyle,
+  ),
+  Text(
+    'Index 1: Business',
+    style: optionStyle,
+  ),
+  Text(
+    'Index 2: School',
+    style: optionStyle,
+  ),
+  Text(
+    'Index 3: Settings',
+    style: optionStyle,
+  ),
+];
+
+void _onItemTapped(int index) {
+  setState(() {
+    _selectedIndex = index;
+  });
+}
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('BottomNavigationBar Sample'),
+    ),
+    body: Center(
+      child: _widgetOptions.elementAt(_selectedIndex),
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+          backgroundColor: Colors.red,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.business),
+          label: 'Business',
+          backgroundColor: Colors.green,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.school),
+          label: 'School',
+          backgroundColor: Colors.purple,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.settings),
+          label: 'Settings',
+          backgroundColor: Colors.pink,
+        ),
+      ],
+      currentIndex: _selectedIndex,
+      selectedItemColor: Colors.amber[800],
+      onTap: _onItemTapped,
+    ),
+  );
+}
+```
+
+### TabBar
+
+&emsp;[TabBar class](https://api.flutter.dev/flutter/material/TabBar-class.html) 一个显示水平选项卡（horizontal row of tabs）的 Material Design widget。（类似 iOS 中比较常见的滑动标签，在页面顶部有一组标签，点击每个标签对标签下面的视图进行切换）
+
+&emsp;DefaultTabController、TabBar 和 TabBarView：你需要将 widget 置入标签页吗？那么，你可以选用 DefaultTabController、TabBar 和 TabBarView widget，要使用标签页，你首先需要一个标签页控制器（DefaultTabController），将选定的标签页和可见内容保持同步化最简单的方法是使用 DefaultTabController，一旦你有了这个东西你将需要一个能够显示用户在标签页之间切换不同内容的 widget，在这个阶段，你可以使用 TabBar，TabBar 接收标签页 widget 的列表，最后你需要为每个标签页创建内容，在这个阶段，你可以使用 TabBarView，子项目所列出的每一个  widget 都对应于 TabBar 中的标签页，标签页和 TabView 的子项目之间必须一对一进行匹配。
+
+&emsp;如下示例代码，TabBar 和 TabBarView 一一对应。
+
+```c++
+Widget build(BuildContext context) {
+  return DefaultTabController(
+    initialIndex: 1,
+    length: 3,
+    child: Scaffold(
+      appBar: AppBar(
+        title: const Text('TabBar Widget'),
+        bottom: const TabBar(
+          tabs: <Widget>[
+            Tab(
+              icon: Icon(Icons.cloud_outlined),
+            ),
+            Tab(
+              icon: Icon(Icons.beach_access_sharp),
+            ),
+            Tab(
+              icon: Icon(Icons.brightness_5_sharp),
+            ),
+          ],
+        ),
+      ),
+      body: const TabBarView(
+        children: <Widget>[
+          Center(
+            child: Text("It's cloudy here"),
+          ),
+          Center(
+            child: Text("It's rainy here"),
+          ),
+          Center(
+            child: Text("It's sunny here"),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+```
+
+### TabBarView
+
+&emsp;[TabBarView class](https://api.flutter.dev/flutter/material/TabBarView-class.html) 显示与当前选中的选项卡相对应的页面视图。通常和 TabBar 一起使用。A page view that displays the widget which corresponds to the currently selected tab.
+
+### MaterialApp class
+
+&emsp;[MaterialApp class](https://api.flutter.dev/flutter/material/MaterialApp-class.html) 一个便利的 widget，它封装了应用程序实现 Material Design 通常所需要的一些 widget。它通过添加特定于 material-design 的功能（例如 AnimatedTheme 和 GridPaper）构建在 WidgetsApp 之上。
+
+&emsp;The MaterialApp configures the top-level Navigator to search for routes in the following order:
+
+1. For the / route, the home property, if non-null, is used.
+2. Otherwise, the routes table is used, if it has an entry for the route.
+3. Otherwise, onGenerateRoute is called, if provided. It should return a non-null value for any valid route not handled by home and routes.
+4. Finally if all else fails onUnknownRoute is called.
+
+&emsp;If a Navigator is created, at least one of these options must handle the / route, since it is used when an invalid initialRoute is specified on startup (e.g. by another application launching this one with an intent on Android; see dart:ui.PlatformDispatcher.defaultRouteName).
+
+&emsp;This widget also configures the observer of the top-level Navigator (if any) to perform Hero animations.
+
+&emsp;If home, routes, onGenerateRoute, and onUnknownRoute are all null, and builder is not null, then no Navigator is created.
+
+```c++
+MaterialApp(
+  routes: <String, WidgetBuilder>{
+    '/': (BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Home Route'),
+        ),
+      );
+    },
+    '/about': (BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('About Route'),
+        ),
+      );
+     }
+   },
+)
+```
+
+### WidgetsApp
+
+&emsp;[WidgetsApp class](https://api.flutter.dev/flutter/widgets/WidgetsApp-class.html) 一个便利的 widget，它封装了应用程序通常需要的一些 widget。
+
+&emsp;WidgetsApp 提供的主要角色之一是将系统后退按钮绑定为弹出 Navigator 或退出应用程序。
+
+&emsp;它由 MaterialApp 和 CupertinoApp 用于实现应用程序的基本功能。
+
+&emsp;使用 MediaQuery.fromWindow 构建 MediaQuery。要使用继承的 MediaQuery，请设置 useInheritedMediaQuery 为 true。
+
+### Drawer
+
+&emsp;[Drawer class](https://api.flutter.dev/flutter/material/Drawer-class.html) 从 Scaffold 边缘水平滑动以显示应用程序中导航链接的 Material Design 面板。（类似 iOS App 中左右两边的抽屉效果）
+
+```c++
+Scaffold(
+  appBar: AppBar(
+    title: const Text('Drawer Demo'),
+  ),
+  drawer: Drawer(
+    child: ListView(
+      padding: EdgeInsets.zero,
+      children: const <Widget>[
+        DrawerHeader(
+          decoration: BoxDecoration(
+            color: Colors.blue,
+          ),
+          child: Text(
+            'Drawer Header',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+            ),
+          ),
+        ),
+        ListTile(
+          leading: Icon(Icons.message),
+          title: Text('Messages'),
+        ),
+        ListTile(
+          leading: Icon(Icons.account_circle),
+          title: Text('Profile'),
+        ),
+        ListTile(
+          leading: Icon(Icons.settings),
+          title: Text('Settings'),
+        ),
+      ],
+    ),
+  ),
+)
+```
+
+### RaisedButton
+
+
 
 
 
