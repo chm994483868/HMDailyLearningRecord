@@ -8,13 +8,54 @@
 
 > &emsp;一个调试器的任务是尽可能以自然、可理解的方式，向程序员提供执行程序的一个概观，同时允许对其执行进行多样各种不同的控制。这意味着在本质上，调试器必须 **逆向许多编译器精心制作的变换**，把程序的数据及状态转换回到这个程序源代码里程序员原来使用的措辞（terms）。
 
-&emsp;关于 DWARF 调试格式的内容还有很多。例如它的发展历程，当前已经到达 DWARF 5（2017 年发布）。例如它的设计模型它内部的块结构，它是如何描述几乎任何机器架构上的过程编程语言的，它是如何紧凑的表示可执行程序与源代码关系的。等等内容，这里我们不再详细展开，毕竟网络上有大篇的相关文档。下面我们主要把关注点放在在 iOS 日常开发中与 DWARF 的一些联系。
+&emsp;关于 DWARF 调试格式的内容还有很多。例如它的发展历程，当前已经到达 DWARF 5（2017 年发布）。例如它的设计模型它内部的块结构，它是如何描述几乎任何机器架构上的过程编程语言的，它是如何紧凑的表示可执行程序与源代码关系的。等等内容，这里我们不再详细展开，毕竟网络上有大篇的相关文档。下面我们主要把关注点放在 iOS 日常开发工作中与 DWARF 有接触的一些点上（.dSYM）。
 
-&emsp;本篇的重心我们则放在 Xcode 中 Build Options 中 Debug Information Format 中的 DWARF with dSYM File 选项中，下面我们通过 .dSYM 文件来一起学习 DWARF 和 .dSYM 文件的内容，然后学习如何从 crash log 中追踪解析错误日志。
+&emsp;~~本篇的重心我们放在 Xcode 中 Build Options 中 Debug Information Format 中的 DWARF with dSYM File 选项中，下面我们通过 .dSYM 文件来一起学习 DWARF 和 .dSYM 文件的内容，然后学习如何从 crash log 中追踪解析错误日志。~~
+
+&emsp;下面我们通过一个 iOS 示例项目来研究 .dSYM 文件。
 
 ## Debug Information Format
 
-&emsp;.dSYM 文件，乍一看这个后缀名好复杂，其实不然，它仅做一个指示作用，其实它和 .app 一样，都仅是一个文件夹而已，我们下面会直接 `cd` 进入看它内部的内容，而 dSYM 这四个字母便是 dynamic Symbol（动态符号）的缩写。
+&emsp;首先我们使用 Xcode 创建一个名为 dSYMDemo 的 iOS 项目，然后在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认值是 DWARF，在 Release 模式下默认值是 DWARF with dSYM File，然后我们也可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们主要来研究 dSYMDemo.app.dSYM 文件。
+
+&emsp;.dSYM 文件，乍一看这个后缀名好复杂，其实不然，它仅起一个类似 “聚合” 的作用，它和 .app 文件一样，它们都仅是一个带后缀的文件夹形式的文件，所以直白的一点的话我们可以直接把它们看作是一个文件夹。下面会直接 `cd` 进入 .dSYM 文件内部查看其核心内容。（dSYM 这四个字母便是 Debug Symbols（调试符号）的缩写）
+
+&emsp;在前面学习 mach-o 时我们多次使用过 file 命令，下面我们依然使用 file 命令来查看文件（类型）的详细信息。
+
+&emsp;下面我们再回顾一下 iOS 日常开发中经常遇到的几个文件后缀：.xcarchive .ipa .app .dSYM .plist。（在 macOS 的文件系统中我们选中指定文件在右边的简介中已经列出此文件的简要种类信息）
+
++ .xcarchive：Xcode Archive（带后缀的文件夹形式的文件）
++ .ipa：iOS 软件包归档 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```c++
 hmc@localhost Release-iphonesimulator % tree
@@ -45,7 +86,7 @@ hmc@localhost Release-iphonesimulator % tree
 hmc@localhost Release-iphonesimulator % 
 ```
 
-&emsp;下面我们通过一个示例项目来研究 .dSYM 文件。首先创建一个名为 dSYMDemo 的 iOS 项目，在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认值是 DWARF，在 Release 模式下默认值是 DWARF with dSYM File，然后我们也可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们主要来研究 dSYMDemo.app.dSYM。
+
 
 ### 生成 .dSYM 文件
 
