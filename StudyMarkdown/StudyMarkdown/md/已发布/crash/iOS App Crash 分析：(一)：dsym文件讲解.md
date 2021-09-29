@@ -14,18 +14,28 @@
 
 &emsp;下面我们通过一个 iOS 示例项目来研究 .dSYM 文件。
 
-## Debug Information Format
+## Xcode：Debug Information Format
 
 &emsp;首先我们使用 Xcode 创建一个名为 dSYMDemo 的 iOS 项目，然后在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认值是 DWARF，在 Release 模式下默认值是 DWARF with dSYM File，然后我们也可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们主要来研究 dSYMDemo.app.dSYM 文件。
 
-&emsp;.dSYM 文件，乍一看这个后缀名好复杂，其实不然，它仅起一个类似 “聚合” 的作用，它和 .app 文件一样，它们都仅是一个带后缀的文件夹形式的文件，所以直白的一点的话我们可以直接把它们看作是一个文件夹。下面会直接 `cd` 进入 .dSYM 文件内部查看其核心内容。（dSYM 这四个字母便是 Debug Symbols（调试符号）的缩写）
+&emsp;这里我们发现当 Debug Information Format 设置为 DWARF 时仅生成一个 .app 文件，如果设置为 DWARF with dSYM File 则会同时生成一个 .app 文件一个 .dSYM 文件，那我们是不是会有一个疑惑呢，当设置了 Debug Information Format 为 DWARF 时，那 .dSYM 调试文件去哪了呢？
 
-&emsp;在前面学习 mach-o 时我们多次使用过 file 命令，下面我们依然使用 file 命令来查看文件（类型）的详细信息。
+
+
+
+
+
+&emsp;.dSYM 文件，乍一看这个后缀名好复杂，其实不然，它仅起一个类似 “聚合” 的作用，它和 .app 文件一样，**它们都仅是一个带后缀的文件夹形式的文件**，所以我们直接把它们看作文件夹就好，在 macOS 中直接右键显示包内容即可直接看到其内部内容。下面会直接 `cd` 进入 .dSYM 文件内部查看其核心内容。（dSYM 这四个字母便是 Debug Symbols（调试符号）的缩写）
+
+&emsp;在前面学习 mach-o 时我们多次使用过 file 命令，下面我们依然使用 file 命令来查看文件（类型）的详细信息。（可以在控制台输入 file --help 指令并回车，查看 file 命令的更多详细信息）
 
 &emsp;下面我们再回顾一下 iOS 日常开发中经常遇到的几个文件后缀：.xcarchive .ipa .app .dSYM .plist。（在 macOS 的文件系统中我们选中指定文件在右边的简介中已经列出此文件的简要种类信息）
 
-+ .xcarchive：Xcode Archive（带后缀的文件夹形式的文件）
-+ .ipa：iOS 软件包归档 
++ .xcarchive：Xcode Archive（带后缀的文件夹形式的文件）`file dSYMDemo.xcarchive: dSYMDemo.xcarchive: directory`
++ .ipa：iOS 软件包归档（一个 zip 文件，可以直接 unzip 解压）`file dSYMDemo.ipa: dSYMDemo.ipa: Zip archive data, at least v1.0 to extract`
++ .app：应用程序(Intel)（带后缀的文件夹形式的文件）`file dSYMDemo.app: dSYMDemo.app: directory`
++ .dSYM：Archived Debug Symbols（带后缀的文件夹形式的文件）`file dSYMDemo.app.dSYM: dSYMDemo.app.dSYM: directory`
++ .plist：Property List `file ExportOptions.plist: ExportOptions.plist: XML 1.0 document text, ASCII text`
 
 
 
@@ -33,59 +43,21 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;既然 dSYMDemo.app.dSYM 是一个文件夹，那么我们继续看其内部的内容，这里除了选中文件右键显示包内容查看，还可以先使用 [tree](http://mama.indstate.edu/users/ice/tree/) 命令来一览 dSYMDemo.app.dSYM 文件的内部文件层级。（tree 命令可以使用 Homebrew 安装：brew install tree）
 
 ```c++
-hmc@localhost Release-iphonesimulator % tree
-.
-├── dSYMDemo.app
-│   ├── Base.lproj
-│   │   ├── LaunchScreen.storyboardc
-│   │   │   ├── 01J-lp-oVM-view-Ze5-6b-2t3.nib
-│   │   │   ├── Info.plist
-│   │   │   └── UIViewController-01J-lp-oVM.nib
-│   │   └── Main.storyboardc
-│   │       ├── BYZ-38-t0r-view-8bC-Xf-vdC.nib
-│   │       ├── Info.plist
-│   │       └── UIViewController-BYZ-38-t0r.nib
-│   ├── Info.plist
-│   ├── PkgInfo
-│   ├── _CodeSignature
-│   │   └── CodeResources
-│   └── dSYMDemo
-└── dSYMDemo.app.dSYM
-    └── Contents
-        ├── Info.plist
-        └── Resources
-            └── DWARF
-                └── dSYMDemo
+hmc@bogon Debug-iphonesimulator % tree dSYMDemo.app.dSYM 
+dSYMDemo.app.dSYM
+└── Contents
+    ├── Info.plist
+    └── Resources
+        └── DWARF
+            └── dSYMDemo
 
-9 directories, 12 files
-hmc@localhost Release-iphonesimulator % 
+3 directories, 2 files
 ```
 
+&emsp;dSYMDemo.app.dSYM 内部有个 3 个文件夹，2 个文件，其中最核心的便是 DWARF 文件夹下的 dSYMDemo 文件。 
 
 
 ### 生成 .dSYM 文件
@@ -178,3 +150,4 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 + [DWARF文件初探——提取轻量符号表](https://juejin.cn/post/6950227054931476516)
 + [dwarf简介](https://blog.csdn.net/helloworlddm/article/details/76785319)
 + [调试 DWARF 和 STAB 格式](https://blog.csdn.net/weixin_34014277/article/details/93052964?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7Edefault-14.no_search_link&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7Edefault-14.no_search_link)
++ [mac额外安装命令tree](https://www.jianshu.com/p/75b125ac19d5)
