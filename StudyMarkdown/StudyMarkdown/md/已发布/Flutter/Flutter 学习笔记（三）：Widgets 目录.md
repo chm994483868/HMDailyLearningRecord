@@ -540,6 +540,201 @@ Scaffold(
 
 ### RaisedButton
 
+&emsp;[RaisedButton class](https://docs.flutter.io/flutter/material/RaisedButton-class.html) Material Design 中的 button， 一个凸起的材质矩形按钮。（This class is deprecated, please use ElevatedButton instead. 此类已经被废弃了，使用 ElevatedButton 来代替。）
+
+### FloatingActionButton
+
+&emsp;[FloatingActionButton class](https://api.flutter.dev/flutter/material/FloatingActionButton-class.html) 一个圆形图标按钮，它悬停在内容之上，以展示应用程序中的主要动作。FloatingActionButton 通常用于 Scaffold.floatingActionButton 字段。
+
+&emsp;在 Flutter 中添加 FloatingActionButton 非常容易。只需要将 FloatingActionButton 添加到 Scaffold 中即可。但是，如果你有一个 BottomNavigationBar，并且想要 FloatingActionButton 嵌入其中，该怎么办？首先，将 BottomNavigationBar 添加到你的 Scaffold 中。然后，使用 FloatingActionButtonLocation 嵌入 FloatingActionButton。
+
+```c++
+Scaffold(
+  floatingActionButton: ...
+  bottomNavigationBar: ...
+  floatingActionButtonLocation:
+    FloatingActionButtonLocation.endDocked,
+);
+```
+
+&emsp;如果想要 FloatingActionButton 在中间显示，可以尝试将 endDocked 更改为 centerDocked。现在 FloatingActionButton 已整齐的嵌入 BottomNavigationBar 中了。
+
+```c++
+/// Flutter code sample for FloatingActionButton
+
+// This example shows how to display a [FloatingActionButton] in a
+// [Scaffold], with a pink [backgroundColor] and a thumbs up [Icon].
+//
+// ![](https://flutter.github.io/assets-for-api-docs/assets/material/floating_action_button.png)
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: _title,
+      home: MyStatelessWidget(),
+    );
+  }
+}
+
+/// This is the stateless widget that the main application instantiates.
+class MyStatelessWidget extends StatelessWidget {
+  const MyStatelessWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Floating Action Button'),
+      ),
+      body: const Center(child: Text('Press the button below!')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 点击后的响应事件
+          // Add your onPressed code here!
+          
+        },
+        child: const Icon(Icons.navigation),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+}
+```
+
+### FlatButton class
+
+&emsp;[FlatButton class](https://api.flutter.dev/flutter/material/FlatButton-class.html) 一个扁平的 Material 按钮。（This class is deprecated, please use TextButton instead. 此类已经被废弃了，使用 TextButton 来代替。）
+
+### IconButton class
+
+&emsp;[IconButton class](https://api.flutter.dev/flutter/material/IconButton-class.html) 一个 Material 图标按钮，点击时会有水波动画。
+
+```c++
+/// Flutter code sample for IconButton
+
+// This sample shows an `IconButton` that uses the Material icon "volume_up" to
+// increase the volume.
+//
+// ![](https://flutter.github.io/assets-for-api-docs/assets/material/icon_button.png)
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const Center(
+          child: MyStatefulWidget(),
+        ),
+      ),
+    );
+  }
+}
+
+double _volume = 0.0;
+
+/// This is the stateful widget that the main application instantiates.
+class MyStatefulWidget extends StatefulWidget {
+  const MyStatefulWidget({Key? key}) : super(key: key);
+
+  @override
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
+}
+
+/// This is the private State class that goes with MyStatefulWidget.
+class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        IconButton(
+          icon: const Icon(Icons.volume_up),
+          tooltip: 'Increase volume by 10',
+          onPressed: () {
+            setState(() {
+              _volume += 10;
+            });
+          },
+        ),
+        Text('Volume : $_volume')
+      ],
+    );
+  }
+}
+```
+
+### PopupMenuButton<T> class 
+
+&emsp;[PopupMenuButton<T> class](https://api.flutter.dev/flutter/material/PopupMenuButton-class.html) 当菜单隐藏式，点击或调用 onSelected 时显示一个弹出式菜单列表。
+
+```c++
+// This is the type used by the popup menu below.
+enum WhyFarther { harder, smarter, selfStarter, tradingCharter }
+
+// This menu button widget updates a _selection field (of type WhyFarther, not shown here).
+
+PopupMenuButton<WhyFarther>(
+  onSelected: (WhyFarther result) { setState(() { _selection = result; }); },
+  itemBuilder: (BuildContext context) => <PopupMenuEntry<WhyFarther>>[
+    const PopupMenuItem<WhyFarther>(
+      value: WhyFarther.harder,
+      child: Text('Working a lot harder'),
+    ),
+    const PopupMenuItem<WhyFarther>(
+      value: WhyFarther.smarter,
+      child: Text('Being a lot smarter'),
+    ),
+    const PopupMenuItem<WhyFarther>(
+      value: WhyFarther.selfStarter,
+      child: Text('Being a self-starter'),
+    ),
+    const PopupMenuItem<WhyFarther>(
+      value: WhyFarther.tradingCharter,
+      child: Text('Placed in charge of trading charter'),
+    ),
+  ],
+)
+```
+
+### ButtonBar class
+
+&emsp;[ButtonBar class](https://api.flutter.dev/flutter/material/ButtonBar-class.html) 水平排列的按钮组。
+
+
+### 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
