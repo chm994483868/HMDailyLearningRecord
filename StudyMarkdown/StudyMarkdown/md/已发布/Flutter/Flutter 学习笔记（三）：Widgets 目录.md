@@ -721,15 +721,233 @@ PopupMenuButton<WhyFarther>(
 
 &emsp;[ButtonBar class](https://api.flutter.dev/flutter/material/ButtonBar-class.html) 水平排列的按钮组。
 
+### TextField class
 
-### 
+&emsp;[TextField class](https://api.flutter.dev/flutter/material/TextField-class.html) 文本输入框。（类比 iOS 的 UITextField） 
 
+```c++
+const TextField(
+  obscureText: true,
+  decoration: InputDecoration(
+    border: OutlineInputBorder(),
+    labelText: 'Password',
+  ),
+)
+```
 
+### Checkbox class
 
+&emsp;[Checkbox class](https://api.flutter.dev/flutter/material/Checkbox-class.html) 复选框（多选框），允许用户从一组中选择多个选项。
 
+```c++
+bool isChecked = false;
 
+@override
+Widget build(BuildContext context) {
+  Color getColor(Set<MaterialState> states) {
+    const Set<MaterialState> interactiveStates = <MaterialState>{
+      MaterialState.pressed,
+      MaterialState.hovered,
+      MaterialState.focused,
+    };
+    if (states.any(interactiveStates.contains)) {
+      return Colors.blue;
+    }
+    return Colors.red;
+  }
+  return Checkbox(
+    checkColor: Colors.white,
+    fillColor: MaterialStateProperty.resolveWith(getColor),
+    value: isChecked,
+    onChanged: (bool? value) {
+      setState(() {
+        isChecked = value!;
+      });
+    },
+  );
+}
+```
 
+### Radio<T> class
 
+&emsp;[Radio<T> class](https://api.flutter.dev/flutter/material/Radio-class.html) 单选框，允许用户从一组中选择一个选项。
+
+&emsp;用于在多个相互排斥的值之间进行选择。当选定组中的一个 radio button 时，组中的其他 radio buttons 将停止选择。值为 T 型，即 Radio 的类型参数。常用于此目的。
+
+```c++
+/// Flutter code sample for Radio
+
+// Here is an example of Radio widgets wrapped in ListTiles, which is similar
+// to what you could get with the RadioListTile widget.
+//
+// The currently selected character is passed into `groupValue`, which is
+// maintained by the example's `State`. In this case, the first `Radio`
+// will start off selected because `_character` is initialized to
+// `SingingCharacter.lafayette`.
+//
+// If the second radio button is pressed, the example's state is updated
+// with `setState`, updating `_character` to `SingingCharacter.jefferson`.
+// This causes the buttons to rebuild with the updated `groupValue`, and
+// therefore the selection of the second button.
+//
+// Requires one of its ancestors to be a [Material] widget.
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const Center(
+          child: MyStatefulWidget(),
+        ),
+      ),
+    );
+  }
+}
+
+enum SingingCharacter { lafayette, jefferson }
+
+/// This is the stateful widget that the main application instantiates.
+class MyStatefulWidget extends StatefulWidget {
+  const MyStatefulWidget({Key? key}) : super(key: key);
+
+  @override
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
+}
+
+/// This is the private State class that goes with MyStatefulWidget.
+class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  SingingCharacter? _character = SingingCharacter.lafayette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        ListTile(
+          title: const Text('Lafayette'),
+          leading: Radio<SingingCharacter>(
+            value: SingingCharacter.lafayette,
+            groupValue: _character,
+            onChanged: (SingingCharacter? value) {
+              setState(() {
+                _character = value;
+              });
+            },
+          ),
+        ),
+        ListTile(
+          title: const Text('Thomas Jefferson'),
+          leading: Radio<SingingCharacter>(
+            value: SingingCharacter.jefferson,
+            groupValue: _character,
+            onChanged: (SingingCharacter? value) {
+              setState(() {
+                _character = value;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+```
+
+### Switch class
+
+&emsp;[Switch class](https://api.flutter.dev/flutter/material/Switch-class.html) On/off 用于切换一个单一状态。 
+
+### Slider class
+
+&emsp;[Slider class](https://api.flutter.dev/flutter/material/Slider-class.html) 滑块，允许用户通过滑动滑块来从一系列值中选择。
+
+```c++
+/// Flutter code sample for Slider
+
+// ![A slider widget, consisting of 5 divisions and showing the default value
+// indicator.](https://flutter.github.io/assets-for-api-docs/assets/material/slider.png)
+//
+// The Sliders value is part of the Stateful widget subclass to change the value
+// setState was called.
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const MyStatefulWidget(),
+      ),
+    );
+  }
+}
+
+/// This is the stateful widget that the main application instantiates.
+class MyStatefulWidget extends StatefulWidget {
+  const MyStatefulWidget({Key? key}) : super(key: key);
+
+  @override
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
+}
+
+/// This is the private State class that goes with MyStatefulWidget.
+class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  double _currentSliderValue = 20;
+
+  @override
+  Widget build(BuildContext context) {
+    return Slider(
+      value: _currentSliderValue,
+      min: 0,
+      max: 100,
+      divisions: 5,
+      label: _currentSliderValue.round().toString(),
+      onChanged: (double value) {
+        setState(() {
+          _currentSliderValue = value;
+        });
+      },
+    );
+  }
+}
+```
+
+### Date & Time Pickers
+
+&emsp;[Date & Time Pickers](https://api.flutter.dev/flutter/material/showDatePicker.html) 日期&时间选择器。
+
+### Chip class
+
+&emsp;[Chip class](https://api.flutter.dev/flutter/material/Chip-class.html) 标签，一个 Material widget。 它可以将一个复杂内容实体展现在一个小块中，如联系人。
+
+### Card class
+
+&emsp;[Card class](https://api.flutter.dev/flutter/material/Card-class.html) 一个 Material Design 卡片，拥有一个圆角和阴影。
+
+### ListTile class
+
+&emsp;[ListTile class](https://api.flutter.dev/flutter/material/ListTile-class.html) 一个固定高度的行，通常包含一些文本，以及一个行前或行尾图标。 
 
 
 
