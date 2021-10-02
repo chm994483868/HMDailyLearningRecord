@@ -2,23 +2,27 @@
 
 ## DWARF 概述
 
-&emsp;DWARF 是一种被广泛使用的标准化 [Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)（调试数据格式）。DWARF 最初是与 [Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 一起设计的，尽管它是一种独立于 [object file](https://en.wikipedia.org/wiki/Object_file) 的格式（ELF 是类 Unix 操作系统的可执行二进制文件标准格式，如 Linux 的主要可执行文件格式就是 ELF，macOS 的可执行文件格式是 mach-o。这里的意思是即使 DWARF 最初是与 ELF 一起设计的，但是 DWARF 是独立与目标文件格式的，即它并不是和 ELF 绑定的。）。DWARF 这个名字是对 “ELF” 的 [medieval fantasy](https://en.wikipedia.org/wiki/Historical_fantasy#Medieval_fantasy) 补充，没有官方意义，尽管后来提出是 "Debugging With Arbitrary Record Formats" 或 "Debugging With Attributed Record Formats" 的首字母缩写（使用任意记录格式调试/使用属性化记录格式调试）。[Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)
+&emsp;DWARF 是一种被广泛使用的标准化 [Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)（调试数据格式）。DWARF 最初是与 [Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 一起设计的，尽管它是一种独立于 [object file](https://en.wikipedia.org/wiki/Object_file) 的格式（ELF 是类 Unix 操作系统的可执行二进制文件标准格式，如 Linux 的主要可执行文件格式就是 ELF，macOS 的可执行文件格式是 mach-o。这里的意思是即使 DWARF 最初是与 ELF 一起设计的，但是 DWARF 是独立与目标文件格式的，即它并不是和 ELF 绑定的）。
+
+&emsp;DWARF 这个名字是对 “ELF” 的 [medieval fantasy](https://en.wikipedia.org/wiki/Historical_fantasy#Medieval_fantasy) 补充，没有官方意义，尽管后来提出是 "Debugging With Arbitrary Record Formats" 或 "Debugging With Attributed Record Formats" 的首字母缩写（使用任意记录格式调试/使用属性化记录格式调试）。[Debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format)
 
 &emsp;DWARF 是许多 **编译器** 和 **调试器** 用于支持源码级调试的 **调试文件格式**（debugging file format）（在开发中除了源码级调试还有汇编指令级调试）。它满足了许多过程语言的要求，如 C、C++ 和 Fortran，并且可以扩展到其他语言。DWARF 是独立于架构的，适用于任何处理器或操作系统。它广泛应用于 Unix、Linux 和其他操作系统，以及单机环境中（stand-alone environments）。[The DWARF Debugging Standard](http://dwarfstd.org)
 
-> &emsp;一个调试器的任务是尽可能以自然、可理解的方式，向程序员提供执行程序的一个概观，同时允许对其执行进行多样各种不同的控制。这意味着在本质上，调试器必须 **逆向许多编译器精心制作的变换**，把程序的数据及状态转换回到这个程序源代码里程序员原来使用的措辞（terms）。
+&emsp;一个调试器的任务是尽可能以自然、可理解的方式，向程序员提供**执行程序的一个概观**，同时**允许对其执行进行多样各种不同的控制**。这意味着在本质上，调试器必须 **逆向许多编译器精心制作的变换**，把程序的**数据及状态**转换回到这个程序源代码里程序员原来使用的措辞（terms）。DWARF 调试数据格式便可为这个过程服务。
 
-&emsp;关于 DWARF 调试格式的内容还有很多。例如它的发展历程，当前已经到达 DWARF 5（2017 年发布）。例如它的设计模型它内部的块结构，它是如何描述几乎任何机器架构上的过程编程语言的，它是如何紧凑的表示可执行程序与源代码关系的。等等内容，这里我们不再详细展开，毕竟网络上有大篇的相关文档。下面我们主要把关注点放在 iOS 日常开发工作中与 DWARF 有接触的一些点上（.dSYM）。
+&emsp;关于 DWARF 调试格式的内容还有很多。例如它的发展历程，当前已经到达 DWARF 5（2017 年发布）。例如它的设计模型它内部的块结构，它是如何描述几乎任何机器架构上的过程编程语言的，它是如何紧凑的表示可执行程序与源代码关系的。等等内容，在下面的章节中我们会随机梳理一下，毕竟网络上有大篇的相关文档。
 
-&emsp;~~本篇的重心我们放在 Xcode 中 Build Options 中 Debug Information Format 中的 DWARF with dSYM File 选项中，下面我们通过 .dSYM 文件来一起学习 DWARF 和 .dSYM 文件的内容，然后学习如何从 crash log 中追踪解析错误日志。~~
+&emsp;下面我们主要把关注点放在 iOS 日常开发工作中与 DWARF 有接触的一些点上（.dSYM）。
 
-&emsp;下面我们通过一个 iOS 示例项目来研究 .dSYM 文件。
+&emsp;~~本篇的重心我们放在 Xcode 中 Build Options 中 Debug Information Format 选择 DWARF with dSYM File 选项中生成的 .dSYM 文件，下面我们通过 .dSYM 文件来一起学习 DWARF 和 .dSYM 文件内部结构，然后学习如何从 crash log 中追踪解析错误日志。~~
+
+&emsp;下面我们从一个 iOS 示例项目开始学习。
 
 ## Xcode：Debug Information Format
 
 &emsp;首先我们使用 Xcode 创建一个名为 dSYMDemo 的 iOS 项目，然后在其 Build Settings 中直接搜索 DWARF，我们便可看到 Build Options -> Debug Information Format，其中在 Debug 模式下默认值是 DWARF，在 Release 模式下默认值是 DWARF with dSYM File，然后我们也可以直接把 Debug 模式时的 DWARF 设置为 DWARF with dSYM File，然后运行项目便可在 ~/Library/Developer/Xcode/DerivedData/dSYMDemo-aewxczjzradnxqbkowrhyregmryo/Build/Products/Debug-iphonesimulator 路径（以本机实际路径为准）下生成 dSYMDemo.app 和 dSYMDemo.app.dSYM 两个文件，其中的 dSYMDemo.app 文件我们在学习 mach-o 时已经详细研究过，本篇我们主要来研究 dSYMDemo.app.dSYM 文件。
 
-&emsp;这里我们发现当 Debug Information Format 设置为 DWARF 时仅生成一个 .app 文件，如果设置为 DWARF with dSYM File 则会同时生成一个 .app 文件一个 .dSYM 文件，那我们是不是会有一个疑惑呢，当设置了 Debug Information Format 为 DWARF 时，那 .dSYM 调试文件去哪了呢？
+&emsp;这里我们发现当 Debug Information Format 设置为 DWARF 时仅生成一个 .app 文件，如果设置为 DWARF with dSYM File 则会同时生成一个 .app 文件一个 .dSYM 文件，那我们是不是会有一个疑惑呢，当设置了 Debug Information Format 为 DWARF 时，那调试文件去哪了呢？既然都让我们选择了调试信息格式，那这调试文件总会生成的吧？
 
 
 
@@ -29,18 +33,21 @@
 
 &emsp;在前面学习 mach-o 时我们多次使用过 file 命令，下面我们依然使用 file 命令来查看文件（类型）的详细信息。（可以在控制台输入 file --help 指令并回车，查看 file 命令的更多详细信息）
 
-&emsp;下面我们再回顾一下 iOS 日常开发中经常遇到的几个文件后缀：.xcarchive .ipa .app .dSYM .plist。（在 macOS 的文件系统中我们选中指定文件在右边的简介中已经列出此文件的简要种类信息）
+&emsp;下面我们再回顾一下 iOS 日常开发中经常遇到的几个文件后缀：.xcarchive .ipa .app .dSYM .plist。（在 macOS 的文件系统中我们选中指定文件然后在右边的简介中已经列出了此文件的简要的种类信息，当我们选中 .dSYM 文件右键显示简介时，还会有一个“附赠信息”，它会直接列出当前 .dSYM 文件的 uuid，帮助 dwarfdump -uuid 命令做了它要做的事情。）
 
-+ .xcarchive：Xcode Archive（带后缀的文件夹形式的文件）`file dSYMDemo.xcarchive: dSYMDemo.xcarchive: directory`
-+ .ipa：iOS 软件包归档（一个 zip 文件，可以直接 unzip 解压）`file dSYMDemo.ipa: dSYMDemo.ipa: Zip archive data, at least v1.0 to extract`
-+ .app：应用程序(Intel)（带后缀的文件夹形式的文件）`file dSYMDemo.app: dSYMDemo.app: directory`
-+ .dSYM：Archived Debug Symbols（带后缀的文件夹形式的文件）`file dSYMDemo.app.dSYM: dSYMDemo.app.dSYM: directory`
-+ .plist：Property List `file ExportOptions.plist: ExportOptions.plist: XML 1.0 document text, ASCII text`
++ .xcarchive：Xcode Archive（带后缀的文件夹形式的文件），file 命令查看：`file dSYMDemo.xcarchive: dSYMDemo.xcarchive: directory`
++ .ipa：iOS 软件包归档（一个 zip 文件，可以直接用 unzip 命令解压）file 命令查看：`file dSYMDemo.ipa: dSYMDemo.ipa: Zip archive data, at least v1.0 to extract`
++ .app：应用程序(Intel)（带后缀的文件夹形式的文件）file 命令查看：`file dSYMDemo.app: dSYMDemo.app: directory`
++ .dSYM：Archived Debug Symbols（带后缀的文件夹形式的文件）file 命令查看：`file dSYMDemo.app.dSYM: dSYMDemo.app.dSYM: directory`
++ .plist：Property List，file 命令查看：`file ExportOptions.plist: ExportOptions.plist: XML 1.0 document text, ASCII text`
 
-
-
-
-
+|  | macOS 文件系统显示 | file 命令查看文件类型 |
+| -- | -- |-- |
+|  .xcarchive | Xcode Archive（带后缀的文件夹形式的文件） | dSYMDemo.xcarchive: directory |
+|  .ipa | iOS 软件包归档（一个 zip 文件，可以直接用 unzip 命令解压） | dSYMDemo.ipa: Zip archive data, at least v1.0 to extract |
+|  .app | 应用程序(Intel)（带后缀的文件夹形式的文件） | dSYMDemo.app: directory |
+|  .dSYM | Archived Debug Symbols（带后缀的文件夹形式的文件） | dSYMDemo.app.dSYM: directory |
+|  .plist | Property List | ExportOptions.plist: XML 1.0 document text, ASCII text |
 
 
 &emsp;既然 dSYMDemo.app.dSYM 是一个文件夹，那么我们继续看其内部的内容，这里除了选中文件右键显示包内容查看，还可以先使用 [tree](http://mama.indstate.edu/users/ice/tree/) 命令来一览 dSYMDemo.app.dSYM 文件的内部文件层级。（tree 命令可以使用 Homebrew 安装：brew install tree）
@@ -57,7 +64,7 @@ dSYMDemo.app.dSYM
 3 directories, 2 files
 ```
 
-&emsp;dSYMDemo.app.dSYM 内部有个 3 个文件夹，2 个文件，其中最核心的便是 DWARF 文件夹下的 dSYMDemo 文件。 
+&emsp;可看到 dSYMDemo.app.dSYM 内部有个 3 个文件夹，2 个文件，其中最核心的便是 DWARF 文件夹下的 dSYMDemo 文件，它没有任何后缀名。 
 
 
 ### 生成 .dSYM 文件
