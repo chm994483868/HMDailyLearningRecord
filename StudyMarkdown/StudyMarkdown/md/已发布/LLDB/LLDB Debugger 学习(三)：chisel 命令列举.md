@@ -1,4 +1,4 @@
-# iOS App 启动优化(十三)：chisel 命令列举
+# LLDB Debugger 学习(三)：chisel 命令列举
 
 &emsp;上篇学习了 LLDB 的一些基础命令，然后也学习了 chisel 的安装以及执行原理，本篇就看一下 chisel 都给我们提供了哪些便捷的命令吧！
 

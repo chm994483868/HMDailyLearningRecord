@@ -23,11 +23,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		8E06B17226DB4228001F451B /* iOS App 启动优化(十二)：LLDB 进阶.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十二)：LLDB 进阶.md"; sourceTree = "<group>"; };
+		8E06B17226DB4228001F451B /* LLDB Debugger 学习(二)：LLDB 进阶.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(二)：LLDB 进阶.md"; sourceTree = "<group>"; };
 		8E110CCE270F1F020016FF16 /* Flutter 学习笔记（三）：Widgets 目录（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（2）.md"; sourceTree = "<group>"; };
 		8E12B93026A6552900BC72AC /* iOS App 启动优化(八)：Hook 总结之 fishhook 源码逐行分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：Hook 总结之 fishhook 源码逐行分析.md"; sourceTree = "<group>"; };
 		8E12B93126A65B1900BC72AC /* 埋点.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "埋点.md"; sourceTree = "<group>"; };
-		8E2137B226D2365700CB9B03 /* iOS App 启动优化(十一)：LLDB 文档：LLDB Quick Start Guide.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十一)：LLDB 文档：LLDB Quick Start Guide.md"; sourceTree = "<group>"; };
+		8E2137B226D2365700CB9B03 /* LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md"; sourceTree = "<group>"; };
 		8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记（一）：第一个 Flutter 应用.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（一）：第一个 Flutter 应用.md"; sourceTree = "<group>"; };
 		8E3327D926F0227600753049 /* iOS App 启动优化(十四)：clang.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十四)：clang.md"; sourceTree = "<group>"; };
 		8E3327EF26F2C30C00753049 /* iOS App Crash 分析：(一)：dsym文件讲解.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(一)：dsym文件讲解.md"; sourceTree = "<group>"; };
@@ -157,7 +157,7 @@
 		8E5E58D92686A0010088C814 /* memmove函数使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "memmove函数使用.md"; sourceTree = "<group>"; };
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
-		8E7610A926EF8DAD00B3C4FC /* iOS App 启动优化(十三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十三)：chisel 命令列举.md"; sourceTree = "<group>"; };
+		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
 		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
@@ -177,6 +177,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8E110CCF270F48A30016FF16 /* LLDB */ = {
+			isa = PBXGroup;
+			children = (
+				8E2137B226D2365700CB9B03 /* LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md */,
+				8E06B17226DB4228001F451B /* LLDB Debugger 学习(二)：LLDB 进阶.md */,
+				8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */,
+			);
+			path = LLDB;
+			sourceTree = "<group>";
+		};
 		8E2137B326D2382E00CB9B03 /* Flutter */ = {
 			isa = PBXGroup;
 			children = (
@@ -243,6 +253,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8E110CCF270F48A30016FF16 /* LLDB */,
 				8E3327F026F2C38000753049 /* crash */,
 				8E2137B326D2382E00CB9B03 /* Flutter */,
 				8E53C9F226B29D6400FB0AD7 /* Swift */,
@@ -332,9 +343,6 @@
 				8E12B93026A6552900BC72AC /* iOS App 启动优化(八)：Hook 总结之 fishhook 源码逐行分析.md */,
 				8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */,
 				8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */,
-				8E2137B226D2365700CB9B03 /* iOS App 启动优化(十一)：LLDB 文档：LLDB Quick Start Guide.md */,
-				8E06B17226DB4228001F451B /* iOS App 启动优化(十二)：LLDB 进阶.md */,
-				8E7610A926EF8DAD00B3C4FC /* iOS App 启动优化(十三)：chisel 命令列举.md */,
 				8E3327D926F0227600753049 /* iOS App 启动优化(十四)：clang.md */,
 				8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */,
 				8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */,
