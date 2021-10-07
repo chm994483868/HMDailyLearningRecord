@@ -1,4 +1,4 @@
-#  Flutter 学习笔记（三）：Widgets 目录
+# Flutter 学习笔记（三）：Widgets 目录（1）
 
 &emsp;使用 Flutter 的一套的视觉、结构、平台、和交互式的 widgets，快速创建漂亮的 APP。
 
@@ -945,17 +945,389 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
 &emsp;[Card class](https://api.flutter.dev/flutter/material/Card-class.html) 一个 Material Design 卡片，拥有一个圆角和阴影。
 
+```c++
+/// Flutter code sample for Card
+
+// This sample shows creation of a [Card] widget that shows album information and two actions.
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const MyStatelessWidget(),
+      ),
+    );
+  }
+}
+
+/// This is the stateless widget that the main application instantiates.
+class MyStatelessWidget extends StatelessWidget {
+  const MyStatelessWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const ListTile(
+              leading: Icon(Icons.album),
+              title: Text('The Enchanted Nightingale'),
+              subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                TextButton(
+                  child: const Text('BUY TICKETS'),
+                  onPressed: () {/* ... */},
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  child: const Text('LISTEN'),
+                  onPressed: () {/* ... */},
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
 ### ListTile class
 
 &emsp;[ListTile class](https://api.flutter.dev/flutter/material/ListTile-class.html) 一个固定高度的行，通常包含一些文本，以及一个行前或行尾图标。 
 
+![Custom list item a](https://flutter.github.io/assets-for-api-docs/assets/widgets/custom_list_item_a.png)
 
+```c++
+/// Flutter code sample for ListTile
 
+// Here is an example of a custom list item that resembles a YouTube-related video list item created with [Expanded] and [Container] widgets.
 
+import 'package:flutter/material.dart';
 
+void main() => runApp(const MyApp());
 
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
+  static const String _title = 'Flutter Code Sample';
 
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const MyStatelessWidget(),
+      ),
+    );
+  }
+}
+
+class CustomListItem extends StatelessWidget {
+  const CustomListItem({
+    Key? key,
+    required this.thumbnail,
+    required this.title,
+    required this.user,
+    required this.viewCount,
+  }) : super(key: key);
+
+  final Widget thumbnail;
+  final String title;
+  final String user;
+  final int viewCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            flex: 2,
+            child: thumbnail,
+          ),
+          Expanded(
+            flex: 3,
+            child: _VideoDescription(
+              title: title,
+              user: user,
+              viewCount: viewCount,
+            ),
+          ),
+          const Icon(
+            Icons.more_vert,
+            size: 16.0,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VideoDescription extends StatelessWidget {
+  const _VideoDescription({
+    Key? key,
+    required this.title,
+    required this.user,
+    required this.viewCount,
+  }) : super(key: key);
+
+  final String title;
+  final String user;
+  final int viewCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(5.0, 0.0, 0.0, 0.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14.0,
+            ),
+          ),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
+          Text(
+            user,
+            style: const TextStyle(fontSize: 10.0),
+          ),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 1.0)),
+          Text(
+            '$viewCount views',
+            style: const TextStyle(fontSize: 10.0),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// This is the stateless widget that the main application instantiates.
+class MyStatelessWidget extends StatelessWidget {
+  const MyStatelessWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(8.0),
+      itemExtent: 106.0,
+      children: <CustomListItem>[
+        CustomListItem(
+          user: 'Flutter',
+          viewCount: 999000,
+          thumbnail: Container(
+            decoration: const BoxDecoration(color: Colors.blue),
+          ),
+          title: 'The Flutter YouTube Channel',
+        ),
+        CustomListItem(
+          user: 'Dash',
+          viewCount: 884000,
+          thumbnail: Container(
+            decoration: const BoxDecoration(color: Colors.yellow),
+          ),
+          title: 'Announcing Flutter 1.0',
+        ),
+      ],
+    );
+  }
+}
+```
+
+### Stepper class
+
+&emsp;[Stepper class](https://api.flutter.dev/flutter/material/Stepper-class.html) 一个 Material Design 步骤指示器，显示一系列步骤的过程。
+
+```c++
+/// Flutter code sample for Stepper
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const Center(
+          child: MyStatefulWidget(),
+        ),
+      ),
+    );
+  }
+}
+
+/// This is the stateful widget that the main application instantiates.
+class MyStatefulWidget extends StatefulWidget {
+  const MyStatefulWidget({Key? key}) : super(key: key);
+
+  @override
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
+}
+
+/// This is the private State class that goes with MyStatefulWidget.
+class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stepper(
+      currentStep: _index,
+      onStepCancel: () {
+        if (_index > 0) {
+          setState(() {
+            _index -= 1;
+          });
+        }
+      },
+      onStepContinue: () {
+        if (_index <= 0) {
+          setState(() {
+            _index += 1;
+          });
+        }
+      },
+      onStepTapped: (int index) {
+        setState(() {
+          _index = index;
+        });
+      },
+      steps: <Step>[
+        Step(
+          title: const Text('Step 1 title'),
+          content: Container(
+              alignment: Alignment.centerLeft,
+              child: const Text('Content for Step 1')),
+        ),
+        const Step(
+          title: Text('Step 2 title'),
+          content: Text('Content for Step 2'),
+        ),
+      ],
+    );
+  }
+}
+```
+
+### Divider class
+
+&emsp;[Divider class](https://docs.flutter.io/flutter/material/Divider-class.html) 一个逻辑 1 像素高的水平分割线，两边都有填充。
+
+![Divider](https://flutter.github.io/assets-for-api-docs/assets/material/divider.png)
+
+```c++
+/// Flutter code sample for Divider
+
+// This sample shows how to display a Divider between an orange and blue box inside a column.
+// The Divider is 20 logical pixels in height and contains a vertically centered black line that is 5 logical pixels thick. The black line is indented by 20 logical pixels.
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const MyStatelessWidget(),
+      ),
+    );
+  }
+}
+
+/// This is the stateless widget that the main application instantiates.
+class MyStatelessWidget extends StatelessWidget {
+  const MyStatelessWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: Container(
+              color: Colors.amber,
+              child: const Center(
+                child: Text('Above'),
+              ),
+            ),
+          ),
+          const Divider(
+            height: 50,
+            thickness: 5,
+            indent: 20,
+            endIndent: 20,
+          ),
+          // Subheader example from Material spec.
+          // https://material.io/components/dividers#types
+          Container(
+            padding: const EdgeInsets.only(left: 20),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                'Subheader',
+                style: Theme.of(context).textTheme.caption,
+                textAlign: TextAlign.start,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              color: Theme.of(context).colorScheme.primary,
+              child: const Center(
+                child: Text('Below'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
 
 ## 参考链接
 **参考链接:🔗**

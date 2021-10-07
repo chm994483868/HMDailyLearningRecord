@@ -94,9 +94,6 @@ dSYMDemo (for architecture arm64):    Mach-O 64-bit dSYM companion file arm64
 
 
 
-
-
-
 ```c++
 hmc@bogon Debug-iphonesimulator % dwarfdump -uuid dSYM_Demo.app.dSYM
 UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/Resources/DWARF/dSYM_Demo
@@ -158,3 +155,7 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 + [dwarf简介](https://blog.csdn.net/helloworlddm/article/details/76785319)
 + [调试 DWARF 和 STAB 格式](https://blog.csdn.net/weixin_34014277/article/details/93052964?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7Edefault-14.no_search_link&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EOPENSEARCH%7Edefault-14.no_search_link)
 + [mac额外安装命令tree](https://www.jianshu.com/p/75b125ac19d5)
++ [iOS中符号的那些事儿](https://juejin.cn/post/6844904164208689166)
++ [ios dSYM 符号化](https://juejin.cn/post/6995853234975801380)
++ [Bugly iOS 符号表配置](https://bugly.qq.com/docs/user-guide/symbol-configuration-ios/?v=20170912151050#_2)
++ [深入理解Symbol](https://blog.csdn.net/Hello_Hwc/article/details/103330564)
