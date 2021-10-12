@@ -140,6 +140,9 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 
 ## 参考链接
 **参考链接:🔗**
++ [漫谈 iOS Crash 收集框架](https://mp.weixin.qq.com/s/hOOzVzJ-nAtkQ8iD-8wVGg)
++ [iOS崩溃异常处理(NSUncaughtExceptionHandler)](https://www.jianshu.com/p/2a8b6c9b5a59)
+
 + [DWARF调试格式的简介](https://blog.csdn.net/wuhui_gdnt/article/details/7283483/)
 + [iOS查看UUID](https://blog.csdn.net/bianhuanshizhe/article/details/50338797)
 + [使用 Setfile 命令修改 MacOS 文件创建时间 (creation date)，（非 touch 命令），附 Linux 文件时间属性介绍](https://ld246.com/article/1592910201129)
@@ -162,3 +165,100 @@ UUID: E54BEE35-F931-3C61-B045-D729AE9E8F02 (x86_64) dSYM_Demo.app.dSYM/Contents/
 + [ios dSYM 符号化](https://juejin.cn/post/6995853234975801380)
 + [Bugly iOS 符号表配置](https://bugly.qq.com/docs/user-guide/symbol-configuration-ios/?v=20170912151050#_2)
 + [深入理解Symbol](https://blog.csdn.net/Hello_Hwc/article/details/103330564)
+
+1. 代码健壮性差、单元测试覆盖率低：发生异常
+2. 发生异常时的统计上报。
+  + 异常分类：`NSSetUncaughtExceptionHandle` 和 `void (*signal(int, void (*)(int)))(int)` 捕获异常。
+  + 
+
+&emsp;NSException 类学习
+
+```c++
+/*
+typedef void NSUncaughtExceptionHandler(NSException *exception);
+
+// 获取当前的异常处理函数
+FOUNDATION_EXPORT NSUncaughtExceptionHandler * _Nullable NSGetUncaughtExceptionHandler(void);
+ 
+// 设置当前的异常处理函数
+FOUNDATION_EXPORT void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler * _Nullable);
+*/
+
+void uncaughtExceptionHandler(NSException *exception) {
+    // 
+}
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Override point for customization after application launch.
+    
+    // 测试
+    // NSException *exception = [[NSException alloc] init];
+    
+    NSUncaughtExceptionHandler *currentHandler = NSGetUncaughtExceptionHandler();
+    NSSetUncaughtExceptionHandler(&uncaughtExceptionHandler);
+
+    return YES;
+}
+```
+## NSException
+
+&emsp;NSException 类是一个 NSObject 的直接子类，用于描述中断程序执行正常流的特殊情况（原因），用于描述程序正常执行被中断的原因。（An object that represents a special condition that interrupts the normal flow of program execution.）
+
+### Declaration
+
+```c++
+#if __OBJC2__
+__attribute__((__objc_exception__))
+#endif
+@interface NSException : NSObject <NSCopying, NSSecureCoding> {
+    @private
+    NSString        *name;
+    NSString        *reason;
+    NSDictionary    *userInfo;
+    id            reserved;
+}
+```
+
+### Overview
+
+&emsp;使用 NSException 实现 exception 处理（描述）。exception 是中断正常程序执行流的一种特殊情况。每个应用程序都可以因不同的原因中断程序。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲，exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control-C）解释为异常：长时间运行的进程应该中止的指示。
+
+
+&emsp;下面我们快速学习一下 NSException.h 中的内容。
+
+```c++
+/***************    Exception object    ***************/
+
+#if __OBJC2__
+__attribute__((__objc_exception__))
+#endif
+@interface NSException : NSObject <NSCopying, NSSecureCoding> {
+    @private
+    NSString        *name;
+    NSString        *reason;
+    NSDictionary    *userInfo;
+    id            reserved;
+}
+
++ (NSException *)exceptionWithName:(NSExceptionName)name reason:(nullable NSString *)reason userInfo:(nullable NSDictionary *)userInfo;
+- (instancetype)initWithName:(NSExceptionName)aName reason:(nullable NSString *)aReason userInfo:(nullable NSDictionary *)aUserInfo NS_DESIGNATED_INITIALIZER;
+
+@property (readonly, copy) NSExceptionName name;
+@property (nullable, readonly, copy) NSString *reason;
+@property (nullable, readonly, copy) NSDictionary *userInfo;
+
+@property (readonly, copy) NSArray<NSNumber *> *callStackReturnAddresses API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));
+@property (readonly, copy) NSArray<NSString *> *callStackSymbols API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0));
+
+- (void)raise;
+
+@end
+
+@interface NSException (NSExceptionRaisingConveniences)
+
++ (void)raise:(NSExceptionName)name format:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3);
++ (void)raise:(NSExceptionName)name format:(NSString *)format arguments:(va_list)argList NS_FORMAT_FUNCTION(2,0);
+
+@end
+```
+
