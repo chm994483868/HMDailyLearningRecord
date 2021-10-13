@@ -221,10 +221,82 @@ __attribute__((__objc_exception__))
 
 ### Overview
 
-&emsp;使用 NSException 实现 exception 处理（描述）。exception 是中断正常程序执行流的一种特殊情况。每个应用程序都可以因不同的原因中断程序。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲，exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control-C）解释为异常：长时间运行的进程应该中止的指示。
+&emsp;使用 NSException 实现 exception 处理（描述）。exception 是指中断正常程序执行流的一种特殊情况。每个应用程序都可以因不同的原因中断程序。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲，exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control-C）解释为异常：长时间运行的进程应该中止的指示。
+
+### Creating and Raising an NSException Object 
+
+#### + exceptionWithName:reason:userInfo:
+
+```c++
+typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
+
++ (NSException *)exceptionWithName:(NSExceptionName)name
+                            reason:(nullable NSString *)reason
+                          userInfo:(nullable NSDictionary *)userInfo;
+```
+
+&emsp;创建并返回一个 exception 对象。`name`：NSString 类型的 exception 的名字，`reason`：一个人类可读的消息字符串，总结 exception 的原因，`userInfo`：包含用户定义的与 exception 相关的信息的字典。返回值是一个 NSException 对象，或者不能创建时返回 `nil`。
+
+#### + raise:format:
+
+```c++
+
+@interface NSException (NSExceptionRaisingConveniences)
+
++ (void)raise:(NSExceptionName)name format:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3);
+
+...
+@end
+```
+
+&emsp;创建和 raises exception 对象的便利构造函数。`name`：NSString 类型的 exception 的名字，`format`：一个人类可读的消息字符串（即异常原因），带有后面变量参数的转换规范。
 
 
-&emsp;下面我们快速学习一下 NSException.h 中的内容。
+
+
+
+#### + raise:format:arguments:
+
+```c++
+@interface NSException (NSExceptionRaisingConveniences)
+...
+
++ (void)raise:(NSExceptionName)name format:(NSString *)format arguments:(va_list)argList NS_FORMAT_FUNCTION(2,0);
+
+@end
+```
+
+&emsp;创建并提出指定名称、理由和参数的例外情况。
+
+
+
+
+
+
+#### - initWithName:reason:userInfo:
+
+```c++
+- (instancetype)initWithName:(NSExceptionName)aName
+                      reason:(nullable NSString *)aReason
+                    userInfo:(nullable NSDictionary *)aUserInfo NS_DESIGNATED_INITIALIZER;
+```
+
+&emsp;
+
+
+#### - raise
+
+```c++
+- (void)raise;
+```
+
+&emsp;引发接收器，导致程序流跳转到本地异常处理程序。
+
+&emsp;当异常处理程序堆栈中没有异常处理程序时，除非在发布通知期间引发异常，否则此方法调用未捕获异常处理程序，在该处理程序中可以执行最后一分钟的日志记录。无论未捕获异常处理程序执行了什么操作，程序都会终止。
+
+
+
+
 
 ```c++
 /***************    Exception object    ***************/
@@ -240,8 +312,8 @@ __attribute__((__objc_exception__))
     id            reserved;
 }
 
-+ (NSException *)exceptionWithName:(NSExceptionName)name reason:(nullable NSString *)reason userInfo:(nullable NSDictionary *)userInfo;
-- (instancetype)initWithName:(NSExceptionName)aName reason:(nullable NSString *)aReason userInfo:(nullable NSDictionary *)aUserInfo NS_DESIGNATED_INITIALIZER;
+
+
 
 @property (readonly, copy) NSExceptionName name;
 @property (nullable, readonly, copy) NSString *reason;
