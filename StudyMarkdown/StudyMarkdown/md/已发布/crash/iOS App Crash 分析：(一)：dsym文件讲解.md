@@ -294,6 +294,61 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 
 &emsp;当异常处理程序堆栈中没有异常处理程序时，除非在发布通知期间引发异常，否则此方法调用未捕获异常处理程序，在该处理程序中可以执行最后一分钟的日志记录。无论未捕获异常处理程序执行了什么操作，程序都会终止。
 
+### Querying an NSException Object
+
+#### name
+
+```c++
+@property (readonly, copy) NSExceptionName name;
+```
+&emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。
+
+#### reason
+
+```c++
+@property (nullable, readonly, copy) NSString *reason;
+```
+
+&emsp;一个只读的字符串，可能为 nil，一个人类可读（human-readable）的字符串，用于表示 exception 发生的原因。
+
+#### userInfo
+
+```c++
+@property (nullable, readonly, copy) NSDictionary *userInfo;
+```
+
+&emsp;一个只读的 NSDictionary，可能为 nil，包含与 exception 对象相关的特定于应用程序的数据。
+
+&emsp;如果不存在特定于应用程序的数据，则为 nil。例如，如果某个方法的返回值导致引发异常，则该返回值可能通过该方法可供异常处理程序使用。
+
+### Getting Exception Stack Frames
+
+#### callStackReturnAddresses
+
+```c++
+@property (readonly, copy) NSArray<NSNumber *> *callStackReturnAddresses API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));
+```
+
+&emsp;与引发的异常相关的调用返回地址。
+
+&emsp;封装整数值的NSNumber对象数组。每个值都是一个调用帧返回地址。堆栈帧数组从第一次引发异常的点开始，第一个项是最近的堆栈帧。
+假装为NSException类的NSException子类或干扰异常引发机制的子类或其他API元素可能无法获取此信息。
+
+#### callStackSymbols
+
+```c++
+@property (readonly, copy) NSArray<NSString *> *callStackSymbols API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0));
+```
+
+&emsp;包含当前调用堆栈符号的数组。
+
+
+
+
+
+
+
+
 
 
 
@@ -314,13 +369,6 @@ __attribute__((__objc_exception__))
 
 
 
-
-@property (readonly, copy) NSExceptionName name;
-@property (nullable, readonly, copy) NSString *reason;
-@property (nullable, readonly, copy) NSDictionary *userInfo;
-
-@property (readonly, copy) NSArray<NSNumber *> *callStackReturnAddresses API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));
-@property (readonly, copy) NSArray<NSString *> *callStackSymbols API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0));
 
 - (void)raise;
 
