@@ -202,7 +202,9 @@ void uncaughtExceptionHandler(NSException *exception) {
 ```
 ## NSException
 
-&emsp;NSException 类是一个 NSObject 的直接子类，用于描述中断程序执行正常流的特殊情况（原因），用于描述程序正常执行被中断的原因。（An object that represents a special condition that interrupts the normal flow of program execution.）
+&emsp;NSException 类是一个 NSObject 的子类，用于描述中断程序执行正常流的特殊情况（原因），即用于描述程序正常执行被中断的原因。（An object that represents a special condition that interrupts the normal flow of program execution.）
+
+&emsp;系统的异常处理是管理非典型事件（例如未被识别的消息）的过程，此过程将会中断正常的程序执行。如果没有足够的错误处理，遇到非典型事件时，程序可能立刻抛出（或者引发）一种被称之为异常的东西，然后结束运行。
 
 ### Declaration
 
@@ -218,6 +220,8 @@ __attribute__((__objc_exception__))
     id            reserved;
 }
 ```
+
+&emsp;reserved 字段是保留字段，其实它是用来存放 callStackReturnAddresses 和 callStackSymbols 数据的可变字典。
 
 ### Overview
 
@@ -331,7 +335,7 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 
 &emsp;与引发的异常相关的调用返回地址。
 
-&emsp;封装整数值的NSNumber对象数组。每个值都是一个调用帧返回地址。堆栈帧数组从第一次引发异常的点开始，第一个项是最近的堆栈帧。
+&emsp;封装整数值的 NSNumber 对象数组。每个值都是一个调用帧返回地址。堆栈帧数组从第一次引发异常的点开始，第一个项是最近的堆栈帧。
 假装为NSException类的NSException子类或干扰异常引发机制的子类或其他API元素可能无法获取此信息。
 
 #### callStackSymbols
@@ -342,7 +346,9 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 
 &emsp;包含当前调用堆栈符号的数组。
 
+&emsp;callStackSymbols 和 callStackReturnAddresses 其实是保存在 exception 对象的 reserved 字段中的。如下示例，是一个很常见的数组越界导致的 crash，name、reason、userInfo 三个字段的内容我们比较熟悉，然后我们重点关注 reserved 字段（保留字段），可看到它是一个可变字典，共有两个 key：callStackReturnAddresses 和 callStackSymbols，它们的 value 分别是一个长度是 17 的数组，分别存放的是调用堆栈的返回地址和调用堆栈的符号。
 
+![截屏2021-10-18 08.51.07.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fa1e44710b694a0982ccf1145d79866b~tplv-k3u1fbpfcp-watermark.image?)
 
 
 
@@ -382,3 +388,10 @@ __attribute__((__objc_exception__))
 @end
 ```
 
+
+
++ [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
++ [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
++ [异常处理NSException的使用（思维篇）](https://www.cnblogs.com/cchHers/p/15116833.html)
++ [异常统计- IOS 收集崩溃信息 NSEXCEPTION类](https://www.freesion.com/article/939519506/)
++ [NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
