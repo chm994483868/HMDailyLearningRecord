@@ -4,7 +4,7 @@
 
 ## Cupertino(iOS 风格的 widget)
 
-&emsp;用于当前 iOS 设计语言的美丽和高保真 widget。（它们用了 Cupertino 库比提诺 作为前缀，它是美国一座城市的名字。）
+&emsp;用于当前 iOS 设计语言的美丽和高保真 widget。（它们用了 Cupertino 库比提诺作为前缀，它是美国一座城市的名字，也是苹果总部所在地，为什么不干脆直接以 Apple 为前缀呢😂）
 
 ### CupertinoActivityIndicator
 
@@ -142,14 +142,538 @@ Center(
 
 #### FittedBox
 
-&emsp;[]() 按自己的大小调整其子 widget 的大小和位置。
+&emsp;[FittedBox class](https://api.flutter.dev/flutter/widgets/FittedBox-class.html) 按自己的大小调整其子 widget 的大小和位置。
 
+&emsp;大多数 Flutter widget 都是盒子，你可以将它们布置、堆叠、甚至相互嵌套，但是，当一个盒子不适合另一个盒子时会发生什么呢？为了解决这个问题，就有了 FittedBox，只需为其提供一个子级 widget 和一个 BoxFit，它描述如何使子级 widget 贴合自己，它将自动缩放或裁剪其子级 widget，BoxFit 枚举提供了一堆不同的贴合类型，例如 fitWidth、fill、甚至 none，还有一个对齐属性，告诉 FittedBox 如果有多余的空间如何对齐子级 
 
+```c++
+MyBlueRect(
+  child: FittedBox(
+    alignment: Alignment.centerLeft,
+    fit: BoxFit.contain,
+    child: MyDashPic(),
+  ),
+)
+```
 
+```c++
+/// Flutter code sample for FittedBox
 
+// In this example, the image is stretched to fill the entire [Container], which would not happen normally without using FittedBox.
+// 在此示例中，image 被拉伸以填充整个 [Container]，如果不使用 FittedBox，通常不会发生。
 
+import 'package:flutter/material.dart';
 
+void main() => runApp(const MyApp());
 
+/// This is the main application widget.
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: _title,
+      home: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        body: const Center(
+          child: MyStatelessWidget(),
+        ),
+      ),
+    );
+  }
+}
+
+/// This is the stateless widget that the main application instantiates.
+class MyStatelessWidget extends StatelessWidget {
+  const MyStatelessWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 400,
+      width: 300,
+      color: Colors.red,
+      child: FittedBox(
+        child: Image.network(
+            'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl-2.jpg'),
+        fit: BoxFit.fill,
+      ),
+    );
+  }
+}
+```
+
+#### AspectRatio
+
+&emsp;[AspectRatio class](https://api.flutter.dev/flutter/widgets/AspectRatio-class.html) 一个 widget，试图将子 widget 的大小指定为某个特定的长宽比。
+
+```c++
+Expanded(
+  child: Align(
+    alignment: Alignment.bottomCenter,
+    child: AspectRatio(
+      aspectRatio: 3 / 2,
+      child: MyWidget(),
+    ),
+  ),
+)
+```
+
+#### ConstrainedBox
+
+&emsp;[ConstrainedBox class](https://api.flutter.dev/flutter/widgets/ConstrainedBox-class.html) 对其子项施加附加约束的 widget。
+
+```c++
+ConstrainedBox(
+  constraints: BoxConstraints(
+    maxWidth: 40,
+    maxHeight: 30,
+  ),
+  child: Container(),
+)
+```
+
+&emsp;约束文本 widget 的最大宽度，使其跨越多行：
+
+```c++
+ConstrainedBox(
+  constraints: BoxConstraints(
+    maxWidth: 200,
+  ),
+  child: Text(
+    'Delicious Candy',
+    textAlign: TextAlign.center,
+  ),
+)
+```
+
+&emsp;可以通过约束其最小高度来拉伸凸起按钮的高度：
+
+```c++
+ConstrainedBox(
+  constraints: BoxConstraints(
+    minHeight: 100,
+  ),
+  child: RaisedButton(
+    child: Text('Tap Me!'),
+    onPressed: () {},
+  ),
+)
+```
+
+#### Baseline
+
+&emsp;[Baseline class](https://api.flutter.dev/flutter/widgets/Baseline-class.html) 根据子项的基线对它们的位置进行定位的 widget。
+
+#### FractionallySizedBox
+
+&emsp;[FractionallySizedBox class](https://api.flutter.dev/flutter/widgets/FractionallySizedBox-class.html) 一个 widget，它把它的子项放在可用空间的一小部分。关于布局算法的更多细节，见 RenderFractionallySizedOverflowBox
+
+```c++
+Container(
+  alignment: Alignment.center,
+  child: FractionallySizedBox(
+    widthFactor: 0.7,
+    child: MyButton(
+      child: Text('PRESS HERE'),
+    ),
+  ),
+)
+```
+
+&emsp;小尺寸的空白也可以使用没有子项的 FractionallySizedBox:
+
+```c++
+FractionallySizedBox(
+  heightFactor: 0.1,
+)
+
+Flexible(
+  child: FractionallySizedBox(
+    heightFactor: 0.1,
+  ),
+)
+```
+
+#### IntrinsicHeight
+
+&emsp;[IntrinsicHeight class](https://api.flutter.dev/flutter/widgets/IntrinsicHeight-class.html) 一个 widget，它将它的子 widget 的高度调整其本身实际的高度。
+
+#### IntrinsicWidth
+
+&emsp;[IntrinsicWidth class](https://api.flutter.dev/flutter/widgets/IntrinsicWidth-class.html) 一个 widget，它将它的子 widget 的宽度调整其本身实际的宽度.
+
+#### LimitedBox
+
+&emsp;[LimitedBox class](https://api.flutter.dev/flutter/widgets/LimitedBox-class.html) 一个当其自身不受约束时才限制其大小的盒子。
+
+```c++
+ListView(
+ children: [
+   for (var i = 0; i < 10; i++)
+     LimitedBox(
+       maxHeight: 200,
+       child: Container(
+         color: randomColor(),
+       ),
+     ),
+  ],
+)
+```
+
+#### Offstage
+
+&emsp;[Offstage class](https://api.flutter.dev/flutter/widgets/Offstage-class.html) 一个布局 widget，可以控制其子 widget 的显示和隐藏。
+
+#### OverflowBox
+
+&emsp;[OverflowBox class](https://api.flutter.dev/flutter/widgets/OverflowBox-class.html) 对其子项施加不同约束的 widget，它可能允许子项溢出父级。
+
+#### SizedBox
+
+&emsp;[SizedBox class](https://api.flutter.dev/flutter/widgets/SizedBox-class.html) 一个特定大小的盒子。这个 widget 强制它的孩子有一个特定的宽度和高度。如果宽度或高度为 NULL，则此 widget 将调整自身大小以匹配该维度中的孩子的大小。
+
+```c++
+SizedBox(
+  width: 200,
+  width: double.infinity,
+  height: 100,
+  height: double.infinity,
+  child: MyButton(),
+)
+
+SizedBox.expand(
+  child: MyButton(),
+)
+```
+
+&emsp;可以使用 SizeBox 在 widget 之间添加间隙。
+
+```c++
+Column(
+  children: [
+    MyButton(),
+    SizedBox(height: 200),
+    OtherButton(),
+  ],
+)
+```
+
+#### SizedOverflowBox
+
+&emsp;[SizedOverflowBox class](https://api.flutter.dev/flutter/widgets/SizedOverflowBox-class.html) 一个特定大小的 widget，但是会将它的原始约束传递给它的孩子，它可能会溢出。
+
+#### Transform
+
+&emsp;[Transform class](https://docs.flutter.io/flutter/widgets/Transform-class.html) 在绘制子 widget 之前应用转换的 widget。
+
+```c++
+Transform.rotate(
+  angle: pi/4, // 45 deg
+  child: MyIcon(),
+)
+
+Transform.scale(
+  scale: 1.5,
+  child: MyIcon(),
+)
+
+Transform.translate(
+  offset: Offset(50, 50),
+  child: MyIcon(),
+)
+
+Transform(
+  transform: Matrix4.skewX(0.3),
+  child: MyIcon(),
+)
+```
+
+#### CustomSingleChildLayout
+
+&emsp;[CustomSingleChildLayout class](https://api.flutter.dev/flutter/widgets/CustomSingleChildLayout-class.html) 一个自定义的拥有单个子 widget 的布局 widget。
+
+### 拥有多个子元素的布局 widget
+
+#### Row 
+
+&emsp;[Row class](https://api.flutter.dev/flutter/widgets/Row-class.html) 在水平方向上排列子 widget 的列表。
+
+&emsp;两个文本和一个图片在一行上从左到右显示：
+
+```c++
+Row(
+  children: const <Widget>[
+    Expanded(
+      child: Text('Deliver features faster', textAlign: TextAlign.center),
+    ),
+    Expanded(
+      child: Text('Craft beautiful UIs', textAlign: TextAlign.center),
+    ),
+    Expanded(
+      child: FittedBox(
+        fit: BoxFit.contain, // otherwise the logo will be tiny
+        child: FlutterLogo(),
+      ),
+    ),
+  ],
+)
+```
+
+#### Column
+
+&emsp;[Column class](https://api.flutter.dev/flutter/widgets/Column-class.html) 在垂直方向上排列子widget的列表。
+
+&emsp;两个文本和一个图片在一列上从上到下显示：
+
+```c++
+Column(
+  children: const <Widget>[
+    Text('Deliver features faster'),
+    Text('Craft beautiful UIs'),
+    Expanded(
+      child: FittedBox(
+        fit: BoxFit.contain, // otherwise the logo will be tiny
+        child: FlutterLogo(),
+      ),
+    ),
+  ],
+)
+```
+
+#### Stack
+
+&emsp;[Stack class](https://api.flutter.dev/flutter/widgets/Stack-class.html) 可以允许其子 widget 简单的堆叠在一起。
+
+&emsp;一组 widget 堆叠在一起：
+
+```c++
+Stack(
+  children: <Widget>[
+    Container(
+      width: 100,
+      height: 100,
+      color: Colors.red,
+    ),
+    Container(
+      width: 90,
+      height: 90,
+      color: Colors.green,
+    ),
+    Container(
+      width: 80,
+      height: 80,
+      color: Colors.blue,
+    ),
+  ],
+)
+```
+
+#### IndexedStack
+
+&emsp;[IndexedStack class](https://api.flutter.dev/flutter/widgets/IndexedStack-class.html) 从一个子 widget 列表中显示单个孩子的 Stack。 
+
+```c++
+IndexedStack(
+  index: _widgetIndex,
+  children: [
+    WidgetOne(),
+    WidgetTwo(),
+  ],
+)
+
+// elsewhere in the code
+setState(
+  () => _widgetIndex = 2);
+```
+
+#### Flow
+
+&emsp;[Flow class](https://api.flutter.dev/flutter/widgets/Flow-class.html) 一个实现流式布局算法的 widget。
+
+#### Table
+
+&emsp;[Table class](https://api.flutter.dev/flutter/widgets/Table-class.html) 为其子 widget 使用表格布局算法的 widget。 
+
+#### Wrap
+
+&emsp;[Wrap class](https://api.flutter.dev/flutter/widgets/Wrap-class.html) 可以在水平或垂直方向多行显示其子 widget。
+
+```c++
+Wrap(
+  spacing: 8.0, // gap between adjacent chips
+  runSpacing: 4.0, // gap between lines
+  children: <Widget>[
+    Chip(
+      avatar: CircleAvatar(backgroundColor: Colors.blue.shade900, child: const Text('AH')),
+      label: const Text('Hamilton'),
+    ),
+    Chip(
+      avatar: CircleAvatar(backgroundColor: Colors.blue.shade900, child: const Text('ML')),
+      label: const Text('Lafayette'),
+    ),
+    Chip(
+      avatar: CircleAvatar(backgroundColor: Colors.blue.shade900, child: const Text('HM')),
+      label: const Text('Mulligan'),
+    ),
+    Chip(
+      avatar: CircleAvatar(backgroundColor: Colors.blue.shade900, child: const Text('JL')),
+      label: const Text('Laurens'),
+    ),
+  ],
+)
+```
+
+#### ListBody
+
+&emsp;[ListBody class](https://api.flutter.dev/flutter/widgets/ListBody-class.html) 一个 widget，它沿着一个给定的轴，顺序排列它的子元素。
+
+#### ListView
+
+&emsp;[ListView class](https://api.flutter.dev/flutter/widgets/ListView-class.html) 可滚动的列表控件。ListView 是最常用的滚动 widget，它在滚动方向上一个接一个地显示它的孩子。在纵轴上，孩子们被要求填充 ListView。
+
+```c++
+ListView(
+  padding: const EdgeInsets.all(8),
+  children: <Widget>[
+    Container(
+      height: 50,
+      color: Colors.amber[600],
+      child: const Center(child: Text('Entry A')),
+    ),
+    Container(
+      height: 50,
+      color: Colors.amber[500],
+      child: const Center(child: Text('Entry B')),
+    ),
+    Container(
+      height: 50,
+      color: Colors.amber[100],
+      child: const Center(child: Text('Entry C')),
+    ),
+  ],
+)
+```
+
+#### CustomMultiChildLayout
+
+&emsp;[CustomMultiChildLayout class](https://api.flutter.dev/flutter/widgets/CustomMultiChildLayout-class.html) 使用一个委托来对多个孩子进行设置大小和定位的小部件。
+
+### Layout helpers
+
+#### LayoutBuilder 
+
+&emsp;[LayoutBuilder class](https://api.flutter.dev/flutter/widgets/LayoutBuilder-class.html) 构建一个可以依赖父窗口大小的 widget 树。
+
+```c++
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+      },
+    );
+  }
+}
+```
+
+```c++
+Widget build(BuildContext context) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < 600) {
+        return MyOneColumnLayout();
+      } else {
+        return MyTwoColumnLayout();
+      }
+    },
+  );
+}
+```
+
+### 文本 Widget 
+
+&emsp;文本显示和样式。
+
+#### Text
+
+&emsp;[Text class](https://api.flutter.dev/flutter/widgets/Text-class.html) 单一格式的文本。 
+
+```c++
+Text(
+  'Hello, $_name! How are you?',
+  textAlign: TextAlign.center,
+  overflow: TextOverflow.ellipsis,
+  style: const TextStyle(fontWeight: FontWeight.bold),
+)
+```
+
+```c++
+const Text.rich(
+  TextSpan(
+    text: 'Hello', // default text style
+    children: <TextSpan>[
+      TextSpan(text: ' beautiful ', style: TextStyle(fontStyle: FontStyle.italic)),
+      TextSpan(text: 'world', style: TextStyle(fontWeight: FontWeight.bold)),
+    ],
+  ),
+)
+```
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
 
 
 
