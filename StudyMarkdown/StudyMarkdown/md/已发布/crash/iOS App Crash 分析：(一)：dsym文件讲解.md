@@ -202,9 +202,11 @@ void uncaughtExceptionHandler(NSException *exception) {
 ```
 ## NSException
 
-&emsp;NSException 类是一个 NSObject 的子类，用于描述中断程序执行正常流的特殊情况（原因），即用于描述程序正常执行被中断的原因。（An object that represents a special condition that interrupts the normal flow of program execution.）
+&emsp;系统的异常处理是管理非典型事件（例如未被识别的消息）的过程，此过程将会中断正常的程序执行。如果没有足够的错误处理，遇到非典型事件时，程序可能立刻抛出（或者引发）一种被称之为异常的东西，然后结束运行。程序抛出异常的原因多种多样，可由硬件导致也可由软件引起。异常的例子很多，包括被零除、下溢和上异之类的数学错误，调用未定义的指令（例如，试图调用一个没有定义的方法 ）以及试图越界访问群体中的元素 。[NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
 
-&emsp;系统的异常处理是管理非典型事件（例如未被识别的消息）的过程，此过程将会中断正常的程序执行。如果没有足够的错误处理，遇到非典型事件时，程序可能立刻抛出（或者引发）一种被称之为异常的东西，然后结束运行。
+&emsp;NSException 类是一个 NSObject 的子类，用于在 Cocoa 中描述中断程序执行正常流的特殊情况（原因），即用于描述程序正常执行被中断的原因。（An object that represents a special condition that interrupts the normal flow of program execution.）
+
+&emsp;下面我们看一下 NSException 类的定义：
 
 ### Declaration
 
@@ -221,11 +223,11 @@ __attribute__((__objc_exception__))
 }
 ```
 
-&emsp;reserved 字段是保留字段，其实它是用来存放 callStackReturnAddresses 和 callStackSymbols 数据的可变字典。
+&emsp;reserved 字段是一个 id 类型的保留字段，虽然它被作为保留字段，但是它已经被使用了，当前它会作为一个可变字典类型用来存放 callStackReturnAddresses 和 callStackSymbols 数据。
 
 ### Overview
 
-&emsp;使用 NSException 实现 exception 处理（描述）。exception 是指中断正常程序执行流的一种特殊情况。每个应用程序都可以因不同的原因中断程序。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲，exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control-C）解释为异常：长时间运行的进程应该中止的指示。
+&emsp;使用 NSException 实现 exception 处理（描述）。**exception（异常）** 是指中断正常程序执行流的一种特殊情况。每个进程都可以因不同的原因中断执行。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲，exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control-C）解释为异常：长时间运行的进程应该中止的指示。
 
 ### Creating and Raising an NSException Object 
 
@@ -303,9 +305,58 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 #### name
 
 ```c++
+typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
+
 @property (readonly, copy) NSExceptionName name;
 ```
-&emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。
+&emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。然后在 NSException.h 文件的顶部，系统也为我们定义了一组异常的名字。
+
+```c++
+/***************    Generic Exception names        ***************/
+
+FOUNDATION_EXPORT NSExceptionName const NSGenericException;
+FOUNDATION_EXPORT NSExceptionName const NSRangeException;
+FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
+FOUNDATION_EXPORT NSExceptionName const NSInternalInconsistencyException;
+
+FOUNDATION_EXPORT NSExceptionName const NSMallocException;
+
+FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
+FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
+FOUNDATION_EXPORT NSExceptionName const NSDestinationInvalidException;
+    
+FOUNDATION_EXPORT NSExceptionName const NSPortTimeoutException;
+FOUNDATION_EXPORT NSExceptionName const NSInvalidSendPortException;
+FOUNDATION_EXPORT NSExceptionName const NSInvalidReceivePortException;
+FOUNDATION_EXPORT NSExceptionName const NSPortSendException;
+FOUNDATION_EXPORT NSExceptionName const NSPortReceiveException;
+
+FOUNDATION_EXPORT NSExceptionName const NSOldStyleException;
+
+FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
+```
+
+&emsp;我们看这一组 NSException 的名字，其中 NSRangeException 可能是我们最熟悉的，数组越界访问时产生的异常（NSException）对象的名字就是 NSRangeException。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #### reason
 
@@ -395,3 +446,4 @@ __attribute__((__objc_exception__))
 + [异常处理NSException的使用（思维篇）](https://www.cnblogs.com/cchHers/p/15116833.html)
 + [异常统计- IOS 收集崩溃信息 NSEXCEPTION类](https://www.freesion.com/article/939519506/)
 + [NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
++ [iOS Crash之NSGenericException](https://blog.csdn.net/skylin19840101/article/details/51945558)
