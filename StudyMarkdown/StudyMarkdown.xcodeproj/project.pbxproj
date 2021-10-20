@@ -202,8 +202,8 @@
 		8E3327F026F2C38000753049 /* crash */ = {
 			isa = PBXGroup;
 			children = (
-				8E6496A827151413009DD7FC /* iOS App Crash 分析：(二)：NSException 分析.md */,
 				8E3327EF26F2C30C00753049 /* iOS App Crash 分析：(一)：dsym文件讲解.md */,
+				8E6496A827151413009DD7FC /* iOS App Crash 分析：(二)：NSException 分析.md */,
 			);
 			path = crash;
 			sourceTree = "<group>";
