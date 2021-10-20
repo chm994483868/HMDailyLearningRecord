@@ -200,6 +200,49 @@ void uncaughtExceptionHandler(NSException *exception) {
     return YES;
 }
 ```
+
+&emsp;这里还发现一个点，即使发生了异常，当调用到 `uncaughtExceptionHandler` 函数时，它内部的代码不执行完毕的话，程序是不会退出的桌面的。
+
+```c++
+void uncaughtExceptionHandler(NSException *exception) {
+    for (int i = 0; i < 5; ++i) {
+        sleep(1);
+        NSLog(@"🐔🐔🐔 %d", i);
+    }
+}
+```
+
+```c++
+2021-10-20 17:25:31.650557+0800 dSYMDemo[39533:359760] 🏵🏵🏵 数组要越界了...
+2021-10-20 17:25:32.659840+0800 dSYMDemo[39533:359760] 🏵🏵🏵 0
+2021-10-20 17:25:33.661376+0800 dSYMDemo[39533:359760] 🏵🏵🏵 1
+2021-10-20 17:25:34.662952+0800 dSYMDemo[39533:359760] 🏵🏵🏵 2
+2021-10-20 17:25:35.664537+0800 dSYMDemo[39533:359760] 🏵🏵🏵 3
+2021-10-20 17:25:36.666269+0800 dSYMDemo[39533:359760] 🏵🏵🏵 4
+2021-10-20 17:25:36.668223+0800 dSYMDemo[39533:359760] *** Terminating app due to uncaught exception 'NSRangeException', reason: '*** -[__NSArrayI objectAtIndexedSubscript:]: index 3 beyond bounds [0 .. 2]'
+*** First throw call stack:
+(
+    0   CoreFoundation                      0x00007fff20421af6 __exceptionPreprocess + 242
+    1   libobjc.A.dylib                     0x00007fff20177e78 objc_exception_throw + 48
+    2   CoreFoundation                      0x00007fff2049e77f _CFThrowFormattedException + 194
+    3   CoreFoundation                      0x00007fff2044341d +[__NSArrayI allocWithZone:] + 0
+    4   dSYMDemo                            0x000000010210cccb -[AppDelegate function3] + 107
+    5   dSYMDemo                            0x000000010210cc55 -[AppDelegate function2] + 53
+    6   dSYMDemo                            0x000000010210cc15 -[AppDelegate function1] + 53
+    7   dSYMDemo                            0x000000010210cba4 -[AppDelegate application:didFinishLaunchingWithOptions:] + 132
+    8   UIKitCore                           0x00007fff24692fdd -[UIApplication _handleDelegateCallbacksWithOptions:isSuspended:restoreState:] + 232
+    9   UIKitCore                           0x00007fff24694b5f -[UIApplication _callInitializationDelegatesWithActions:forCanvas:payload:fromOriginatingProcess:] + 3919
+    10  UIKitCore                           0x00007fff2469a56d -[UIApplication _runWithMainScene:transitionContext:completion:] + 1237
+    11  UIKitCore                           0x00007fff23cc3730 -[_UISceneLifecycleMultiplexer completeApplicationLaunchWithFBSScene:transitionContext:] + 179
+    12  UIKitCore                           0x00007fff2469695a -[UIApplication _compellApplicationLaunchToCompleteUnconditionally] + 59
+    13  UIKitCore                           0x00007fff24696ce9 -[UIApplication _run] + 898
+    14  UIKitCore                           0x00007fff2469bba8 UIApplicationMain + 101
+    15  dSYMDemo                            0x000000010210cff2 main + 114
+    16  libdyld.dylib                       0x00007fff2025a3e9 start + 1
+)
+libc++abi.dylib: terminating with uncaught exception of type NSException
+```
+
 ## NSException
 
 &emsp;系统的异常处理是管理非典型事件（例如未被识别的消息）的过程，此过程将会中断正常的程序执行。如果没有足够的错误处理，遇到非典型事件时，程序可能立刻抛出（或者引发）一种被称之为异常的东西，然后结束运行。程序抛出异常的原因多种多样，可由硬件导致也可由软件引起。异常的例子很多，包括被零除、下溢和上异之类的数学错误，调用未定义的指令（例如，试图调用一个没有定义的方法 ）以及试图越界访问群体中的元素 。[NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
@@ -364,7 +407,9 @@ FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 @property (nullable, readonly, copy) NSString *reason;
 ```
 
-&emsp;一个只读的字符串，可能为 nil，一个人类可读（human-readable）的字符串，用于表示 exception 发生的原因。
+&emsp;一个只读的字符串，可能为 nil，一个人类可读（human-readable）的字符串，用于表示 exception 发生的原因。例如我们常见的数组越界访问的错误打印：`*** -[__NSArrayI objectAtIndexedSubscript:]: index 3 beyond bounds [0 .. 2]`。
+
+&emsp;还有一个小小的细节，NSException 类的 `- (NSString *)description { ... }` 函数就仅仅返回 NSException 实例对象的  `reason` 属性，如 `NSLog(@"🐝🐝🐝 exception: %@", exception);` 就仅输出 `exception.reason` 的值。
 
 #### userInfo
 
