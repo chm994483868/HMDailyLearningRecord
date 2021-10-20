@@ -201,7 +201,7 @@ void uncaughtExceptionHandler(NSException *exception) {
 }
 ```
 
-&emsp;这里还发现一个点，即使发生了异常，当调用到 `uncaughtExceptionHandler` 函数时，它内部的代码不执行完毕的话，程序是不会退出的桌面的。
+&emsp;这里还发现一个点，即使发生了异常，当调用到 `uncaughtExceptionHandler` 函数时，它内部的代码不执行完毕的话，程序是不会退出的，所以我们可以在此函数中把异常数据写入本地，并在下次程序启动时把异常数据上传到服务器去。
 
 ```c++
 void uncaughtExceptionHandler(NSException *exception) {

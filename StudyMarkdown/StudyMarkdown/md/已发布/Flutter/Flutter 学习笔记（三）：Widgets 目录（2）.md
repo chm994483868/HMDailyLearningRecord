@@ -623,6 +623,283 @@ const Text.rich(
 )
 ```
 
+#### RichText
+
+&emsp;[RichText class](https://api.flutter.dev/flutter/widgets/RichText-class.html) 一个富文本 Text，可以显示多种样式的 text。
+
+&emsp;在其中加入 TextSpan 可以进行自定义显示以及交互（点击超链接跳转）等。
+
+```c++
+RichText(
+  text: TextSpan(
+    text: 'Hello ',
+    style: DefaultTextStyle.of(context).style,
+    children: const <TextSpan>[
+      TextSpan(text: 'bold', style: TextStyle(fontWeight: FontWeight.bold)),
+      TextSpan(text: ' world!'),
+    ],
+  ),
+)
+```
+
+#### DefaultTextStyle 
+
+&emsp;[DefaultTextStyle class](https://api.flutter.dev/flutter/widgets/DefaultTextStyle-class.html) 文字样式，用于指定 Text widget 的文字样式。
+
+### Input 
+
+&emsp;Material Components 和 Cupertino 中获取用户输入的 widget。
+
+#### Form
+
+&emsp;[Form class](https://api.flutter.dev/flutter/widgets/Form-class.html) 一个可选的、用于给多个 TextField 分组的 widget。
+
+#### FormField
+
+&emsp;[FormField<T> class](https://api.flutter.dev/flutter/widgets/FormField-class.html) 一个单独的表单字段。此 widget 维护表单字段的当前状态，以便在 UI 中直观地反映更新和验证错误。
+
+#### RawKeyboardListener
+
+&emsp;[RawKeyboardListener class](https://api.flutter.dev/flutter/widgets/RawKeyboardListener-class.html) 每当用户按下或释放键盘上的键时调用回调的 widget。
+
+### 动画和Motion 
+
+&emsp;在应用中使用动画。
+
+#### AnimatedContainer
+
+&emsp;[AnimatedContainer class](https://api.flutter.dev/flutter/widgets/AnimatedContainer-class.html) 在一段时间内逐渐改变其值的容器。
+
+#### AnimatedCrossFade
+
+&emsp;[AnimatedCrossFade class](https://api.flutter.dev/flutter/widgets/AnimatedCrossFade-class.html) 一个 widget，在两个孩子之间交叉淡入，并同时调整他们的尺寸。
+
+```c++
+AnimatedCrossFade(
+  duration: const Duration(seconds: 3),
+  firstChild: const FlutterLogo(style: FlutterLogoStyle.horizontal, size: 100.0),
+  secondChild: const FlutterLogo(style: FlutterLogoStyle.stacked, size: 100.0),
+  crossFadeState: _first ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+)
+```
+
+#### Hero
+
+&emsp;[Hero class](https://api.flutter.dev/flutter/widgets/Hero-class.html) 将其子项标记为 hero 动画候选的 widget。
+
+#### AnimatedBuilder
+
+&emsp;[AnimatedBuilder class](https://api.flutter.dev/flutter/widgets/AnimatedBuilder-class.html) 用于构建动画的通用小部件。AnimatedBuilder 在有多个 widget 希望有一个动画作为一个较大的建造函数部分时会非常有用。要使用 AnimatedBuilder，只需构建 widget 并将其传给 builder 函数即可。
+
+#### DecoratedBoxTransition
+
+&emsp;[DecoratedBoxTransition class](https://api.flutter.dev/flutter/widgets/DecoratedBoxTransition-class.html) DecoratedBox 的动画版本，可以给它的 Decoration 不同属性使用动画。
+
+#### FadeTransition
+
+&emsp;[FadeTransition class](https://api.flutter.dev/flutter/widgets/FadeTransition-class.html) 对透明度使用动画的 widget。
+
+#### PositionedTransition
+
+&emsp;[PositionedTransition class](https://api.flutter.dev/flutter/widgets/PositionedTransition-class.html) Positioned 的动画版本，它需要一个特定的动画来将孩子的位置从动画的生命周期的起始位置移到结束位置。
+
+#### RotationTransition
+
+&emsp;[RotationTransition class](https://api.flutter.dev/flutter/widgets/RotationTransition-class.html) 对 widget 使用旋转动画。
+
+#### ScaleTransition
+
+&emsp;[ScaleTransition class](https://api.flutter.dev/flutter/widgets/ScaleTransition-class.html) 对 widget 使用缩放动画。
+
+#### SizeTransition
+
+&emsp;[SizeTransition class](https://api.flutter.dev/flutter/widgets/SizeTransition-class.html) 对自己的 size 和 clips 进行动画，并调整孩子。
+
+#### SlideTransition
+
+&emsp;[SlideTransition class](https://api.flutter.dev/flutter/widgets/SlideTransition-class.html) 对相对于其正常位置的某个位置之间使用动画。
+
+#### AnimatedDefaultTextStyle
+
+&emsp;[AnimatedDefaultTextStyle class](https://api.flutter.dev/flutter/widgets/AnimatedDefaultTextStyle-class.html) 在文本样式切换时使用动画。
+
+#### AnimatedListState
+
+&emsp;[AnimatedListState class](https://api.flutter.dev/flutter/widgets/AnimatedListState-class.html) 动画列表的 state。
+
+#### AnimatedModalBarrier
+
+&emsp;[AnimatedModalBarrier class](https://api.flutter.dev/flutter/widgets/AnimatedModalBarrier-class.html) 一个阻止用户与 widget 交互的 widget。
+
+#### AnimatedOpacity
+
+&emsp;[AnimatedOpacity class](https://api.flutter.dev/flutter/widgets/AnimatedOpacity-class.html) Opacity 的动画版本，在给定的透明度变化时，自动地在给定的一段时间内改变孩子的 Opacity。
+
+#### AnimatedPhysicalModel
+
+&emsp;[AnimatedPhysicalModel class](https://api.flutter.dev/flutter/widgets/AnimatedPhysicalModel-class.html) PhysicalModel 的动画版本。
+
+#### AnimatedPositioned
+
+&emsp;[AnimatedPositioned class](https://api.flutter.dev/flutter/widgets/AnimatedPositioned-class.html) 动画版本的 Positioned，每当给定位置的变化，自动在给定的时间内转换孩子的位置。
+
+#### AnimatedSize
+
+&emsp;[AnimatedSize class](https://api.flutter.dev/flutter/widgets/AnimatedSize-class.html) 动画 widget，当给定的孩子的大小变化时，它自动地在给定时间内转换它的大小。
+
+#### AnimatedWidget
+
+&emsp;[AnimatedWidget class](https://api.flutter.dev/flutter/widgets/AnimatedWidget-class.html) 当给定的 Listenable 改变值时，会重新构建该 widget。
+
+#### AnimatedWidgetBaseState
+
+&emsp;[AnimatedWidgetBaseState<T extends ImplicitlyAnimatedWidget> class](https://api.flutter.dev/flutter/widgets/AnimatedWidgetBaseState-class.html) 具有隐式动画的 widget 的基类。
+
+### 交互模型
+
+&emsp;响应触摸事件并将用户路由到不同的页面视图（View）。
+
+#### LongPressDraggable 
+
+&emsp;[LongPressDraggable<T extends Object> class](https://api.flutter.dev/flutter/widgets/LongPressDraggable-class.html) 可以使其子 widget 在长按时可拖动。
+
+#### GestureDetector
+
+&emsp;[GestureDetector class](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html) 一个检测手势的 widget。
+
+#### DragTarget
+
+&emsp;[DragTarget<T extends Object> class](https://api.flutter.dev/flutter/widgets/DragTarget-class.html) 一个拖动的目标 widget，在完成拖动时它可以接收数据。
+
+#### Dismissible
+
+&emsp;[Dismissible class](https://api.flutter.dev/flutter/widgets/Dismissible-class.html) 可以在拖动时隐藏的 widget。
+
+#### IgnorePointer
+
+&emsp;[IgnorePointer class](https://api.flutter.dev/flutter/widgets/IgnorePointer-class.html) 在 hit test 中不可见的 widget。当 ignoring 为 true 时，此 widget 及其子树不响应事件。但它在布局过程中仍然消耗空间，并像往常一样绘制它的孩子。它是无法捕获事件对象、因为它在 RenderBox.hitTest 中返回 false。
+
+#### AbsorbPointer
+
+&emsp;[AbsorbPointer class](https://api.flutter.dev/flutter/widgets/AbsorbPointer-class.html) 在 hit test 期间吸收(拦截)事件。当 absorbing 为 true 时，此小部件阻止其子树通过终止命中测试来接收指针事件。它在布局过程中仍然消耗空间，并像往常一样绘制它的孩子。它只是防止其孩子成为事件命中目标，因为它从 RenderBox.hitTest 返回 true。
+
+#### Navigator
+
+&emsp;[Navigator class](https://api.flutter.dev/flutter/widgets/Navigator-class.html) 导航器，可以在多个页面(路由)栈之间跳转。
+
+#### Scrollable
+
+&emsp;[Scrollable class](https://api.flutter.dev/flutter/widgets/Scrollable-class.html) 实现了可滚动 widget 的交互模型，但不包含 UI 显示相关的逻辑。
+
+### 样式
+
+&emsp;管理应用的主题，使应用能够响应式的适应屏幕尺寸或添加填充。
+
+#### Padding
+
+&emsp;[Padding class](https://api.flutter.dev/flutter/widgets/Padding-class.html) 一个 widget, 会给其子 widget 添加指定的填充。
+
+#### Theme
+
+&emsp;[Theme class](https://api.flutter.dev/flutter/material/Theme-class.html) 将主题应用于子 widget。主题描述了应用选择的颜色和字体。
+
+#### MediaQuery
+
+&emsp;[MediaQuery class](https://api.flutter.dev/flutter/widgets/MediaQuery-class.html) 建立一个子树，在树中媒体查询解析不同的给定数据。
+
+### 绘制和效果
+
+&emsp;Widget 将视觉效果应用到其子组件，而不改变它们的布局、大小和位置。
+
+#### Opacity
+
+&emsp;[Opacity class](https://api.flutter.dev/flutter/widgets/Opacity-class.html) 使其子 widget 透明的 widget。
+
+```c++
+Opacity(
+  opacity: _visible ? 1.0 : 0.0,
+  child: const Text("Now you see me, now you don't!"),
+)
+```
+
+#### Transform
+
+&emsp;[Transform class](https://api.flutter.dev/flutter/widgets/Transform-class.html) 在绘制子 widget 之前应用转换的 widget。
+
+#### DecoratedBox
+
+&emsp;[DecoratedBox class](https://api.flutter.dev/flutter/widgets/DecoratedBox-class.html) 在孩子绘制之前或之后绘制装饰的 widget。
+
+#### FractionalTranslation
+
+&emsp;[FractionalTranslation class](https://api.flutter.dev/flutter/widgets/FractionalTranslation-class.html) 绘制盒子之前给其添加一个偏移转换。
+
+#### RotatedBox
+
+&emsp;[RotatedBox class](https://api.flutter.dev/flutter/widgets/RotatedBox-class.html) 可以延顺时针以 90 度的倍数旋转其子 widget。
+
+&emsp;对比 Transform.rotate 而言，RotatedBox 只会影响渲染而不会影响布局，Transform.rotate 中的布局将表现好似未旋转的子部件仍占据着其原始位置，Transform.rotate 因此对动画和轻微旋转很有用，但对于像这样永久旋转的 box，请使用 RotatedBox。
+
+```c++
+const RotatedBox(
+  quarterTurns: 3,
+  child: Text('Hello World!'),
+)
+```
+
+#### ClipOval 
+
+&emsp;[ClipOval class](https://api.flutter.dev/flutter/widgets/ClipOval-class.html) 用椭圆剪辑其孩子的 widget。
+
+#### ClipPath
+
+&emsp;[ClipPath class](https://api.flutter.dev/flutter/widgets/ClipPath-class.html) 用 path 剪辑其孩子的 widget。
+
+#### ClipRect
+
+&emsp;[ClipRect class](https://api.flutter.dev/flutter/widgets/ClipRect-class.html) 用矩形剪辑其孩子的 widget。
+
+#### CustomPaint
+
+&emsp;[CustomPaint class](https://api.flutter.dev/flutter/widgets/CustomPaint-class.html) 提供一个画布的 widget，在绘制阶段可以在画布上绘制自定义图形。
+
+#### BackdropFilter
+
+&emsp;[BackdropFilter class](https://api.flutter.dev/flutter/widgets/BackdropFilter-class.html) 一个 widget，它将过滤器应用到现有的绘图内容，然后绘制孩子。这种效果是比较昂贵的，尤其是如果过滤器是 non-local，如 blur。
+
+
+### 异步 Widgets
+
+&emsp;Flutter 应用的异步模型。
+
+#### FutureBuilder
+
+&emsp;[FutureBuilder<T> class](https://api.flutter.dev/flutter/widgets/FutureBuilder-class.html) 基于与 Future 交互的最新快照来构建自身的 widget。
+
+#### StreamBuilder
+
+&emsp;[StreamBuilder<T> class](https://api.flutter.dev/flutter/widgets/StreamBuilder-class.html) 基于与流交互的最新快照构建自身的 widget。
+
+### 可滚动的Widget
+
+&emsp;滚动一个拥有多个子组件的父组件。
+
+#### ListView
+
+&emsp;[ListView class](https://api.flutter.dev/flutter/widgets/ListView-class.html) 一个可滚动的列表。
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]()
+
 #### 
 
 &emsp;[]() 
@@ -645,7 +922,7 @@ const Text.rich(
 
 #### 
 
-&emsp;[]() 
+&emsp;[]()
 
 #### 
 
@@ -669,14 +946,55 @@ const Text.rich(
 
 #### 
 
+&emsp;[]()
+
+#### 
+
 &emsp;[]() 
 
 #### 
 
 &emsp;[]() 
 
+#### 
 
+&emsp;[]() 
 
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]()
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]() 
+
+#### 
+
+&emsp;[]()
 
 
 
