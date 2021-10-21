@@ -352,7 +352,9 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 
 @property (readonly, copy) NSExceptionName name;
 ```
-&emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。然后在 NSException.h 文件的顶部，系统也为我们定义了一组异常的名字。
+&emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。
+
+&emsp;在 NSException.h 文件的顶部，系统也为我们事先定义了一组异常的名字，帮助我们针对不同的异常对象进行分类。
 
 ```c++
 /***************    Generic Exception names        ***************/
@@ -379,8 +381,25 @@ FOUNDATION_EXPORT NSExceptionName const NSOldStyleException;
 FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 ```
 
-&emsp;我们看这一组 NSException 的名字，其中 NSRangeException 可能是我们最熟悉的，数组越界访问时产生的异常（NSException）对象的名字就是 NSRangeException。
+&emsp;我们看这一组 NSException 的名字，其中 NSRangeException 可能是我们最熟悉的，数组越界访问时产生的异常（NSException）对象的名字就是 NSRangeException。下面我们简单列一下不同的 NSExceptionName 异常所对应的一些造成此异常的情况。
 
+##### NSGenericException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSGenericException;
+```
+
+1. 在 foreach 循环中添加元素和删除元素：`*** Terminating app due to uncaught exception 'NSGenericException', reason: '*** Collection <__NSArrayM: 0x600003764450> was mutated while being enumerated.'`
+2. 读取数据文件失败。
+3. 其他情况，例如：UIActivityViewController 使用做原生分享时，在 iPad 下必须给创建的 UIActivityViewController 对象的 popoverPresentationController.sourceView 属性赋值，否则会直接 crash，iPhone 则不会。
+
+##### NSRangeException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSRangeException;
+```
+
+&emsp;
 
 
 
