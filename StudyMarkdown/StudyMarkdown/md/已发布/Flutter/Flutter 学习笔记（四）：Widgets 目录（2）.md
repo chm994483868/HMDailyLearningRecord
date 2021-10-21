@@ -1,4 +1,4 @@
-# Flutter 学习笔记（三）：Widgets 目录（2）
+# Flutter 学习笔记（四）：Widgets 目录（2）
 
 &emsp;使用 Flutter 的一套的视觉、结构、平台、和交互式的 widgets，快速创建漂亮的 APP。
 
@@ -888,120 +888,97 @@ const RotatedBox(
 
 &emsp;[ListView class](https://api.flutter.dev/flutter/widgets/ListView-class.html) 一个可滚动的列表。
 
-#### 
+```c++
+ListView(
+  padding: const EdgeInsets.all(8),
+  children: <Widget>[
+    Container(
+      height: 50,
+      color: Colors.amber[600],
+      child: const Center(child: Text('Entry A')),
+    ),
+    Container(
+      height: 50,
+      color: Colors.amber[500],
+      child: const Center(child: Text('Entry B')),
+    ),
+    Container(
+      height: 50,
+      color: Colors.amber[100],
+      child: const Center(child: Text('Entry C')),
+    ),
+  ],
+)
+```
 
-&emsp;[]() 
+#### NestedScrollView
 
-#### 
+&emsp;[NestedScrollView class](https://api.flutter.dev/flutter/widgets/NestedScrollView-class.html) 一个可以嵌套其它可滚动 widget 的 widget。
 
-&emsp;[]() 
+#### GridView
 
-#### 
+&emsp;[GridView class](https://api.flutter.dev/flutter/widgets/GridView-class.html) 一个可滚动的二维空间数组。
 
-&emsp;[]()
+#### SingleChildScrollView
 
-#### 
+&emsp;[SingleChildScrollView class](https://api.flutter.dev/flutter/widgets/SingleChildScrollView-class.html) 有一个子 widget 的可滚动的 widget，子内容超过父容器时可以滚动。
 
-&emsp;[]() 
+#### Scrollable
 
-#### 
+&emsp;[Scrollable class](https://api.flutter.dev/flutter/widgets/Scrollable-class.html) 实现了可滚动 widget 的交互模型，但不包含 UI 显示相关的逻辑。
 
-&emsp;[]() 
+#### CustomScrollView
 
-#### 
+&emsp;[CustomScrollView class](https://api.flutter.dev/flutter/widgets/CustomScrollView-class.html) 一个使用 slivers 创建自定义的滚动效果的 ScrollView。
 
-&emsp;[]() 
+#### NotificationListener
 
-#### 
+&emsp;[NotificationListener<T extends Notification> class](https://api.flutter.dev/flutter/widgets/NotificationListener-class.html) 一个用来监听树上冒泡通知的 widget。
 
-&emsp;[]() 
+#### ScrollConfiguration
 
-#### 
+&emsp;[ScrollConfiguration class](https://api.flutter.dev/flutter/widgets/ScrollConfiguration-class.html) 控制可滚动组件在子树中的表现行为。
 
-&emsp;[]() 
+#### RefreshIndicator
 
-#### 
+&emsp;[RefreshIndicator class](https://api.flutter.dev/flutter/material/RefreshIndicator-class.html) Material Design 下拉刷新指示器，包装一个可滚动 widget。
 
-&emsp;[]()
+```c++
+ListView(
+  physics: const AlwaysScrollableScrollPhysics(),
+  children: ...
+)
+```
 
-#### 
+### 辅助功能 Widget
 
-&emsp;[]() 
+&emsp;给你的 App 添加辅助功能(这是一个正在进行的工作)。
 
-#### 
+#### Semantics
 
-&emsp;[]() 
+&emsp;[Semantics class](https://api.flutter.dev/flutter/widgets/Semantics-class.html) 一个 widget，用以描述 widget 树的具体语义。使用辅助工具、搜索引擎和其他语义分析软件来确定应用程序的含义。
 
-#### 
+#### MergeSemantics
 
-&emsp;[]() 
+&emsp;[MergeSemantics class](https://api.flutter.dev/flutter/widgets/MergeSemantics-class.html) 合并其后代语义的 widget。
 
-#### 
+```c++
+MergeSemantics(
+  child: Row(
+    children: <Widget>[
+      Checkbox(
+        value: true,
+        onChanged: (bool? value) {},
+      ),
+      const Text('Settings'),
+    ],
+  ),
+)
+```
 
-&emsp;[]() 
+#### ExcludeSemantics
 
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]()
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]()
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]() 
-
-#### 
-
-&emsp;[]()
-
-
-
-
-
-
-
+&emsp;[ExcludeSemantics class](https://api.flutter.dev/flutter/widgets/ExcludeSemantics-class.html) 删除其后代所有语义的 widget。
 
 ## 参考链接
 **参考链接:🔗**
