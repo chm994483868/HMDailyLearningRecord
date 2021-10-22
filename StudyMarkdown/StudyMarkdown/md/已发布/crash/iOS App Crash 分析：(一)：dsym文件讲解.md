@@ -391,7 +391,9 @@ FOUNDATION_EXPORT NSExceptionName const NSGenericException;
 
 1. 在 foreach 循环中添加元素和删除元素：`*** Terminating app due to uncaught exception 'NSGenericException', reason: '*** Collection <__NSArrayM: 0x600003764450> was mutated while being enumerated.'`
 2. 读取数据文件失败。
-3. 其他情况，例如：UIActivityViewController 使用做原生分享时，在 iPad 下必须给创建的 UIActivityViewController 对象的 popoverPresentationController.sourceView 属性赋值，否则会直接 crash，iPhone 则不会。
+3. 使用 UIActivityViewController 时，在 iPad 下必须给创建的 UIActivityViewController 对象的 .popoverPresentationController.sourceView 属性赋值，否则会 crash，iPhone 则不会：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'UIPopoverPresentationController (<UIPopoverPresentationController: 0x7fe9c95144f0>) should have a non-nil sourceView or barButtonItem set before the presentation occurs.'`
+4. iOS 10.0-10.2 时 NSURLSessionTaskMetrics 的 _initWithTask 引发的异常：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'Start date cannot be later in time than end date!'`。距离如今时间比较久了，可参考这个链接，描述的比较清楚：[iOS10系统崩溃问题修复——NSURLSessionTaskMetrics](https://www.unko.cn/2017/07/10/iOS10系统崩溃问题修复——NSURLSessionTaskMetrics/) 
+5. ...
 
 ##### NSRangeException
 
@@ -513,3 +515,4 @@ __attribute__((__objc_exception__))
 + [iOS Crash之NSGenericException](https://blog.csdn.net/skylin19840101/article/details/51945558)
 + [iOS异常处理](https://www.jianshu.com/p/1e4d5421d29c)
 + [iOS异常处理](https://www.jianshu.com/p/59927211b745)
++ [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
