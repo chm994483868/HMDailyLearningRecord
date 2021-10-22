@@ -138,6 +138,92 @@ class MyHomePage extends StatelessWidget {
 }
 ```
 
+## 显示来自网上的图片
+
+&emsp;显示图片是大多数移动应用程序的基础。Flutter 提供了 Image Widget 来显示不同类型的图片。
+
+&emsp;为了处理来自 URL 的图像，请使用 Image.network 构造函数。
+
+```c++
+new Image.network(
+  'https://raw.githubusercontent.com/flutter/website/master/_includes/code/layout/lakes/images/lake.jpg',
+)
+```
+
+### Bonus: GIF 动画
+
+&emsp;Image Widget 的一个惊艳的功能是：支持 GIF 动画！
+
+```c++
+new Image.network(
+  'https://github.com/flutter/plugins/raw/master/packages/video_player/doc/demo_ipod.gif?raw=true',
+)
+```
+
+### 占位图和缓存
+
+&emsp;Image.network 默认不能处理一些高级功能，例如在下载完图片后加载或缓存图片到设备中后，使图片渐隐渐显。
+
+#### 用占位符淡入图片
+
+&emsp;当使用默认 Image widget 显示图片时，可能会注意到它们在加载完成后会直接显示到屏幕上。这可能会让用户产生视觉突兀。相反，如果最初显示一个占位图，然后在图像加载完显示时淡入，那么它会不会更好？我们可以使用 FadeInImage 来达到这个目的。
+
+&emsp;FadeInImage 适用于任何类型的图片：内存、本地 Asset 或来自网上的图片。
+
+&emsp;在下面的例子中，我们将使用 transparent_image 包作为一个简单的透明占位图。你也可以考虑按照 Assets 和图片指南使用本地资源来做占位图。
+
+```c++
+new FadeImage.memoryNetwork(
+  placeholder: kTransparentImage,
+  image: '',
+);
+```
+
+&emsp;完整的例子:
+
+&emsp;首先需要在 [pub.dartlang.org](https://pub.dev/flutter/packages) 搜索 `transparent_image` 软件包（看到其当前版本是：2.0.0），然后在 pubspec.yaml 文件中引入 `transparent_image: ^2.0.0`。
+
+```c++
+import 'package:flutter/material.dart';
+import 'package:transparent_image/transparent_image.dart';
+
+void main() {
+  runApp(new MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    final title = 'Fade in images';
+
+    return new MaterialApp(
+      title: title,
+      home: new Scaffold(
+        appBar: new AppBar(
+          title: new Text(title),
+        ),
+        body: new Stack(
+          children: <Widget>[
+            new Center(child: new CircularProgressIndicator()),
+            new Center(
+              child: new FadeInImage.memoryNetwork(
+                placeholder: kTransparentImage,
+                image: 'https://picsum.photos/250?image=9',
+              ),
+            )
+          ]
+        )
+      )
+    );
+  }
+}
+```
+
+#### 使用缓存图片
+
+
+
 
 
 
