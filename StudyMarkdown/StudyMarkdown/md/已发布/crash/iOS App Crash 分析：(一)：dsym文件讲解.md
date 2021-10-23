@@ -395,13 +395,23 @@ FOUNDATION_EXPORT NSExceptionName const NSGenericException;
 4. iOS 10.0-10.2 时 NSURLSessionTaskMetrics 的 _initWithTask 引发的异常：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'Start date cannot be later in time than end date!'`。距离如今时间比较久了，可参考这个链接，描述的比较清楚：[iOS10系统崩溃问题修复——NSURLSessionTaskMetrics](https://www.unko.cn/2017/07/10/iOS10系统崩溃问题修复——NSURLSessionTaskMetrics/) 
 5. ...
 
+
+
 ##### NSRangeException
 
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSRangeException;
 ```
 
-&emsp;
+
+
+
+
+
+
+##### NSInvalidArgumentException
+
+`*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: 'Could not find a storyboard named 'Main' in bundle NSBundle </Users/hmc/Library/Developer/CoreSimulator/Devices/2ADFB467-5FFF-4F61-872F-73F1CF1C2174/data/Containers/Bundle/Application/1DE87EF5-E2FA-44B8-8967-F565941653CB/dSYMDemo.app> (loaded)'`
 
 
 
