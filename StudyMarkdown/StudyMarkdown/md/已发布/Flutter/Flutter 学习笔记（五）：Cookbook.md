@@ -188,26 +188,27 @@ import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 void main() {
-  runApp(new MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    final title = 'Fade in images';
+    const title = 'Fade in images';
 
-    return new MaterialApp(
+    return MaterialApp(
       title: title,
-      home: new Scaffold(
-        appBar: new AppBar(
-          title: new Text(title),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
         ),
-        body: new Stack(
+        body: Stack(
           children: <Widget>[
-            new Center(child: new CircularProgressIndicator()),
-            new Center(
-              child: new FadeInImage.memoryNetwork(
+            const Center(child: CircularProgressIndicator()),
+            Center(
+              child: FadeInImage.memoryNetwork(
                 placeholder: kTransparentImage,
                 image: 'https://picsum.photos/250?image=9',
               ),
@@ -222,6 +223,174 @@ class MyApp extends StatelessWidget {
 
 #### 使用缓存图片
 
+&emsp;在某些情况下，在从网上下载图片后缓存图片可能会很方便，以便它们可以脱机使用。为此，我们可以使用 cached_network_image 包来达到目的。
+
+&emsp;除了缓存之外，cached_image_network 包在加载时还支持占位符和淡入淡出图片。
+
+```c++
+new CachedNetworkImage(
+  imageUrl:'https://github.com/flutter/website/blob/master/_includes/code/layout/lakes/images/lake.jpg?raw=true',
+);
+```
+
+##### 添加一个占位符
+
+&emsp;cache_network_image 包允许我们使用任何 Widget 作为占位符！在这个例子中，我们将在图片加载时显示一个进度圈。
+
+```c++
+new CachedNetworkImage(
+  placeholder: new CircularProgressIndicator(),
+  imageUrl: 'https://github.com/flutter/website/blob/master/_includes/code/layout/lakes/images/lake.jpg?raw=true',
+);
+```
+
+##### 完整的例子
+
+&emsp;同样，我们需要先引入 `cached_network_image`。首先在 [pub.dartlang.org](https://pub.dev/flutter/packages) 搜索 `cached_network_image` 软件包（看到其当前版本是：3.1.0），然后在 pubspec.yaml 文件中引入 `cached_network_image: ^3.1.0`。
+
+```c++
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Cached Images';
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: Stack(
+          children: <Widget>[
+            const Center(child: CircularProgressIndicator()),
+            Center(
+              child: CachedNetworkImage(
+                imageUrl: 'https://picsum.photos/250?image=9',
+              ),
+            ),
+          ]
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 创建一个基本 list
+
+&emsp;显示数据列表是移动应用程序常见的需求。Flutter 包含的 ListView Widget，使列表变得轻而易举！
+
+### 创建一个 ListView
+
+&emsp;使用标准 ListView 构造函数非常适合仅包含少量条目的列表。我们使用内置的 ListTile Widget 来作为列表项。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Basic List';
+
+    return MaterialApp(
+        title: title,
+        home: Scaffold(
+            appBar: AppBar(
+              title: const Text(title),
+            ),
+            body: ListView(children: const <Widget>[
+              ListTile(
+                leading: Icon(Icons.map),
+                title: Text('Maps'),
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_album),
+                title: Text('Album'),
+              ),
+              ListTile(
+                leading: Icon(Icons.phone),
+                title: Text('Phone'),
+              ),
+            ])));
+  }
+}
+```
+
+## 创建一个水平 list
+
+&emsp;有时，你可能想要创建一个水平滚动（而不是垂直滚动）的列表，ListView 本身就支持水平 list。在创建 ListView 时，设置 scrollDirection 为水平方向以覆盖默认的垂直方向。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Horizontal List';
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: Container(
+          margin: const EdgeInsets.symmetric(vertical: 20.0),
+          height: 200.0,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: <Widget>[
+              Container(
+                width: 160.0,
+                color: Colors.red,
+              ),
+              Container(
+                width: 160.0,
+                color: Colors.blue,
+              ),
+              Container(
+                width: 160.0,
+                color: Colors.green,
+              ),
+              Container(
+                width: 160.0,
+                color: Colors.yellow,
+              ),
+              Container(
+                width: 160.0,
+                color: Colors.orange,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 使用长列表
+
+&emsp;标准的 ListView 构造函数适用于小列表。为了处理包含大量数据的列表，最好使用 ListView.builder 构造函数。
+
+&emsp;ListView 的构造函数需要一次创建所有项目，但 ListView.builder 的构造函数不需要，它将在列表项滚动到屏幕上时创建该列表项。
 
 
 
@@ -230,3 +399,4 @@ class MyApp extends StatelessWidget {
 ## 参考链接
 **参考链接:🔗**
 + [Widgets 目录](https://flutterchina.club/widgets/)
++ [Cookbook](https://flutterchina.club/cookbook/)
