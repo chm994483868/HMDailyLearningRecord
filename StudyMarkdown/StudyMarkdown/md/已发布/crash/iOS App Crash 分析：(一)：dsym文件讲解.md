@@ -390,7 +390,7 @@ FOUNDATION_EXPORT NSExceptionName const NSGenericException;
 ```
 
 1. 在 for in 循环中添加元素和删除元素：`*** Terminating app due to uncaught exception 'NSGenericException', reason: '*** Collection <__NSArrayM: 0x600003764450> was mutated while being enumerated.'` [iOS数组异常:NSGenericException,Collection <__NSArrayM: 0x61800024f7b0> was mutated while being enumerated.'](https://www.jianshu.com/p/4a5982bab58e)
-2. 使用 UIActivityViewController 时，在 iPad 下必须给创建的 UIActivityViewController 对象的 .popoverPresentationController.sourceView 属性赋值，否则会 crash，iPhone 则不会：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'UIPopoverPresentationController (<UIPopoverPresentationController: 0x7fe9c95144f0>) should have a non-nil sourceView or barButtonItem set before the presentation occurs.'`
+2. 使用 UIActivityViewController 时，在 iPad 下必须给创建的 UIActivityViewController 对象的 .popoverPresentationController.sourceView 属性赋值，否则会 crash，iPhone 则不会：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'UIPopoverPresentationController (<UIPopoverPresentationController: 0x7fe9c95144f0>) should have a non-nil sourceView or barButtonItem set before the presentation occurs.'`。
 3. iOS 10.0-10.2 时 NSURLSessionTaskMetrics 的 _initWithTask 引发的异常：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'Start date cannot be later in time than end date!'`。距离如今时间比较久了，可参考这个链接，描述的比较清楚：[iOS10系统崩溃问题修复——NSURLSessionTaskMetrics](https://www.unko.cn/2017/07/10/iOS10系统崩溃问题修复——NSURLSessionTaskMetrics/) 
 4. ...
 
@@ -400,13 +400,21 @@ FOUNDATION_EXPORT NSExceptionName const NSGenericException;
 FOUNDATION_EXPORT NSExceptionName const NSRangeException;
 ```
 
-
-
-
-
-
+1. 大家见的最多的数组越界访问：`*** Terminating app due to uncaught exception 'NSRangeException', reason: '*** -[__NSArrayI objectAtIndexedSubscript:]: index 3 beyond bounds [0 .. 2]'`
 
 ##### NSInvalidArgumentException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
+```
+
+&emsp;非法参数异常（`NSInvalidArgumentException`）也是一个特别常见的异常，需要我们写代码时时刻注意参数的检查，避免传入非法参数导致异常，特别是参数为 nil 传递。
+
+1. 
+
+
+
+
 
 `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: 'Could not find a storyboard named 'Main' in bundle NSBundle </Users/hmc/Library/Developer/CoreSimulator/Devices/2ADFB467-5FFF-4F61-872F-73F1CF1C2174/data/Containers/Bundle/Application/1DE87EF5-E2FA-44B8-8967-F565941653CB/dSYMDemo.app> (loaded)'`
 
