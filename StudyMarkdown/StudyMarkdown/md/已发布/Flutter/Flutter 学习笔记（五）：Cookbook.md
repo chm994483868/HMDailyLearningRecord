@@ -392,6 +392,424 @@ class MyApp extends StatelessWidget {
 
 &emsp;ListView 的构造函数需要一次创建所有项目，但 ListView.builder 的构造函数不需要，它将在列表项滚动到屏幕上时创建该列表项。
 
+### 1. 创建一个数据源
+
+&emsp;首先我们需要一个数据源，例如，你的数据源可能是消息列表、搜索结果或商店中的产品。大多数情况下，这些数据将来自互联网或数据库。
+
+&emsp;在这个例子中，我们将使用 List.generate 构造函数生成拥有 10000 个字符串的列表。
+
+```c++
+final items = new List<String>.generate(10000, (i) => "Item $i");
+```
+
+### 2. 将数据源转换成 Widgets
+
+&emsp;为了显示我们的字符串列表，我们需要将每个字符串展现为一个 Widget!
+
+&emsp;这正是 ListView.builder 发挥作用的地方。在我们的例子中，我们将每一行显示一个字符串：
+
+```c++
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp(
+    items: List<String>.generate(10000, (index) => "Item $index"),
+  ));
+}
+
+class MyApp extends StatelessWidget {
+  final List<String> items;
+
+  const MyApp({Key? key, required this.items}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Long List';
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(items[index]),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 使用不同类型的子项创建列表
+
+&emsp;我们经常需要创建显示不同类型内容的列表。例如，我们可能正在制作一个列表，其中显示一个标题，后面跟着与该标题相关的几个子项，再后面是另一个标题，等等。
+
+&emsp;如何用 Flutter 创建这样的结构呢？
+
+### 步骤
+
+1. 使用不同类型的数据创建数据源。
+2. 将数据源转换为 Widgets 列表。
+
+#### 1. 使用不同类型的数据创建数据源
+
+&emsp;条目（子项）类型
+
+&emsp;为了表示列表中的不同类型的条目，我们需要为每个类型的条目定义一个类。
+
+&emsp;在这个例子中，我们将在一个应用程序上显示一个标题，后面跟着五条消息。因此，我们将创建三个类：ListItem、HeadingItem、和 MessageItem。
+
+&emsp;创建 Item 列表
+
+&emsp;大多数时候，我们会从互联网或本地数据库中读取数据，并将该数据转换成 item 的列表。
+
+&emsp;对于这个例子，我们将生成一个 Item 列表来处理。该列表将包含一个标题、后五条消息，然后重复。
+
+#### 2. 将数据源转换为 Widgets 列表
+
+&emsp;为了将每个 item 转换为 Widget，我们将使用 ListView.builder 构造函数。
+
+&emsp;通常，我们需要提供一个 builder 函数来检查我们正在处理的 item 类型，并返回该 item 类型对应的 Widget。
+
+&emsp;在这个例子中，使用 is 关键字来检查我们正在处理的 item 的类型，这个速度很快，并会自动将每个 item 转换为适当的类型。但是，如果你更喜欢另一种模式，也有不同的方法可以解决这个问题！
+
+```c++
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
+void main() {
+  runApp(MyApp(
+    items: List<ListItem>.generate(
+      1000,
+      (index) => index % 6 == 0
+          ? HeadingItem("Heading $index")
+          : MessageItem("Sender $index", "Message body $index"),
+    ),
+  ));
+}
+
+class MyApp extends StatelessWidget {
+  final List<ListItem> items;
+
+  const MyApp({Key? key, required this.items}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = "Mixed List";
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: ListView.builder(
+          // Let the ListView know how many items it needs to build
+          itemCount: items.length,
+          // Provide a builder function. This is where the magic happens! We'll convert each item into a Widget based on the type of item it is.
+          itemBuilder: (context, index) {
+            final item = items[index];
+
+            if (item is HeadingItem) {
+              return ListTile(
+                title: Text(
+                  item.heading,
+                  style: Theme.of(context).textTheme.headline3,
+                ),
+              );
+            } else if (item is MessageItem) {
+              return ListTile(
+                title: Text(item.sender),
+                subtitle: Text(item.body),
+              );
+            } else {
+              return const ListTile(
+                title: Text("PLACEHOLDER")
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// The base class for the different types of items the List can contain
+abstract class ListItem {}
+
+// A ListItem that contains data to display a heading
+class HeadingItem implements ListItem {
+  final String heading;
+
+  HeadingItem(this.heading);
+}
+
+// A ListItem that contains data to display a message
+class MessageItem implements ListItem {
+  final String sender;
+  final String body;
+
+  MessageItem(this.sender, this.body);
+}
+```
+
+## 创建一个 Grid List
+
+&emsp;在某些情况下，你可能希望将 item 显示为网格，而不是一个普通列表。对于这个需求，我们可以使用 GridView Widget。
+
+&emsp;使用网格的最简单方法是使用 GridView.count 构造函数，它允许我们指定行数和列数。
+
+&emsp;在这个例子中，我们将生成一个包含 100 个 Widget 的 list，在网格中显示它们的索引。这将帮助我们观察 GridView 如何工作。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Grid List';
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: GridView.count(
+          crossAxisCount: 3,
+          children: List.generate(100, (index) {
+            return Center(
+              child: Text(
+                'Item $index',
+                style: Theme.of(context).textTheme.headline6,
+              ),
+            );
+          }),
+        ),
+      )
+    );
+  }
+}
+```
+
+## 处理点击
+
+&emsp;我们不仅希望向用户展示信息，还希望我们的用户与我们的应用互动，那么如何响应用户的基本操作，如何点击和拖动？在 Flutter 中我们可以使用 GestureDetector Widget。假设我们想要创建一个自定义按钮，当点击时显示一个 SnackBar。如何解决这个问题？
+
+### 步骤
+
+1. 创建一个 button。
+2. 把它包装在 GestureDetector 中并提供一个 onTap 回调。
+
+### 注意
+
+1. 虽然我们已经创建了一个自定义按钮来演示这些概念，但 Flutter 也提供了一些其它开箱即用的按钮：RaisedButton、FlatButton、CupertinoButton。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Gesture Demo';
+
+    return const MaterialApp(
+      title: title,
+      home: MyHomePage(title: title),
+    );
+  }
+}
+
+class MyHomePage extends StatelessWidget {
+  final String title;
+
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+      ),
+      body: const Center(child: MyButton()),
+    );
+  }
+}
+
+class MyButton extends StatelessWidget {
+  const MyButton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Our GestureDetector wraps our button
+    return GestureDetector(
+      // When the child is tapped, show a snackbar
+      onTap: () {
+        const snackBar = SnackBar(content: Text("Tap"));
+
+        // ignore: deprecated_member_use
+        Scaffold.of(context).showSnackBar(snackBar);
+      },
+      // Our Custom Button!
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          // ignore: deprecated_member_use
+          color: Theme.of(context).buttonColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: const Text('My Button'),
+      ),
+    );
+  }
+}
+```
+
+## 添加 Material 触摸水波效果
+
+&emsp;在设计应遵循 Material Design 指南的应用程序时，我们希望在点击时将水波动画添加到 Widgets。
+
+&emsp;Flutter 提供了 InkWell Widget 来实现这个效果。
+
+### 步骤
+
+1. 创建一个可点击的 Widget。
+2. 将它包裹在一个 InkWell 中来管理点击回调和水波动画。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'InkWell Demo';
+
+    return const MaterialApp(
+      title: title,
+      home: MyHomePage(title: title),
+    );
+  }
+}
+
+class MyHomePage extends StatelessWidget {
+  final String title;
+
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+      ),
+      body: const Center(child: MyButton()),
+    );
+  }
+}
+
+class MyButton extends StatelessWidget {
+  const MyButton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        // ignore: deprecated_member_use
+        Scaffold.of(context).showSnackBar(const SnackBar(
+          content: Text('Tap'),
+        ));
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        child: const Text('Flat Button'),
+      ),
+    );
+  }
+}
+```
+
+## 实现滑动关闭
+
+&emsp;"滑动删除" 模式在移动应用中很常见。例如，如果我们正在编写一个电子邮件应用程序，我们希望允许我们的用户在列表中滑动电子邮件。当我们这样做时，我们需要将条目从收件箱移至垃圾箱。
+
+&emsp;Flutter 通过提供 Dismissable Widget 使这项任务变的简单。
+
+### 步骤
+
+1. 创建 item 列表。
+2. 将每个 item 包装在一个 Dismissable Widget 中。
+3. 提供滑动背景提示。
+
+#### 1. 创建 item 列表
+
+&emsp;第一步是创建一个我们可以滑动的列表。
+
+##### 创建数据源
+
+&emsp;在我们的例子中，我们需要 20 个条目。为了简单起见，我们将生成一个字符串列表。
+
+```c++
+final items = new List<String>.generate(20, (i) => "Item ${i + 1}");
+```
+
+##### 将数据源转换为 List
+
+&emsp;首先，我们将简单地在屏幕上的列表中显示每个项目（先不支持滑动）。
+
+##### 将每个 item 包装在 Dismissible Widget 中
+
+&emsp;现在我们希望让用户能够将条目从列表中移除，用户删除一个条目后。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
