@@ -777,12 +777,264 @@ final items = new List<String>.generate(20, (i) => "Item ${i + 1}");
 
 &emsp;首先，我们将简单地在屏幕上的列表中显示每个项目（先不支持滑动）。
 
-##### 将每个 item 包装在 Dismissible Widget 中
+#### 2. 将每个 item 包装在 Dismissible Widget 中
 
-&emsp;现在我们希望让用户能够将条目从列表中移除，用户删除一个条目后。
+&emsp;现在我们希望让用户能够将条目从列表中移除，用户删除一个条目后，我们需要从列表中删除该条目并显示一个 Snackbar。在实际的场景中，你可能需要执行更复杂的逻辑，例如从 Web 服务或数据库中删除条目。‘
 
+&emsp;这时我们就可以使用 Dismissable。在下面的例子中，我们将更新 itemBuilder 函数以返回一个 Dismissable Widget。
 
+#### 3. 提供滑动背景提示
 
+&emsp;现在，我们的应用程序将允许用户从列表中滑动项目，但用户并不知道滑动后做了什么，所以，我们需要告诉用户滑动操作会移除条目。为此，我们将在滑动条目时显示提示。在下面的例子中，我们通过将背景设置为红色表示删除操作。
+
+&emsp;为此，我们为 Dismissable 提供一个 background 参数。
+
+&emsp;完整的例子：
+
+```c++
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp(
+    items: List<String>.generate(20, (index) => "Item ${index + 1}"),
+  ));
+}
+
+class MyApp extends StatelessWidget {
+  final List<String> items;
+
+  const MyApp({Key? key, required this.items}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'Dismissing Items';
+
+    return MaterialApp(
+      title: title,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+
+            return Dismissible(
+              // Each Dismissible must contain a Key. Keys allow Flutter to uniquely identify Widgets.
+              key: Key(item),
+              onDismissed: (direction) {
+                items.removeAt(index);
+
+                // ignore: deprecated_member_use
+                Scaffold.of(context).showSnackBar(SnackBar(content: Text("$item dismissed")));
+              },
+              // Show a red background as the item is swiped away
+              background: Container(color: Colors.red),
+              child: ListTile(title: Text(item)),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 导航到新页面并返回
+
+&emsp;大多数应用程序包含多个页面。例如，我们可能有一个显示产品的页面，然后，用户可以点击产品，跳到该产品的详情页。
+
+&emsp;在 Android 中，页面对应的是 Activity，在 iOS 中是 ViewController。而在 Flutter 中，页面只是一个 Widget！在 Flutter 中，我们可以使用 Navigator 在页面之间跳转。
+
+### 步骤
+
+1. 创建两个页面。
+2. 调用 Navigator.push 导航到第二个页面。
+3. 调用 Navigator.pop 返回第一个页面。
+
+#### 1. 创建两个页面
+
+&emsp;我们创建两个页面，每个页面包含一个按钮。点击第一个页面上的按钮将导航到第二个页面上。点击第二个页面上的按钮将返回到第一个页面上。
+
+#### 2. 调用 Navigator.push 导航到第二个页面
+
+&emsp;为了导航到新的页面，我们需要调用 Navigator.push 方法。该 push 方法将添加 Route 到由导航器管理的路由栈中！该 push 方法需要一个 Route，但 Route 从哪里来？我们可以创建自己的，或直接使用 MaterialPageRoute。MaterialPageRoute 很方便，因为它使用平台特定的动画跳转到新的页面（Android 和 iOS 屏幕切换动画会不同）。在 FirstScreen Widget 的 Build 方法中，我们添加 onPressed 回调。
+
+#### 3. 调用 Navigator.pop 返回第一个页面
+
+&emsp;现在我们在第二个屏幕上，我们如何关闭它并返回到第一个屏幕？使用 Navigator.pop 方法！该 pop 方法将 Route 从导航器管理的路由栈中移除当前路径。 
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MaterialApp(
+    title: 'Navigation Basics',
+    home: FirstScreen(),
+  ));
+}
+
+class FirstScreen extends StatelessWidget {
+  const FirstScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("First Screen"),),
+      body: Center(
+        // ignore: deprecated_member_use
+        child: RaisedButton(
+          child: const Text("Launch new Screen"),
+          onPressed: () {
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => const SecondScreen()),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class SecondScreen extends StatelessWidget {
+  const SecondScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Second Screen"),
+        ),
+        body: Center(
+          // ignore: deprecated_member_use
+          child: RaisedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("Go back!"),
+          ),
+        ),
+      );
+  }
+}
+```
+
+## 给新页面传值
+
+&emsp;通常，我们不仅要导航到新的页面，还要将一些数据传给页面。例如，我们想要传一些关于我们点击的条目的信息。请记住：页面只是 Widgets，在这个例子中，我们将创建一个 Todos 列表。当点击一个 todo 时，我们将导航到一个显示关于待办事项信息到新页面（Widget）。
+
+### Directions
+
+1. 定义一个 Todo 类。
+2. 显示 Todos 列表。
+3. 创建一个显示待办事项详情的页面。
+4. 导航并将数据传递到详情页。
+
+#### 1. 定义一个 Todo 类
+
+&emsp;首先，我们需要一种简单的方法来表示 Todos（待办事项）。在这个例子中，我们将创建一个包含两部分数据的类：标题和描述。
+
+#### 2. 创建一个 Todos 列表
+
+&emsp;其次，我们要显示一个 Todos 列表。在这个例子中，我们将生成 20 个待办事项并使用 ListView 显示它们。
+
+#### 3. 创建一个显示待办事项（todo）详情的页面
+
+&emsp;现在，我们将创建我们的第二个页面。页面的标题将包含待办事项的标题，页面正文将显示说明。由于这是一个普通的 StatelessWidget，我们只需要在创建页面时传递一个 Todo！然后，我们将使用给定的 Todo 来构建新的页面。
+
+#### 4. 导航并将数据传递到详情页
+
+&emsp;接下来，当用户点击我们列表中的待办事项时我们将导航到 DetailScreen，并将 Todo 传递给 DetailScreen。为了实现这一点，我们将实现 ListTile 的 onTap 回调。在我们的 onTap 回调中，我们将再次调用 Navigator.push 方法。
+
+```c++
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+class Todo {
+  final String title;
+  final String description;
+
+  Todo(this.title, this.description);
+}
+
+void main() {
+  runApp(MaterialApp(
+    title: 'Passing Data',
+    home: TodosScreen(
+      todos: List.generate(
+        20,
+        (i) => Todo(
+          'Todo $i',
+          'A description of what needs to be done for Todo $i',
+        ),
+      ),
+    ),
+  ));
+}
+
+class TodosScreen extends StatelessWidget {
+  final List<Todo> todos;
+
+  const TodosScreen({Key? key, required this.todos}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Todos'),
+      ),
+      body: ListView.builder(
+        itemCount: todos.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(todos[index].title),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailScreen(todo: todos[index]),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class DetailScreen extends StatelessWidget {
+  final Todo todo;
+
+  const DetailScreen({Key? key, required this.todo}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(todo.title),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(todo.description),
+      ),
+    );
+  }
+}
+```
+
+## 从新页面返回数据给上一个页面
+
+&emsp;在某些情况下，我们可能想要从新页面返回数据。例如，假设我们导航到一个新页面，向用户呈现两个选项。当用户点击某个选项时，我们需要将用户选择通知给第一个页面，以便它能够处理这些信息！
+
+&emsp;我们如何实现？使用 Navigator.pop！
+
+### 步骤
+
+1. 
 
 
 
