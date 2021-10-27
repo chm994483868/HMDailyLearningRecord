@@ -408,9 +408,31 @@ FOUNDATION_EXPORT NSExceptionName const NSRangeException;
 FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
 ```
 
-&emsp;非法参数异常（`NSInvalidArgumentException`）也是一个特别常见的异常，需要我们写代码时时刻注意参数的检查，避免传入非法参数导致异常，特别是参数为 nil 传递。
+&emsp;非法参数异常（`NSInvalidArgumentException`）也是一个特别常见的异常，需要我们写代码时时刻注意参数的检查，避免传入非法参数导致异常，特别是传递 nil 参数导致异常。
 
-1. 
+&emsp;在日常对集合类型：NSMutableDictionary、NSMutableArray、NSDictionary 的操作中，需要特别注意的一些点如下：
+
++ NSMutableDictionary:
+
+1. `- (void)setObject:(ObjectType)anObject forKey:(KeyType <NSCopying>)aKey;` 函数调用时 `anObject` 和 `aKey` 都不能为 nil，否则发生 NSInvalidArgumentException 异常。
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM setObject:forKey:]: object cannot be nil (key: key)'`
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM setObject:forKey:]: key cannot be nil'`
+
+2. `- (void)setObject:(nullable ObjectType)obj forKeyedSubscript:(KeyType <NSCopying>)key API_AVAILABLE(macos(10.8), ios(6.0), watchos(2.0), tvos(9.0));` 函数调用时 `obj` 不能为 nil（`key` 可以为 nil），否则发生 NSInvalidArgumentException 异常。
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM setObject:forKeyedSubscript:]: key cannot be nil'`
+  
+3. `- (void)removeObjectForKey:(KeyType)aKey;` 函数调用时 `aKey` 不能为 nil，否则发生 NSInvalidArgumentException 异常。
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM removeObjectForKey:]: key cannot be nil'`
+
++ NSDictionary:
+
+1. `+ (instancetype)dictionaryWithObject:(ObjectType)object forKey:(KeyType <NSCopying>)key;` 函数调用时 ，否则发生 异常。
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSPlaceholderDictionary initWithObjects:forKeys:count:]: attempt to insert nil object from objects[0]'`
+
+
+# 继续看 NSDictionary 列出的几个函数：
+⬇️⬇️⬇️
++ [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
 
 
 
@@ -520,6 +542,7 @@ __attribute__((__objc_exception__))
 @end
 ```
 
++ [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
 
 
 + [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
