@@ -1034,8 +1034,160 @@ class DetailScreen extends StatelessWidget {
 
 ### 步骤
 
-1. 
+1. 定义主页。
+2. 添加一个打开选择页面的按钮。
+3. 在选择页面上显示两个按钮。
+4. 点击一个按钮时，关闭选择的页面。
+5. 主页上弹出一个 snackbar 以显示用户的选择。
 
+#### 1. 定义主页
+
+&emsp;主页将显示一个按钮，点击后，它将打开选择页面！
+
+#### 2. 添加一个打开选择页面的按钮
+
+&emsp;现在，我们将创建我们的 SelectionButton。我们的选择按钮将会：
+
+1. 点击时启动 SelectionScreen
+2. 等待 SelectionScreen 返回结果
+
+#### 3. 在选择页面上显示两个按钮
+
+&emsp;现在，我们需要构建一个选择页面！它将包含两个按钮。当用户点击按钮时，应该关闭选择页面并让主页知道哪个按钮被点击！现在我们将定义 UI，并确定如何在下一步中返回数据。
+
+#### 4. 点击一个按钮时，关闭选择的页面
+
+&emsp;现在，我们完成两个按钮的 onPressed 回调。为了将数据返回到第一个页面，我们需要使用 Navigator.pop 方法。
+
+&emsp;Navigator.pop 接受一个可选的（第二个）参数 result。如果我们返回结果，它将返回到一个 Future 到主页的 SelectionButton 中。
+
+#### 5. 主页上弹出一个 snackbar 以显示用户的选择
+
+&emsp;既然我们正在启动一个选择页面并等待结果，那么我们会想要对返回的信息进行一些操作。
+
+&emsp;在这种情况下，我们将显示一个显示结果的 Snackbar。为此，我们将更新 SelectionButton 中的 _navigateAndDisplaySelection 方法。
+
+```c++
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MaterialApp(
+    title: 'Returning Data',
+    home: HomeScreen(),
+  ));
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Returning Data Demo'),
+      ),
+      body: const Center(child: SelectionButton()),
+    );
+  }
+}
+
+class SelectionButton extends StatelessWidget {
+  const SelectionButton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
+    return RaisedButton(
+      onPressed: () {
+        _navigateAndDisplaySelection(context);
+      },
+      child: const Text('Pick an option, any option!'),
+    );
+  }
+
+  // A method that launches the SelectionScreen and awaits the result from Navigator.pop!
+  _navigateAndDisplaySelection(BuildContext context) async {
+    // Navigator.push returns a Future that will complete after we call Navigator.pop on the Selection Screen!
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SelectionScreen()),
+    );
+
+    // After the Selection Screen returns a result, show it in a Snackbar!
+    // ignore: deprecated_member_use
+    Scaffold.of(context).showSnackBar(SnackBar(content: Text("$result")));
+  }
+}
+
+class SelectionScreen extends StatelessWidget {
+  const SelectionScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pick an option'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              // ignore: deprecated_member_use
+              child: RaisedButton(
+                onPressed: () {
+                  // Close the screen and return "Yep!" as the result
+                  Navigator.pop(context, 'Yep!');
+                },
+                child: const Text('Yep!'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              // ignore: deprecated_member_use
+              child: RaisedButton(
+                onPressed: () {
+                  // Close the screen and return "Nope!" as the result
+                  Navigator.pop(context, 'Nope.');
+                },
+                child: const Text('Nope.'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+``` 
+
+## 从互联网上获取数据
+
+&emsp;从大多数应用程序都需要从互联网上获取数据，Dart 和 Flutter 提供了相关工具！
+
+> &emsp;官方文档示例使用的是 http package 发起简单的网路请求，但是 http package 功能较弱，很多常用功能都不支持。建议使用 [dio](https://github.com/flutterchina/dio) 来发起网络请求，它是一个强大易用的 dart http 请求库，支持 Restful API、FormData、拦截器、请求取消、Cookie 管理、文件上传/下载...
+
+
+### 步骤
+
+1. 添加 `http` package 依赖
+2. 使用 `http` package 发出网请求
+3. 将响应转为自定义的 Dart 对象
+4. 获取并显示数据
+
+#### 1. 添加 http package
+
+&emsp;[http](https://pub.dartlang.org/packages/http) package 提供了从互联网获取数据的最简单方法。
+
+```c++
+dependencies:
+  http: <latest_version>
+```
+
+#### 2. 发起网络请求
+
+&emsp;在这个例子中，我们将使用 http.get 从 
 
 
 
