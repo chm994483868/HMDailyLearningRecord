@@ -381,13 +381,15 @@ FOUNDATION_EXPORT NSExceptionName const NSOldStyleException;
 FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 ```
 
-&emsp;我们看这一组 NSException 的名字，其中 NSRangeException 可能是我们最熟悉的，数组越界访问时产生的异常（NSException）对象的名字就是 NSRangeException。下面我们简单列一下不同的 NSExceptionName 异常所对应的一些造成此异常的情况。
+&emsp;我们看这一组 NSException 的名字，其中 NSRangeException 可能是我们最熟悉的，数组越界访问时产生的异常（NSException）对象的名字就是 NSRangeException。下面我们简单列一下不同的 NSExceptionName 异常所对应的一些造成此异常的情况，快速浏览即可。
 
 ##### NSGenericException
 
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSGenericException;
 ```
+
+&emsp;NSGenericException 是 exception 的通用名称，通常我们应该使用更具体的 exception 的名称来表示发生的异常。
 
 1. 在 for in 循环中添加元素和删除元素：`*** Terminating app due to uncaught exception 'NSGenericException', reason: '*** Collection <__NSArrayM: 0x600003764450> was mutated while being enumerated.'` [iOS数组异常:NSGenericException,Collection <__NSArrayM: 0x61800024f7b0> was mutated while being enumerated.'](https://www.jianshu.com/p/4a5982bab58e)
 2. 使用 UIActivityViewController 时，在 iPad 下必须给创建的 UIActivityViewController 对象的 .popoverPresentationController.sourceView 属性赋值，否则会 crash，iPhone 则不会：`*** Terminating app due to uncaught exception 'NSGenericException', reason: 'UIPopoverPresentationController (<UIPopoverPresentationController: 0x7fe9c95144f0>) should have a non-nil sourceView or barButtonItem set before the presentation occurs.'`。
@@ -412,27 +414,49 @@ FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
 
 &emsp;在日常对集合类型：NSMutableDictionary、NSMutableArray、NSDictionary 的操作中，需要特别注意的一些点如下：
 
-+ NSMutableDictionary:
++ NSMutableDictionary 添加对象:
 
-1. `- (void)setObject:(ObjectType)anObject forKey:(KeyType <NSCopying>)aKey;` 函数调用时 `anObject` 和 `aKey` 都不能为 nil，否则发生 NSInvalidArgumentException 异常。
+1. `- (void)setObject:(ObjectType)anObject forKey:(KeyType <NSCopying>)aKey;` 
+  函数调用时 `anObject` 和 `aKey` 都不能为 nil，否则发生 NSInvalidArgumentException 异常。
   `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM setObject:forKey:]: object cannot be nil (key: key)'`
   `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM setObject:forKey:]: key cannot be nil'`
 
 2. `- (void)setObject:(nullable ObjectType)obj forKeyedSubscript:(KeyType <NSCopying>)key API_AVAILABLE(macos(10.8), ios(6.0), watchos(2.0), tvos(9.0));` 函数调用时 `obj` 不能为 nil（`key` 可以为 nil），否则发生 NSInvalidArgumentException 异常。
   `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM setObject:forKeyedSubscript:]: key cannot be nil'`
-  
-3. `- (void)removeObjectForKey:(KeyType)aKey;` 函数调用时 `aKey` 不能为 nil，否则发生 NSInvalidArgumentException 异常。
+ 
++ NSMutableDictionary 删除对象：  
+
+1. `- (void)removeObjectForKey:(KeyType)aKey;` 
+  函数调用时 `aKey` 不能为 nil，否则发生 NSInvalidArgumentException 异常。
   `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM removeObjectForKey:]: key cannot be nil'`
 
-+ NSDictionary:
++ NSDictionary 初始化:
 
-1. `+ (instancetype)dictionaryWithObject:(ObjectType)object forKey:(KeyType <NSCopying>)key;` 函数调用时 ，否则发生 异常。
-  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSPlaceholderDictionary initWithObjects:forKeys:count:]: attempt to insert nil object from objects[0]'`
+1. `+ (instancetype)dictionaryWithObject:(ObjectType)object forKey:(KeyType <NSCopying>)key;` 
+  函数调用时 `object` 和 `key` 都不能为 nil，否则发生 NSInvalidArgumentException 异常。
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSPlaceholderDictionary initWithObjects:forKeys:count:]: attempt to insert nil object from objects[0]'` 
+
+2. `+ (instancetype)dictionaryWithObjects:(NSArray<ObjectType> *)objects forKeys:(NSArray<KeyType <NSCopying>> *)keys;` 
+  函数调用时 `objects` 和 `keys` 两个数组的元素数量必须相等，否则发生 NSInvalidArgumentException 异常。
+  `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[NSDictionary initWithObjects:forKeys:]: count of objects (1) differs from count of keys (2)'`
 
 
-# 继续看 NSDictionary 列出的几个函数：
-⬇️⬇️⬇️
-+ [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
+
+
+
+
+
+
+[慎用 dictionaryWithObjectsAndKeys：](https://www.jianshu.com/p/c723771b983b)
+
+
+
+
+
+
+
+
+
 
 
 
