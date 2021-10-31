@@ -1187,36 +1187,300 @@ dependencies:
 
 #### 2. 发起网络请求
 
-&emsp;在这个例子中，我们将使用 http.get 从 
+&emsp;在这个例子中，我们将使用 http.get 从 [JSONPlaceholder REST API](https://jsonplaceholder.typicode.com) 中获取示例文章。
 
+```c++
+Future<http.Response> fetchPost() {
+  return http.get('https://jsonplaceholder.typicode.com/posts/1');
+}
+``` 
 
+&emsp;http.get 方法返回一个包含一个 Response 的 Future。
 
++ [Future](https://api.flutter.dev/flutter/dart-async/Future-class.html) 是与异步操作一起工作的核心 Dart 类。它用于表示未来某个时间可能会出现的可用值或错误。
++ http.Response 类包含一个成功的 HTTP 请求接收到的数据。
 
+#### 3. 将响应转换为自定义 Dart 对象
 
+&emsp;虽然发出网络请求很简单，但如果要使用原始的 `Future<http.Response>` 并不简单。为了让我们可以开开心心的写代码，我们可以将 http.Response 转换成我们自己的 Dart 对象。
 
+##### 创建一个 Post 类
 
+&emsp;首先，我们需要创建一个 Post 类，它包含我们网络请求的数据。它还将包括一个工厂构造函数，它允许我们可以通过 json 创建一个 Post 对象。
 
+&emsp;手动转换 JSON 只是一种选择。
 
+##### 将 http.Response 转换成一个 Post 对象
 
+&emsp;现在，我们将更新 fetchPost 函数以返回一个 `Future<Post>`。为此，我们需要：
 
+1. 使用 dart:convert package 将响应内容转化为一个 json Map。
+2. 使用 fromJson 工厂函数，将 json Map 转化为一个 Post 对象。
 
+#### 4. 获取并显示数据
 
+&emsp;为了获取数据并将其显示在屏幕上，我们可以使用 FutureBuilder widget! FutureBuilder Widget 可以很容易与异步数据源一起工作。
 
+&emsp;我们需要提供两个参数：
 
+1. future 参数是一个异步的网络请求，在这个例子中，我们传递调用 fetchPost() 函数的返回值（一个 future）。
+2. 一个 builder 函数，这告诉 Flutter 在 future 执行的不同阶段应该如何渲染界面。
 
+```c++
+import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
+Future<Post> fetchPost() async {
+  final response = await http.get('https://jsonplaceholder.typicode.com/posts/1');
+  final responseJson = json.decode(response.body);
 
+  return Post.fromJson(responseJson);
+}
 
+class Post {
+  final int userId;
+  final int id;
+  final String title;
+  final String body;
 
+  Post({required this.userId, required this.id, required this.title, required this.body});
 
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      userId: json['userId'],
+      id: json['id'],
+      title: json['title'],
+      body: json['body'],
+    );
+  }
+}
 
+void main() {
+  runApp(const MyApp());
+}
 
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Fetch Data Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Fetch Data Example'),
+        ),
+        body: Center(
+          child: FutureBuilder(
+            future: fetchPost(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(snapshot.data.toString());
+              } else if (snapshot.hasError){
+                return Text('${snapshot.error}');
+              }
 
+              // By default, show a loading spinner
+              return const CircularProgressIndicator();
+            } 
+          ),
+        ),
+      )
+    );
+  }
+}
+```
 
+## 进行认证请求
 
+&emsp;为了从更多的 Web 服务获取数据，有些时候您需要提供授权。有很多方法可以做到这一点，但最常见的可能是使用 HTTP header 中的 Authorization。
 
+### 添加 Authorization Headers
+
+&emsp;http package 提供了一种方便的方法来为请求添加 headers。您也可以使用 dart:io package 来添加。
+
+```c++
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+
+Future<Post> fetchPost() async {
+  final response = await http.get(
+    'https://jsonplaceholder.typicode.com/posts/1',
+    headers: {HttpHeaders.AUTHORIZATION: "Basic your_api_token_here"},
+  );
+  final responseJson = json.decode(response.body);
+  return Post.fromJson(responseJson);
+}
+
+class Post {
+  final int userId;
+  final int id;
+  final String title;
+  final String body;
+
+  Post({required this.userId, required this.id, required this.title, required this.body});
+
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(userId: json['userId'], id: json['id'], title: json['title'], body: json['body']);
+  }
+}
+```
+
+## 使用 WebSockets
+
+&emsp;除了正常的 HTTP 请求之外，我们还可以使用 WebSocket 连接到服务器。WebSocket 允许与服务器进行双向通信而无需轮询。
+
+### 步骤
+
+1. 连接到 WebSocket 服务器。
+2. 监听来自服务器的消息。
+3. 将数据发送到服务器。
+4. 关闭 WebSocket 连接。
+
+#### 1. 连接到 WebSocket 服务器
+
+&emsp;[web_socket_channel](https://pub.dev/packages/web_socket_channel) package 提供了我们需要连接到 WebSocket 服务器的工具。
+
+&emsp;该 package 提供了一个 WebSocketChannel 允许我们既可以监听来自服务器的消息，又可以将消息发送到服务器的方法。
+
+&emsp;在 Flutter 中，我们可以创建一个 WebSocketChannel 连接到一台服务器。
+
+```c++
+final channel = new IOWebSocketChannel.connect('ws://echo.websocket.org');
+``` 
+
+#### 2. 监听来自服务器的消息
+
+&emsp;现在我们建立了连接，我们可以监听来自服务器的消息，在我们发送消息给测试服务器之后，它会返回相同的消息。
+
+&emsp;我们如何收取消息并显示它们？在这个例子中，我们将使用一个 [StreamBuilder](https://api.flutter.dev/flutter/widgets/StreamBuilder-class.html) Widget 来监听消息，并用一个 Text Widget 来显示它们。
+
+##### 这是如何工作的？
+
+&emsp;WebSocketChannel 提供了一个来自服务器的消息 Stream。
+
+&emsp;该 Stream 类是 dart:async 包中的一个基础类。它提供了一种方法来监听来自数据源的异步事件。与 Future 返回单个异步响应不同，Stream 类可以随着时间推移传递很多事情。
+
+&emsp;该 StreamBuilder Widget 将连接到一个 Stream，并在每次收到消息时通知 Flutter 重新构建页面。
+
+#### 3. 将数据发送到服务器
+
+&emsp;为了将数据发送到服务器，我们会 add 消息给 WebSocketChannel 提供的 sink。
+
+```c++
+channel.sink.add('Hello!');
+```
+
+##### 这是如何工作的？
+
+&emsp;WebSocketChannel 提供了一个 StreamSink，它将消息发送给服务器。
+
+&emsp;StreamSink 类提供了给数据源同步或异步添加事件的一般方法。
+
+#### 4. 关闭 WebSocket 连接
+
+&emsp;在我们使用 WebSocket 后，要关闭连接：
+
+```c++
+channel.sink.close();
+```
+
+```c++
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    const title = 'WebSocket Demo';
+
+    return MaterialApp(
+      title: title,
+      home: MyHomePage(
+        title: title,
+        channel: IOWebSocketChannel.connect('ws://echo.websocket.org'),
+      ),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  final String title;
+  final WebSocketChannel channel;
+
+  const MyHomePage({Key? key, required this.title, required this.channel}) : super(key: key);
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Form(
+              child: TextFormField(
+                controller: _controller,
+                decoration: const InputDecoration(labelText: 'Send a message'),
+              ),
+            ),
+            StreamBuilder(
+              stream: widget.channel.stream,
+              builder: (context, snapshot) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: Text(snapshot.hasData ? '${snapshot.data}' : ''),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _snedMessage,
+        tooltip: 'Send message',
+        child: const Icon(Icons.send),
+      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  void _snedMessage() {
+    if (_controller.text.isNotEmpty) {
+      widget.channel.sink.add(_controller.text);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.channel.sink.close();
+    super.dispose();
+  }
+}
+```
 
 ## 参考链接
 **参考链接:🔗**
