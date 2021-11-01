@@ -402,6 +402,8 @@ FOUNDATION_EXPORT NSExceptionName const NSGenericException;
 FOUNDATION_EXPORT NSExceptionName const NSRangeException;
 ```
 
+&emsp;尝试访问某些数据边界之外时发生的异常的名称。（例如字符串结尾之外）
+
 1. 大家见的最多的数组越界访问：`*** Terminating app due to uncaught exception 'NSRangeException', reason: '*** -[__NSArrayI objectAtIndexedSubscript:]: index 3 beyond bounds [0 .. 2]'`
 
 ##### NSInvalidArgumentException
@@ -409,6 +411,8 @@ FOUNDATION_EXPORT NSExceptionName const NSRangeException;
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
 ```
+
+&emsp;向方法传递无效参数时发生的异常的名称，例如需要非 nil 对象时却传递了一个 nil 指针。
 
 &emsp;非法参数异常（`NSInvalidArgumentException`）也是一个特别常见的异常，需要我们写代码时时刻注意参数的检查，避免传入非法参数导致异常，特别是传递 nil 参数导致异常。
 
@@ -450,38 +454,77 @@ FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
 
 + NSArray 获取匹配的下标:
 
-1. `- (NSUInteger)indexOfObject:(ObjectType)obj inSortedRange:(NSRange)r options:(NSBinarySearchingOptions)opts usingComparator:(NSComparator NS_NOESCAPE)cmp API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0)); // binary search` 返回与使用给定 NSComparator block 的数组中的元素进行比较的对象在指定 NSRange 内的索引。
+1. `- (NSUInteger)indexOfObject:(ObjectType)obj inSortedRange:(NSRange)r options:(NSBinarySearchingOptions)opts usingComparator:(NSComparator NS_NOESCAPE)cmp API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0)); // binary search` 返回与使用给定 NSComparator block 的数组中的元素进行比较的对象在指定 NSRange 内的索引。此函数所以参数都不能为空：
+
+  `obj` An object for which to search in the ordered set. If this value is nil, throws an `NSInvalidArgumentException`.
+  `range` The range within the array to search for object. If r exceeds the bounds of the ordered set (if the location plus length of the range is greater than the count of the ordered set), throws an `NSRangeException`.
+  `cmp` A comparator block used to compare the object obj with elements in the ordered set. If this value is NULL, throws an `NSInvalidArgumentException`.
   
++ 向 NSArray 的每个对象发送消息
 
+1. `- (void)makeObjectsPerformSelector:(SEL)aSelector;` This method raises an NSInvalidArgumentException if aSelector is NULL. aSelector 不能为 NULL，否则发生一个 NSInvalidArgumentException 异常。aSelector 不能传参，且不能有修改原始数组的副作用。
 
+2. `- (void)makeObjectsPerformSelector:(SEL)aSelector withObject:(id)argument;` 同上，不过可以进行传参，但同样，aSelector 不能为 NULL，否则发出一个 NSInvalidArgumentException 异常。
 
++ 向数组（NSArray/NSMutableArray）中添加对象时，对象不能是 nil，否则发出 NSInvalidArgumentException 异常
 
+1. `- (NSArray<ObjectType> *)arrayByAddingObject:(ObjectType)anObject;`
+2. `- (void)addObject:(ObjectType)anObject;` 
 
++ NSMutableArray 中插入对象
 
+1. `- (void)insertObject:(ObjectType)anObject atIndex:(NSUInteger)index;` 如果 anObject 是 nil，则发生一个 `NSInvalidArgumentException` 异常，如果 index 大于 NSMutableArray 的元素数，则发生一个 `NSRangeException` 异常。
 
++ NSMutableArray 替换对象
 
+1. `- (void)replaceObjectAtIndex:(NSUInteger)index withObject:(ObjectType)anObject;` 同样一个越界报 `NSRangeException`，一个为 nil 时，报 `NSInvalidArgumentException` 异常。
 
++ NSMutableArray 设置对象
 
+1. `- (void)setObject:(ObjectType)obj atIndexedSubscript:(NSUInteger)idx;` 同样一个越界报 `NSRangeException`，一个为 nil 时，报 `NSInvalidArgumentException` 异常。
+ 
++ NSString 初始化
 
+1. `- (instancetype)initWithString:(NSString *)aString;` Raises an NSInvalidArgumentException if aString is nil.
 
++ NSString 格式初始化
 
+1. `- (instancetype)initWithFormat:(NSString *)format, ...;` Raises an NSInvalidArgumentException if format is nil. 
 
++ NSString 其他 NSString 对象初始化
 
+1. `+ (instancetype)stringWithString:(NSString *)string;` Raises an NSInvalidArgumentException if aString is nil.
 
+2. `- (NSString *)stringByAppendingString:(NSString *)aString;` Raises an NSInvalidArgumentException if aString is nil. 
 
++ NSMutableString 的格式初始化
 
+1. `- (void)appendFormat:(NSString *)format, ...;` Raises an NSInvalidArgumentException if format is nil.
 
++ NSMutableString 的替换操作
 
+1. `- (NSUInteger)replaceOccurrencesOfString:(NSString *)target withString:(NSString *)replacement options:(NSStringCompareOptions)options range:(NSRange)searchRange;` 其中三个参数都可能导致不同的异常。
+  Raises an NSInvalidArgumentException if target is nil. 
+  Raises an NSInvalidArgumentException if replacement is nil.
+  Raises an NSRangeException if any part of searchRange lies beyond the end of the receiver.
+  
++ NSString 的前后缀判断
 
+1. `- (BOOL)hasPrefix:(NSString *)str;` `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '-[__NSCFConstantString hasPrefix:]: nil argument'`
 
+2. `- (BOOL)hasSuffix:(NSString *)str;` `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '-[__NSCFConstantString hasSuffix:]: nil argument'`
 
++ .storyboard 或者 .xib 加载，对应的文件名不存在
 
+1. `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: 'Could not find a storyboard named 'Main' in bundle NSBundle </Users/hmc/Library/Developer/CoreSimulator/Devices/2ADFB467-5FFF-4F61-872F-73F1CF1C2174/data/Containers/Bundle/Application/1DE87EF5-E2FA-44B8-8967-F565941653CB/dSYMDemo.app> (loaded)'`
 
+##### NSInternalInconsistencyException
 
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSInternalInconsistencyException;
+```
 
-`*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: 'Could not find a storyboard named 'Main' in bundle NSBundle </Users/hmc/Library/Developer/CoreSimulator/Devices/2ADFB467-5FFF-4F61-872F-73F1CF1C2174/data/Containers/Bundle/Application/1DE87EF5-E2FA-44B8-8967-F565941653CB/dSYMDemo.app> (loaded)'`
-
-
+&emsp;看名字大意是指 "内部矛盾" 异常，当内部断言失败时发生的异常的名称，并暗示被调用代码中存在意外情况。
 
 
 
