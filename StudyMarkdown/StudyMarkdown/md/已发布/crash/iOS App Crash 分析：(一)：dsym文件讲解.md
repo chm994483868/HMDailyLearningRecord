@@ -444,10 +444,14 @@ FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
   函数调用时 `objects` 和 `keys` 两个数组的元素数量必须相等，否则发生 NSInvalidArgumentException 异常。
   `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[NSDictionary initWithObjects:forKeys:]: count of objects (1) differs from count of keys (2)'`
   
-3. `+ (instancetype)dictionaryWithObjectsAndKeys:(id)firstObject, ... NS_REQUIRES_NIL_TERMINATION NS_SWIFT_UNAVAILABLE("Use dictionary literals instead");` 函数调用时，`(id)firstObject, ...` 参数是一个可变参数，它们是被成对使用的，用 nil 做一个结尾，然后连续的一对参数，前面的值作为 value 使用，后面的值作为 key 使用。value 值在前，它和后面的第一个 key 值，组合为一个键值对插在 NSDictionary 中，当遇到第一个 nil 值的参数时便结束，所以 key 值不能为 nil，否则发生 NSInvalidArgumentException 异常，而 value 为 nil 则会被当作 NSDictionary 构建结束的标记。
+3. `+ (instancetype)dictionaryWithObjectsAndKeys:(id)firstObject, ... NS_REQUIRES_NIL_TERMINATION NS_SWIFT_UNAVAILABLE("Use dictionary literals instead");` 函数调用时，`(id)firstObject, ...` 参数是一个可变数量的参数，它们是被成对使用的，用 nil 做一个结尾，然后连续的一对参数，前面的值作为 value 使用，后面的值作为 key 使用。value 值在前，它和后面的第一个 key 值，组合为一个键值对插在 NSDictionary 中，当遇到第一个 nil 值的参数时便结束，所以 key 值不能为 nil，否则发生 NSInvalidArgumentException 异常，而 value 为 nil 则会被当作 NSDictionary 构建结束的标记。
   `*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '+[NSDictionary dictionaryWithObjectsAndKeys:]: second object of each pair must be non-nil.  Or, did you forget to nil-terminate your parameter list?'`
   由于前面的 value 为 nil 时会导致 NSDictionary 提前构建结束，所以我们可能会遇到这种情况：[慎用 dictionaryWithObjectsAndKeys：](https://www.jianshu.com/p/c723771b983b)
 
++ NSArray 获取匹配的下标:
+
+1. `- (NSUInteger)indexOfObject:(ObjectType)obj inSortedRange:(NSRange)r options:(NSBinarySearchingOptions)opts usingComparator:(NSComparator NS_NOESCAPE)cmp API_AVAILABLE(macos(10.6), ios(4.0), watchos(2.0), tvos(9.0)); // binary search` 返回与使用给定 NSComparator block 的数组中的元素进行比较的对象在指定 NSRange 内的索引。
+  
 
 
 
