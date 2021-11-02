@@ -524,9 +524,13 @@ FOUNDATION_EXPORT NSExceptionName const NSInvalidArgumentException;
 FOUNDATION_EXPORT NSExceptionName const NSInternalInconsistencyException;
 ```
 
-&emsp;看名字大意是指 "内部矛盾" 异常，当内部断言失败时发生的异常的名称，并暗示被调用代码中存在意外情况。
+&emsp;看名字大意是指 "内部矛盾" 异常，当内部断言失败时发生的异常的名称，并暗示被调用代码中存在意外情况。`Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the called code.`
 
-
+1.  mutating method sent to immutable object。（例如函数调用返回了一个 NSDictionary 对象，但是使用了一个 NSMutableDictionary 指针变量去接收，并在接下来把此对象当作一个可变字典进行一些改变操作。测试代码现在报 NSInvalidArgumentException 异常，而不再是 NSInternalInconsistencyException 异常了。[iOS Crash之NSInternalInconsistencyException](https://blog.csdn.net/skylin19840101/article/details/51991825)）
+2. 手动创建 `UIApplication` 对象：`UIApplication *app = [[UIApplication alloc] init];`，会直接抛出断言，这个大家应该都比较能理解，在当前进程中，UIApplication 作为一个单例类使用，App 启动时，系统会自动构建一个 UIApplication 对象，表示当前进程。
+  `*** Assertion failure in -[UIApplication init], UIApplication.m:1469`
+  `*** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'There can only be one UIApplication instance.'` [NSInternalInconsistencyException](https://www.jianshu.com/p/0b227de4a90a)
+3. 
 
 
 
