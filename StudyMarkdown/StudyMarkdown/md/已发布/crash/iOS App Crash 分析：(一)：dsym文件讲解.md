@@ -531,10 +531,95 @@ FOUNDATION_EXPORT NSExceptionName const NSInternalInconsistencyException;
   `*** Assertion failure in -[UIApplication init], UIApplication.m:1469`
   `*** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'There can only be one UIApplication instance.'` [NSInternalInconsistencyException](https://www.jianshu.com/p/0b227de4a90a)
 3. 指定刷新 tableView 并超出当前 section 和 row 的范围。看到 `UITableView` 的 `_endCellAnimationsWithContext` 函数触发了断言，并随后报出了一个 `NSInternalInconsistencyException` 异常。
-  原因：在调用 `reloadRowsAtIndexPaths` 时，依赖于 tableView 先前的状态已有要更新的 cell，它内部是先删除该 cell，再重新创建，所以当你在原先没有该 cell 的状态下调用 `reloadRowsAtIndexPaths`，会报异常你正在尝试删除不存在的 cell。reloadData 是完全重新加载，包括c ell 数量也会重新计算，不会依赖之前 tableView 的状态。 
+  原因：在调用 `reloadRowsAtIndexPaths` 时，依赖于 tableView 先前的状态已有要更新的 cell，它内部是先删除该 cell，再重新创建，所以当你在原先没有该 cell 的状态下调用 `reloadRowsAtIndexPaths`，会报异常你正在尝试删除不存在的 cell。reloadData 是完全重新加载，包括 cell 数量也会重新计算，不会依赖之前 tableView 的状态。[iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658) 
   `*** Assertion failure in -[UITableView _endCellAnimationsWithContext:], UITableView.m:2097`
   `*** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'attempt to delete row 6 from section 0 which only contains 5 rows before the update'`
-4. 
+  
+##### NSMallocException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSMallocException;
+```
+
+&emsp;Obsolete; not currently used.（废弃了，不再使用。它用来代表内存不足的问题，无法分配足够的内存空间，比如需要分配的内存大小是一个不正常的值，比较巨大或者设备的内存空间不足以及被耗尽了。虽然说是被废弃了，但是我们一些错误的示例代码还是可以触发抛出一个这个名字的异常，如下：[iOS Crash之NSMallocException](https://blog.csdn.net/skylin19840101/article/details/51944701)
+
+1. 需要分配的空间过大。
+  ```c++
+  NSMutableData *data = [[NSMutableData alloc] initWithCapacity:1];
+  long long len = 203293514220329351;
+  [data increaseLengthBy:len];
+  ```
+  运行此代码便会抛出此异常：`*** Terminating app due to uncaught exception 'NSMallocException', reason: 'Failed to grow buffer'`。
+2. 以及还有图片占用空间过大和 OOM（Out of memory）问题。
+
+##### NSObjectInaccessibleException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
+```
+
+&emsp;从不应访问的线程访问远程对象时发生的异常名称。（Name of an exception that occurs when a remote object is accessed from a thread that should not access it. 暂时未遇到过。）
+
+##### NSObjectNotAvailableException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
+```
+
+&emsp;Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.
+
+##### NSDestinationInvalidException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSDestinationInvalidException;
+```
+
+&emsp;
+
+##### NSPortTimeoutException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSPortTimeoutException;
+```
+
+##### NSInvalidSendPortException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSInvalidSendPortException;
+```
+
+##### NSInvalidReceivePortException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSInvalidReceivePortException;
+```
+
+##### NSPortSendException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSPortSendException;
+```
+
+##### NSPortReceiveException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSPortReceiveException;
+```
+
+##### NSOldStyleException
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSOldStyleException;
+```
+
+#####
+
+```c++
+FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
+```
+
+
+    
 
 
 
@@ -635,7 +720,8 @@ __attribute__((__objc_exception__))
 
 + [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
 + [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
-
++ [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
++ [NSException抛出异常&NSError简单介绍](https://www.jianshu.com/p/23913bbc4ee5)
 
 + [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
 + [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
