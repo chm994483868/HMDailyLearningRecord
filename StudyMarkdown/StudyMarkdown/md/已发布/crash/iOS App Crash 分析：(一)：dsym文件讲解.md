@@ -526,12 +526,15 @@ FOUNDATION_EXPORT NSExceptionName const NSInternalInconsistencyException;
 
 &emsp;看名字大意是指 "内部矛盾" 异常，当内部断言失败时发生的异常的名称，并暗示被调用代码中存在意外情况。`Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the called code.`
 
-1.  mutating method sent to immutable object。（例如函数调用返回了一个 NSDictionary 对象，但是使用了一个 NSMutableDictionary 指针变量去接收，并在接下来把此对象当作一个可变字典进行一些改变操作。测试代码现在报 NSInvalidArgumentException 异常，而不再是 NSInternalInconsistencyException 异常了。[iOS Crash之NSInternalInconsistencyException](https://blog.csdn.net/skylin19840101/article/details/51991825)）
-2. 手动创建 `UIApplication` 对象：`UIApplication *app = [[UIApplication alloc] init];`，会直接抛出断言，这个大家应该都比较能理解，在当前进程中，UIApplication 作为一个单例类使用，App 启动时，系统会自动构建一个 UIApplication 对象，表示当前进程。
+1. mutating method sent to immutable object。（例如函数调用返回了一个 NSDictionary 对象，但是使用了一个 NSMutableDictionary 指针变量去接收，并在接下来把此对象当作一个可变字典进行一些改变操作。测试代码现在报 NSInvalidArgumentException 异常，而不再是 NSInternalInconsistencyException 异常了。[iOS Crash之NSInternalInconsistencyException](https://blog.csdn.net/skylin19840101/article/details/51991825)）
+2. 手动创建 `UIApplication` 对象：`UIApplication *app = [[UIApplication alloc] init];`，看到 `UIApplication` 的 `init` 函数触发了断言，并随后报出了一个 `NSInternalInconsistencyException` 异常。这个大家应该都比较能理解，在当前进程中，UIApplication 作为一个单例类使用，App 启动时，系统会自动构建一个 UIApplication 对象，表示当前进程。
   `*** Assertion failure in -[UIApplication init], UIApplication.m:1469`
   `*** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'There can only be one UIApplication instance.'` [NSInternalInconsistencyException](https://www.jianshu.com/p/0b227de4a90a)
-3. 
-
+3. 指定刷新 tableView 并超出当前 section 和 row 的范围。看到 `UITableView` 的 `_endCellAnimationsWithContext` 函数触发了断言，并随后报出了一个 `NSInternalInconsistencyException` 异常。
+  原因：在调用 `reloadRowsAtIndexPaths` 时，依赖于 tableView 先前的状态已有要更新的 cell，它内部是先删除该 cell，再重新创建，所以当你在原先没有该 cell 的状态下调用 `reloadRowsAtIndexPaths`，会报异常你正在尝试删除不存在的 cell。reloadData 是完全重新加载，包括c ell 数量也会重新计算，不会依赖之前 tableView 的状态。 
+  `*** Assertion failure in -[UITableView _endCellAnimationsWithContext:], UITableView.m:2097`
+  `*** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'attempt to delete row 6 from section 0 which only contains 5 rows before the update'`
+4. 
 
 
 
@@ -631,6 +634,7 @@ __attribute__((__objc_exception__))
 ```
 
 + [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
++ [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
 
 
 + [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
