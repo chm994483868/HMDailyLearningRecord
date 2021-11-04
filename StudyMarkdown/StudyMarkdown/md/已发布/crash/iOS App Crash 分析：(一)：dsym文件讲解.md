@@ -354,7 +354,9 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 ```
 &emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。
 
-&emsp;在 NSException.h 文件的顶部，系统也为我们事先定义了一组异常的名字，帮助我们针对不同的异常对象进行分类。
+> &emsp;Cocoa 预先定义了一些通用异常名称，以标识可以在自己的代码中处理的异常，甚至可以引发和重新引发异常(@throw 和 raise 函数)。你还可以创建和使用自定义异常名称。通常异常名是 NSException.h 中定义的字符串常量，记录在 Foundation Constants Reference 中。除了一般的异常名称外，Cocoa 的一些子系统还定义了自己的异常名称，例如 NSInconsistentArchiveException 和 NSFileHandleOperationException。通过将异常的名称与这些预定义的名称进行比较，可以在异常处理程序中识别捕获异常。然后你可以处理这个异常，或者，如果它不是你感兴趣的，重新抛出它。请注意，所有预定义的异常都以前缀 "NS" 开头，因此你在创建新的异常名称时应避免使用相同的前缀(避免与系统预定义的那些异常同名)。[Predefined Exceptions](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Concepts/PredefinedExceptions.html)
+
+&emsp;在 NSException.h 文件的顶部，列出了一组事先定义的异常名字，可帮助我们针对抛出的异常而进行分类。
 
 ```c++
 /***************    Generic Exception names        ***************/
@@ -559,7 +561,7 @@ FOUNDATION_EXPORT NSExceptionName const NSMallocException;
 FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
 ```
 
-&emsp;从不应访问的线程访问 remote object 时发生的异常名称。（Name of an exception that occurs when a remote object is accessed from a thread that should not access it. 暂时未遇到过。）
+&emsp;从不应访问 remote object 的线程访问该对象时发生的异常的名称。（Name of an exception that occurs when a remote object is accessed from a thread that should not access it. 暂时未遇到过。）
 
 ##### NSObjectNotAvailableException
 
@@ -567,7 +569,10 @@ FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
 FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
 ```
 
-&emsp;Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.
+&emsp;当 NSConnection 的远程端由于对象从未出售而拒绝向该对象发送消息时发生的异常的名称。Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.
+
+1. `*** Terminating app due to uncaught exception 'NSObjectNotAvailableException', reason: 'UIAlertView is deprecated and unavailable for UIScene based applications, please use UIAlertController!'`
+2. 
 
 ##### NSDestinationInvalidException
 
@@ -724,6 +729,16 @@ __attribute__((__objc_exception__))
 + [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
 + [NSException抛出异常&NSError简单介绍](https://www.jianshu.com/p/23913bbc4ee5)
 + [NSException:错误处理机制---调试中以及上架后的产品如何收集错误日志](https://blog.csdn.net/lcl130/article/details/41891273)
++ [Exception Programming Topics](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Exceptions.html#//apple_ref/doc/uid/10000012-BAJGFBFB)
+
+
+
+
+
+
+
+
+
 
 + [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
 + [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
