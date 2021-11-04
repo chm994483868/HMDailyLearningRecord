@@ -549,7 +549,8 @@ FOUNDATION_EXPORT NSExceptionName const NSMallocException;
   long long len = 203293514220329351;
   [data increaseLengthBy:len];
   ```
-  运行此代码便会抛出此异常：`*** Terminating app due to uncaught exception 'NSMallocException', reason: 'Failed to grow buffer'`。
+  运行此代码便会抛出异常：`*** Terminating app due to uncaught exception 'NSMallocException', reason: 'Failed to grow buffer'`。
+  
 2. 以及还有图片占用空间过大和 OOM（Out of memory）问题。
 
 ##### NSObjectInaccessibleException
@@ -558,7 +559,7 @@ FOUNDATION_EXPORT NSExceptionName const NSMallocException;
 FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
 ```
 
-&emsp;从不应访问的线程访问远程对象时发生的异常名称。（Name of an exception that occurs when a remote object is accessed from a thread that should not access it. 暂时未遇到过。）
+&emsp;从不应访问的线程访问 remote object 时发生的异常名称。（Name of an exception that occurs when a remote object is accessed from a thread that should not access it. 暂时未遇到过。）
 
 ##### NSObjectNotAvailableException
 
@@ -722,6 +723,7 @@ __attribute__((__objc_exception__))
 + [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
 + [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
 + [NSException抛出异常&NSError简单介绍](https://www.jianshu.com/p/23913bbc4ee5)
++ [NSException:错误处理机制---调试中以及上架后的产品如何收集错误日志](https://blog.csdn.net/lcl130/article/details/41891273)
 
 + [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
 + [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
