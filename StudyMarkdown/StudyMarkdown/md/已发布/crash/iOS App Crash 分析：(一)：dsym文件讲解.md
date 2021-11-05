@@ -580,7 +580,7 @@ FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
 FOUNDATION_EXPORT NSExceptionName const NSDestinationInvalidException;
 ```
 
-&emsp;
+&emsp;当内部断言失败并暗示分布对象中的意外情况时发生的异常名称。Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the distributed objects.
 
 ##### NSPortTimeoutException
 
