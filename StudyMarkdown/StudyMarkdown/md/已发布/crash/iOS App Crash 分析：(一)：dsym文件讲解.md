@@ -571,11 +571,9 @@ FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
 ```
+&emsp;在 Developer Documentation 中的解释：Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.（）
 
-&emsp;当 NSConnection 的远程端由于对象从未出售而拒绝向该对象发送消息时发生的异常的名称。Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.
-
-1. 例如：`*** Terminating app due to uncaught exception 'NSObjectNotAvailableException', reason: 'UIAlertView is deprecated and unavailable for UIScene based applications, please use UIAlertController!'`
-2. 
+1. `*** Terminating app due to uncaught exception 'NSObjectNotAvailableException', reason: 'UIAlertView is deprecated and unavailable for UIScene based applications, please use UIAlertController!'`
 
 ##### NSDestinationInvalidException
 
@@ -583,7 +581,7 @@ FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
 FOUNDATION_EXPORT NSExceptionName const NSDestinationInvalidException;
 ```
 
-&emsp;当内部断言失败并暗示分布对象中的意外情况时发生的异常名称。Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the distributed objects.
+&emsp;Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the distributed objects. This is a distributed objects–specific exception.
 
 ##### NSPortTimeoutException
 
@@ -591,17 +589,23 @@ FOUNDATION_EXPORT NSExceptionName const NSDestinationInvalidException;
 FOUNDATION_EXPORT NSExceptionName const NSPortTimeoutException;
 ```
 
+&emsp;Name of an exception that occurs when a timeout set on a port expires during a send or receive operation. This is a distributed objects–specific exception.
+
 ##### NSInvalidSendPortException
 
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSInvalidSendPortException;
 ```
 
+&emsp;Name of an exception that occurs when the send port of an NSConnection has become invalid. This is a distributed objects–specific exception.
+
 ##### NSInvalidReceivePortException
 
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSInvalidReceivePortException;
 ```
+
+&emsp;Name of an exception that occurs when the receive port of an NSConnection has become invalid. This is a distributed objects–specific exception.
 
 ##### NSPortSendException
 
@@ -621,7 +625,7 @@ FOUNDATION_EXPORT NSExceptionName const NSPortReceiveException;
 FOUNDATION_EXPORT NSExceptionName const NSOldStyleException;
 ```
 
-#####
+##### NSInconsistentArchiveException
 
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
