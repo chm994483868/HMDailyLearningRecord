@@ -571,7 +571,7 @@ FOUNDATION_EXPORT NSExceptionName const NSObjectInaccessibleException;
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
 ```
-&emsp;在 Developer Documentation 中的解释：Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.（）
+&emsp;Name of an exception that occurs when the remote side of the NSConnection refused to send the message to the object because the object has never been vended.
 
 1. `*** Terminating app due to uncaught exception 'NSObjectNotAvailableException', reason: 'UIAlertView is deprecated and unavailable for UIScene based applications, please use UIAlertController!'`
 
@@ -581,7 +581,7 @@ FOUNDATION_EXPORT NSExceptionName const NSObjectNotAvailableException;
 FOUNDATION_EXPORT NSExceptionName const NSDestinationInvalidException;
 ```
 
-&emsp;Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the distributed objects. This is a distributed objects–specific exception.
+&emsp;Name of an exception that occurs when an internal assertion fails and implies an unexpected condition within the distributed objects. This is a distributed objects–specific exception.（当内部断言失败时发生的异常的名称，并暗示 distributed objects 中存在意外情况。这是一个分布式对象特定的例外。）
 
 ##### NSPortTimeoutException
 
@@ -613,11 +613,15 @@ FOUNDATION_EXPORT NSExceptionName const NSInvalidReceivePortException;
 FOUNDATION_EXPORT NSExceptionName const NSPortSendException;
 ```
 
+&emsp;Generic error occurred on send.This is an NSPort-specific exception.
+
 ##### NSPortReceiveException
 
 ```c++
 FOUNDATION_EXPORT NSExceptionName const NSPortReceiveException;
 ```
+
+&emsp;Generic error occurred on receive.This is an NSPort-specific exception.
 
 ##### NSOldStyleException
 
@@ -631,22 +635,7 @@ FOUNDATION_EXPORT NSExceptionName const NSOldStyleException;
 FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 ```
 
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;The name of an exception raised by NSArchiver if there are problems initializing or encoding.
 
 #### reason
 
@@ -694,8 +683,12 @@ FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 ![截屏2021-10-18 08.51.07.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fa1e44710b694a0982ccf1145d79866b~tplv-k3u1fbpfcp-watermark.image?)
 
 
+// 规划
+1. 把异常抛出时的函数调用堆栈的两个属性看完。
+2. 自定义异常抛出处理函数，并不能覆盖之前的异常处理函数。
+3. 把那几篇官方的文档浏览一下，摘录其中的重点。
 
-
+4. 本篇差不多就这些，然后开下一篇......
 
 
 
