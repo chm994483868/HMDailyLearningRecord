@@ -665,10 +665,10 @@ FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 @property (readonly, copy) NSArray<NSNumber *> *callStackReturnAddresses API_AVAILABLE(macos(10.5), ios(2.0), watchos(2.0), tvos(9.0));
 ```
 
-&emsp;与引发的异常相关的调用返回地址。
+&emsp;与抛出的异常相关的调用返回地址（call return addresses）。
 
-&emsp;封装整数值的 NSNumber 对象数组。每个值都是一个调用帧返回地址。堆栈帧数组从第一次引发异常的点开始，第一个项是最近的堆栈帧。
-假装为NSException类的NSException子类或干扰异常引发机制的子类或其他API元素可能无法获取此信息。
+&emsp;`callStackReturnAddresses` 是一个元素都是整数值（po 打印的是十进制整数）的 NSNumber 对象数组。每个值都是一个调用帧（call frame，即函数调用栈中的每一个函数）返回地址。栈帧（stack frames）数组从第一次引发异常的点开始，第一个项是最近的堆栈帧。
+假装为 NSException 类的 NSException 子类或干扰异常引发机制的子类或其他 API 元素可能无法获取此信息。
 
 #### callStackSymbols
 
