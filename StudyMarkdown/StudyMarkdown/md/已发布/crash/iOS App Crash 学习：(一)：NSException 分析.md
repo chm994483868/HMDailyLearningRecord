@@ -518,7 +518,7 @@ void uncaughtExceptionHandler(NSException *exception) {
 }
 ```
 
-&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置，所以我们可以使用 `NSGetUncaughtExceptionHandler`来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的异常处理函数。
+&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置（或者我们自己设置过后，又被第三方 SDK 设置了一遍，导致它把我们自己设置的未捕获异常处理函数覆盖了），所以我们可以使用 `NSGetUncaughtExceptionHandler`来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的异常处理函数。
 
 ```c++
 
