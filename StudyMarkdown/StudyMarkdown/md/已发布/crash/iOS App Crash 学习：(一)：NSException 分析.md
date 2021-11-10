@@ -486,11 +486,54 @@ FOUNDATION_EXPORT void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler 
 
 &emsp;改变（设置）当前最顶层的异常处理程序。
 
+&emsp;所有未捕获的异常都应该进行抓取处理或者进行统计上传，作为程序运行的反馈和监测。在 OC 中我们可以使用 @try @catch 语句来捕获异常，而未捕获的异常我们还有一次统一处理的机会，我们便可以使用 `NSSetUncaughtExceptionHandler` 来设置这个函数。
 
+```c++
+    @try {
+        // 有可能出现异常的代码
+    } @catch (NSException *exception) {
+        // 如果对象不存在
+        if ([exception.name isEqualToString:NSObjectInaccessibleException]) {
+            NSLog(@"Object have not exits");
+        } else {
+            // 抛给未处理异常函数去处理，可使用 raise 或 @throw 继续抛出异常
+            [exception raise];
+//            @throw exception;
+        }
+    } @finally {
+        // 
+    }
+```
 
+&emsp;首先编写一个 `NSUncaughtExceptionHandler` 类型的函数：
 
+```c++
+void uncaughtExceptionHandler(NSException *exception) {
+    NSArray *stackSymbols = [exception callStackSymbols];
+    NSArray *stackReturnAddress = [exception callStackReturnAddresses];
+    
+    NSString *url = [NSString stringWithFormat:@"异常报告：name:\n%@reason:\n%@\ncallStackSymbols:\n%@\nstackReturnAddress:\n%@", [exception name], [exception reason], [stackSymbols componentsJoinedByString:@" "], [stackReturnAddress componentsJoinedByString:@" "]];
+    NSString *path = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Exception.txt"];
+    [url writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+}
+```
 
+&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置，所以我们可以使用 `NSGetUncaughtExceptionHandler`来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的异常处理函数。
 
+```c++
+
+void originalUncaughtExceptionHandler(NSException *exception);
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Override point for customization after application launch.
+    
+    NSUncaughtExceptionHandler *currentHandler = NSGetUncaughtExceptionHandler();
+    NSLog(@"✳️✳️✳️ 当前的未捕获的异常的处理程序：%p", currentHandler);
+    NSSetUncaughtExceptionHandler(&uncaughtExceptionHandler);
+    
+    return YES;
+}
+```
 
 
 
@@ -538,6 +581,8 @@ __attribute__((__objc_exception__))
 @end
 ```
 
+## 参考链接
+**参考链接:🔗**
 + [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
 + [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
 + [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
