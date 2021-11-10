@@ -449,7 +449,11 @@ FOUNDATION_EXPORT NSExceptionName const NSInconsistentArchiveException;
 #### NSUncaughtExceptionHandler
 
 ```c++
+// 在 Developer Documentation 中是这种写法：
 typedef void (NSException * _Nonnull) NSUncaughtExceptionHandler;
+
+// 在 NSException.h 中是这种写法：
+typedef void NSUncaughtExceptionHandler(NSException *exception);
 ```
 
 &emsp;给返回值是 void 入参是 NSException 指针（非空）的函数起一个 `NSUncaughtExceptionHandler` 的别名。  
@@ -460,7 +464,29 @@ typedef void (NSException * _Nonnull) NSUncaughtExceptionHandler;
 typedef NSString *NSExceptionName;
 ```
 
-&emsp;
+&emsp;异常的名字的类型其实是 NSString。
+
+### Functions
+
+#### NSGetUncaughtExceptionHandler
+
+```c++
+NSUncaughtExceptionHandler * NSGetUncaughtExceptionHandler(void);
+```
+
+&emsp;返回当前最顶层的异常处理程序。
+
+&emsp;返回一个 `NSUncaughtExceptionHandler` 函数指针，指向当前 top-level 的 error-handling function，当异常抛出程序被终止执行之前会调用此函数，我们可以在其中添加异常记录，把异常信息写入本地，等 APP 下一次启动时发送到服务器中去进行统计。（默认情况下 `NSUncaughtExceptionHandler` 返回值为空，需要我们调用 `NSSetUncaughtExceptionHandler` 函数进行提前设置。）
+
+#### NSSetUncaughtExceptionHandler
+
+```c++
+FOUNDATION_EXPORT void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler * _Nullable);
+```
+
+&emsp;改变（设置）当前最顶层的异常处理程序。
+
+
 
 
 
