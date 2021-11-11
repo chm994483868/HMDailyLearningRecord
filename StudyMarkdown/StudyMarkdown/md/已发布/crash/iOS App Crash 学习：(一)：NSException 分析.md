@@ -1,14 +1,11 @@
 # iOS App Crash 学习：(一)：NSException 分析
 
-&emsp;iOS 常见的导致 Crash 的原因有两类，对于系统崩溃而引起的程序异常退出，可以通过 `NSSetUncaughtExceptionHandler` 机制抓取处理（并不能阻挡程序崩溃，即该崩还是崩，我们能做的是在这里统计记录等操作），另一类是 signal 机制异常。
+> &emsp;iOS Crash 的原因是应用收到了未处理的信号，未处理的信号可能来源于三个地方：kernel(系统内核)、其它进程、App 本身。因此，Crash 异常也可以分为三种：
+> + Mach 异常：是指最底层的内核级异常。用户态的开发者可以直接通过 Mach API 设置 thread、task、host 的异常端口，来捕获 Mach 异常。
+> + Unix 信号：又称 BSD 信号，如果开发者没有捕获 Mach 异常，则会被 host 层的方法 ux_exception() 将异常转换为对应的 UNIX 信号，并通过方法 threadsignal() 将信号投递到出错线程。可以通过方法 signal(x, SignalHandler) 来捕获 single。 
+> + NSException：应用级异常，它是未被捕获的 Objective-C 异常，导致程序向自身发送了 SIGABRT 信号而崩溃，对于未捕获的 Objective-C 异常，是可以通过 try catch 来捕获的，或者通过 NSSetUncaughtExceptionHandler(并不能阻挡程序崩溃，即该崩还是崩，我们能做的是在这里统计记录等操作) 机制来捕获。[iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 
-
-// 待补充摘要....
-
-
-
-
-
+&emsp;后续我们对以上情况慢慢深入，本篇先来学习我们最熟悉的 NSException。
 
 ## NSException
 
@@ -544,15 +541,6 @@ void originalUncaughtExceptionHandler(NSException *exception);
     return YES;
 }
 ```
-
-// 规划
-1. 把异常抛出时的函数调用堆栈的两个属性看完。
-2. 自定义异常抛出处理函数，并不能覆盖之前的异常处理函数。
-3. 把那几篇官方的文档浏览一下，摘录其中的重点。
-
-4. 本篇差不多就这些，然后开下一篇......
-
-
 
 ## 参考链接
 **参考链接:🔗**
