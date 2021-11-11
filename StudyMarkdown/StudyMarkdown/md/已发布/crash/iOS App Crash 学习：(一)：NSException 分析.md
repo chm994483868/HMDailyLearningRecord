@@ -1,5 +1,15 @@
 # iOS App Crash 学习：(一)：NSException 分析
 
+&emsp;iOS 常见的导致 Crash 的原因有两类，对于系统崩溃而引起的程序异常退出，可以通过 `NSSetUncaughtExceptionHandler` 机制抓取处理（并不能阻挡程序崩溃，即该崩还是崩，我们能做的是在这里统计记录等操作），另一类是 signal 机制异常。
+
+
+// 待补充摘要....
+
+
+
+
+
+
 ## NSException
 
 &emsp;系统的异常处理是一个管理非典型事件（例如发送了未被识别的消息）的过程，此过程将会中断正常的程序执行流程。如果没有足够的错误处理，遇到非典型事件时，程序可能立刻抛出或引发一种被称之为异常的行为，并结束程序的正常运行。程序抛出异常的原因多种多样，可由硬件导致也可由软件引起。异常的例子很多，包括被零除、下溢和上溢之类的数学错误，调用未定义的指令（例如，试图调用一个没有定义的方法）以及试图越界访问集合中的元素等。而 NSException 对象正是作为一个异常的载体，提示我们发生异常的原因以及发生异常时的函数调用堆栈信息等等重要的信息，来帮助我们更快速的修复造成异常的代码。[NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
@@ -512,16 +522,16 @@ void uncaughtExceptionHandler(NSException *exception) {
     NSArray *stackSymbols = [exception callStackSymbols];
     NSArray *stackReturnAddress = [exception callStackReturnAddresses];
     
-    NSString *url = [NSString stringWithFormat:@"异常报告：name:\n%@reason:\n%@\ncallStackSymbols:\n%@\nstackReturnAddress:\n%@", [exception name], [exception reason], [stackSymbols componentsJoinedByString:@" "], [stackReturnAddress componentsJoinedByString:@" "]];
+    NSString *crashReportString = [NSString stringWithFormat:@"异常报告：\nname:%@\nreason:%@\ncallStackSymbols:\n%@\nstackReturnAddress:\n%@", [exception name], [exception reason], [stackSymbols componentsJoinedByString:@"\n"], [stackReturnAddress componentsJoinedByString:@"\n"]];
+    NSLog(@"🏵🏵🏵 crashReportString: %@", crashReportString);
     NSString *path = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Exception.txt"];
-    [url writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    [crashReportString writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 ```
 
 &emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置（或者我们自己设置过后，又被第三方 SDK 设置了一遍，导致它把我们自己设置的未捕获异常处理函数覆盖了），所以我们可以使用 `NSGetUncaughtExceptionHandler`来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的异常处理函数。
 
 ```c++
-
 void originalUncaughtExceptionHandler(NSException *exception);
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -535,11 +545,6 @@ void originalUncaughtExceptionHandler(NSException *exception);
 }
 ```
 
-
-
-
-
-
 // 规划
 1. 把异常抛出时的函数调用堆栈的两个属性看完。
 2. 自定义异常抛出处理函数，并不能覆盖之前的异常处理函数。
@@ -548,38 +553,6 @@ void originalUncaughtExceptionHandler(NSException *exception);
 4. 本篇差不多就这些，然后开下一篇......
 
 
-
-
-
-
-```c++
-/***************    Exception object    ***************/
-
-#if __OBJC2__
-__attribute__((__objc_exception__))
-#endif
-@interface NSException : NSObject <NSCopying, NSSecureCoding> {
-    @private
-    NSString        *name;
-    NSString        *reason;
-    NSDictionary    *userInfo;
-    id            reserved;
-}
-
-
-
-
-- (void)raise;
-
-@end
-
-@interface NSException (NSExceptionRaisingConveniences)
-
-+ (void)raise:(NSExceptionName)name format:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3);
-+ (void)raise:(NSExceptionName)name format:(NSString *)format arguments:(va_list)argList NS_FORMAT_FUNCTION(2,0);
-
-@end
-```
 
 ## 参考链接
 **参考链接:🔗**
