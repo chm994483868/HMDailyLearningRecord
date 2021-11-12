@@ -5,7 +5,7 @@
 > + Unix 信号：又称 BSD 信号，如果开发者没有捕获 Mach 异常，则会被 host 层的方法 ux_exception() 将异常转换为对应的 UNIX 信号，并通过方法 threadsignal() 将信号投递到出错线程。可以通过方法 signal(x, SignalHandler) 来捕获 single。 
 > + NSException：应用级异常，它是未被捕获的 Objective-C 异常，导致程序向自身发送了 SIGABRT 信号而崩溃，对于未捕获的 Objective-C 异常，是可以通过 try catch 来捕获的，或者通过 NSSetUncaughtExceptionHandler(并不能阻挡程序崩溃，即该崩还是崩，我们能做的是在这里统计记录等操作) 机制来捕获。[iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 
-&emsp;后续我们对以上情况慢慢深入，本篇先来学习我们最熟悉的 NSException。
+&emsp;后续我们再对 Mach 异常和 Unix 信号进行深入学习，本篇先来学习我们最熟悉的 NSException。
 
 ## NSException
 
