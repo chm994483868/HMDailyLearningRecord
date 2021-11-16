@@ -161,6 +161,7 @@
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
+		8E941C7B274333D300B2B8A3 /* mach异常.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "mach异常.md"; sourceTree = "<group>"; };
 		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		8EB2848F2687EFD000CCD5FB /* iOS App 启动优化(七)：NSProcessInfo 解析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(七)：NSProcessInfo 解析.md"; sourceTree = "<group>"; };
 		8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(二)：.md"; sourceTree = "<group>"; };
@@ -208,6 +209,8 @@
 				8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：NSException 分析.md */,
 				8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：.md */,
 				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(三)：dsym文件讲解.md */,
+				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(二)：dsym文件讲解.md */,
+				8E941C7B274333D300B2B8A3 /* mach异常.md */,
 			);
 			path = crash;
 			sourceTree = "<group>";
