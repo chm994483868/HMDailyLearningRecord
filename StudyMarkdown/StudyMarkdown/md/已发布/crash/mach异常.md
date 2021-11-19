@@ -54,4 +54,7 @@ void mySignalHandler(int signal) {
 }
 ```
 
+&emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App  去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
+
 &emsp;
+
