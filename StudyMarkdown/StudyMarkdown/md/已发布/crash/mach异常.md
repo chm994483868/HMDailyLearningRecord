@@ -37,6 +37,7 @@ void mySignalHandler(int signal) {
     printf("🏵🏵🏵 char ** 怎么打印：%p", strs);
     
 //    kill(<#pid_t#>, <#int#>)
+    
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -56,5 +57,38 @@ void mySignalHandler(int signal) {
 
 &emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App  去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
 
-&emsp;
+&emsp;iOS Crash 捕获的目的，学习了 Crash 捕获相关的 Mach 异常和 signal 信号处理，记录下相关内容，并提供对应
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 参考链接
+**参考链接:🔗**
++ [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
++ [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
++ [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
++ [NSException抛出异常&NSError简单介绍](https://www.jianshu.com/p/23913bbc4ee5)
++ [NSException:错误处理机制---调试中以及上架后的产品如何收集错误日志](https://blog.csdn.net/lcl130/article/details/41891273)
++ [Exception Programming Topics](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Exceptions.html#//apple_ref/doc/uid/10000012-BAJGFBFB)
++ [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
++ [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
++ [异常处理NSException的使用（思维篇）](https://www.cnblogs.com/cchHers/p/15116833.html)
++ [异常统计- IOS 收集崩溃信息 NSEXCEPTION类](https://www.freesion.com/article/939519506/)
++ [NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
++ [iOS Crash之NSGenericException](https://blog.csdn.net/skylin19840101/article/details/51945558)
++ [iOS异常处理](https://www.jianshu.com/p/1e4d5421d29c)
++ [iOS异常处理](https://www.jianshu.com/p/59927211b745)
++ [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
++ [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)

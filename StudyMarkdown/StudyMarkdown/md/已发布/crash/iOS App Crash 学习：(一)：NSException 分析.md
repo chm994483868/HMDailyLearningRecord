@@ -541,6 +541,7 @@ void originalUncaughtExceptionHandler(NSException *exception);
     return YES;
 }
 ```
+
 ## 参考链接
 **参考链接:🔗**
 + [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
@@ -558,4 +559,5 @@ void originalUncaughtExceptionHandler(NSException *exception);
 + [iOS异常处理](https://www.jianshu.com/p/1e4d5421d29c)
 + [iOS异常处理](https://www.jianshu.com/p/59927211b745)
 + [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
++ [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)
 
