@@ -57,7 +57,22 @@ void mySignalHandler(int signal) {
 
 &emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App  去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
 
-&emsp;iOS Crash 捕获的目的，学习了 Crash 捕获相关的 Mach 异常和 signal 信号处理，记录下相关内容，并提供对应
+&emsp;学习 Crash 捕获相关的 **Mach 异常** 和 **signal 信号处理**。
+
+> &emsp;**Mach 为 XNU 的微内核，Mach 异常为最底层的内核级异常。在 iOS 系统中，底层 Crash 先触发 Mach 异常，然后再转换为对应的 Signal 信号**。
+
+&emsp;Darwin 是 macOS 和 iOS 的操作系统，而 XNU 是 Darwin 操作系统的内核部分。XNU 是混合内核，兼具宏内核和微内核的特性，而 Mach 即为其微内核。Mac 可执行 `system_profiler SPSoftwareDataType` 命令查看 Darwin 版本号。
+
+![截屏2021-11-20 09.09.20.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/eec1dc7e8fe34a82979793b2f6e2463b~tplv-k3u1fbpfcp-watermark.image?)
+
+
+
+
+
+
+
+
+
 
 
 

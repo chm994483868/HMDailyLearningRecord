@@ -1,9 +1,10 @@
 # iOS App Crash 学习：(一)：NSException 分析
 
 > &emsp;iOS Crash 的原因是应用收到了未处理的信号，未处理的信号可能来源于三个地方：kernel(系统内核)、其它进程、App 本身。因此，Crash 异常也可以分为三种：
+> 
 > + Mach 异常：是指最底层的内核级异常。用户态的开发者可以直接通过 Mach API 设置 thread、task、host 的异常端口，来捕获 Mach 异常。
 > + Unix 信号：又称 BSD 信号，如果开发者没有捕获 Mach 异常，则会被 host 层的方法 ux_exception() 将异常转换为对应的 UNIX 信号，并通过方法 threadsignal() 将信号投递到出错线程。可以通过方法 signal(x, SignalHandler) 来捕获 single。 
-> + NSException：应用级异常，它是未被捕获的 Objective-C 异常，导致程序向自身发送了 SIGABRT 信号而崩溃，对于未捕获的 Objective-C 异常，是可以通过 try catch 来捕获的，或者通过 NSSetUncaughtExceptionHandler(并不能阻挡程序崩溃，即该崩还是崩，我们能做的是在这里统计记录等操作) 机制来捕获。[iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
+> + NSException：应用级异常，它是未被捕获的 Objective-C 异常，最终可导致程序向自身发送 SIGABRT 信号而崩溃，对于未捕获的 Objective-C 异常，是可以通过 try catch 来捕获处理的，或者通过 NSSetUncaughtExceptionHandler(并不能阻止程序崩溃，即该崩还是崩，我们能做的是在这里把崩溃的详细信息写入本地文件，并调用 NSGetUncaughtExceptionHandler 获取到的其他 SDK 设置的异常捕获函数，（防止覆盖了别人的异常记录），然后再调用一个 kill(getpid(), SIGKILL) 杀掉程序，防止 NSSetUncaughtExceptionHandler 设置的未捕获异常处理函数执行结束后，程序崩溃抛出的 SIGABRT 被 SignalException 捕获，防止重复记录崩溃) 机制来记录崩溃的详细原因。[iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 
 &emsp;后续我们再对 Mach 异常和 Unix 信号进行深入学习，本篇先来学习我们最熟悉的 NSException。
 
@@ -34,7 +35,7 @@ __attribute__((__objc_exception__))
 
 ### Overview
 
-&emsp;使用 NSException 实现 exception 处理（描述）。**exception（异常）** 是指中断正常程序执行流的一种特殊情况。每个进程都可以因不同的原因被中断执行。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲 exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control + C）解释为异常：长时间运行的进程应该中止的指示。
+&emsp;使用 NSException 实现 exception 处理（描述）。**exception（异常）** 是指中断正常程序执行流的一种特殊情况。每个进程都可以因不同的原因被中断执行。例如，一个应用程序可能会将文件保存在写保护（write-protected）的目录中解释为异常。从这个意义上讲 exception 相当于一个错误。另一个应用程序可能会将用户的按键（例如 Control + C）解释为异常：长时间运行的进程应该中止的指示。（Control + C 是一个中断命令）
 
 ### Creating and Raising an NSException Object 
 
@@ -104,13 +105,13 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 - (void)raise;
 ```
 
-&emsp;引发（抛出）exception，导致程序流跳转到本地异常处理程序（即：`void uncaughtExceptionHandler(NSException *exception)` 函数，后面我们会进行详细学习）。
+&emsp;引发（抛出）exception，如果不使用 try catch 捕获的话，可导致程序流跳转到本地异常处理程序（即：`void uncaughtExceptionHandler(NSException *exception)` 函数，后面我们会进行详细学习）。
 
 &emsp;在开发阶段，当某些业务逻辑的条件不满足时，我们可以创建一个 NSException 对象，然后调用 raise 函数直接抛出异常，帮助我们发现问题，或者在 try catch 语句中，当收到我们未可预知的异常时，在 catch 语句中我们继续调用 raise 函数抛出异常，方便我们发现一些未知问题。
 
 > &emsp;When there are no exception handlers in the exception handler stack, unless the exception is raised during the posting of a notification, this method calls the uncaught exception handler, in which last-minute logging can be performed. The program then terminates, regardless of the actions taken by the uncaught exception handler.
 
-&emsp;当异常处理程序堆栈中没有异常处理程序时，除非在发布通知期间引发异常，否则此方法调用未捕获异常处理程序（`void uncaughtExceptionHandler(NSException *exception)`），在该处理程序中可以执行最后一分钟的日志记录（实测可以执行好久，远超过 1 分钟，貌似只要函数内容执行不完就可以一直执行下去）。无论 `uncaughtExceptionHandler` 执行了什么操作，程序都会终止。
+&emsp;当异常处理程序堆栈中没有异常处理程序时，除非在发布通知期间引发异常，否则此方法调用未捕获异常处理程序（`void uncaughtExceptionHandler(NSException *exception)`），在该处理程序中可以执行最后一分钟的日志记录（实测可以执行好久，远超过 1 分钟，只要函数内容执行不完就可以一直执行下去）。无论 `uncaughtExceptionHandler` 执行了什么操作，程序都会终止。
 
 ### Querying an NSException Object
 
@@ -123,7 +124,7 @@ typedef NSString * NSExceptionName NS_EXTENSIBLE_STRING_ENUM;
 ```
 &emsp;一个只读的字符串，表示 NSException 对象的名字，用于唯一识别。
 
-> &emsp;Cocoa 预先定义了一些通用异常名称，以标识可以在自己的代码中处理的异常，甚至可以引发和重新引发异常(如：在 try-catch 中捕获异常，当是未知的异常时，可以使用 @throw 或 raise 函数继续抛出异常)。你还可以创建和使用自定义异常名称。通常异常名是 NSException.h 中定义的字符串常量，记录在 Foundation Constants Reference 中。除了一般的异常名称外，Cocoa 的一些子系统还定义了自己的异常名称，例如 NSInconsistentArchiveException 和 NSFileHandleOperationException。通过将异常的名称与这些预定义的名称进行比较，可以在异常处理程序中识别捕获异常。然后你可以处理这个异常，或者，如果它不是你感兴趣的，重新抛出它。请注意，所有预定义的异常都以前缀 "NS" 开头，因此你在创建新的异常名称时应避免使用相同的前缀(避免与系统预定义的那些异常同名)。[Predefined Exceptions](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Concepts/PredefinedExceptions.html)
+> &emsp;Cocoa 预先定义了一些通用异常名称，以标识可以在自己的代码中处理的异常，甚至可以引发和重新引发异常(如：在 try catch 中捕获异常，当是未知的异常时，可以使用 @throw 或 raise 函数继续抛出异常)。你还可以创建和使用自定义异常名称。通常异常名是 NSException.h 中定义的字符串常量，记录在 Foundation Constants Reference 中。除了一般的异常名称外，Cocoa 的一些子系统还定义了自己的异常名称，例如 NSInconsistentArchiveException 和 NSFileHandleOperationException。通过将异常的名称与这些预定义的名称进行比较，可以在异常处理程序中识别捕获异常。然后你可以处理这个异常，或者，如果它不是你感兴趣的，重新抛出它。请注意，所有预定义的异常都以前缀 "NS" 开头，因此你在创建新的异常名称时应避免使用相同的前缀(避免与系统预定义的那些异常同名)。[Predefined Exceptions](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Concepts/PredefinedExceptions.html)
 
 &emsp;在 NSException.h 文件的顶部，列出了一组事先定义的异常名字，可帮助我们针对常见的抛出的异常进行归类。
 
@@ -493,7 +494,7 @@ FOUNDATION_EXPORT void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler 
 
 &emsp;改变（设置）当前最顶层的异常处理程序。
 
-&emsp;所有未捕获的异常都应该进行抓取处理或者进行统计上传，作为程序运行的反馈和监测。在 OC 中我们可以使用 @try @catch 语句来捕获异常，而未捕获的异常我们还有一次统一处理的机会，我们便可以使用 `NSSetUncaughtExceptionHandler` 来设置这个函数。
+&emsp;所有未捕获的异常都应该进行抓取处理或者进行统计上传，作为程序运行的反馈和监测。在 OC 中我们可以使用 try catch 来捕获异常，而未捕获的异常我们还有一次统一处理的机会，我们便可以使用 `NSSetUncaughtExceptionHandler` 来设置这个函数。
 
 ```c++
     @try {
@@ -516,6 +517,8 @@ FOUNDATION_EXPORT void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler 
 
 ```c++
 void uncaughtExceptionHandler(NSException *exception) {
+    
+    // 把崩溃日志记录到本地
     NSArray *stackSymbols = [exception callStackSymbols];
     NSArray *stackReturnAddress = [exception callStackReturnAddresses];
     
@@ -523,24 +526,36 @@ void uncaughtExceptionHandler(NSException *exception) {
     NSLog(@"🏵🏵🏵 crashReportString: %@", crashReportString);
     NSString *path = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Exception.txt"];
     [crashReportString writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    
+    // 在自己的异常处理操作完毕后，调用先前别人注册的 未捕获异常处理函数，并把原始的 exception 进行传递
+    if (previousUncaughtExceptionHandler) {
+        previousUncaughtExceptionHandler(exception);
+    }
+    
+    // 杀掉程序，这样可以防止 uncaughtExceptionHandler 函数执行结束后，程序被终止时抛出的 SIGABRT 被 SignalException 捕获，造成崩溃原因重复记录
+    kill(getpid(), SIGKILL);
 }
 ```
 
-&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置（或者我们自己设置过后，又被第三方 SDK 设置了一遍，导致它把我们自己设置的未捕获异常处理函数覆盖了），所以我们可以使用 `NSGetUncaughtExceptionHandler`来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的异常处理函数。
+&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置（或者我们自己设置过后，又被第三方 SDK 设置了一遍，导致它把我们自己设置的未捕获异常处理函数覆盖了），所以我们可以使用 `NSGetUncaughtExceptionHandler`来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的异常处理函数，然后再调用 `kill(getpid(), SIGKILL)` 杀掉程序，这样可以防止 `uncaughtExceptionHandler` 函数执行结束后，程序被终止时抛出的 `SIGABRT` 被 `SignalException` 捕获，造成崩溃原因重复记录。
 
 ```c++
-void originalUncaughtExceptionHandler(NSException *exception);
+static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
-    NSUncaughtExceptionHandler *currentHandler = NSGetUncaughtExceptionHandler();
-    NSLog(@"✳️✳️✳️ 当前的未捕获的异常的处理程序：%p", currentHandler);
+    // 将之前注册的 未捕获异常处理函数 取出并备份
+    previousUncaughtExceptionHandler = NSGetUncaughtExceptionHandler();
+    NSLog(@"🏵🏵🏵 currentHandler: %p", previousUncaughtExceptionHandler);
+    // 设置我们自己准备的 未捕获异常处理函数
     NSSetUncaughtExceptionHandler(&uncaughtExceptionHandler);
     
     return YES;
 }
 ```
+
+&emsp;Objective-C 异常处理大概就看到这里吧，下篇我们继续深入学习 Mach 异常和 Signal 信号处理。
 
 ## 参考链接
 **参考链接:🔗**
