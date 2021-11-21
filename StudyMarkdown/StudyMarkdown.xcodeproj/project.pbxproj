@@ -156,7 +156,7 @@
 		8E5E58D52686A0010088C814 /* =default 和 = delete使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "=default 和 = delete使用.md"; sourceTree = "<group>"; };
 		8E5E58D92686A0010088C814 /* memmove函数使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "memmove函数使用.md"; sourceTree = "<group>"; };
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
-		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：NSException 分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：NSException 分析.md"; sourceTree = "<group>"; };
+		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
@@ -206,10 +206,9 @@
 		8E3327F026F2C38000753049 /* crash */ = {
 			isa = PBXGroup;
 			children = (
-				8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：NSException 分析.md */,
+				8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */,
 				8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：.md */,
 				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(三)：dsym文件讲解.md */,
-				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(二)：dsym文件讲解.md */,
 				8E941C7B274333D300B2B8A3 /* mach异常.md */,
 			);
 			path = crash;
