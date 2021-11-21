@@ -26,6 +26,16 @@ NSLog(@"🏵🏵🏵 %d", result);
 
 
 
+
+
+
+
+
+
+
+
+
+
 ```c++
 #import "AppDelegate.h"
 #import <execinfo.h>
@@ -94,6 +104,7 @@ void mySignalHandler(int signal) {
 
 
 
+
 ## 参考链接
 **参考链接:🔗**
 + [Mach-维基百科](https://zh.wikipedia.org/wiki/Mach)
@@ -101,7 +112,7 @@ void mySignalHandler(int signal) {
 + [Linux 多线程环境下 进程线程终止函数小结](https://www.cnblogs.com/biyeymyhjob/archive/2012/10/11/2720377.html)
 + [pthread_kill引发的争论](https://www.jianshu.com/p/756240e837dd)
 + [线程的信号pthread_kill()函数（线程四）](https://blog.csdn.net/littesss/article/details/71156793)
-
++ [原子操作atomic_fetch_add](https://www.jianshu.com/p/985fb2e9c201)
 
 
 
