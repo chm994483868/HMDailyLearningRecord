@@ -1,19 +1,19 @@
 # iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
 
-&emsp;Objective-C 的异常处理是指通过 `@try` `@catch` 或 `NSSetUncaughtExceptionHandler` 函数来捕获或记录统计异常，但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
+&emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常，但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
 
 ⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常，还是 Mach 异常后会发送 signal 信号，后面要验证一下：
 
 这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
 
-&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又访问了已经被释放的内存) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有得到执行！ 
+&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又去访问 objc 已经被释放的内存) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有得到执行！ 
 
 ```c++
-    __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
-    NSLog(@"✳️✳️✳️ objc: %@", objc);
+__unsafe_unretained NSObject *objc = [[NSObject alloc] init];
+NSLog(@"✳️✳️✳️ objc: %@", objc);
 ```
 
-&emsp;在测试除零操作时，发现如下代码在 xcode 12.4 下会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 错误，而在 xcode 13.1 下程序正常运行没有 crash 退出，且每次运行 result 的值都是随机的。
+&emsp;在测试除零操作时，发现如下代码在 xcode 12.4 下会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 错误，而在 xcode 13.1 下程序正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机值，这里和 Optimization Level 有关系，如果设置为 None 则会 crash，如设置为 Faster, Aggressive Optimizations 则不 crash，且每次都是一个很大的随机值。
 
 ```c++
 int a = 0;
@@ -22,10 +22,13 @@ int result = b / a;
 NSLog(@"🏵🏵🏵 %d", result);
 ```
 
-&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别是：
+&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别如下，这里还有一个小细节，就是程序退出其实是某条线程的退出，即主
 
 ```c++
-
+(lldb) bt
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=EXC_I386_GPFLT)
+    frame #0: 0x00007fff2019de72 libobjc.A.dylib`objc_opt_respondsToSelector + 16
+    ...
 ```
 
 ```c++
