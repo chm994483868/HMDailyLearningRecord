@@ -1,8 +1,12 @@
-### mach 异常
+# iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
 
-&emsp;Objective-C 的异常处理（指 `@try` `@catch` 和 `NSSetUncaughtExceptionHandler` 机制，它们对内存访问错误、重复释放等错误是无能为力的，这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
+&emsp;Objective-C 的异常处理是指通过 `@try` `@catch` 或 `NSSetUncaughtExceptionHandler` 函数来捕获或记录统计异常，但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
 
-&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 并中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行报出：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)`(objc 已经被释放，然后 NSLog 语句中又访问了已经被释放的内存) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有被执行！ 
+⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常，还是 Mach 异常后会发送 signal 信号，后面要验证一下：
+
+这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
+
+&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又访问了已经被释放的内存) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有得到执行！ 
 
 ```c++
     __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
@@ -17,6 +21,18 @@ int b = 1;
 int result = b / a;
 NSLog(@"🏵🏵🏵 %d", result);
 ```
+
+&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别是：
+
+```c++
+
+```
+
+```c++
+
+```
+
+
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被终止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
@@ -124,3 +140,5 @@ void mySignalHandler(int signal) {
 + [iOS异常处理](https://www.jianshu.com/p/59927211b745)
 + [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 + [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)
+
+
