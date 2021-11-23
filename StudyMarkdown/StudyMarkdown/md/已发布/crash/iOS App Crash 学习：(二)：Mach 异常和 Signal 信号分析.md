@@ -2,7 +2,7 @@
 
 &emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常，但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
 
-⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常，还是 Mach 异常后会发送 signal 信号，后面要验证一下：
+⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常（正常情况下都会转化为 signal 信号，但是比如收集到 mach 异常后，直接调用了 `exit()` 函数就会导致程序终止而没有产生对应的 signal 信号），还是 Mach 异常后会发送 signal 信号，后面要验证一下：
 
 这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
 
@@ -13,7 +13,7 @@ __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
 NSLog(@"✳️✳️✳️ objc: %@", objc);
 ```
 
-&emsp;在测试除零操作时，发现如下代码在 xcode 12.4 下会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 错误，而在 xcode 13.1 下程序正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机值，这里和 Optimization Level 有关系，如果设置为 None 则会 crash，如设置为 Faster, Aggressive Optimizations 则不 crash，且每次都是一个很大的随机值。
+&emsp;在测试除零操作时（我们都知道 0 不能做除数😂）如下示例代码，发现运行结果与 Build Settings 的 Optimization Level 的选项值有关系，当我们选择 None[-O0] 时会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 错误，而在其他任意 Fast[-O, O1]、Faster[-O2]、Fastest[-O3]、Fastest,Smallest[-Os]、Fastest,Aggressive Optimizations[-Ofast]、Smallest,Aggressive Size Optimizations[-Oz] 选项下程序都正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机数。
 
 ```c++
 int a = 0;
@@ -22,25 +22,74 @@ int result = b / a;
 NSLog(@"🏵🏵🏵 %d", result);
 ```
 
-&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别如下，这里还有一个小细节，就是程序退出其实是某条线程的退出，即主
+&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别如下：`EXC_ARITHMETIC`、`EXC_BAD_ACCESS`、`signal SIGABRT`。 这里还有一个小细节，就是程序退出大概是某条线程的退出：主线程或子线程，当我们把上述代码放在一条子线程的执行的话，便会看到子线程的停止原因。
+
+&emsp;除零操作：
 
 ```c++
+// 当前在主线程
 (lldb) bt
-* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=EXC_I386_GPFLT)
-    frame #0: 0x00007fff2019de72 libobjc.A.dylib`objc_opt_respondsToSelector + 16
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)
+  * frame #0: 0x0000000102d06daf dSYMDemo`-[AppDelegate application:didFinishLaunchingWithOptions:](self=0x0000600002bb82c0, _cmd="application:didFinishLaunchingWithOptions:", application=0x00007fe1dbc06f50, launchOptions=0x0000000000000000) at AppDelegate.m:59:20
+  ...
+  
+// 当前在子线程
+(lldb) bt all
+  thread #1, queue = 'com.apple.main-thread'
+    frame #0: 0x00007fff203b69a4 CoreFoundation`__CFStringHash + 151
+    ...
+    
+* thread #8, queue = 'com.apple.root.default-qos', stop reason = EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)
+  * frame #0: 0x00000001029a0daf dSYMDemo`__57-[AppDelegate application:didFinishLaunchingWithOptions:]_block_invoke(.block_descriptor=0x00000001029a6048) at AppDelegate.m:60:24
+  ...
+```
+
+&emsp;野指针访问：
+
+```c++
+// 当前在主线程
+(lldb) bt
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=1, address=0x539e0d66c11c)
+    frame #0: 0x00007fff20190d18 libobjc.A.dylib`objc_opt_respondsToSelector + 16
+    ...
+
+// 当前在子线程
+thread #1, queue = 'com.apple.main-thread'
+  frame #0: 0x00007fff2468f57e UIKitCore`+[_UIBackgroundTaskInfo backgroundTaskAssertionQueue]
+  ...
+  
+* thread #4, queue = 'com.apple.root.default-qos', stop reason = EXC_BAD_ACCESS (code=1, address=0xbc637211426c)
+    frame #0: 0x00007fff20190d18 libobjc.A.dylib`objc_opt_respondsToSelector + 16
     ...
 ```
 
+&emsp;附加一个数组越界的 crash 作为对比（它是 `abort` 函数调用 `pthread_kill` 发送了一个 `SIGABRT` 信号后程序中止）：
+
 ```c++
+// 当前在主线程
+(lldb) bt 
+* thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGABRT
+    frame #0: 0x00007fff61131462 libsystem_kernel.dylib`__pthread_kill + 10
+    frame #1: 0x00007fff6116a610 libsystem_pthread.dylib`pthread_kill + 263
+    frame #2: 0x00007fff200fab94 libsystem_c.dylib`abort + 120
+    ...
 
+// 当前在子线程
+(lldb) bt all
+  thread #1, queue = 'com.apple.main-thread'
+    frame #0: 0x00007fff204318a9 CoreFoundation`-[NSSet anyObject]
+    ...
+
+* thread #5, queue = 'com.apple.root.default-qos', stop reason = signal SIGABRT
+  * frame #0: 0x00007fff61131462 libsystem_kernel.dylib`__pthread_kill + 10
+    frame #1: 0x00007fff6116a610 libsystem_pthread.dylib`pthread_kill + 263
+    frame #2: 0x00007fff200fab94 libsystem_c.dylib`abort + 120
+    ...
 ```
-
-
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被终止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
 &emsp;上篇我们已经分析过 Objective-C 的异常捕获处理，下面我们开始详细学习 mach 异常和 signal 处理。
-
 
 ```c++
 #import "AppDelegate.h"
@@ -90,8 +139,7 @@ void mySignalHandler(int signal) {
 
 ### Mach 异常 
 
-
-
+######### 总结 Mach 知识点：⬇️
 
 
 
@@ -119,7 +167,7 @@ void mySignalHandler(int signal) {
 + [pthread_kill引发的争论](https://www.jianshu.com/p/756240e837dd)
 + [线程的信号pthread_kill()函数（线程四）](https://blog.csdn.net/littesss/article/details/71156793)
 + [原子操作atomic_fetch_add](https://www.jianshu.com/p/985fb2e9c201)
-
++ [iOS Crash 分析攻略](https://zhuanlan.zhihu.com/p/159301707)
 
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
