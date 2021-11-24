@@ -141,7 +141,7 @@ void mySignalHandler(int signal) {
 
 ######### 总结 Mach 知识点：⬇️
 
-&emsp;首先我们梳理一下 Mach、XNU、BSD、Darwin、Kernel 等之间的一些联系或者关系。
+&emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先梳理一下，大概会涉及到：Mach、XNU、BSD、Darwin、Kernel、GUI、NeXTSTEP、macOS 等之间的一些联系或者关系。
 
 &emsp;对 Mach 的维基百科的的介绍进行总结：
 
@@ -162,9 +162,16 @@ void mySignalHandler(int signal) {
 1. 核心：名为 Darwin，是以 BSD 源代码和 Mach 微核心为基础，由苹果公司和独立开发者社群合作开发；
 2. GUI：由苹果公司开发，名为 Aqua 的专利的图形用户界面。（Aqua 是 macOS（旧称 Mac OS X 和 OS X）的 GUI 之商标名称）
 
-&emsp;[Kernel](https://zh.wikipedia.org/wiki/内核) ........
+&emsp;[IPC](https://zh.wikipedia.org/wiki/行程間通訊) 进程间通信：Inter-Process Communication，缩写：IPC，指至少两个进程或线程间传送数据或信号的一些技术或方法。IPC 对**微内核**和 nano 内核的设计过程非常重要。 微内核减少了内核提供的功能数量，然后通过 IPC 与服务器通信获得这些功能，与普通的宏内核相比，IPC 的数量大幅增加。
 
- 
+&emsp;[系统调用](https://zh.wikipedia.org/wiki/系统调用) 在电脑中，系统调用（英语：system call），指运行在用户空间的程序向操作系统内核请求需要更高权限运行的服务。系统调用提供用户程序与操作系统之间的接口。大多数系统交互式操作需求在内核态执行。如设备 IO 操作或者进程间通信。操作系统的进程空间可分为用户空间（用户态）和内核空间（内核态），它们需要不同的执行权限，其中系统调用运行在内核空间。系统调用和普通库函数调用非常相似，只是系统调用由操作系统内核提供，运行于内核态，而普通的库函数调用由函数库或用户自己提供，运行于用户态。（通过中断实现内核态和用户态的切换，后续还需要学习一下）
+
+&emsp;[Kernel](https://zh.wikipedia.org/wiki/内核) 内核/核心：Kernel，在计算机科学中是一个用来**管理**软件发出的资料 I/O（输入与输出）要求的电脑程序，将这些要求转译为资料处理的指令并交由中央处理器（CPU）及电脑中其他电子组件进行处理，是现代操作系统中最基本的部分。它是为众多应用程序提供对计算机硬件的安全访问的一部分软件，这种访问是有限的，并由内核决定一个程序在什么时候对某部分硬件操作多长时间。直接对硬件操作是非常复杂的，所以内核通常提供一种硬件抽象的方法，来完成这些操作。有了这个，通过 **进程间通信机制（IPC）** 及 **系统调用**，应用进程可间接控制所需的硬件资源（特别是处理器及 IO 设备）。（内核大概可理解为提供了应用进程和计算机硬件之间的桥梁）
+
+
+
+
+
 &emsp;[XNU](https://zh.wikipedia.org/wiki/XNU) XNU 是一个由苹果电脑开发用于macOS操作系统的操作系统内核。它是Darwin操作系统的一部分，跟随着Darwin一同作为自由及开放源代码软件被发布。它还是iOS、tvOS和watchOS操作系统的内核。XNU是X is Not Unix的缩写[1]。
 
 
@@ -190,10 +197,34 @@ void mySignalHandler(int signal) {
 在 Mach 下，这就交给了 IPC 系统。与直接系统调用不同，这里的用户进程是先向内核申请一个 port 的访问许可，然后利用 IPC 机制向这个 port 发送消息。虽说发送消息的操作同样是系统调用，但 Mach 内核的工作形式有些不同——handler 的工作可以交由其他进程实现。
 
 
+```c++
+(lldb) help process handle
+     Manage LLDB handling of OS signals for the current target process. Defaults to showing current policy.
+
+Syntax: process handle <cmd-options> [<unix-signal> [<unix-signal> [...]]]
+
+Command Options Usage:
+  process handle [-n <boolean>] [-p <boolean>] [-s <boolean>] [<unix-signal> [<unix-signal> [...]]]
+
+       -n <boolean> ( --notify <boolean> )
+            Whether or not the debugger should notify the user if the signal is received.
+
+       -p <boolean> ( --pass <boolean> )
+            Whether or not the signal should be passed to the process.
+
+       -s <boolean> ( --stop <boolean> )
+            Whether or not the process should be stopped if the signal is received.
+
+If no signals are specified, update them all.  If no update option is specified, list the current values.
+     
+     This command takes options and free-form arguments.  If your arguments
+     resemble option specifiers (i.e., they start with a - or --), you must use
+     ' -- ' between the end of the command options and the beginning of the
+     arguments.
+```
 
 
-
-
+&emsp;`UncaughtExceptionHandlers` 函数执行结束后， abort() -> pthread_kill 抛出的 `SIGABRT` 信号，使用 `signal(SIGABRT, MySignalHandler);` 捕获不到！ 
 
 
 
@@ -206,6 +237,7 @@ void mySignalHandler(int signal) {
 + [线程的信号pthread_kill()函数（线程四）](https://blog.csdn.net/littesss/article/details/71156793)
 + [原子操作atomic_fetch_add](https://www.jianshu.com/p/985fb2e9c201)
 + [iOS Crash 分析攻略](https://zhuanlan.zhihu.com/p/159301707)
++ [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html)
 
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)

@@ -1,4 +1,4 @@
-# iOS App Crash 学习：(一)：NSException 分析
+# iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）
 
 > &emsp;iOS Crash 的原因是应用收到了未处理的信号，未处理的信号可能来源于三个地方：kernel(系统内核)、其它进程、App 本身。因此，Crash 异常也可以分为三种：
 > 
