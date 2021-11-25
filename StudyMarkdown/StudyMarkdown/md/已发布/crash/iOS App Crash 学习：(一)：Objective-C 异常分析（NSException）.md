@@ -8,7 +8,7 @@
 > + Unix 信号：又称 BSD 信号，如果开发者没有捕获 Mach 异常，则会被 host 层的方法 ux_exception() 将异常转换为对应的 UNIX 信号，并通过方法 threadsignal() 将信号投递到出错线程。可以通过方法 signal(x, SignalHandler) 来捕获 single。 
 
 
-> + NSException：应用级异常，也是 Objective-C 异常，如果不进行捕获的话，程序最终会向主线程发送 SIGABRT 信号而中止程序运行。对于 Objective-C 异常，是可以通过 try catch 来捕获处理后让程序继续运行的。如果不捕获（或者捕获到异常以后继续调用 raise/@throw 抛出异常）可通过 NSSetUncaughtExceptionHandler 机制来记录异常的详细原因。(并不能阻止程序崩溃，最终还是会发出 SIGABRT 信号，即该崩还是崩，我们能做的是先在这里把崩溃的详细信息写入本地文件，然后调用 NSGetUncaughtExceptionHandler 获取到的其他开发者设置的异常捕获函数，（防止覆盖了别人的异常记录），然后再调用一个 kill(getpid(), SIGKILL) 杀掉程序，防止 NSSetUncaughtExceptionHandler 设置的未捕获异常处理函数执行结束后，程序发出的 SIGABRT 信号被设置的 signalException 信号处理函数再次捕获，防止重复记录同一个崩溃。) [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
+> + NSException：应用级异常，也是 Objective-C 异常，如果不进行捕获的话，程序最终会向主线程发送 SIGABRT 信号而中止程序运行。对于 Objective-C 异常，是可以通过 try catch 来捕获处理后让程序继续运行的。如果不捕获（或者捕获到异常以后继续调用 raise/@throw 抛出异常）可通过 NSSetUncaughtExceptionHandler 机制来记录异常的详细原因。(并不能阻止程序崩溃，最终还是会发出 SIGABRT 信号，即该崩还是崩，我们能做的是先在这里把崩溃的详细信息写入本地文件，然后调用 NSGetUncaughtExceptionHandler 获取到的其他开发者设置的未捕获异常处理函数，（防止覆盖了别人的异常记录），然后再调用一个 kill(getpid(), SIGKILL) 杀掉程序，~~防止 NSSetUncaughtExceptionHandler 设置的未捕获异常处理函数执行结束后，程序发出的 SIGABRT 信号被设置的 signalException 信号处理函数再次捕获，防止重复记录同一个崩溃。~~ 这里并不会造成重复记录，测试发现，未捕获异常处理函数执行结束后，abort() 发出了 SIGABRT 信号，但并不会回调 signalException) [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 
 &emsp;关于程序终止的 `SIGABRT` 信号，我们可以随便写一段数组越界的函数运行，然后程序 crash 以后，我们在控制台执行 bt 指令，可看到程序停止的原因是主线程收到了 SIGABRT 信号。 
 
@@ -553,7 +553,7 @@ void uncaughtExceptionHandler(NSException *exception) {
 }
 ```
 
-&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置（或者我们自己设置过后，又被第三方 SDK 设置了一遍，导致它把我们自己设置的未捕获异常处理函数覆盖了），所以我们可以先调用 `NSGetUncaughtExceptionHandler`函数来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的未捕获异常处理函数，然后再调用 `kill(getpid(), SIGKILL)` 杀掉程序，防止 `uncaughtExceptionHandler` 函数执行结束后，程序发出的 SIGABRT 信号被设置的 `signalException` 信号处理函数再次处理，防止重复记录同一个崩溃。
+&emsp;然后我们再调用 `NSSetUncaughtExceptionHandler` 函数把 `uncaughtExceptionHandler` 设置为统一处理未捕获异常的函数。这里还有一个点，如果我们调用 `NSSetUncaughtExceptionHandler` 之前，已经有其它引入的第三方 SDK 设置了未捕获异常的处理函数，此时我们再设置就会覆盖之前的设置（或者我们自己设置过后，又被第三方 SDK 设置了一遍，导致它把我们自己设置的未捕获异常处理函数覆盖了），所以我们可以先调用 `NSGetUncaughtExceptionHandler`函数来获取当前的未捕获异常处理函数，并用一个函数指针记录下来，然后在我们新设置的未捕获异常处理函数中再调用一次原始的未捕获异常处理函数，然后再调用 `kill(getpid(), SIGKILL)` 杀掉程序。~~防止 `uncaughtExceptionHandler` 函数执行结束后，程序发出的 SIGABRT 信号被设置的 `signalException` 信号处理函数再次处理，防止重复记录同一个崩溃~~（这里并不会造成重复记录，测试发现，未捕获异常处理函数执行结束后，abort() 发出了 SIGABRT 信号，但并不会回调 signalException）
 
 ```c++
 static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;

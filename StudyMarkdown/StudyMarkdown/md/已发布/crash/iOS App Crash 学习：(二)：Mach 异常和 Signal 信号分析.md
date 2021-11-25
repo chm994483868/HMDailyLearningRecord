@@ -130,11 +130,10 @@ void mySignalHandler(int signal) {
 
 > &emsp;**Mach 为 XNU 的微内核，Mach 异常为最底层的内核级异常。在 iOS 系统中，底层 Crash 先触发 Mach 异常，然后再转换为对应的 Signal 信号**。
 
-&emsp;Darwin 是 macOS 和 iOS 的操作系统，而 XNU 是 Darwin 操作系统的内核部分。XNU 是混合内核，兼具宏内核和微内核的特性，而 Mach 即为其微内核。Mac 可执行 `system_profiler SPSoftwareDataType` 命令查看当前设备的 Darwin 版本号。
+&emsp;Darwin 是 macOS 和 iOS 的操作系统，而 XNU 是 Darwin 操作系统的内核部分。XNU 是混合内核，兼具宏内核和微内核的特性，而 Mach 即为其微内核。
 
-![截屏2021-11-20 09.09.20.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/eec1dc7e8fe34a82979793b2f6e2463b~tplv-k3u1fbpfcp-watermark.image?)
 
-![截屏2021-11-21 上午8.47.18.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/146836b6c7d04a4da5d316b085dafafa~tplv-k3u1fbpfcp-watermark.image?)
+
 
 
 ### Mach 异常 
@@ -182,10 +181,9 @@ void mySignalHandler(int signal) {
 
 &emsp;[XNU](https://zh.wikipedia.org/wiki/XNU) XNU 是一个由苹果电脑开发用于 macOS 操作系统的操作系统内核。它是 Darwin 操作系统的一部分，跟随着 Darwin 一同作为自由及开放源代码软件被发布。它还是 iOS、tvOS 和 watchOS 操作系统的内核。XNU 是 X is Not Unix 的缩写。...................
 
-&emsp;[Darwin](https://zh.wikipedia.org/wiki/Darwin_(操作系统)) Darwin 是由苹果公司于 2000 年所发布的一个开放源代码操作系统。Darwin 是 macOS 和 iOS 操作环境的操作系统部分。Darwin 是一种类 Unix 操作系统，它的内核是 XNU（XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能），其以微核心为基础的核心架构来实现 Mach，而操作系统的服务和用户空间工具则以 BSD 为基础。类似其他类 Unix 操作系统，Darwin 也有对称多处理器的优点，高性能的网络设施和支持多种集成的文件系统。集成 Mach 到 XNU 内核的好处是可携性，或者是在不同形式的系统使用软件的能力。举例来说，一个操作系统核心集成了 Mach 微核心，能够提供多种不同 CPU 架构的二进制格式到一个单一的文件（例如 x86 和 PowerPC），这是因为它使用了 Mach-O 的二进制格式。（到这里就和我们之前学习 Mach-O 的知识点联系起来了）
+&emsp;[Darwin](https://zh.wikipedia.org/wiki/Darwin_(操作系统)) Darwin 是由苹果公司于 2000 年所发布的一个开放源代码操作系统（2003 年 7 月，苹果在 APSL（Apple Public Source License）的 2.0 版本下发布了 Darwin）。Darwin 是 macOS 和 iOS 操作环境的操作系统部分。Darwin 是一种类 Unix 操作系统，它的内核是 XNU（XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能），其以微核心为基础的核心架构来实现 Mach，而操作系统的服务和用户空间工具则以 BSD 为基础。类似其他类 Unix 操作系统，Darwin 也有对称多处理器的优点，高性能的网络设施和支持多种集成的文件系统。集成 Mach 到 XNU 内核的好处是可携性，或者是在不同形式的系统使用软件的能力。举例来说，一个操作系统核心集成了 Mach 微核心，能够提供多种不同 CPU 架构的二进制格式到一个单一的文件（例如 x86 和 PowerPC），这是因为它使用了 Mach-O 的二进制格式。（到这里就和我们之前学习 Mach-O 的知识点联系起来了）
 
-
-&emsp;命令终端中的 uname -r 命令将显示 Darwin 版本号，uname -v 命令将显示 XNU 构建版本的字符串，其中包括 Darwin 的版本号。
+&emsp;在 mac 电脑的命令终端中执行 uname -r 命令将显示 Darwin 版本号，执行 uname -v 命令将显示 XNU 构建版本的字符串，其中包括 Darwin 的版本号（uname 后面可跟 -a -m -n -p -r -s -v）。执行 system_profiler SPSoftwareDataType 命令将显示 mac 电脑的 software 信息。如下：
 
 ```c++
 ➜  ~ uname -r
@@ -194,6 +192,35 @@ void mySignalHandler(int signal) {
 Darwin Kernel Version 21.1.0: Wed Oct 13 17:33:23 PDT 2021; root:xnu-8019.41.5~1/RELEASE_X86_64
 ➜  ~ 
 ```
+
+```c++
+hmc@localhost ~ % system_profiler SPSoftwareDataType
+Software:
+
+    System Software Overview:
+
+      System Version: macOS 11.2.2 (20D80)
+      Kernel Version: Darwin 20.3.0
+      Boot Volume: Macintosh HD
+      Boot Mode: Normal
+      Computer Name: HM的Mac mini
+      User Name: HM C (hmc)
+      Secure Virtual Memory: Enabled
+      System Integrity Protection: Enabled
+      Time since boot: 17:56
+
+hmc@localhost ~ % 
+```
+
+```c++
+
+```
+
+![截屏2021-11-20 09.09.20.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/eec1dc7e8fe34a82979793b2f6e2463b~tplv-k3u1fbpfcp-watermark.image?)
+
+![截屏2021-11-21 上午8.47.18.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/146836b6c7d04a4da5d316b085dafafa~tplv-k3u1fbpfcp-watermark.image?)
+
+&emsp;
 
 
 
