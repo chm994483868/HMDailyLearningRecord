@@ -1,12 +1,12 @@
 # iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
 
-&emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常，但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
+&emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常（处理异常），但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
 
 ⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常（正常情况下都会转化为 signal 信号，但是比如收集到 mach 异常后，直接调用了 `exit()` 函数就会导致程序终止而没有产生对应的 signal 信号），还是 Mach 异常后会发送 signal 信号，后面要验证一下：
 
 这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
 
-&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又去访问 objc 已经被释放的内存) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有得到执行！ 
+&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又去访问 objc 已经被释放的内存，造成野指针访问) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有得到执行！ 
 
 ```c++
 __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
@@ -22,18 +22,18 @@ int result = b / a;
 NSLog(@"🏵🏵🏵 %d", result);
 ```
 
-&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别如下：`EXC_ARITHMETIC`、`EXC_BAD_ACCESS`、`signal SIGABRT`。 这里还有一个小细节，就是程序退出大概是某条线程的退出：主线程或子线程，当我们把上述代码放在一条子线程的执行的话，便会看到子线程的停止原因。
+&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别如下：`EXC_ARITHMETIC`、`EXC_BAD_ACCESS`、`signal SIGABRT`。 这里还有一个小细节，就是程序退出大概是某条线程的退出，可以是主线程也可是某条子线程，当我们把上述代码放在一条子线程执行的话，便会看到控制台输出中最后一条是子线程的停止原因。
 
-&emsp;除零操作：
+&emsp;除零操作（EXC_ARITHMETIC）：
 
 ```c++
-// 当前在主线程
+// 当前在主线程 crash
 (lldb) bt
 * thread #1, queue = 'com.apple.main-thread', stop reason = EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)
   * frame #0: 0x0000000102d06daf dSYMDemo`-[AppDelegate application:didFinishLaunchingWithOptions:](self=0x0000600002bb82c0, _cmd="application:didFinishLaunchingWithOptions:", application=0x00007fe1dbc06f50, launchOptions=0x0000000000000000) at AppDelegate.m:59:20
   ...
   
-// 当前在子线程
+// 当前在子线程 crash
 (lldb) bt all
   thread #1, queue = 'com.apple.main-thread'
     frame #0: 0x00007fff203b69a4 CoreFoundation`__CFStringHash + 151
@@ -44,16 +44,16 @@ NSLog(@"🏵🏵🏵 %d", result);
   ...
 ```
 
-&emsp;野指针访问：
+&emsp;野指针访问（EXC_BAD_ACCESS）：
 
 ```c++
-// 当前在主线程
+// 当前在主线程 crash
 (lldb) bt
 * thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=1, address=0x539e0d66c11c)
     frame #0: 0x00007fff20190d18 libobjc.A.dylib`objc_opt_respondsToSelector + 16
     ...
 
-// 当前在子线程
+// 当前在子线程 crash
 thread #1, queue = 'com.apple.main-thread'
   frame #0: 0x00007fff2468f57e UIKitCore`+[_UIBackgroundTaskInfo backgroundTaskAssertionQueue]
   ...
@@ -63,10 +63,10 @@ thread #1, queue = 'com.apple.main-thread'
     ...
 ```
 
-&emsp;附加一个数组越界的 crash 作为对比（它是 `abort` 函数调用 `pthread_kill` 发送了一个 `SIGABRT` 信号后程序中止）：
+&emsp;附加一个数组越界的 crash 作为对比（它最终是 `abort` 函数调用 `pthread_kill` 发送了一个 `SIGABRT` 信号停止某条线程后，连带程序中止）：
 
 ```c++
-// 当前在主线程
+// 当前在主线程 crash
 (lldb) bt 
 * thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGABRT
     frame #0: 0x00007fff61131462 libsystem_kernel.dylib`__pthread_kill + 10
@@ -74,7 +74,7 @@ thread #1, queue = 'com.apple.main-thread'
     frame #2: 0x00007fff200fab94 libsystem_c.dylib`abort + 120
     ...
 
-// 当前在子线程
+// 当前在子线程 crash
 (lldb) bt all
   thread #1, queue = 'com.apple.main-thread'
     frame #0: 0x00007fff204318a9 CoreFoundation`-[NSSet anyObject]
@@ -124,7 +124,7 @@ void mySignalHandler(int signal) {
 }
 ```
 
-&emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App  去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
+&emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App 去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
 
 &emsp;学习 Crash 捕获相关的 **Mach 异常** 和 **signal 信号处理**。
 
@@ -140,7 +140,7 @@ void mySignalHandler(int signal) {
 
 ######### 总结 Mach 知识点：⬇️
 
-&emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先梳理一下，大概会涉及到：Mach、XNU、BSD、Darwin、Kernel、GUI、NeXTSTEP、macOS 等之间的一些联系或者关系。
+&emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：Mach、XNU、BSD、Darwin、Kernel、GUI、NeXTSTEP、macOS 等之间的一些联系或者关系。
 
 &emsp;对 Mach 的维基百科的的介绍进行总结：
 
@@ -154,11 +154,11 @@ void mySignalHandler(int signal) {
 
 &emsp;[macOS](https://zh.wikipedia.org/wiki/MacOS)/ˌmækʔoʊˈɛs/ 是苹果公司推出的基于 GUI 的操作系统，为麦金塔（Macintosh，简称 Mac）系列电脑的主操作系统。Classic Mac OS（操作系统，简称 Mac OS，注意这里是没有 X 的）所指的是苹果公司从 1984 年至 2001 年间为麦金塔系列电脑所开发的一系列操作系统，始于 System 1，终结于 Mac OS 9，1997 年，史蒂夫·乔布斯重回苹果公司，经过为期四年的开发，苹果公司于 2001 年以新的操作系统 Mac OS X 取代了 Classic Mac OS。它保留了 Classic Mac OS 的大部分 GUI 设计元素，并且应用程序框架为了兼容性而存在着一些重叠，但这两个操作系统的起源和结构以及底层代码完全不同。简单来说，Mac OS X 它是 Mac OS 版本 10 的分支，然而它与早期发行的 Mac OS 相比，在 Mac OS 的历史上是彻底走向独立发展的。自 2001 年推出起，Mac OS X 这个名字随着时间的推移也发生了一些变化，2001 年至 2011 年间称作 Mac OS X，2012 年至 2015 年称 OS X，2016 年 6 月，苹果公司宣布 OS X 更名为 macOS，以便与苹果其他操作系统 iOS、watchOS 和 tvOS 保持统一的命名风格。
 
-&emsp;[POSIX](https://zh.wikipedia.org/wiki/可移植操作系统接口) 可移植操作系统接口：Portable Operating System Interface，缩写：POSIX，是 IEEE（电气电子工程师学会） 为要在各种 UNIX 操作系统上运行软件，而定义 API 的一系列互相关联的标准的总称，其正式称呼为 IEEE Std 1003，而国际标准名称为 ISO/IEC 9945。此标准源于一个大约开始于 1985 年的项目。POSIX 这个名称是由理查德·斯托曼（RMS）应 IEEE 的要求而提议的一个易于记忆的名称。它基本上是 Portable Operating System Interface（可移植操作系统接口）的缩写，而最后一个字母 X 则表明其对 Unix API 的传承。
+&emsp;[POSIX](https://zh.wikipedia.org/wiki/可移植操作系统接口) 可移植操作系统接口：Portable Operating System Interface，缩写：POSIX，是 IEEE（电气电子工程师学会）为要在各种 UNIX 操作系统上运行软件，而定义 API 的一系列互相关联的标准的总称，其正式称呼为 IEEE Std 1003，而国际标准名称为 ISO/IEC 9945。此标准源于一个大约开始于 1985 年的项目。POSIX 这个名称是由理查德·斯托曼（RMS）应 IEEE 的要求而提议的一个易于记忆的名称。它基本上是 Portable Operating System Interface（可移植操作系统接口）的缩写，而最后一个字母 X 则表明其对 Unix API 的传承。
 
 &emsp;Mac OS X 是与先前的 Mac OS 彻底地分离开来的一个操作系统，它的底层代码与先前版本完全不同。Mac OS X 新的核心名为 Darwin，是一套开放源码、符合 POSIX 标准的操作系统，伴随着标准的 Unix 命令行与其强大的应用工具。macOS 包含两个主要的部分：
 
-1. 核心：名为 Darwin，是以 BSD 源代码和 Mach 微核心为基础，由苹果公司和独立开发者社群合作开发；
+1. 核心：名为 Darwin，是以 BSD 源代码和 Mach 微核心为基础，由苹果公司和独立开发者社群合作开发
 2. GUI：由苹果公司开发，名为 Aqua 的专利的图形用户界面。（Aqua 是 macOS（旧称 Mac OS X 和 OS X）的 GUI 之商标名称）
 
 &emsp;[IPC](https://zh.wikipedia.org/wiki/行程間通訊) 进程间通信：Inter-Process Communication，缩写：IPC，指至少两个进程或线程间传送数据或信号的一些技术或方法。IPC 对**微内核**和 nano 内核的设计过程非常重要。 微内核减少了内核提供的功能数量，然后通过 IPC 与服务器通信获得这些功能，与普通的宏内核相比，IPC 的数量大幅增加。
@@ -213,7 +213,22 @@ hmc@localhost ~ %
 ```
 
 ```c++
+➜  ~ system_profiler SPSoftwareDataType
+Software:
 
+    System Software Overview:
+
+      System Version: macOS 12.0.1 (21A559)
+      Kernel Version: Darwin 21.1.0
+      Boot Volume: Macintosh HD
+      Boot Mode: Normal
+      Computer Name: HM的MacBook Pro
+      User Name: HM C (hmc)
+      Secure Virtual Memory: Enabled
+      System Integrity Protection: Disabled
+      Time since boot: 2:25
+
+➜  ~ 
 ```
 
 ![截屏2021-11-20 09.09.20.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/eec1dc7e8fe34a82979793b2f6e2463b~tplv-k3u1fbpfcp-watermark.image?)
