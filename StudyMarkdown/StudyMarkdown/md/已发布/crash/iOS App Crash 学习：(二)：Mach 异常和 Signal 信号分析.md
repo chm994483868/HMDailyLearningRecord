@@ -2,7 +2,7 @@
 
 &emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常（处理异常），但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
 
-⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常（正常情况下都会转化为 signal 信号，但是比如收集到 mach 异常后，直接调用了 `exit()` 函数就会导致程序终止而没有产生对应的 signal 信号），还是 Mach 异常后会发送 signal 信号，后面要验证一下：
+⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常（正常情况下都会转化为 signal 信号，但是比如收集到 Mach 异常后，直接调用了 `exit()` 函数就会导致程序终止而没有产生对应的 signal 信号），还是 Mach 异常后会发送 signal 信号，后面要验证一下：
 
 这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
 
@@ -89,7 +89,7 @@ thread #1, queue = 'com.apple.main-thread'
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被终止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
-&emsp;上篇我们已经分析过 Objective-C 的异常捕获处理，下面我们开始详细学习 mach 异常和 signal 处理。
+&emsp;上篇我们已经分析过 Objective-C 的异常捕获处理，下面我们开始详细学习 Mach 异常和 signal 处理。
 
 ```c++
 #import "AppDelegate.h"
@@ -126,23 +126,14 @@ void mySignalHandler(int signal) {
 
 &emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App 去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
 
-&emsp;学习 Crash 捕获相关的 **Mach 异常** 和 **signal 信号处理**。
-
-> &emsp;**Mach 为 XNU 的微内核，Mach 异常为最底层的内核级异常。在 iOS 系统中，底层 Crash 先触发 Mach 异常，然后再转换为对应的 Signal 信号**。
-
-&emsp;Darwin 是 macOS 和 iOS 的操作系统，而 XNU 是 Darwin 操作系统的内核部分。XNU 是混合内核，兼具宏内核和微内核的特性，而 Mach 即为其微内核。
-
-
 
 
 
 ### Mach 异常 
 
-######### 总结 Mach 知识点：⬇️
+&emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：BSD、Mach、GUI、NeXTSTEP、macOS、POSIX、IPC、system call、Kernel、宏内核、微内核、混合内核、XNU、Darwin 等以及他们之间的一些联系或者关系。
 
-&emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：Mach、XNU、BSD、Darwin、Kernel、GUI、NeXTSTEP、macOS 等之间的一些联系或者关系。
-
-&emsp;对 Mach 的维基百科的的介绍进行总结：
+&emsp;下面我们对维基百科中对以上名词的介绍进行摘录：
 
 &emsp;[BSD](https://zh.wikipedia.org/wiki/BSD)伯克利软件包：Berkeley Software Distribution，缩写：BSD，也被称为伯克利 Unix 或 Berkeley Unix，是一个派生自 Unix（类 Unix）的操作系统，1970 年代由伯克利加州大学的学生比尔·乔伊开创，也被用来代表其派生出的各种包。
 
@@ -179,11 +170,13 @@ void mySignalHandler(int signal) {
 
 &emsp;[混合内核](https://zh.wikipedia.org/wiki/混合核心) Hybrid kernel，又称为混合式核心、混合内核，是指一种操作系统内核架构。传统上的操作系统内核可以分为宏内核（Monolithic kernel）与微核心（Micro kernel）两大基本架构，混合核心结合了这两种核心架构，混合核心的基本设计理念，是以微核心架构来设计操作系统核心，但在实现上则采用宏内核的做法。混合核心实质上是微核心，只不过它让一些微核结构执行在用户空间的代码执行在核心空间，这样让核心的执行效率更高些。这是一种妥协做法，设计者参考了微核心结构的系统执行速度不佳的理论。
 
-&emsp;[XNU](https://zh.wikipedia.org/wiki/XNU) XNU 是一个由苹果电脑开发用于 macOS 操作系统的操作系统内核。它是 Darwin 操作系统的一部分，跟随着 Darwin 一同作为自由及开放源代码软件被发布。它还是 iOS、tvOS 和 watchOS 操作系统的内核。XNU 是 X is Not Unix 的缩写。...................
+&emsp;[XNU](https://zh.wikipedia.org/wiki/XNU) XNU 是一个由苹果电脑开发用于 macOS 操作系统的操作系统内核。它是 Darwin 操作系统的一部分，跟随着 Darwin 一同作为自由及开放源代码软件被发布。它还是 iOS、tvOS 和 watchOS 操作系统的内核。XNU 是 X is Not Unix 的缩写。XNU 最早是 NeXT 公司为了 NeXTSTEP 操作系统而发展的。它是一种混合式核心（Hybrid kernel），结合了由卡内基美隆大学发展的 Mach 2.5 版，4.3 BSD，与称为 Driver Kit 的面向对象程序设计应用程序界面。在苹果电脑收购 NeXT 公司之后，XNU 的 Mach 微内核被升级到 Mach 3.0，BSD 的部分升级至 FreeBSD，Driver Kit 则改成 I/O Kit，一套以 C++ 撰写的应用程序界面。XNU 是一个混合内核，将宏内核与微内核两者的特性兼收并蓄，以期同时拥有两种内核的优点————比如在微内核中提高操作系统模块化程度以及让操作系统更多的部分接受内存保护的消息传递机制，和宏内核在高负荷下表现的高性能。到 2007 年为止，XNU 支持单核和具有对称多处理的 ARM，IA-32 和 x86-64 处理器。在第 10 版（即 Mac OS X 10.6）之后，不再支持 PowerPC。
+
+&emsp;**XNU 中的 Mach:** XNU 内核以一个被深度定制的 Mach 3.0 内核作为基础。如此这般，它便可以把操作系统的核心部分作为独立的进程运行，由此带来极大的灵活性（Mach 核心之上可平行运行多个操作系统）。但是因为 **内核态/用户态的上下文切换** 会额外消耗时间，同时内核与服务进程之间的消息传递也会降低运行效率，所以这种设计通常会降低性能。为了提高效率，在 Mac OS X 中 BSD 部分与 Mach 一起内建于核心部分。深度定制的 “混合” Mach 3.0 内核与传统 BSD 内核聚变一体的产物就是一个 “混合” 内核，同时具有两者的优点与缺点。
 
 &emsp;[Darwin](https://zh.wikipedia.org/wiki/Darwin_(操作系统)) Darwin 是由苹果公司于 2000 年所发布的一个开放源代码操作系统（2003 年 7 月，苹果在 APSL（Apple Public Source License）的 2.0 版本下发布了 Darwin）。Darwin 是 macOS 和 iOS 操作环境的操作系统部分。Darwin 是一种类 Unix 操作系统，它的内核是 XNU（XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能），其以微核心为基础的核心架构来实现 Mach，而操作系统的服务和用户空间工具则以 BSD 为基础。类似其他类 Unix 操作系统，Darwin 也有对称多处理器的优点，高性能的网络设施和支持多种集成的文件系统。集成 Mach 到 XNU 内核的好处是可携性，或者是在不同形式的系统使用软件的能力。举例来说，一个操作系统核心集成了 Mach 微核心，能够提供多种不同 CPU 架构的二进制格式到一个单一的文件（例如 x86 和 PowerPC），这是因为它使用了 Mach-O 的二进制格式。（到这里就和我们之前学习 Mach-O 的知识点联系起来了）
 
-&emsp;在 mac 电脑的命令终端中执行 uname -r 命令将显示 Darwin 版本号，执行 uname -v 命令将显示 XNU 构建版本的字符串，其中包括 Darwin 的版本号（uname 后面可跟 -a -m -n -p -r -s -v）。执行 system_profiler SPSoftwareDataType 命令将显示 mac 电脑的 software 信息。如下：
+&emsp;在 mac 电脑的命令终端中执行 `uname -r` 命令将显示 Darwin 版本号，执行 `uname -v` 命令将显示 XNU 构建版本的字符串，其中包括 Darwin 的版本号（uname 后面可跟 -a -m -n -p -r -s -v）。执行 `system_profiler SPSoftwareDataType` 命令将显示 mac 电脑的 software 信息。如下输出：
 
 ```c++
 ➜  ~ uname -r
@@ -191,25 +184,6 @@ void mySignalHandler(int signal) {
 ➜  ~ uname -v
 Darwin Kernel Version 21.1.0: Wed Oct 13 17:33:23 PDT 2021; root:xnu-8019.41.5~1/RELEASE_X86_64
 ➜  ~ 
-```
-
-```c++
-hmc@localhost ~ % system_profiler SPSoftwareDataType
-Software:
-
-    System Software Overview:
-
-      System Version: macOS 11.2.2 (20D80)
-      Kernel Version: Darwin 20.3.0
-      Boot Volume: Macintosh HD
-      Boot Mode: Normal
-      Computer Name: HM的Mac mini
-      User Name: HM C (hmc)
-      Secure Virtual Memory: Enabled
-      System Integrity Protection: Enabled
-      Time since boot: 17:56
-
-hmc@localhost ~ % 
 ```
 
 ```c++
@@ -231,13 +205,94 @@ Software:
 ➜  ~ 
 ```
 
-![截屏2021-11-20 09.09.20.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/eec1dc7e8fe34a82979793b2f6e2463b~tplv-k3u1fbpfcp-watermark.image?)
+&emsp;看到这里的话我们大概就可以对 Mach 的位置进行一个总结了：Darwin 是 macOS 和 iOS 操作环境的操作系统部分，它的内核是 XNU，XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能，而 XNU 内核的微内核部分便是一个被深度定制的 Mach 3.0 内核，所以看到这里我们便可理解那句 **Mach 异常为最底层的内核级异常**，我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码，Mach 异常便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中：
 
-![截屏2021-11-21 上午8.47.18.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/146836b6c7d04a4da5d316b085dafafa~tplv-k3u1fbpfcp-watermark.image?)
+> &emsp;异常首先有处理器陷阱引发，然后 Mach 的异常处理程序 exception_triage() 负责将异常转换成 Mach 消息。exception_triage() 内部通过 exception_deliver() 尝试把异常依次投递到三个端口：thread、task、host(默认)，如果没有一个端口返回，任务即被终止。（这个过程暂时完全理解不了...）
 
-&emsp;
+&emsp;下面我们列举几个比较常见的 Mach 异常：
+
+```c++
+/*
+ *    Machine-independent exception definitions.
+ */
+
+/* Could not access memory. */
+/* Code contains kern_return_t describing error. */
+/* Subcode contains bad memory address. */
+#define EXC_BAD_ACCESS          1       
+```
+
+&emsp;通常由于访问了不该访问的内存导致。
+
+```c++
+/* Instruction failed */
+/* Illegal or undefined instruction or operand */
+#define EXC_BAD_INSTRUCTION     2       
+```
+
+&emsp;此类异常通常由于线程执行非法指令导致。
+
+```c++
+/* Arithmetic exception */
+/* Exact nature of exception is in code field */
+#define EXC_ARITHMETIC          3       
+```
+
+&emsp;算术异常，除零错误会抛出此类异常。
+
+```c++
+
+```
 
 
+
+
+
+
+
+
+&emsp;下面我们再看一下 [《Kernel Programming Guide》](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html?spm=a2c6h.12873639.0.0.15ee7113vyXhuI#//apple_ref/doc/uid/TP30000905-CH209-TPXREF102) 文档中的介绍 Mach 的部分。
+
+&emsp;Mach Overview
+
+&emsp;OS X 内核的基本服务和原语（fundamental services and primitives）基于 Mach 3.0。Apple 已经修改并扩展了 Mach，以更好地满足 OS X 的功能和性能目标。Mach 3.0 最初被设想为一个简单，可扩展的通信微内核。它能够作为独立内核运行，其他传统操作系统服务（如 I/O、文件系统和网络堆栈）作为用户模式服务运行。
+
+&emsp;但是，在 OS X 中，Mach 与其他内核组件链接到单个内核地址空间中。这主要是为了性能;在链接组件之间进行直接调用比在单独的任务之间发送消息或执行远程过程调用 remote procedure calls（RPC） 要快得多。这种模块化结构使系统比单片内核所允许的更强大，更具可扩展性，而不会受到纯微内核的性能损失。
+
+&emsp;因此，在 OSX 中，Mach 主要不是客户端和服务器之间的通信枢纽。相反，它的价值在于它的抽象性、可扩展性和灵活性。特别是，Mach 提供了:
+
++ 以通信通道（communication channels）（例如 ports）作为对象引用的基于对象的 API
++ 高度并行执行，包括抢占式调度线程和对 SMP 的支持
++ 灵活的调度框架，支持实时使用
++ 一整套 IPC 原语，包括消息传递、RPC、同步和通知
++ 支持大型虚拟地址空间、共享内存区域和由持久存储支持的内存对象
++ 经验证的可扩展性和可移植性，例如跨指令集体系结构和在分布式环境中
++ 安全和资源管理是设计的基本原则；所有资源都是虚拟化的
+
+&emsp;Mach Kernel Abstractions
+
+&emsp;Mach 提供了一小部分抽象（Abstractions），这些抽象（Abstractions）被设计为既简单又强大。以下是主要的内核抽象（Kernel Abstractions）：
+
++ Tasks。资源所有权的单位；每个任务由一个虚拟地址空间、一个端口权限命名空间和一个或多个线程组成。（类似于 process）
++ Threads。任务中的 CPU 执行单位。
++ Address space。Mach 与内存管理器一起实现了 sparse 虚拟地址空间和共享内存的概念。
++ Memory objects。内存管理的内部单元。内存对象包括命名的条目和区域；它们是可能映射到地址空间的潜在持久数据的表示。
++ Ports。安全的单工通信通道，只能通过发送和接收功能（称为端口权限）访问。
++ IPC。消息队列、远程过程调用、通知、信号量和锁集。
++ Time。时钟、计时器和等待。
+
+&emsp;在 trap 级别，大多数 Mach 抽象的接口由发送到和来自表示这些对象的内核端口的消息组成。trap-level 接口（如 mach_msg_overwrite_trap）和消息格式本身在正常使用中由 Mach 接口生成器（MIG）抽象。MIG 用于根据对基于消息的 API 的描述，编译这些 API 的过程接口。
+
+&emsp;Tasks and Threads
+
+&emsp;OS X 进程和 POSIX 线程（pthreads）分别在 Mach 任务和线程之上实现。线程是任务中的控制流点。存在一个任务，用于为其包含的线程提供资源。进行此拆分是为了提供并行性和资源共享。
+
+
+
+
+
+
+> &emsp;**Mach 为 XNU 的微内核，Mach 异常为最底层的内核级异常。在 iOS 系统中，底层 Crash 先触发 Mach 异常，然后再转换为对应的 Signal 信号**。
 
 
 
@@ -296,7 +351,7 @@ If no signals are specified, update them all.  If no update option is specified,
 + [原子操作atomic_fetch_add](https://www.jianshu.com/p/985fb2e9c201)
 + [iOS Crash 分析攻略](https://zhuanlan.zhihu.com/p/159301707)
 + [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html)
-
++ [Apple 源码文件下载列表](https://opensource.apple.com/tarballs/)
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
 
