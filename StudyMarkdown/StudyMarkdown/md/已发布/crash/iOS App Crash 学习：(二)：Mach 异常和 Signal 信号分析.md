@@ -1,6 +1,13 @@
 # iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
 
-&emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常（处理异常），但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等）。
+&emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常（处理异常），但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等），所以这里就要学习 Mach 异常处理和 signal 信号处理。
+
+&emsp;NSException 是应用层面的异常，具体来说就是 Objective-C 异常，它与其他两者的最大区别就是 Mach 异常与 Unix 信号是硬件层面的异常，NSException 是软件层面的异常，且它们三者中两者有一些转化关系。
+
++ 当发生 Objective-C 异常，且不进行捕获时，最终程序会因当前线程收到 `SIGABRT` 信号而终止，此时我们只能使用 try catch 或 NSSetUncaughtExceptionHandler 来记录处理，最终抛出的 `SIGABRT` 信号，我们使用 `signal(SIGABRT, SignalHandler);` 并不能收到回调。（NSException -> Signal）
++ Mach 异常基本都会转换成 Signal，但是有些情况下，Mach 还没转换成 Signal，程序就已经被杀死了（如死循环导致的内存溢出），这时候就无法捕获 Signal 了。（Mach -> Signal）
++ 有些异常不会经过 Mach Exception，也不会被 NSException 捕获，只能通过 Signal 捕获，原因是底层直接调用了 `__pthread_kill` 函数直接向某条线程发送了 Signal。
+
 
 ⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常（正常情况下都会转化为 signal 信号，但是比如收集到 Mach 异常后，直接调用了 `exit()` 函数就会导致程序终止而没有产生对应的 signal 信号），还是 Mach 异常后会发送 signal 信号，后面要验证一下：
 
@@ -425,7 +432,25 @@ Software:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 > &emsp;**Mach 为 XNU 的微内核，Mach 异常为最底层的内核级异常。在 iOS 系统中，底层 Crash 先触发 Mach 异常，然后再转换为对应的 Signal 信号**。
+
+
+
+
+
 
 
 
