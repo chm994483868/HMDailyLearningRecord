@@ -1,29 +1,37 @@
 # iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
 
-&emsp;Objective-C 异常是应用层面的异常，我们可以通过 `@try` `@catch`（捕获）或 `NSSetUncaughtExceptionHandler`（记录）函数来捕获或记录异常（处理异常），这里之所以说 Objective-C 异常是应用层面的异常是因为当发生 Objective-C 异常时就仅是一个 NSException 对象被 raise/@throw 仅仅在未捕获处理此 NSException 对象的情况下最终才会导致进程中止，且最终进程中止的过程是系统调用了 abort 函数，abort 内部调用了 (void)pthread_kill(pthread_self(), SIGABRT) 向当前线程发送了 SIGABRT 信号导致了进程中止。Objective-C 异常之外的例如对内存访问错误、重复释放等错误引起的 Mach 异常需要通过其他方式进行处理（如野指针访问、MRC 下重复 release 等会造成 EXC_BAD_ACCESS 类型的 Mach 异常导致进程中止），本篇我们便开始学习 Mach 异常处理和 signal 信号处理。
+## 摘要
 
-&emsp;NSException 是应用层面的异常，具体来说就是 Objective-C 异常，它与其他两者的最大区别就是 Mach 异常与 Unix 信号是硬件层面的异常，NSException 是软件层面的异常，且它们三者中两者有一些转化关系。
+&emsp;Objective-C 异常是应用层面的异常，我们可以通过 `@try` `@catch`（捕获）或 `NSSetUncaughtExceptionHandler`（记录）函数来捕获或记录异常（处理异常），这里之所以说 Objective-C 异常是应用层面的异常是因为当发生 Objective-C 异常时只是一个 NSException 对象被 raise/@throw 仅在未捕获处理此 NSException 对象的情况下最终才会导致进程中止，且最终进程中止的过程是系统调用了 abort 函数，abort 内部调用了 (void)pthread_kill(pthread_self(), SIGABRT) 向当前线程发送了 SIGABRT 信号导致了进程中止[abort.c](https://opensource.apple.com/source/Libc/Libc-1439.141.1/stdlib/FreeBSD/abort.c.auto.html)。而 Objective-C 异常之外的例如对内存访问错误、重复释放等错误引起的 Mach 异常需要通过其他方式进行处理（如野指针访问、MRC 下重复 release 等会造成 EXC_BAD_ACCESS 类型的 Mach 异常导致进程中止。直接调用 abort 函数其内部调用 pthread_kill 对当前线程发出 SIGABRT 信号后进程被中止，或者我们也可以自己手动调用 pthread_kill(pthread_self(), SIGSEGV) 中止进程此时我们便可以收到 Signal 回调），本篇我们便开始学习 Mach 异常处理和 signal 信号处理。
 
-&emsp;
+&emsp;Objective-C 异常处理过程：
 
++ 生成异常对象: @try 中出现异常，系统会生成一个 NSException 异常对象，该对象提交到系统中，系统就会抛出异常；
++ 异常处理流程: 运行环境接收到 NSException 异常对象时，如果存在能处理该异常对象的 @catch 代码块，就将该异常对象交给 @catch 处理，该过程就是捕获异常，如果没有 @catch 代码块处理异常，程序就会终止（abort()）；
++ @catch 代码块捕获过程: 运行环境接收到异常对象时, 会依次判断该异常对象类型是否是 @catch 代码块中异常或其子类实例, 如果匹配成功, 被匹配的 @catch 就会处理该异常, 都则就会跟下一个 @catch 代码块对比;
++ @catch 处理异常: 系统将 NSException 异常对象传递给 @catch 形参，@catch 通过该形参获取 NSException 异常对象详细信息，可进行一些处理后使进程继续执行，也可以调用 raise/@throw 继续抛出 NSException 异常对象使用程序终止。
 
-+ 当发生 Objective-C 异常，且不进行捕获时，最终程序会因当前线程收到 `SIGABRT` 信号而终止，此时我们只能使用 try catch 或 NSSetUncaughtExceptionHandler 来记录处理，最终抛出的 `SIGABRT` 信号，我们使用 `signal(SIGABRT, SignalHandler);` 并不能收到回调。（NSException -> Signal）
-+ Mach 异常基本都会转换成 Signal，但是有些情况下，Mach 还没转换成 Signal，程序就已经被杀死了（如死循环导致的内存溢出），这时候就无法捕获 Signal 了。（Mach -> Signal）
+## Objective-C 异常、Mach 异常、Signal 信号之间的联系 
+
+&emsp;Objective-C 异常（NSException）是应用层面的异常，它与其他两者的最大区别就是 Mach 异常与 Unix 信号是硬件层面的异常，NSException 是软件层面的异常，且它们三者中两者之间有一些迁移转化关系。
+
++ 当发生 Objective-C 异常，且不进行捕获时，最终程序会因当前线程收到 `SIGABRT` 信号而终止，此时我们只能使用 try catch 或 NSSetUncaughtExceptionHandler 来记录处理 NSException 异常，而最终程序终止时抛出的 `SIGABRT` 信号，我们使用 `signal(SIGABRT, SignalHandler);` 是抓取不到 Signal 回调的，如果我们自己在程序中手动调用 abort() 则可以抓取到 `SIGABRT` 信号。（NSException -> Signal）
+
++ 一般情况下 Mach 异常会转换成 Signal，但是比如收集到 Mach 异常后，直接调用了 `exit()` 函数就会导致进程退出而没有产生对应的 signal 信号，又或者 Mach 异常还没转换成 Signal，程序就已经被杀死了（如死循环导致的内存溢出），这时候就无法捕获 Signal 了。（Mach -> Signal）
 + 有些异常不会经过 Mach Exception，也不会被 NSException 捕获，只能通过 Signal 捕获，原因是底层直接调用了 `__pthread_kill` 函数直接向某条线程发送了 Signal。
 
+&emsp;如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
 
-⬇️⬇️⬇️⬇️⬇️⬇️ 这里需要注意一下： （如野指针访问、MRC 下重复 release 等） 这里是单纯的 Mach 异常（正常情况下都会转化为 signal 信号，但是比如收集到 Mach 异常后，直接调用了 `exit()` 函数就会导致程序终止而没有产生对应的 signal 信号），还是 Mach 异常后会发送 signal 信号，后面要验证一下：
+## Mach 异常示例 
 
-这种错误抛出的是 `signal`，所以需要专门做 `signal` 处理）不能得到 signal，如果要处理 signal 需要利用 unix 标准的 signal 机制，注册 `SIGABRT`、`SIGBUS`、`SIGSEGV` 等 signal 发生时的处理函数。
-
-&emsp;例如我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又去访问 objc 已经被释放的内存，造成野指针访问) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，导致退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在程序中止之前并没有得到执行！ 
+&emsp;我们编写如下代码，然后直接运行，程序会直接 crash 中止运行，然后 `NSLog(@"✳️✳️✳️ objc: %@", objc);` 行显示红色的错误信息：`Thread 1: EXC_BAD_ACCESS (code=1, address=0x3402e8d4c25c)` (objc 对象已经被释放，然后 NSLog 语句中又去访问 objc 已经被释放的内存，造成野指针访问) 指出我们的程序此时有一个 `EXC_BAD_ACCESS` 异常，它就是一个标准的 Mach 异常导致进程退出，且此时可发现我们通过 `NSSetUncaughtExceptionHandler` 设置的 **未捕获异常处理函数** 在进程中止之前并没有得到执行，以及通过 `void(*signal(int, void (*)(int)))(int)` 设置的 Signal 信号处理函数也没有得到执行，因为此时的异常就仅是一个 Mach 异常，我们使用 Objective-C 异常处理和 Signal 信号处理是抓不到它的。 
 
 ```c++
 __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
 NSLog(@"✳️✳️✳️ objc: %@", objc);
 ```
 
-&emsp;在测试除零操作时（我们都知道 0 不能做除数😂）如下示例代码，发现运行结果与 Build Settings 的 Optimization Level 的选项值有关系，当我们选择 None[-O0] 时会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 错误，而在其他任意 Fast[-O, O1]、Faster[-O2]、Fastest[-O3]、Fastest,Smallest[-Os]、Fastest,Aggressive Optimizations[-Ofast]、Smallest,Aggressive Size Optimizations[-Oz] 选项下程序都正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机数。
+&emsp;在测试除零操作时（我们都知道 0 不能做除数😂）如下示例代码，发现运行结果与 Build Settings 的 Optimization Level 的选项值有关系，当我们选择 None[-O0] 时会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 异常，此时也是一个标准的 Mach 异常，而在其他任意 Fast[-O, O1]、Faster[-O2]、Fastest[-O3]、Fastest,Smallest[-Os]、Fastest,Aggressive Optimizations[-Ofast]、Smallest,Aggressive Size Optimizations[-Oz] 选项下程序都正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机数。
 
 ```c++
 int a = 0;
@@ -32,7 +40,7 @@ int result = b / a;
 NSLog(@"🏵🏵🏵 %d", result);
 ```
 
-&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别如下：`EXC_ARITHMETIC`、`EXC_BAD_ACCESS`、`signal SIGABRT`。 这里还有一个小细节，就是程序退出大概是某条线程的退出，可以是主线程也可是某条子线程，当我们把上述代码放在一条子线程执行的话，便会看到控制台输出中最后一条是子线程的停止原因。
+&emsp;针对上述两段代码导致的 crash，我们在程序退出后在 xcode 底部的调试控制台输入 bt 指令并回车，可看到程序停止运行的原因分别是：`EXC_BAD_ACCESS`、`EXC_ARITHMETIC`，作为对比，数组越界访问时则是：`signal SIGABRT`， 这里还有一个小细节，就是程序退出其实是某条线程的退出导致的，可以是主线程也可是某条子线程，当我们把上述代码放在一条子线程执行的话，便会看到控制台输出中是一条子线程的停止原因。
 
 &emsp;除零操作（EXC_ARITHMETIC）：
 
@@ -99,47 +107,7 @@ thread #1, queue = 'com.apple.main-thread'
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被终止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
-&emsp;上篇我们已经分析过 Objective-C 的异常捕获处理，下面我们开始详细学习 Mach 异常和 signal 处理。
-
-```c++
-#import "AppDelegate.h"
-#import <execinfo.h>
-
-void mySignalHandler(int signal) {
-    NSMutableString *mstr = [[NSMutableString alloc] init];
-    [mstr appendString:@"Stack:\n"];
-    
-    void *callstack[128];
-    int frames = backtrace(callstack, 128);
-    char ** strs = backtrace_symbols(callstack, frames);
-    
-    printf("🏵🏵🏵 char ** 怎么打印：%p", strs);
-    
-//    kill(<#pid_t#>, <#int#>)
-    
-}
-
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
-    
-    // 信号量截断
-    signal(SIGABRT, mySignalHandler);
-    signal(SIGILL, mySignalHandler);
-    signal(SIGSEGV, mySignalHandler);
-    signal(SIGFPE, mySignalHandler);
-    signal(SIGBUS, mySignalHandler);
-    signal(SIGPIPE, mySignalHandler);
-    
-    return YES;
-}
-```
-
-&emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App 去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
-
-
-
-
-### Mach 异常 
+### Mach 异常概述 
 
 &emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：BSD、Mach、GUI、NeXTSTEP、macOS、POSIX、IPC、system call、Kernel、宏内核、微内核、混合内核、XNU、Darwin 等以及他们之间的一些联系或者关系。
 
@@ -465,7 +433,7 @@ Software:
 
 
 
-
+&emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App 去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
 
 &emsp;Mach 引入了 port 的概念用以表示双向的 IPC (进程间通信 Inter-Process Communication），它就像 UNIX 下的文件一样拥有权限信息，使得其安全模型非常接近 UNIX。并且，Mach 使得任何进程都可以拥有一般系统中内核才有的权限，从而允许用户进程实现与硬件交互等操作。
 
