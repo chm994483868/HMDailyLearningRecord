@@ -1,8 +1,11 @@
 # iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
 
-&emsp;Objective-C 的异常处理是指通过 `@try` `@catch`（捕获） 或 `NSSetUncaughtExceptionHandler`（记录） 函数来捕获或记录异常（处理异常），但是这种处理方式对内存访问错误、重复释放等错误引起的 crash 是无能为力的（如野指针访问、MRC 下重复 release 等），所以这里就要学习 Mach 异常处理和 signal 信号处理。
+&emsp;Objective-C 异常是应用层面的异常，我们可以通过 `@try` `@catch`（捕获）或 `NSSetUncaughtExceptionHandler`（记录）函数来捕获或记录异常（处理异常），这里之所以说 Objective-C 异常是应用层面的异常是因为当发生 Objective-C 异常时就仅是一个 NSException 对象被 raise/@throw 仅仅在未捕获处理此 NSException 对象的情况下最终才会导致进程中止，且最终进程中止的过程是系统调用了 abort 函数，abort 内部调用了 (void)pthread_kill(pthread_self(), SIGABRT) 向当前线程发送了 SIGABRT 信号导致了进程中止。Objective-C 异常之外的例如对内存访问错误、重复释放等错误引起的 Mach 异常需要通过其他方式进行处理（如野指针访问、MRC 下重复 release 等会造成 EXC_BAD_ACCESS 类型的 Mach 异常导致进程中止），本篇我们便开始学习 Mach 异常处理和 signal 信号处理。
 
 &emsp;NSException 是应用层面的异常，具体来说就是 Objective-C 异常，它与其他两者的最大区别就是 Mach 异常与 Unix 信号是硬件层面的异常，NSException 是软件层面的异常，且它们三者中两者有一些转化关系。
+
+&emsp;
+
 
 + 当发生 Objective-C 异常，且不进行捕获时，最终程序会因当前线程收到 `SIGABRT` 信号而终止，此时我们只能使用 try catch 或 NSSetUncaughtExceptionHandler 来记录处理，最终抛出的 `SIGABRT` 信号，我们使用 `signal(SIGABRT, SignalHandler);` 并不能收到回调。（NSException -> Signal）
 + Mach 异常基本都会转换成 Signal，但是有些情况下，Mach 还没转换成 Signal，程序就已经被杀死了（如死循环导致的内存溢出），这时候就无法捕获 Signal 了。（Mach -> Signal）
@@ -512,6 +515,7 @@ If no signals are specified, update them all.  If no update option is specified,
 + [iOS Crash 分析攻略](https://zhuanlan.zhihu.com/p/159301707)
 + [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html)
 + [Apple 源码文件下载列表](https://opensource.apple.com/tarballs/)
++ [iOS @try @catch异常机制](https://www.jianshu.com/p/f28b9b3f8e44)
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
 
