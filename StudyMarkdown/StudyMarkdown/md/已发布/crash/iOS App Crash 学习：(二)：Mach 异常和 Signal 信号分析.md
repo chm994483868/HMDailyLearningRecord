@@ -223,6 +223,50 @@ Software:
 &emsp;......
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```c++
 SIGSEGV与SIGBUS
 
@@ -240,6 +284,10 @@ SEGV_MAPERR, 地址没有映射到对象，可能的原因是dangling pointer或
 
 SEGV_ACCERR, 对映射的对象没有权限
 ```
+
+
+
+
 
 
 
@@ -557,6 +605,7 @@ If no signals are specified, update them all.  If no update option is specified,
 + [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html)
 + [Apple 源码文件下载列表](https://opensource.apple.com/tarballs/)
 + [iOS @try @catch异常机制](https://www.jianshu.com/p/f28b9b3f8e44)
++ [一文读懂崩溃原理](https://juejin.cn/post/6873868181635760142)
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
 
