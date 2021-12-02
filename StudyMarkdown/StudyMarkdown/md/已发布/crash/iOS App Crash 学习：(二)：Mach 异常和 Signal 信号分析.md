@@ -11,7 +11,7 @@
 + @catch 代码块捕获过程: 运行环境接收到异常对象时, 会依次判断该异常对象类型是否是 @catch 代码块中异常或其子类实例, 如果匹配成功, 被匹配的 @catch 就会处理该异常, 都则就会跟下一个 @catch 代码块对比;
 + @catch 处理异常: 系统将 NSException 异常对象传递给 @catch 形参，@catch 通过该形参获取 NSException 异常对象详细信息，可进行一些处理后使进程继续执行，也可以调用 raise/@throw 继续抛出 NSException 异常对象使用程序终止。
 
-## Objective-C 异常、Mach 异常、Signal 信号之间的联系 
+## Objective-C 异常、Mach 异常、Signal 信号之间的一些联系 
 
 &emsp;Objective-C 异常（NSException）是应用层面的异常，它与其他两者的最大区别就是 Mach 异常与 Unix 信号是硬件层面的异常，NSException 是软件层面的异常，且它们三者中两者之间有一些迁移转化关系。
 
@@ -31,7 +31,7 @@ __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
 NSLog(@"✳️✳️✳️ objc: %@", objc);
 ```
 
-&emsp;在测试除零操作时（我们都知道 0 不能做除数😂）如下示例代码，发现运行结果与 Build Settings 的 Optimization Level 的选项值有关系，当我们选择 None[-O0] 时会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 异常，此时也是一个标准的 Mach 异常，而在其他任意 Fast[-O, O1]、Faster[-O2]、Fastest[-O3]、Fastest,Smallest[-Os]、Fastest,Aggressive Optimizations[-Ofast]、Smallest,Aggressive Size Optimizations[-Oz] 选项下程序都正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机数。
+&emsp;在测试除零操作时（我们都知道 0 不能做除数）如下示例代码，发现运行结果与 Build Settings 的 Optimization Level 的选项值有关系，当我们选择 None[-O0] 时会 crash，报出：`Thread 1: EXC_ARITHMETIC (code=EXC_I386_DIV, subcode=0x0)` 异常，此时也是一个标准的 Mach 异常，而在其他任意 Fast[-O, O1]、Faster[-O2]、Fastest[-O3]、Fastest,Smallest[-Os]、Fastest,Aggressive Optimizations[-Ofast]、Smallest,Aggressive Size Optimizations[-Oz] 选项下程序都正常运行没有 crash 退出，且每次运行 result 的值都是一个很大的随机数。
 
 ```c++
 int a = 0;
@@ -105,7 +105,7 @@ thread #1, queue = 'com.apple.main-thread'
     ...
 ```
 
-&emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被终止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
+&emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被中止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
 ### Mach 异常概述 
 
@@ -185,9 +185,11 @@ Software:
 
 &emsp;看到这里的话我们大概就可以对 Mach 的位置进行一个总结了：Darwin 是 macOS 和 iOS 操作环境的操作系统部分，它的内核是 XNU，XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能，而 XNU 内核的微内核部分便是一个被深度定制的 Mach 3.0 内核，所以看到这里我们便可理解那句 **Mach 异常为最底层的内核级异常**，我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码，Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中：
 
-> &emsp;异常首先有处理器陷阱引发，然后 Mach 的异常处理程序 exception_triage() 负责将异常转换成 Mach 消息。exception_triage() 内部通过 exception_deliver() 尝试把异常依次投递到三个端口：thread、task、host(默认)，如果没有一个端口返回，任务即被终止。（这个过程暂时完全理解不了...）
+> &emsp;异常首先由处理器陷阱引发，然后 Mach 的异常处理程序 exception_triage() 负责将异常转换成 Mach 消息。exception_triage() 内部通过 exception_deliver() 尝试把异常依次投递到三个端口：thread、task、host(默认)，如果没有一个端口返回，任务即被终止。（这个过程暂时完全理解不了...）[iOS 异常信号思考](https://minosjy.com/2021/04/10/00/377/)
 
-&emsp;下面我们列举几个比较常见的 Mach 异常：
+&emsp;这里很想搞懂 Mach 异常是怎么产生的，奈何知识储备有限，怎么学习方向完全无门，暂时理解不了...（如果有大佬能为小弟指点迷津指点学习的方向，不胜感激...）
+
+&emsp;下面我们通过查看 exception_types.h 文件列举几个比较常见的 Mach 异常，先熟悉一下：
 
 ```c++
 /*
@@ -221,19 +223,33 @@ Software:
 &emsp;......
 
 
+```c++
+SIGSEGV与SIGBUS
+
+SIGBUS(Bus error)意味着指针所对应的地址是有效地址，但总线不能正常使用该指针。通常是未对齐的数据访问所致。
+
+SIGSEGV(Segment fault)意味着指针所对应的地址是无效地址，没有物理内存对应该地址。
+
+SEGV_MAPERR, 地址没有映射到对象，可能的原因是dangling pointer或者overflow，
+
+比如
+
+1. ptr1和ptr2指向同一段内存，但是某个线程某个时刻用ptr1将内存delete了，如果因为错误的设计或者假设导致认为ptr2还是指向合法的内存，使用时就会出错；
+
+2. 某个数组有1个元素，但是传入的数组大小却是2，如果我们要用2作为长度来遍历这个数组，那当访问第二个元素时就会出错；
+
+SEGV_ACCERR, 对映射的对象没有权限
+```
 
 
 
-
-
-
-&emsp;下面我们再看一下 [《Kernel Programming Guide》](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html?spm=a2c6h.12873639.0.0.15ee7113vyXhuI#//apple_ref/doc/uid/TP30000905-CH209-TPXREF102) 文档中的 Mach 概述部分。
+&emsp;下面我们再过一下 [《Kernel Programming Guide》](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html?spm=a2c6h.12873639.0.0.15ee7113vyXhuI#//apple_ref/doc/uid/TP30000905-CH209-TPXREF102) 文档中的 Mach 概述部分。
 
 &emsp;Mach Overview
 
-&emsp;OS X 内核的基本服务和原语（fundamental services and primitives）基于 Mach 3.0。Apple 已经修改并扩展了 Mach，以更好地满足 OS X 的功能和性能目标。Mach 3.0 最初被设想为一个简单，可扩展的通信微内核。它能够作为独立内核运行，其他传统操作系统服务（如 I/O、文件系统和网络堆栈）作为用户模式服务运行。
+&emsp;OS X 内核的基本服务和原语（fundamental services and primitives）基于 Mach 3.0。Apple 已经修改并扩展了 Mach，以更好地满足 OS X 的功能和性能目标。Mach 3.0 最初被设想为一个简单，可扩展的通信微内核。它能够作为独立内核运行，而其他传统操作系统服务（如 I/O、文件系统和网络堆栈）作为用户模式服务运行。
 
-&emsp;但是，在 OS X 中，Mach 与其他内核组件链接到单个内核地址空间中。这主要是为了性能;在链接组件之间进行直接调用比在单独的任务之间发送消息或执行远程过程调用 remote procedure calls（RPC） 要快得多。这种模块化结构使系统比单片内核所允许的更强大，更具可扩展性，而不会受到纯微内核的性能损失。
+&emsp;但是，在 OS X 中，Mach 是与其他内核组件链接到单个内核地址空间中的。这主要是为了性能;在链接组件之间进行直接调用比在单独的任务之间发送消息或执行远程过程调用 remote procedure calls（RPC） 要快得多。这种模块化结构使系统比单片内核所允许的更强大，更具可扩展性，而不会受到纯微内核的性能损失（因通信造成的性能损失）。
 
 &emsp;因此，在 OSX 中，Mach 主要不是客户端和服务器之间的通信枢纽。相反，它的价值在于它的抽象性、可扩展性和灵活性。特别是，Mach 提供了:
 
@@ -399,8 +415,65 @@ Software:
 
 
 
+&emsp;Mach 异常和 Signal 信号转换：
 
+```c++
+/*
+ * Translate Mach exceptions to UNIX signals.
+ *
+ * ux_exception translates a mach exception, code and subcode to
+ * a signal.  Calls machine_exception (machine dependent)
+ * to attempt translation first.
+ */
+static int
+ux_exception(int                        exception,
+    mach_exception_code_t      code,
+    mach_exception_subcode_t   subcode)
+{
+    int machine_signal = 0;
 
+    /* Try machine-dependent translation first. */
+    if ((machine_signal = machine_exception(exception, code, subcode)) != 0) {
+        return machine_signal;
+    }
+
+    switch (exception) {
+    case EXC_BAD_ACCESS:
+        if (code == KERN_INVALID_ADDRESS) {
+            return SIGSEGV;
+        } else {
+            return SIGBUS;
+        }
+
+    case EXC_BAD_INSTRUCTION:
+        return SIGILL;
+
+    case EXC_ARITHMETIC:
+        return SIGFPE;
+
+    case EXC_EMULATION:
+        return SIGEMT;
+
+    case EXC_SOFTWARE:
+        switch (code) {
+        case EXC_UNIX_BAD_SYSCALL:
+            return SIGSYS;
+        case EXC_UNIX_BAD_PIPE:
+            return SIGPIPE;
+        case EXC_UNIX_ABORT:
+            return SIGABRT;
+        case EXC_SOFT_SIGNAL:
+            return SIGKILL;
+        }
+        break;
+
+    case EXC_BREAKPOINT:
+        return SIGTRAP;
+    }
+
+    return 0;
+}
+```
 
 
 
