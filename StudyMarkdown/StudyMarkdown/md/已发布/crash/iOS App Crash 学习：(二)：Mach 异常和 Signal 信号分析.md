@@ -355,6 +355,15 @@ Software:
 
 &emsp;mach_timespec_t API 在 OS X 中已弃用。较新和首选的 API 基于计时器对象，这些对象又使用 AbsoluteTime 作为基本数据类型。AbsoluteTime 是一种依赖于计算机的类型，通常基于平台本机时基。提供了例程，用于将 AbsoluteTime 值与其他数据类型（如纳秒）相互转换。定时器对象支持异步、无漂移通知、取消和过早警报。它们比时钟更有效，并且允许更高的分辨率。
 
+&emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 Port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 Port 端口，Runloop 的唤醒等操作，都是通过 Port 来通信完成的，以及 CFRunLoopSource 中的 Source1 内部都是基于 Port 来实现的。
+
+### Mach Port 的使用
+
+[Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
+[iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
+
+&emsp;这里我们学会了 Port 的使用，那么
+
 #### Mach 异常类型
 
 &emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
