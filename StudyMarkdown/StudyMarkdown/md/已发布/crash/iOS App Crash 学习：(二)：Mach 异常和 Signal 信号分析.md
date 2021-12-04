@@ -357,7 +357,51 @@ Software:
 
 &emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 Port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 Port 端口，Runloop 的唤醒等操作，都是通过 Port 来通信完成的，以及 CFRunLoopSource 中的 Source1 内部都是基于 Port 来实现的。
 
-### Mach Port 的使用
+### Mach Port
+
+&emsp;这一小节我们学习下 port(端口)，提到这个我们大概最先想到的就是 runloop 中的基于 port 的 source1 以及 iOS 中基于 port 的线程间通信。这里我们从简单着手，先不着眼于 mach_port_t，首先我们看下在 cocoa 中使用的 NSMachPort，下面我们通过一些示例代码回顾一下在 iOS 中使用 NSMachPort 进行线程间通信。
+
+#### NSMachPort 使用
+
+&emsp;NSMachPort 是 NSPort 的一个子类，它封装了 mach port，是 macOS 中的基本通信端口，NSMachPort 类的 `@property (readonly) uint32_t machPort;` 属性便是取得 NSMachPort 对象对应的 mach port。NSMachPort 只允许本地（在同一台机器上）通信。附带类 NSSocketPort 允许本地和远程分布式对象通信，但是对于本地情况，可能比 NSMachPort 更昂贵。要有效地使用 NSMachPort，你应该熟悉 mach ports、port 访问权限和 mach messages。
+
+&emsp;NSMachPort 的工作方式其实是将 NSMachPort 的对象添加到一个线程所对应的 RunLoop 中，并给 NSMachPort 对象设置相应的代理。在其他线程中调用该 NSMachPort 对象发消息时会在 NSMachPort 所关联的线程中执行相关的代理方法。
+
+```c++
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    // 1. 创建主线程的 port，子线程通过此 port 发送消息给主线程
+    NSMachPort *myPort = [NSMachPort port];
+    // 2. 
+}
+```
+
+1. 首先把 NSMachPort 的使用总结写完。
+2. 然后介绍 Mach 异常的发生过程。
+3. 捕获 Mach 异常的示例代码。KSCrash 的使用以及源码。
+4. Mach 异常与 Signal 的信号转化函数。
+5. 怎么越过 debug 模式进行 Signal 信号打印。
+6. Signal 信号种类以及捕获处理。
+7. 总结。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 [Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
 [iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
@@ -576,6 +620,10 @@ If no signals are specified, update them all.  If no update option is specified,
 + [[史上最全] iOS Crash/崩溃/异常 捕获](https://www.jianshu.com/p/3f6775c02257)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
 + [KSCrash源码分析](https://cloud.tencent.com/developer/article/1370201)
++ [iOS线程通信和进程通信的例子（NSMachPort和NSTask，NSPipe）](https://blog.csdn.net/yxh265/article/details/51483822)
++ [iOS开发·RunLoop源码与用法完全解析(输入源，定时源，观察者，线程间通信，端口间通信，NSPort，NSMessagePort，NSMachPort，NSPortMessage)](https://sg.jianshu.io/p/07313bc6fd24)
+
+
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
 
