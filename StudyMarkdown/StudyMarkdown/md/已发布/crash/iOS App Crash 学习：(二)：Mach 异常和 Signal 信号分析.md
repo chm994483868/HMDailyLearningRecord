@@ -355,7 +355,7 @@ Software:
 
 &emsp;mach_timespec_t API 在 OS X 中已弃用。较新和首选的 API 基于计时器对象，这些对象又使用 AbsoluteTime 作为基本数据类型。AbsoluteTime 是一种依赖于计算机的类型，通常基于平台本机时基。提供了例程，用于将 AbsoluteTime 值与其他数据类型（如纳秒）相互转换。定时器对象支持异步、无漂移通知、取消和过早警报。它们比时钟更有效，并且允许更高的分辨率。
 
-&emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 Port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 Port 端口，Runloop 的唤醒等操作，都是通过 Port 来通信完成的，以及 CFRunLoopSource 中的 Source1 内部都是基于 Port 来实现的。
+&emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 Port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 Port 端口，Runloop 的唤醒等操作，都是通过 Port 来通信完成的，CFRunLoopSource 中的 Source1 内部基于 Port 来实现的。(Source1：包含了一个 mach_port 和一个回调（函数指针），被用于通过内核和其他线程相互发送消息，这种 Source 能主动唤醒 RunLoop 的线程。)
 
 ### Mach Port
 
@@ -365,18 +365,255 @@ Software:
 
 &emsp;NSMachPort 是 NSPort 的一个子类，它封装了 mach port，是 macOS 中的基本通信端口，NSMachPort 类的 `@property (readonly) uint32_t machPort;` 属性便是取得 NSMachPort 对象对应的 mach port。NSMachPort 只允许本地（在同一台机器上）通信。附带类 NSSocketPort 允许本地和远程分布式对象通信，但是对于本地情况，可能比 NSMachPort 更昂贵。要有效地使用 NSMachPort，你应该熟悉 mach ports、port 访问权限和 mach messages。
 
-&emsp;NSMachPort 的工作方式其实是将 NSMachPort 的对象添加到一个线程所对应的 RunLoop 中，并给 NSMachPort 对象设置相应的代理。在其他线程中调用该 NSMachPort 对象发消息时会在 NSMachPort 所关联的线程中执行相关的代理方法。
+&emsp;NSMachPort 的工作方式其实是将 NSMachPort 的对象添加到一个线程所对应的 RunLoop 中，并给 NSMachPort 对象设置相应的代理。在其他线程中调用该 NSMachPort 对象发消息时会在 NSMachPort 所关联的线程中执行相关的代理方法。示例代码如下：
 
 ```c++
+#import "ViewController.h"
+#import "MyWorkClass.h"
+
+@interface ViewController () <NSPortDelegate>
+
+@end
+
+@implementation ViewController
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
-    // 1. 创建主线程的 port，子线程通过此 port 发送消息给主线程
-    NSMachPort *myPort = [NSMachPort port];
-    // 2. 
+    // 1. 在主线程创建一个 port 对象，然后直接把此 port 对象传到子线程去，子线程通过此 port 对象发送消息给主线程
+    NSPort *myPort = [NSMachPort port];
+    
+    // 2. 设置 port 对象的回调代理
+    myPort.delegate = self;
+    
+    // 3. 把 port 对象加入到主线程的 runloop 中，用来接收消息
+    [[NSRunLoop currentRunLoop] addPort:myPort forMode:NSDefaultRunLoopMode];
+    
+    NSLog(@"🍀🍀🍀 添加到主线程 runloop 中的 port 对象：%@", myPort);
+    
+    // 4. 创建一个子线程，并把传入主线程 runloop 中的 port 对象传递到子线程中去
+    MyWorkClass *work = [[MyWorkClass alloc] init];
+    [NSThread detachNewThreadSelector:@selector(launchThreadWithPort:) toTarget:work withObject:myPort];
 }
+
+// This is the delegate method that subclasses should send to their delegates, unless the subclass has something more specific that it wants to try to send first
+- (void)handlePortMessage:(NSMessagePort *)message {
+    NSLog(@"🍀🍀🍀 接到 子线程 通过 port 传递来的消息：%@ 当前在：%@", message, [NSThread currentThread]);
+    
+    // 1. 消息 id
+    NSUInteger msgID = [[message valueForKeyPath:@"msgid"] integerValue];
+    
+    // 2. 当前主线程的 port
+    NSPort *localPort = [message valueForKeyPath:@"localPort"];
+    
+    NSLog(@"🍀🍀🍀 接到 子线程 通过 port 传递来的消息，localPort: %@", localPort);
+    
+    // 3. 接收到消息的 port（来自其它线程）
+    NSPort *remotePort = [message valueForKeyPath:@"remotePort"];
+    
+    NSLog(@"🍀🍀🍀 接到 子线程 通过 port 传递来的消息，remotePort: %@", remotePort);
+    
+    if (msgID == 100) {
+        // 向子线程的 port 发送消息
+//        [remotePort sendBeforeDate:[NSDate date] msgid:200 components:nil from:localPort reserved:0];
+        
+    } else if (msgID == 200) {
+        NSLog(@"操作 2 ... \n");
+        
+    }
+}
+
+- (void)dealloc {
+    NSLog(@"🍀🍀🍀 %@", @"ViewController");
+}
+
+@end
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface MyWorkClass : NSObject
+
+- (void)launchThreadWithPort:(NSPort *)port;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+#import "MyWorkClass.h"
+
+@interface MyWorkClass () <NSMachPortDelegate>
+
+@property (nonatomic, strong) NSPort *remotePort;
+
+@property (nonatomic, strong) NSPort *myPort;
+
+@end
+
+@implementation MyWorkClass
+
+- (void)launchThreadWithPort:(NSPort *)port {
+    @autoreleasepool {
+        // 1. 保存主线程传来的 port 对象，然后通过此 port 对象可以向主线程发送消息
+        self.remotePort = port;
+        
+        // 2. 设置子线程的名字
+        [[NSThread currentThread] setName:@"MYWORKERCLASSTHREAD"];
+        
+        // 3. 开启 runloop
+        [[NSRunLoop currentRunLoop] run];
+        
+        // 4. 创建自己的 port
+        self.myPort = [NSPort port];
+        
+        NSLog(@"🍀🍀🍀 子线程：%@ 添加到子线程 runloop 的 port 对象：%@", [NSThread currentThread], self.myPort);
+        
+        // 5. 给自己的 port 设置代理
+        self.myPort.delegate = self;
+        
+        // 6. 将自己的 port 添加到当前线程的 runloop 中
+        // 作用 1：防止当前线程的 runloop 退出（如果子线程的 runloop 中没有任何 timer/source/observer 则会自动退出）
+        // 作用 2：可以用来接收主线程通过此 port 对象发送过来的消息
+        [[NSRunLoop currentRunLoop] addPort:self.myPort forMode:NSDefaultRunLoopMode];
+        
+        // 7. 从子线程向主线程发送消息：
+        // 首先我们使用的是主线程 runloop 中的 port 对象发送消息，并且我们把上面创建的并放入子线程 runloop 中的 port 对象传递到主线程去，
+        // 那么后续主线程便可以通过此 port 对象向子线程发送消息，看到这里我们也发现了 port 对象是单向通信的
+        [self sendPortMessage];
+    }
+}
+
+- (void)sendPortMessage {
+    NSMutableArray *array = [[NSMutableArray alloc] initWithArray:@[@"1", @"2"]];
+    // 发送消息到主线程，操作 1
+    [self.remotePort sendBeforeDate:[NSDate date] msgid:100 components:array from:self.myPort reserved:0];
+}
+
+- (void)handlePortMessage:(NSPortMessage *)message {
+    NSLog(@"🍀🍀🍀 接收主线程发送来的消息！");
+    
+    // 处理主线程发送来的消息，例如停止子线程的 runloop 等操作
+}
+
+@end
 ```
+
+&emsp;上面的示例代码中我们演示了 NSMachPort 的使用，NSMachPort 以面向对象的思想对 mach_port_t 进行封装，简化了 port 的使用。
+
+### Mach 异常捕获
+
+&emsp;上面我们看到了 Mach 使用 port 进行线程间通信，而捕获 Mach 异常也正是基于 port 的通信机制来做的，我们可以通过 Mach 提供的 API 实现注册自定义 port（thread 类型/task 类型/host 类型），替换内核接收 Mach 异常消息的 port，然后利用 mach_msg 函数接收异常消息，最后利用 mach_msg 函数将异常消息转发出去，不影响原有的流程。
+
+```c++
+#import "AppDelegate.h"
+
+#import <pthread.h>
+#import <mach/mach_init.h>
+#import <mach/mach_port.h>
+#import <mach/task.h>
+#import <mach/message.h>
+#import <mach/thread_act.h>
+
+@interface AppDelegate ()
+
+@end
+
+@implementation AppDelegate
+
+/// 注册捕获异常的端口
+// 自定义端口号
+mach_port_name_t myExceptionPort = 10086;
+
+- (void)catchMACHExceptions {
+    // 用自定义端口号初始化一个端口
+    mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &myExceptionPort);
+    // 向端口插入发送权限
+    mach_port_insert_right(mach_task_self(), myExceptionPort, myExceptionPort, MACH_MSG_TYPE_MAKE_SEND);
+    // 设置 Mach 异常的种类
+    exception_mask_t excMask = EXC_MASK_BAD_ACCESS | EXC_MASK_BAD_INSTRUCTION | EXC_MASK_ARITHMETIC | EXC_MASK_SOFTWARE;
+    // 设置内核接收 Mach 异常消息的 thread Port
+    thread_set_exception_ports(mach_thread_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+    // 新建一个线程处理异常消息
+    pthread_t thread;
+    pthread_create(&thread, NULL, exc_handler, NULL);
+}
+
+/// 接收异常消息
+static void *exc_handler(void *ignored) {
+    // 结果
+    mach_msg_return_t rc;
+    // 内核将发送给我们的异常消息的格式，参考 ux_handler() [bsd / uxkern / ux_exception.c] 中对异常消息的定义
+    typedef struct {
+        mach_msg_header_t Head;
+        // start of the kernel processed data
+        mach_msg_body_t msgh_body;
+        mach_msg_port_descriptor_t thread;
+        mach_msg_port_descriptor_t task;
+        // end of the kernel processed data
+        NDR_record_t NDR;
+        exception_type_t exception;
+        mach_msg_type_number_t codeCnt;
+        integer_t code[2];
+        int flavor;
+        mach_msg_type_number_t old_stateCnt;
+        natural_t old_state[144];
+    } exc_msg_t;
+    
+    for (;;) {
+        exc_msg_t exc;
+        
+        // 这里会阻塞，直到接收到 exception message，或者线程被中断
+        rc = mach_msg(&exc.Head, MACH_RCV_MSG | MACH_RCV_LARGE, 0, sizeof(exc_msg_t), myExceptionPort, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+        if (rc != MACH_MSG_SUCCESS) {
+            //
+            break;
+        };
+        
+        // 打印异常消息
+        printf("CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d" ,
+               exc.Head.msgh_id, exc.exception, exc.flavor,
+               exc.code[0], exc.code[1],
+               exc.old_stateCnt);
+        
+        // 定义转发出去的消息类型
+        struct rep_msg {
+            mach_msg_header_t Head;
+            NDR_record_t NDR;
+            kern_return_t RetCode;
+        } rep_msg;
+        rep_msg.Head = exc.Head;
+        rep_msg.NDR = exc.NDR;
+        rep_msg.RetCode = KERN_FAILURE;
+        kern_return_t result;
+        if (rc == MACH_MSG_SUCCESS) {
+            // 将异常消息再转发出去
+            result = mach_msg(&rep_msg.Head, MACH_SEND_MSG, sizeof(rep_msg), 0, MACH_PORT_NULL, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+        }
+    }
+    
+    return NULL;
+}
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Override point for customization after application launch.
+    // 自定义捕获 Mach 异常
+    [self catchMACHExceptions];
+    
+    __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
+    NSLog(@"✳️✳️✳️ objc: %@", objc);
+    
+    return YES;
+}
+
+@end
+```
+
+
+
+
+
 
 1. 首先把 NSMachPort 的使用总结写完。
 2. 然后介绍 Mach 异常的发生过程。
@@ -403,8 +640,7 @@ Software:
 
 
 
-[Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
-[iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
+
 
 &emsp;这里我们学会了 Port 的使用，那么
 
@@ -622,7 +858,8 @@ If no signals are specified, update them all.  If no update option is specified,
 + [KSCrash源码分析](https://cloud.tencent.com/developer/article/1370201)
 + [iOS线程通信和进程通信的例子（NSMachPort和NSTask，NSPipe）](https://blog.csdn.net/yxh265/article/details/51483822)
 + [iOS开发·RunLoop源码与用法完全解析(输入源，定时源，观察者，线程间通信，端口间通信，NSPort，NSMessagePort，NSMachPort，NSPortMessage)](https://sg.jianshu.io/p/07313bc6fd24)
-
++ [Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
++ [iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
 
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
