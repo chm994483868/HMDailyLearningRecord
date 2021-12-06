@@ -504,18 +504,56 @@ NS_ASSUME_NONNULL_END
 
 ### Mach 异常产生的流程
 
+&emsp;在《深入解析 Mac OS X & iOS 操作系统》一书中介绍了系统对 Mach 异常处理的默认机制，以及如下一张图：
+
+![截屏2021-12-06 下午10.12.36.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a8c7656632024714aa1b2ec7df67234d~tplv-k3u1fbpfcp-watermark.image?)
+
+&emsp;以及详细的异常机制，硬件异常/软件异常等，这里就不再摘录了。
+
 [软件测试之SDK开发(ios)——Mach捕获](https://blog.csdn.net/lfdanding/article/details/100024022)
 1. 硬件产生的信号被Mach层捕获
 2. Mach异常处理程序exception_triage()通过调用exception_deliver()首先尝试将异常抛给thread端口、然后尝试抛给task端口，最后再抛给host端口(默认端口),exception_deliver通过调用mach_exception_raise,触发异常；
 3. 异常在内核中以消息机制进行处理，通过task_set_exception_posrts()设置自定义的接收Mach异常消息的端口，相当于插入了一个exception处理程序。
 4. Mach 异常在 Mach 层被捕获并抛出后，会在BSD层被catch_mach_exception_raise处理，并通过ux_exception()将异常转换为对应的UNIX信号，并通过threadsignal()将信号投递到出错线程，iOS中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。
 
+》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》 继续看下这个 Mach 异常产生机制.......
 
+#### Mach 异常类型
 
+&emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
 
+&emsp;下面我们通过查看 exception_types.h 文件列举几个比较常见的 Mach 异常，先熟悉一下：
 
+```c++
+/*
+ *    Machine-independent exception definitions.
+ */
 
+/* Could not access memory. */
+/* Code contains kern_return_t describing error. */
+/* Subcode contains bad memory address. */
+#define EXC_BAD_ACCESS          1       
+```
 
+&emsp;通常由于访问了不该访问的内存导致。
+
+```c++
+/* Instruction failed */
+/* Illegal or undefined instruction or operand */
+#define EXC_BAD_INSTRUCTION     2       
+```
+
+&emsp;此类异常通常由于线程执行非法指令导致。
+
+```c++
+/* Arithmetic exception */
+/* Exact nature of exception is in code field */
+#define EXC_ARITHMETIC          3       
+```
+
+&emsp;算术异常，除零错误会抛出此类异常。
+
+&emsp;......
 
 ### Mach 异常捕获
 
@@ -523,6 +561,7 @@ NS_ASSUME_NONNULL_END
 
 &emsp;这里替换内核接收 Mach 异常消息的 port 涉及到两个重要函数：
 
++ [host_set_exception_ports]()
 + 为指定 task 设置异常端口：[task_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/task_set_exception_ports.html)
 + 为指定 thread 设置异常端口：[thread_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/thread_set_exception_ports.html)
 
@@ -585,6 +624,7 @@ static void *exc_handler(void *ignored) {
         natural_t old_state[144];
     } exc_msg_t;
     
+    // 消息处理循环，这里的死循环不会有问题，因为 exc_handler 函数运行在一个独立的子线程中，而且 mach_msg 函数也是会阻塞的。
     for (;;) {
         exc_msg_t exc;
         
@@ -636,7 +676,9 @@ static void *exc_handler(void *ignored) {
 @end
 ```
 
+### Signal 信号捕获
 
+### Mach 异常与信号转换机制
 
 
 
@@ -673,42 +715,7 @@ static void *exc_handler(void *ignored) {
 
 &emsp;这里我们学会了 Port 的使用，那么
 
-#### Mach 异常类型
 
-&emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
-
-&emsp;下面我们通过查看 exception_types.h 文件列举几个比较常见的 Mach 异常，先熟悉一下：
-
-```c++
-/*
- *    Machine-independent exception definitions.
- */
-
-/* Could not access memory. */
-/* Code contains kern_return_t describing error. */
-/* Subcode contains bad memory address. */
-#define EXC_BAD_ACCESS          1       
-```
-
-&emsp;通常由于访问了不该访问的内存导致。
-
-```c++
-/* Instruction failed */
-/* Illegal or undefined instruction or operand */
-#define EXC_BAD_INSTRUCTION     2       
-```
-
-&emsp;此类异常通常由于线程执行非法指令导致。
-
-```c++
-/* Arithmetic exception */
-/* Exact nature of exception is in code field */
-#define EXC_ARITHMETIC          3       
-```
-
-&emsp;算术异常，除零错误会抛出此类异常。
-
-&emsp;......
 
 
 
