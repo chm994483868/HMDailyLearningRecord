@@ -107,7 +107,7 @@ thread #1, queue = 'com.apple.main-thread'
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被中止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
-### Mach 异常概述 
+### Mach 异常概述（Mach 是什么） 
 
 &emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：BSD、Mach、GUI、NeXTSTEP、macOS、POSIX、IPC、system call、Kernel、宏内核、微内核、混合内核、XNU、Darwin 等以及他们之间的一些联系或者关系。
 
@@ -355,15 +355,15 @@ Software:
 
 &emsp;mach_timespec_t API 在 OS X 中已弃用。较新和首选的 API 基于计时器对象，这些对象又使用 AbsoluteTime 作为基本数据类型。AbsoluteTime 是一种依赖于计算机的类型，通常基于平台本机时基。提供了例程，用于将 AbsoluteTime 值与其他数据类型（如纳秒）相互转换。定时器对象支持异步、无漂移通知、取消和过早警报。它们比时钟更有效，并且允许更高的分辨率。
 
-&emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 Port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 Port 端口，Runloop 的唤醒等操作，都是通过 Port 来通信完成的，CFRunLoopSource 中的 Source1 内部基于 Port 来实现的。(Source1：包含了一个 mach_port 和一个回调（函数指针），被用于通过内核和其他线程相互发送消息，这种 Source 能主动唤醒 RunLoop 的线程。)
+&emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 port 端口，Runloop 的唤醒等操作，都是通过 port 来通信完成的，CFRunLoopSource 中的 Source1 内部基于 port 来实现的。(Source1：包含了一个 mach_port 和一个回调（函数指针），被用于通过内核和其他线程相互发送消息，这种 Source 能主动唤醒 RunLoop 的线程。)
 
-### Mach Port
+### Mach 中的通信机制：port
 
 &emsp;这一小节我们学习下 port(端口)，提到这个我们大概最先想到的就是 runloop 中的基于 port 的 source1 以及 iOS 中基于 port 的线程间通信。这里我们从简单着手，先不着眼于 mach_port_t，首先我们看下在 cocoa 中使用的 NSMachPort，下面我们通过一些示例代码回顾一下在 iOS 中使用 NSMachPort 进行线程间通信。
 
-#### NSMachPort 使用
+#### NSMachPort 使用示例
 
-&emsp;NSMachPort 是 NSPort 的一个子类，它封装了 mach port，是 macOS 中的基本通信端口，NSMachPort 类的 `@property (readonly) uint32_t machPort;` 属性便是取得 NSMachPort 对象对应的 mach port。NSMachPort 只允许本地（在同一台机器上）通信。附带类 NSSocketPort 允许本地和远程分布式对象通信，但是对于本地情况，可能比 NSMachPort 更昂贵。要有效地使用 NSMachPort，你应该熟悉 mach ports、port 访问权限和 mach messages。
+&emsp;NSMachPort 是 NSPort 的一个子类，它封装了 mach port，是 macOS 中的基本通信端口，NSMachPort 类的 `@property (readonly) uint32_t machPort` 属性便是取得 NSMachPort 对象对应的 mach port。NSMachPort 只允许本地（在同一台机器上）通信。附带类 NSSocketPort 允许本地和远程分布式对象通信，但是对于本地情况，可能比 NSMachPort 更昂贵。要有效地使用 NSMachPort，你应该熟悉 mach ports、port 访问权限和 mach messages。
 
 &emsp;NSMachPort 的工作方式其实是将 NSMachPort 的对象添加到一个线程所对应的 RunLoop 中，并给 NSMachPort 对象设置相应的代理。在其他线程中调用该 NSMachPort 对象发消息时会在 NSMachPort 所关联的线程中执行相关的代理方法。示例代码如下：
 
@@ -502,9 +502,33 @@ NS_ASSUME_NONNULL_END
 
 &emsp;上面的示例代码中我们演示了 NSMachPort 的使用，NSMachPort 以面向对象的思想对 mach_port_t 进行封装，简化了 port 的使用。
 
+### Mach 异常产生的流程
+
+[软件测试之SDK开发(ios)——Mach捕获](https://blog.csdn.net/lfdanding/article/details/100024022)
+1. 硬件产生的信号被Mach层捕获
+2. Mach异常处理程序exception_triage()通过调用exception_deliver()首先尝试将异常抛给thread端口、然后尝试抛给task端口，最后再抛给host端口(默认端口),exception_deliver通过调用mach_exception_raise,触发异常；
+3. 异常在内核中以消息机制进行处理，通过task_set_exception_posrts()设置自定义的接收Mach异常消息的端口，相当于插入了一个exception处理程序。
+4. Mach 异常在 Mach 层被捕获并抛出后，会在BSD层被catch_mach_exception_raise处理，并通过ux_exception()将异常转换为对应的UNIX信号，并通过threadsignal()将信号投递到出错线程，iOS中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。
+
+
+
+
+
+
+
+
 ### Mach 异常捕获
 
 &emsp;上面我们看到了 Mach 使用 port 进行线程间通信，而捕获 Mach 异常也正是基于 port 的通信机制来做的，我们可以通过 Mach 提供的 API 实现注册自定义 port（thread 类型/task 类型/host 类型），替换内核接收 Mach 异常消息的 port，然后利用 mach_msg 函数接收异常消息，最后利用 mach_msg 函数将异常消息转发出去，不影响原有的流程。
+
+&emsp;这里替换内核接收 Mach 异常消息的 port 涉及到两个重要函数：
+
++ 为指定 task 设置异常端口：[task_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/task_set_exception_ports.html)
++ 为指定 thread 设置异常端口：[thread_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/thread_set_exception_ports.html)
+
+&emsp;这里还有一些注意点：`thread_set_exception_ports` 只能针对特定线程，例如我们在 `thread_set_exception_ports` 设置了主线程，那么在子线程的发生的 mach 异常通过我们设置的 port 是无法收到回调的，此时仅能收到主线程发生的 Mach 异常，而 `task_set_exception_ports` 则可以收到当前进程的所有 Mach 异常，不区分是哪个线程发生了 Mach 异常。
+
+&emsp;下面是捕获 Mach 异常的示例代码：
 
 ```c++
 #import "AppDelegate.h"
@@ -598,9 +622,11 @@ static void *exc_handler(void *ignored) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    
     // 自定义捕获 Mach 异常
     [self catchMACHExceptions];
     
+    // ARC 下会发生 EXC_BAD_ACCESS 异常，这里要注意一下，只有我们关闭 xcode 的 Debug executable 选项才能收到 exc_handler 回调
     __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
     NSLog(@"✳️✳️✳️ objc: %@", objc);
     
@@ -614,13 +640,16 @@ static void *exc_handler(void *ignored) {
 
 
 
-
-1. 首先把 NSMachPort 的使用总结写完。
 2. 然后介绍 Mach 异常的发生过程。
+
 3. 捕获 Mach 异常的示例代码。KSCrash 的使用以及源码。
+
 4. Mach 异常与 Signal 的信号转化函数。
+
 5. 怎么越过 debug 模式进行 Signal 信号打印。
+
 6. Signal 信号种类以及捕获处理。
+
 7. 总结。
 
 
@@ -860,6 +889,18 @@ If no signals are specified, update them all.  If no update option is specified,
 + [iOS开发·RunLoop源码与用法完全解析(输入源，定时源，观察者，线程间通信，端口间通信，NSPort，NSMessagePort，NSMachPort，NSPortMessage)](https://sg.jianshu.io/p/07313bc6fd24)
 + [Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
 + [iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
++ [移动端监控体系之技术原理剖析](https://www.jianshu.com/p/8123fc17fe0e)
+
+
+
+
+
+
+
+
+
+
+
 
 
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
