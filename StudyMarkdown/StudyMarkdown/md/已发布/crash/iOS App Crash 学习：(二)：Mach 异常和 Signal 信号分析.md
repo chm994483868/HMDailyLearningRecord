@@ -504,7 +504,7 @@ NS_ASSUME_NONNULL_END
 
 ### Mach 异常产生的流程
 
-&emsp;在《深入解析 Mac OS X & iOS 操作系统》一书中介绍了系统对 Mach 异常处理的默认机制，以及如下一张图：
+&emsp;在《深入解析 Mac OS X & iOS 操作系统》一书中介绍了系统对异常处理的流程，以及如下一张示意图：
 
 ![截屏2021-12-06 下午10.12.36.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a8c7656632024714aa1b2ec7df67234d~tplv-k3u1fbpfcp-watermark.image?)
 
@@ -522,7 +522,7 @@ NS_ASSUME_NONNULL_END
 
 &emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
 
-&emsp;下面我们通过查看 exception_types.h 文件列举几个比较常见的 Mach 异常，先熟悉一下：
+&emsp;下面我们列举 exception_types.h 中几个比较常见的 Mach 异常类型：
 
 ```c++
 /*
@@ -559,15 +559,19 @@ NS_ASSUME_NONNULL_END
 
 &emsp;上面我们看到了 Mach 使用 port 进行线程间通信，而捕获 Mach 异常也正是基于 port 的通信机制来做的，我们可以通过 Mach 提供的 API 实现注册自定义 port（thread 类型/task 类型/host 类型），替换内核接收 Mach 异常消息的 port，然后利用 mach_msg 函数接收异常消息，最后利用 mach_msg 函数将异常消息转发出去，不影响原有的流程。
 
-&emsp;这里替换内核接收 Mach 异常消息的 port 涉及到两个重要函数：
+&emsp;这里替换内核接收 Mach 异常消息的 port 涉及到三个重要函数，我们能分别在 host、task、thread 三者中设置 port。
 
-+ [host_set_exception_ports]()
++ 为 host 层一个或多个异常类型设置异常处理程序。如果没有 task 或特定于 thread 的异常处理程序，或者这些处理程序返回错误，则会为 host 上的所有 thread 调用这些处理程序。
+ [host_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/mach/host_priv.defs.auto.html)
+ 
 + 为指定 task 设置异常端口：[task_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/task_set_exception_ports.html)
 + 为指定 thread 设置异常端口：[thread_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/thread_set_exception_ports.html)
 
 &emsp;这里还有一些注意点：`thread_set_exception_ports` 只能针对特定线程，例如我们在 `thread_set_exception_ports` 设置了主线程，那么在子线程的发生的 mach 异常通过我们设置的 port 是无法收到回调的，此时仅能收到主线程发生的 Mach 异常，而 `task_set_exception_ports` 则可以收到当前进程的所有 Mach 异常，不区分是哪个线程发生了 Mach 异常。
 
 &emsp;下面是捕获 Mach 异常的示例代码：
+
+&emsp;
 
 ```c++
 #import "AppDelegate.h"
@@ -578,6 +582,7 @@ NS_ASSUME_NONNULL_END
 #import <mach/task.h>
 #import <mach/message.h>
 #import <mach/thread_act.h>
+#import <mach/host_priv.h>
 
 @interface AppDelegate ()
 
@@ -596,8 +601,12 @@ mach_port_name_t myExceptionPort = 10086;
     mach_port_insert_right(mach_task_self(), myExceptionPort, myExceptionPort, MACH_MSG_TYPE_MAKE_SEND);
     // 设置 Mach 异常的种类
     exception_mask_t excMask = EXC_MASK_BAD_ACCESS | EXC_MASK_BAD_INSTRUCTION | EXC_MASK_ARITHMETIC | EXC_MASK_SOFTWARE;
+    
     // 设置内核接收 Mach 异常消息的 thread Port
     thread_set_exception_ports(mach_thread_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+//    task_set_exception_ports(mach_task_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+//    host_set_exception_ports(<#host_priv_t host_priv#>, <#exception_mask_t exception_mask#>, <#mach_port_t new_port#>, <#exception_behavior_t behavior#>, <#thread_state_flavor_t new_flavor#>)
+    
     // 新建一个线程处理异常消息
     pthread_t thread;
     pthread_create(&thread, NULL, exc_handler, NULL);
