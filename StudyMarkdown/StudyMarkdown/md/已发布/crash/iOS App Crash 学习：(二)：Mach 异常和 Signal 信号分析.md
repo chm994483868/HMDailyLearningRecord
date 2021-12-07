@@ -571,8 +571,6 @@ NS_ASSUME_NONNULL_END
 
 &emsp;下面是捕获 Mach 异常的示例代码：
 
-&emsp;
-
 ```c++
 #import "AppDelegate.h"
 
@@ -645,10 +643,7 @@ static void *exc_handler(void *ignored) {
         };
         
         // 打印异常消息
-        printf("CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d" ,
-               exc.Head.msgh_id, exc.exception, exc.flavor,
-               exc.code[0], exc.code[1],
-               exc.old_stateCnt);
+        NSLog(@"🍀🍀🍀 CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d", exc.Head.msgh_id, exc.exception, exc.flavor, exc.code[0], exc.code[1], exc.old_stateCnt);
         
         // 定义转发出去的消息类型
         struct rep_msg {
@@ -685,7 +680,74 @@ static void *exc_handler(void *ignored) {
 @end
 ```
 
+&emsp;运行代码，我们能看到控制台有如下类似的打印：
+
+```c++
+🍀🍀🍀 CatchMACHExceptions 2401. Exception : 1 Flavor: 0. Code 13/0. State count is 8
+```
+
+![截屏2021-12-07 下午9.41.34.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b0545d10a7c94cc3b0b43394e3a527ad~tplv-k3u1fbpfcp-watermark.image?)
+
 ### Signal 信号捕获
+
+&emsp;上面的示例代码中，我们使用第一条 `mach_msg` 捕获到了 Mach 异常，然后我们第二条 `mach_msg` 继续将 Mach 异常消息转发出去，那么转发出去的 Mach 异常消息会去哪里呢？它会被转换为对应的 "UNIX" 信号。通过上面的 Mach 异常流程图，Mach 异常在 Mach 层被捕获并抛出后，会在 BSD 层被 `catch_mach_exception_raise` 处理，并通过 `ux_exception` 将异常转换为对应的 UNIX 信号，并通过 `threadsignal` 将信号投递到出错线程，iOS 中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。我们可以看下 `ux_exception` 函数实现，其中有 Mach 异常类型和 UNIX signals 的对应关系。
+
+```c++
+/*
+ * Translate Mach exceptions to UNIX signals.
+ *
+ * ux_exception translates a mach exception, code and subcode to a signal.  Calls machine_exception (machine dependent) to attempt translation first.
+ */
+static int
+ux_exception(int                        exception,
+    mach_exception_code_t      code,
+    mach_exception_subcode_t   subcode)
+{
+    int machine_signal = 0;
+
+    /* Try machine-dependent translation first. */
+    if ((machine_signal = machine_exception(exception, code, subcode)) != 0) {
+        return machine_signal;
+    }
+
+    switch (exception) {
+    case EXC_BAD_ACCESS:
+        if (code == KERN_INVALID_ADDRESS) {
+            return SIGSEGV;
+        } else {
+            return SIGBUS;
+        }
+
+    case EXC_BAD_INSTRUCTION:
+        return SIGILL;
+
+    case EXC_ARITHMETIC:
+        return SIGFPE;
+
+    case EXC_EMULATION:
+        return SIGEMT;
+
+    case EXC_SOFTWARE:
+        switch (code) {
+        case EXC_UNIX_BAD_SYSCALL:
+            return SIGSYS;
+        case EXC_UNIX_BAD_PIPE:
+            return SIGPIPE;
+        case EXC_UNIX_ABORT:
+            return SIGABRT;
+        case EXC_SOFT_SIGNAL:
+            return SIGKILL;
+        }
+        break;
+
+    case EXC_BREAKPOINT:
+        return SIGTRAP;
+    }
+
+    return 0;
+}
+```
+
 
 ### Mach 异常与信号转换机制
 
