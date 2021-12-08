@@ -107,7 +107,7 @@ thread #1, queue = 'com.apple.main-thread'
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被中止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
-### Mach 异常概述（Mach 是什么） 
+### Mach 概述（Mach 是什么） 
 
 &emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：BSD、Mach、GUI、NeXTSTEP、macOS、POSIX、IPC、system call、Kernel、宏内核、微内核、混合内核、XNU、Darwin 等以及他们之间的一些联系或者关系。
 
@@ -185,7 +185,7 @@ Software:
 
 &emsp;看到这里的话我们大概就可以对 Mach 的位置进行一个总结了：Darwin 是 macOS 和 iOS 操作环境的操作系统部分，它的内核是 XNU，XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能，而 XNU 内核的微内核部分便是一个被深度定制的 Mach 3.0 内核，所以看到这里我们便可理解那句 **Mach 异常为最底层的内核级异常**。
 
-#### Kernel Programming Guide 摘录
+#### 从《Kernel Programming Guide》中学习 Mach 
 
 &emsp;下面我们再过一下 [《Kernel Programming Guide》](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html?spm=a2c6h.12873639.0.0.15ee7113vyXhuI#//apple_ref/doc/uid/TP30000905-CH209-TPXREF102) 文档中的 Mach 概述部分，加深对 Mach 微内核的理解。
 
@@ -500,7 +500,7 @@ NS_ASSUME_NONNULL_END
 @end
 ```
 
-&emsp;上面的示例代码中我们演示了 NSMachPort 的使用，NSMachPort 以面向对象的思想对 mach_port_t 进行封装，简化了 port 的使用。
+&emsp;上面的示例代码中我们演示了 NSMachPort 的使用，NSMachPort 以面向对象的思想对 mach_port_t 进行封装，简化了 port 的使用。与直接系统调用不同，这里的用户进程是先向内核申请一个 port 的访问许可，然后利用 IPC 机制向这个 port 发送消息。虽说发送消息的操作同样是系统调用，但 Mach 内核的工作形式有些不同——handler 的工作可以交由其他进程实现。
 
 ### Mach 异常产生的流程
 
@@ -510,19 +510,13 @@ NS_ASSUME_NONNULL_END
 
 &emsp;以及详细的异常机制，硬件异常/软件异常等，这里就不再摘录了。
 
-[软件测试之SDK开发(ios)——Mach捕获](https://blog.csdn.net/lfdanding/article/details/100024022)
-1. 硬件产生的信号被Mach层捕获
-2. Mach异常处理程序exception_triage()通过调用exception_deliver()首先尝试将异常抛给thread端口、然后尝试抛给task端口，最后再抛给host端口(默认端口),exception_deliver通过调用mach_exception_raise,触发异常；
-3. 异常在内核中以消息机制进行处理，通过task_set_exception_posrts()设置自定义的接收Mach异常消息的端口，相当于插入了一个exception处理程序。
-4. Mach 异常在 Mach 层被捕获并抛出后，会在BSD层被catch_mach_exception_raise处理，并通过ux_exception()将异常转换为对应的UNIX信号，并通过threadsignal()将信号投递到出错线程，iOS中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。
+### Mach 异常类型有哪些
 
-》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》〉》 继续看下这个 Mach 异常产生机制.......
-
-#### Mach 异常类型
-
-&emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
+&emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码，当前最新的版本是 xnu-7195.141.2。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
 
 &emsp;下面我们列举 exception_types.h 中几个比较常见的 Mach 异常类型：
+
++ EXC_BAD_ACCESS
 
 ```c++
 /*
@@ -535,7 +529,15 @@ NS_ASSUME_NONNULL_END
 #define EXC_BAD_ACCESS          1       
 ```
 
-&emsp;通常由于访问了不该访问的内存导致。
+&emsp;通常由于访问了不该访问的内存导致。EXC_BAD_ACCESS 通常是由于访问了不该访问的内存导致，根据情况不同它会分别转换为两种类型的信号：当 mach code 等于 KERN_INVALID_ADDRESS 时转换为 SIGSEGV 其他情况则转换为 SIGBUG。
+
+&emsp;SIGSEGV：对应的 mach code 是 KERN_INVALID_ADDRESS（无效地址访问），即通常我们说的野指针。通常是试图访问未分配给自己的内存，或试图往没有写权限的内存地址写数据。`*((int*)(0x1234)) = 122;` 可以制造一个 `EXC_BAD_ACCESS(SIGSEGV)` 异常。
+
+&emsp;SIGBUG：非法地址，包括内存地址对齐(alignment)出错。比如访问一个四个字长的整数, 但其地址不是 4 的倍数。它与 SIGSEGV 的区别在于后者是由于对合法存储地址的非法访问触发的(如访问不属于自己存储空间或只读存储空间)。`char *s = "hello world"; *s = 'H';` 可以制造一个 EXC_BAD_ACCESS(SIGBUS) 异常。
+
+&emsp;栈溢出会导致 SIGSEGV 信号，但是在 mach 层捕获的时候对应的 mach code 是 KERN_PROTECTION_FAILURE(地址保护错误)，因为栈溢出会访问到栈顶部的保护页。在 mach 层捕获异常转换到对应的信号需要考虑这种情况。
+
++ EXC_BAD_INSTRUCTION
 
 ```c++
 /* Instruction failed */
@@ -543,7 +545,9 @@ NS_ASSUME_NONNULL_END
 #define EXC_BAD_INSTRUCTION     2       
 ```
 
-&emsp;此类异常通常由于线程执行非法指令导致。
+&emsp;此类异常通常由于线程执行非法指令导致。EXC_BAD_INSTRUCTION 是指令相关的异常，通常是尝试执行非法的指令，对应的信号是 SIGILL 表示 Illeague instruction。
+
++ EXC_ARITHMETIC
 
 ```c++
 /* Arithmetic exception */
@@ -551,9 +555,50 @@ NS_ASSUME_NONNULL_END
 #define EXC_ARITHMETIC          3       
 ```
 
-&emsp;算术异常，除零错误会抛出此类异常。
+&emsp;算术异常，除零错误会抛出此类异常。EXC_ARITHMETIC 是算术相关的异常，在发生致命的算术运算错误时发出。不仅包括浮点运算错误，还包括溢出及除数为 0 等其它所有的算术的错误。对应的信号是 SIGFPE。
 
-&emsp;......
++ EXC_EMULATION
+
+```c++
+/* Emulation instruction */
+/* Emulation support instruction encountered */
+/* Details in code and subcode fields    */
+#define EXC_EMULATION           4       
+```
+
+&emsp;EXC_EMULATION 是硬件相关的异常，对应的信号是 SIGEMT，几乎碰不到这种信号。
+
++ EXC_SOFTWARE
+
+```c++
+/* Software generated exception */
+/* Exact exception is in code field. */
+
+/* Codes 0 - 0xFFFF reserved to hardware */
+/* Codes 0x10000 - 0x1FFFF reserved for OS emulation (Unix) */
+
+#define EXC_SOFTWARE            5       
+```
+
+&emsp;EXC_SOFTWARE 是软件相关的异常，它会分别转换为四种不同类型的信号：SIGSYS、SIGPIPE、SIGABRT 和 SIGKILL。
+
+&emsp;SIGSYS：对应的 mach code 是 EXC_UNIX_BAD_SYSCALL，通常是非法的系统调用。
+
+&emsp;SIGPIPE：管道破裂，这个信号通常在进程间通信产生。比如采用 FIFO(管道)通信的两个进程，读管道没打开或者意外终止就往管道写，写进程会收到 SIGPIPE 信号。此外用 Socket 通信的两个进程，写进程在写 Socket 的时候，读进程已经终止。对应的 mach code 是 EXC_UNIX_BAD_PIPE。
+
+&emsp;SIGABRT：是调用 abort 生成的信号。通常是因为应用层发生 NSException 异常，并且没有被捕获，导致程序向自身发送了 SIGABRT 信号而崩溃。abort 函数最终会调用 `(void)pthread_kill(pthread_self(), SIGABRT);`。对应的 mach code 是 EXC_UNIX_ABORT。
+
+&emsp;SIGKILL：用来立即结束程序的运行，该信号不能被阻塞、处理和忽略。对应的 mach code 是 EXC_SOFT_SIGNAL。
+
++ EXC_BREAKPOINT
+
+```c++
+/* Trace, breakpoint, etc. */
+/* Details in code field. */
+#define EXC_BREAKPOINT          6       
+```
+
+&emsp;EXC_BREAKPOINT 是由断点指令或其它 trap 指令产生，由 debugger 使用，对应的信号是 SIGTRAP。
 
 ### Mach 异常捕获
 
@@ -686,11 +731,17 @@ static void *exc_handler(void *ignored) {
 🍀🍀🍀 CatchMACHExceptions 2401. Exception : 1 Flavor: 0. Code 13/0. State count is 8
 ```
 
+&emsp;这里还发现在 m1 mac 下需要关闭下面的 Debug executable 现象后才能捕获到 Mach 异常，在 intel mac 下开启与关闭 Debug executable 选项都能捕获到 Mach 异常。
+
 ![截屏2021-12-07 下午9.41.34.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b0545d10a7c94cc3b0b43394e3a527ad~tplv-k3u1fbpfcp-watermark.image?)
 
-### Signal 信号捕获
+### Unix signals
 
-&emsp;上面的示例代码中，我们使用第一条 `mach_msg` 捕获到了 Mach 异常，然后我们第二条 `mach_msg` 继续将 Mach 异常消息转发出去，那么转发出去的 Mach 异常消息会去哪里呢？它会被转换为对应的 "UNIX" 信号。通过上面的 Mach 异常流程图，Mach 异常在 Mach 层被捕获并抛出后，会在 BSD 层被 `catch_mach_exception_raise` 处理，并通过 `ux_exception` 将异常转换为对应的 UNIX 信号，并通过 `threadsignal` 将信号投递到出错线程，iOS 中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。我们可以看下 `ux_exception` 函数实现，其中有 Mach 异常类型和 UNIX signals 的对应关系。
+&emsp;上面的示例代码中，我们使用第一条 `mach_msg` 捕获到了 Mach 异常，然后我们第二条 `mach_msg` 继续将 Mach 异常消息转发出去，那么转发出去的 Mach 异常消息会去哪里呢？它会被转换为对应的 UNIX 信号（在上面的 Mach 异常类型中我们已经介绍了 Mach 异常类型与 Unix 信号的对应关系，下面我们会更具体的看一下）。通过上面的 Mach 异常流程图，Mach 异常在 Mach 层被捕获并抛出后，会在 BSD 层被 `catch_mach_exception_raise` 处理，并通过 `ux_exception` 将异常转换为对应的 UNIX 信号，并通过 `threadsignal` 将信号投递到出错线程，iOS 中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。我们可以看下 `ux_exception` 函数实现，其中有 Mach 异常类型和 UNIX signals 的对应关系。
+
+#### Mach 异常转换为 Unix signal
+
+&emsp;ux_exception 函数中明确的对应关系：
 
 ```c++
 /*
@@ -748,171 +799,523 @@ ux_exception(int                        exception,
 }
 ```
 
+&emsp;以表格的形式展示，大家更清晰一些：
 
-### Mach 异常与信号转换机制
+<table>
+    <tr>
+        <td>Mach Exception Type</td>
+        <td>Unix Signal</td>
+    </tr>
+    <tr>
+        <td rowspan="2">EXC_BAD_ACCESS</td>
+        <td>SIGSEGV</td>
+    </tr>
+    <tr>
+        <td>SIGBUS</td>
+    </tr>
+    <tr>
+        <td>EXC_BAD_INSTRUCTION</td>
+        <td>SIGILL</td>
+    </tr>
+    <tr>
+        <td>EXC_ARITHMETIC</td>
+        <td>SIGFPE</td>
+    </tr>
+    <tr>
+        <td>EXC_EMULATION</td>
+        <td>SIGEMT</td>
+    </tr>
+    <tr>
+        <td rowspan="4">EXC_SOFTWARE</td>
+        <td>SIGSYS(EXC_UNIX_BAD_SYSCALL)</td>
+    </tr>
+    <tr>
+        <td>SIGPIPE(EXC_UNIX_BAD_PIPE)</td>
+        <td>SIGABRT(EXC_UNIX_ABORT)</td>
+        <td>SIGKILL(EXC_SOFT_SIGNAL)</td>
+    </tr>
+    <tr>
+        <td>EXC_BREAKPOINT</td>
+        <td>SIGTRAP</td>
+    </tr>
+</table>
 
+#### Unix signals 有哪些
 
-
-2. 然后介绍 Mach 异常的发生过程。
-
-3. 捕获 Mach 异常的示例代码。KSCrash 的使用以及源码。
-
-4. Mach 异常与 Signal 的信号转化函数。
-
-5. 怎么越过 debug 模式进行 Signal 信号打印。
-
-6. Signal 信号种类以及捕获处理。
-
-7. 总结。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-&emsp;这里我们学会了 Port 的使用，那么
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-&emsp;Mach 异常和 Signal 信号转换：
+&emsp;所有的 Unix signals 值被定义在 xnu-7195.141.2/bsd/machine/signal.h 中。
 
 ```c++
+#define SIGHUP  1       /* hangup */
+#define SIGINT  2       /* interrupt */
+#define SIGQUIT 3       /* quit */
+#define SIGILL  4       /* illegal instruction (not reset when caught) */
+#define SIGTRAP 5       /* trace trap (not reset when caught) */
+#define SIGABRT 6       /* abort() */
+#if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
+#define SIGPOLL 7       /* pollable event ([XSR] generated, not supported) */
+#else   /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+#define SIGIOT  SIGABRT /* compatibility */
+#define SIGEMT  7       /* EMT instruction */
+#endif  /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+#define SIGFPE  8       /* floating point exception */
+#define SIGKILL 9       /* kill (cannot be caught or ignored) */
+#define SIGBUS  10      /* bus error */
+#define SIGSEGV 11      /* segmentation violation */
+#define SIGSYS  12      /* bad argument to system call */
+#define SIGPIPE 13      /* write on a pipe with no one to read it */
+#define SIGALRM 14      /* alarm clock */
+#define SIGTERM 15      /* software termination signal from kill */
+#define SIGURG  16      /* urgent condition on IO channel */
+#define SIGSTOP 17      /* sendable stop signal not from tty */
+#define SIGTSTP 18      /* stop signal from tty */
+#define SIGCONT 19      /* continue a stopped process */
+#define SIGCHLD 20      /* to parent on child stop or exit */
+#define SIGTTIN 21      /* to readers pgrp upon background tty read */
+#define SIGTTOU 22      /* like TTIN for output if (tp->t_local&LTOSTOP) */
+#if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
+#define SIGIO   23      /* input/output possible signal */
+#endif
+#define SIGXCPU 24      /* exceeded CPU time limit */
+#define SIGXFSZ 25      /* exceeded file size limit */
+#define SIGVTALRM 26    /* virtual time alarm */
+#define SIGPROF 27      /* profiling time alarm */
+#if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
+#define SIGWINCH 28     /* window size changes */
+#define SIGINFO 29      /* information request */
+#endif
+#define SIGUSR1 30      /* user defined signal 1 */
+#define SIGUSR2 31      /* user defined signal 2 */
+```
+
+#### Unix Signal 捕获
+
+&emsp;这里摘录 [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html) 中的示例代码：
+
+
+
+```c++
+//
+//  UncaughtExceptionHandler.m
+//  dSYMDemo
+//
+//  Created by HM C on 2021/11/19.
+//
+
+#import "UncaughtExceptionHandler.h"
+
+#import <UIKit/UIDevice.h>
+#import <libkern/OSAtomic.h>
+#import <execinfo.h>
+#import <stdatomic.h>
+
+NSString * const UncaughtExceptionHandlerSignalExceptionName = @"UncaughtExceptionHandlerSignalExceptionName";
+NSString * const UncaughtExceptionHandlerSignalKey = @"UncaughtExceptionHandlerSignalKey";
+NSString * const UncaughtExceptionHandlerAddressesKey = @"UncaughtExceptionHandlerAddressesKey";
+NSString * const UncaughtExceptionHandlerFileKey = @"UncaughtExceptionHandlerFileKey";
+
+atomic_int UncaughtExceptionCount = 0;
+const int32_t UncaughtExceptionMaximum = 10;
+
+// 这里异常发生时跳过函数调用堆栈中的 4 个 frame，如下 4 个：
 /*
- * Translate Mach exceptions to UNIX signals.
- *
- * ux_exception translates a mach exception, code and subcode to
- * a signal.  Calls machine_exception (machine dependent)
- * to attempt translation first.
- */
-static int
-ux_exception(int                        exception,
-    mach_exception_code_t      code,
-    mach_exception_subcode_t   subcode)
-{
-    int machine_signal = 0;
+ "0   dSYMDemo                            0x00000001042541eb +[UncaughtExceptionHandler backtrace] + 59",
+ "1   dSYMDemo                            0x0000000104253edc mySignalHandler + 76",
+ "2   libsystem_platform.dylib            0x000000010e774e2d _sigtramp + 29",
+ "3   ???                                 0x0000600002932720 0x0 + 105553159464736",
+*/
+const NSInteger UncaughtExceptionHandlerSkipAddressCount = 4;
+//const NSInteger UncaughtExceptionHandlerReportAddressCount = 5;
 
-    /* Try machine-dependent translation first. */
-    if ((machine_signal = machine_exception(exception, code, subcode)) != 0) {
-        return machine_signal;
-    }
+void mySignalHandler(int signal);
 
-    switch (exception) {
-    case EXC_BAD_ACCESS:
-        if (code == KERN_INVALID_ADDRESS) {
-            return SIGSEGV;
-        } else {
-            return SIGBUS;
-        }
+@implementation UncaughtExceptionHandler
 
-    case EXC_BAD_INSTRUCTION:
-        return SIGILL;
-
-    case EXC_ARITHMETIC:
-        return SIGFPE;
-
-    case EXC_EMULATION:
-        return SIGEMT;
-
-    case EXC_SOFTWARE:
-        switch (code) {
-        case EXC_UNIX_BAD_SYSCALL:
-            return SIGSYS;
-        case EXC_UNIX_BAD_PIPE:
-            return SIGPIPE;
-        case EXC_UNIX_ABORT:
-            return SIGABRT;
-        case EXC_SOFT_SIGNAL:
-            return SIGKILL;
-        }
-        break;
-
-    case EXC_BREAKPOINT:
-        return SIGTRAP;
-    }
-
-    return 0;
++ (void)installUncaughtExceptionHandler {
+    // 将之前注册的 未捕获异常处理函数 取出并备份，防止覆盖
+    previousUncaughtExceptionHandler = NSGetUncaughtExceptionHandler();
+    // Objective-C 异常捕获（越界、参数无效等）
+    NSSetUncaughtExceptionHandler(&UncaughtExceptionHandlers);
+    
+    // 信号量截断，当抛出信号时会回调 MySignalHandler 函数
+    signal(SIGABRT, mySignalHandler);
+    signal(SIGILL, mySignalHandler);
+    signal(SIGSEGV, mySignalHandler);
+    signal(SIGFPE, mySignalHandler);
+    signal(SIGBUS, mySignalHandler);
+    signal(SIGPIPE, mySignalHandler);
 }
+
++ (void)setSignalHandlerInAdvance {
+    struct sigaction act;
+    // 当 sa_flags 设为 SA_SIGINFO 时，设定 sa_sigaction 来指定信号处理函数
+    act.sa_flags = SA_SIGINFO;
+    act.sa_sigaction = test_signal_action_handler;
+    sigaction(SIGABRT, &act, NULL);
+}
+
+static void test_signal_action_handler(int signo, siginfo_t *si, void *ucontext) {
+    NSLog(@"🏵🏵🏵 [sigaction handler] - handle signal: %d", signo);
+    
+    // handle siginfo_t
+    NSLog(@"🏵🏵🏵 siginfo: {\n si_signo: %d,\n si_errno: %d,\n si_code: %d,\n si_pid: %d,\n si_uid: %d,\n si_status: %d,\n si_value: %d\n }",
+          si->si_signo,
+          si->si_errno,
+          si->si_code,
+          si->si_pid,
+          si->si_uid,
+          si->si_status,
+          si->si_value.sival_int);
+}
+
+// 获取函数堆栈信息
++ (NSArray *)backtrace {
+    void* callstack[128];
+    
+    // 用于获取当前线程的函数调用堆栈，返回实际获取的指针个数
+    int frames = backtrace(callstack, 128);
+    // 从 backtrace 函数获取的信息转化为一个字符串数组
+    char **strs = backtrace_symbols(callstack, frames);
+    
+    NSMutableArray *backtrace = [NSMutableArray arrayWithCapacity:frames];
+    
+    // 越过当前的 4 个 frame
+    if (backtrace.count > UncaughtExceptionHandlerSkipAddressCount) {
+        for (int i = UncaughtExceptionHandlerSkipAddressCount; i < backtrace.count; ++i) {
+            [backtrace addObject:[NSString stringWithUTF8String:strs[i]]];
+        }
+    }
+    
+    free(strs);
+    
+    return backtrace;
+}
+
+- (void)saveCreash:(NSException *)exception file:(NSString *)file {
+    // 异常发生时的堆栈信息
+    NSArray *stackArray = [exception callStackSymbols];
+    if (!stackArray || stackArray.count <= 0) {
+        stackArray = [exception.userInfo objectForKey:UncaughtExceptionHandlerAddressesKey];
+    }
+    
+    // 出现异常的原因
+    NSString *reason = [exception reason];
+    // 异常名称
+    NSString *name = [exception name];
+    
+    NSString * _libPath  = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:file];
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:_libPath]){
+        [[NSFileManager defaultManager] createDirectoryAtPath:_libPath withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    
+    NSDate* date = [NSDate dateWithTimeIntervalSinceNow:0];
+    NSTimeInterval a = [date timeIntervalSince1970];
+    NSString *timeString = [NSString stringWithFormat:@"%f", a];
+    
+    NSString * savePath = [_libPath stringByAppendingFormat:@"/error%@.log", timeString];
+    NSString *exceptionInfo = [NSString stringWithFormat:@"Exception reason：%@\nException name：%@\nException stack：%@", name, reason, stackArray];
+    BOOL sucess = [exceptionInfo writeToFile:savePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    
+    NSLog(@"🏵🏵🏵 保存崩溃日志 sucess:%d, %@", sucess, savePath);
+}
+
+// 异常处理方法
+- (void)handleException:(NSException *)exception {
+    NSDictionary *userInfo = [exception userInfo];
+    [self saveCreash:exception file:[userInfo objectForKey:UncaughtExceptionHandlerFileKey]];
+    
+    NSSetUncaughtExceptionHandler(NULL);
+    signal(SIGABRT, SIG_DFL);
+    signal(SIGILL, SIG_DFL);
+    signal(SIGSEGV, SIG_DFL);
+    signal(SIGFPE, SIG_DFL);
+    signal(SIGBUS, SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
+    
+    if ([[exception name] isEqual:UncaughtExceptionHandlerSignalExceptionName]) {
+        int signalNumber = [[[exception userInfo] objectForKey:UncaughtExceptionHandlerSignalKey] intValue];
+        
+        NSLog(@"🏵🏵🏵 抓到 signal 异常：%d", signalNumber);
+        
+        // 如果是 signal 异常
+        kill(getpid(), [[[exception userInfo] objectForKey:UncaughtExceptionHandlerSignalKey] intValue]);
+    } else {
+        NSLog(@"🏵🏵🏵 抓到 Objective-C 异常：%@", exception);
+        
+        // 如果是 Objective-C 异常
+        [exception raise];
+        
+        // 在自己的异常处理操作完毕后，调用先前别人注册的未捕获异常处理函数，并把原始的 exception 进行传递
+        if (previousUncaughtExceptionHandler) {
+            previousUncaughtExceptionHandler(exception);
+        } else {
+            // 如果是 Objective-C 异常
+            kill(getpid(), SIGKILL);
+        }
+    }
+}
+
+// 获取应用信息
+NSString* getAppInfo(void) {
+    NSString *appInfo = [NSString stringWithFormat:@"App : %@ %@(%@) Device : %@ OS Version : %@ %@",
+                         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"],
+                         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+                         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"],
+                         [UIDevice currentDevice].model,
+                         [UIDevice currentDevice].systemName,
+                         [UIDevice currentDevice].systemVersion];
+    return appInfo;
+}
+
+static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
+
+// NSSetUncaughtExceptionHandler 捕获异常的调用方法，利用 NSSetUncaughtExceptionHandler，当程序异常退出的时候，可以先进行处理，然后做一些自定义的动作
+void UncaughtExceptionHandlers (NSException *exception) {
+    // 原子自增 1
+    int32_t exceptionCount = atomic_fetch_add(&UncaughtExceptionCount, 1);
+    if (exceptionCount > UncaughtExceptionMaximum) { return; }
+    
+    // 异常发生时的函数堆栈
+    NSArray *callStack = [UncaughtExceptionHandler backtrace];
+    
+    // 组装 userInfo 数据
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:[exception userInfo]];
+    [userInfo setObject:callStack forKey:UncaughtExceptionHandlerAddressesKey];
+    [userInfo setObject:@"Objective-C Crash" forKey:UncaughtExceptionHandlerFileKey];
+    
+    NSException *medianException = [NSException exceptionWithName:[exception name]
+                                                           reason:[exception reason]
+                                                         userInfo:userInfo];
+    
+    // Objective-C 异常和 signal 都放在 handleException: 函数中进行处理
+    [[[UncaughtExceptionHandler alloc] init] performSelectorOnMainThread:@selector(handleException:) withObject:medianException waitUntilDone:YES];
+}
+
+// Signal 处理方法
+void mySignalHandler(int signal) {
+    // 原子自增 1
+    int32_t exceptionCount = atomic_fetch_add(&UncaughtExceptionCount, 1);
+    if (exceptionCount > UncaughtExceptionMaximum) { return; }
+    
+    // 异常发生时的函数堆栈
+    NSArray *callStack = [UncaughtExceptionHandler backtrace];
+    
+    // 组装 userInfo 数据
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObject:[NSNumber numberWithInt:signal] forKey:UncaughtExceptionHandlerSignalKey];
+    [userInfo setObject:callStack forKey:UncaughtExceptionHandlerAddressesKey];
+    [userInfo setObject:@"Signal Crash" forKey:UncaughtExceptionHandlerFileKey];
+    
+    // 构建一个 NSException 对象
+    NSException *medianException = [NSException exceptionWithName:UncaughtExceptionHandlerSignalExceptionName
+                                                     reason:[NSString stringWithFormat:NSLocalizedString(@"Signal %d was raised.\n" @"%@", nil), signal, getAppInfo()]
+                                                   userInfo:userInfo];
+    
+    // Objective-C 异常和 signal 都放在 handleException: 函数中进行处理
+    [[[UncaughtExceptionHandler alloc] init] performSelectorOnMainThread:@selector(handleException:) withObject:medianException  waitUntilDone:YES];
+}
+
+@end
+
 ```
-
-
 
 ```c++
-SIGSEGV与SIGBUS
+//
+//  AppDelegate.m
+//  dSYMDemo
+//
+//  Created by HM C on 2021/9/24.
+//
 
-SIGBUS(Bus error)意味着指针所对应的地址是有效地址，但总线不能正常使用该指针。通常是未对齐的数据访问所致。
+#import "AppDelegate.h"
+#import "UncaughtExceptionHandler.h"
 
-SIGSEGV(Segment fault)意味着指针所对应的地址是无效地址，没有物理内存对应该地址。
+// 捕获 Mach 异常涉及到的头文件
+#import <pthread.h>
+#import <mach/mach_init.h>
+#import <mach/mach_port.h>
+#import <mach/task.h>
+#import <mach/message.h>
+#import <mach/thread_act.h>
+#import <mach/host_priv.h>
 
-SEGV_MAPERR, 地址没有映射到对象，可能的原因是dangling pointer或者overflow，
+@interface AppDelegate ()
 
-比如
+@end
 
-1. ptr1和ptr2指向同一段内存，但是某个线程某个时刻用ptr1将内存delete了，如果因为错误的设计或者假设导致认为ptr2还是指向合法的内存，使用时就会出错；
+@implementation AppDelegate
 
-2. 某个数组有1个元素，但是传入的数组大小却是2，如果我们要用2作为长度来遍历这个数组，那当访问第二个元素时就会出错；
+/// 注册捕获异常的端口
+// 自定义端口号
+mach_port_name_t myExceptionPort = 10086;
 
-SEGV_ACCERR, 对映射的对象没有权限
+- (void)catchMACHExceptions {
+    // 用自定义端口号初始化一个端口
+    mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &myExceptionPort);
+    // 向端口插入发送权限
+    mach_port_insert_right(mach_task_self(), myExceptionPort, myExceptionPort, MACH_MSG_TYPE_MAKE_SEND);
+    // 设置 Mach 异常的种类
+    exception_mask_t excMask = EXC_MASK_BAD_ACCESS | EXC_MASK_BAD_INSTRUCTION | EXC_MASK_ARITHMETIC | EXC_MASK_SOFTWARE;
+    
+    // 设置内核接收 Mach 异常消息的 thread Port
+    
+//    thread_set_exception_ports(mach_thread_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+    task_set_exception_ports(mach_task_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+//    host_set_exception_ports(<#host_priv_t host_priv#>, <#exception_mask_t exception_mask#>, <#mach_port_t new_port#>, <#exception_behavior_t behavior#>, <#thread_state_flavor_t new_flavor#>)
+    
+    // 新建一个线程处理异常消息
+    pthread_t thread;
+    pthread_create(&thread, NULL, exc_handler, NULL);
+}
+
+/// 接收异常消息
+static void *exc_handler(void *ignored) {
+    // 结果
+    mach_msg_return_t rc;
+    // 内核将发送给我们的异常消息的格式，参考 ux_handler() [bsd / uxkern / ux_exception.c] 中对异常消息的定义
+    typedef struct {
+        mach_msg_header_t Head;
+        // start of the kernel processed data
+        mach_msg_body_t msgh_body;
+        mach_msg_port_descriptor_t thread;
+        mach_msg_port_descriptor_t task;
+        // end of the kernel processed data
+        NDR_record_t NDR;
+        exception_type_t exception;
+        mach_msg_type_number_t codeCnt;
+        integer_t code[2];
+        int flavor;
+        mach_msg_type_number_t old_stateCnt;
+        natural_t old_state[144];
+    } exc_msg_t;
+    
+    for (;;) {
+        exc_msg_t exc;
+        
+        // 这里会阻塞，直到接收到 exception message，或者线程被中断
+        rc = mach_msg(&exc.Head, MACH_RCV_MSG | MACH_RCV_LARGE, 0, sizeof(exc_msg_t), myExceptionPort, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+        if (rc != MACH_MSG_SUCCESS) {
+            //
+            break;
+        };
+        
+        // 打印异常消息
+//        printf("🏵🏵🏵 收到 Mach 异常 ！！！ CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d \n" ,
+//               exc.Head.msgh_id, exc.exception, exc.flavor,
+//               exc.code[0], exc.code[1],
+//               exc.old_stateCnt);
+        
+        NSLog(@"🏵🏵🏵 收到 Mach 异常 ！！！ CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d", exc.Head.msgh_id, exc.exception, exc.flavor,
+              exc.code[0], exc.code[1], exc.old_stateCnt);
+        
+        // 定义转发出去的消息类型
+        struct rep_msg {
+            mach_msg_header_t Head;
+            NDR_record_t NDR;
+            kern_return_t RetCode;
+        } rep_msg;
+        rep_msg.Head = exc.Head;
+        rep_msg.NDR = exc.NDR;
+        rep_msg.RetCode = KERN_FAILURE;
+        kern_return_t result;
+        if (rc == MACH_MSG_SUCCESS) {
+            // 将异常消息再转发出去
+            result = mach_msg(&rep_msg.Head, MACH_SEND_MSG, sizeof(rep_msg), 0, MACH_PORT_NULL, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+        }
+    }
+    
+    return NULL;
+}
+
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Override point for customization after application launch.
+    
+    // Objective-C 异常处理/signal 信号处理
+    [UncaughtExceptionHandler installUncaughtExceptionHandler];
+    
+    // 自定义捕获 Mach 异常
+    [self catchMACHExceptions];
+    
+//    mach_port_t tt;
+//    NSObject *tempObjc = [[NSObject alloc] init];
+//    [tempObjc release];
+//    [tempObjc release];
+    
+//    // 将之前注册的 未捕获异常处理函数 取出并备份
+//    previousUncaughtExceptionHandler = NSGetUncaughtExceptionHandler();
+//    NSLog(@"🏵🏵🏵 currentHandler: %p", previousUncaughtExceptionHandler);
+//    // 设置我们自己准备的 未捕获异常处理函数
+//    NSSetUncaughtExceptionHandler(&uncaughtExceptionHandler);
+    
+    // 信号量截断
+//    signal(SIGABRT, mySignalHandler);
+//    signal(SIGILL, mySignalHandler);
+//    signal(SIGSEGV, mySignalHandler);
+//    signal(SIGFPE, mySignalHandler);
+//    signal(SIGBUS, mySignalHandler);
+//    signal(SIGPIPE, mySignalHandler);
+    
+    // 除0⃣️操作
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+//        int a = 0;
+//        int b = 1;
+//        int result = b / a;
+//        NSLog(@"🏵🏵🏵 %d", result);
+//    });
+    
+    // 野指针访问
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
+        NSLog(@"🏵🏵🏵 objc: %@", objc);
+//    *((int*)(0x1234)) = 122;
+    
+//    char *s = "hello world";
+//    *s = 'H';
+    
+//    });
+    
+    // 数组越界
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+//         NSArray *tempArray = @[@(1), @(2)];
+//         NSLog(@"🏵🏵🏵 %@", tempArray[2]);
+//    abort();
+//    });
+    
+//    pthread_kill(pthread_self(), SIGABRT);
+//    abort();
+    
+    // process handle --notify true
+    // process handle --pass true
+    // process handle --stop false
+    // process handle
+    
+//    NSObject *objc = [[NSObject alloc] init];
+//    [objc performSelector:@selector(TEST)];
+    
+    return YES;
+}
+
+#pragma mark - UISceneSession lifecycle
+
+
+- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
+    // Called when a new scene session is being created.
+    // Use this method to select a configuration to create the new scene with.
+    return [[UISceneConfiguration alloc] initWithName:@"Default Configuration" sessionRole:connectingSceneSession.role];
+}
+
+
+- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions {
+    // Called when the user discards a scene session.
+    // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
+    // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+}
+
+@end
+
+
+
 ```
-
-
-
-
-
-
-
-
-
-
-
-> &emsp;**Mach 为 XNU 的微内核，Mach 异常为最底层的内核级异常。在 iOS 系统中，底层 Crash 先触发 Mach 异常，然后再转换为对应的 Signal 信号**。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-&emsp;SignalHandler 不要在 debug 环境下测试。因为系统的 debug 会优先去拦截。我们要运行一次后，关闭 debug 状态。应该直接在模拟器上点击我们 build 上去的 App 去运行。而 UncaughtExceptionHandler 可以在调试状态下捕捉。
-
-&emsp;Mach 引入了 port 的概念用以表示双向的 IPC (进程间通信 Inter-Process Communication），它就像 UNIX 下的文件一样拥有权限信息，使得其安全模型非常接近 UNIX。并且，Mach 使得任何进程都可以拥有一般系统中内核才有的权限，从而允许用户进程实现与硬件交互等操作。
-
-&emsp;Port 机制在 IPC 中的应用该是 Mach 与其他传统内核的一大分野。在 UNIX 下，用户进程调用内核只能通过系统调用或陷入（trap）。用户进程使用一个库安排好数据的位置，然后软件触发一个中断，内核在初始化时会为所有中断设置 handler，因此程序触发中断的时候，控制权就转移到了内核，在一些必要的检查之后即可得以进一步操作。
-在 Mach 下，这就交给了 IPC 系统。与直接系统调用不同，这里的用户进程是先向内核申请一个 port 的访问许可，然后利用 IPC 机制向这个 port 发送消息。虽说发送消息的操作同样是系统调用，但 Mach 内核的工作形式有些不同——handler 的工作可以交由其他进程实现。
 
 
 ```c++
@@ -943,7 +1346,6 @@ If no signals are specified, update them all.  If no update option is specified,
 
 
 &emsp;`UncaughtExceptionHandlers` 函数执行结束后， abort() -> pthread_kill 抛出的 `SIGABRT` 信号，使用 `signal(SIGABRT, MySignalHandler);` 捕获不到！ 
-
 
 
 ## 参考链接
