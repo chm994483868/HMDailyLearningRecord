@@ -1,4 +1,4 @@
-# iOS App Crash 学习：(二)：Mach 异常和 Signal 信号分析
+# iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析
 
 ## 摘要
 
@@ -107,7 +107,7 @@ thread #1, queue = 'com.apple.main-thread'
 
 &emsp;Objective-C 的异常如果不做任何处理的话（try catch 捕获处理），最终便会触发程序中止退出，此时造成退出的原因是程序向自身发送了 `SIGABRT` 信号。（对于未捕获的 Objective-C 异常，我们可以通过 `NSSetUncaughtExceptionHandler` 函数设置 **未捕获异常处理函数** 在其中记录存储异常日志，然后在 APP 下次启动时进行上传（**未捕获异常处理函数** 函数执行完毕后，程序也同样会被中止，此时没有机会给我们进行网络请求上传数据），如果异常日志记录得当，然后再配合一些异常发生时用户的操作行为数据，那么可以分析和解决大部分的崩溃问题。）
 
-### Mach 概述（Mach 是什么） 
+## Mach 概述（Mach 是什么） 
 
 &emsp;Mach（微内核）涉及到的知识点有点多，所以这里我们首先稍微梳理铺垫一下，大概会涉及到：BSD、Mach、GUI、NeXTSTEP、macOS、POSIX、IPC、system call、Kernel、宏内核、微内核、混合内核、XNU、Darwin 等以及他们之间的一些联系或者关系。
 
@@ -122,6 +122,10 @@ thread #1, queue = 'com.apple.main-thread'
 &emsp;[NeXTSTEP](https://zh.wikipedia.org/wiki/NeXTSTEP)（又写作 NeXTstep、NeXTStep、NEXTSTEP)是由 NeXT.Inc 所开发的操作系统。NeXT 是乔布斯在 1985 年离开苹果公司后所创立的公司。这套系统是以 Mach 和 BSD 为基础，以 Objective-C 作为原生语言，具有很先进的 GUI。1.0 版推出时间是在 1989 年 9 月 18 日。后来苹果电脑在 1997 年 2 月将 NeXT 买下，成为 Mac OS X 的基础。
 
 &emsp;[macOS](https://zh.wikipedia.org/wiki/MacOS)/ˌmækʔoʊˈɛs/ 是苹果公司推出的基于 GUI 的操作系统，为麦金塔（Macintosh，简称 Mac）系列电脑的主操作系统。Classic Mac OS（操作系统，简称 Mac OS，注意这里是没有 X 的）所指的是苹果公司从 1984 年至 2001 年间为麦金塔系列电脑所开发的一系列操作系统，始于 System 1，终结于 Mac OS 9，1997 年，史蒂夫·乔布斯重回苹果公司，经过为期四年的开发，苹果公司于 2001 年以新的操作系统 Mac OS X 取代了 Classic Mac OS。它保留了 Classic Mac OS 的大部分 GUI 设计元素，并且应用程序框架为了兼容性而存在着一些重叠，但这两个操作系统的起源和结构以及底层代码完全不同。简单来说，Mac OS X 它是 Mac OS 版本 10 的分支，然而它与早期发行的 Mac OS 相比，在 Mac OS 的历史上是彻底走向独立发展的。自 2001 年推出起，Mac OS X 这个名字随着时间的推移也发生了一些变化，2001 年至 2011 年间称作 Mac OS X，2012 年至 2015 年称 OS X，2016 年 6 月，苹果公司宣布 OS X 更名为 macOS，以便与苹果其他操作系统 iOS、watchOS 和 tvOS 保持统一的命名风格。
+
+&emsp;这里补一张 macOS 架构图：
+
+![截屏2021-12-09 上午12.03.48.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c2746a6b912a451382441c50261dd936~tplv-k3u1fbpfcp-watermark.image?)
 
 &emsp;[POSIX](https://zh.wikipedia.org/wiki/可移植操作系统接口) 可移植操作系统接口：Portable Operating System Interface，缩写：POSIX，是 IEEE（电气电子工程师学会）为要在各种 UNIX 操作系统上运行软件，而定义 API 的一系列互相关联的标准的总称，其正式称呼为 IEEE Std 1003，而国际标准名称为 ISO/IEC 9945。此标准源于一个大约开始于 1985 年的项目。POSIX 这个名称是由理查德·斯托曼（RMS）应 IEEE 的要求而提议的一个易于记忆的名称。它基本上是 Portable Operating System Interface（可移植操作系统接口）的缩写，而最后一个字母 X 则表明其对 Unix API 的传承。
 
@@ -185,11 +189,11 @@ Software:
 
 &emsp;看到这里的话我们大概就可以对 Mach 的位置进行一个总结了：Darwin 是 macOS 和 iOS 操作环境的操作系统部分，它的内核是 XNU，XNU 是混合内核设计，使其具备了微内核的灵活性和宏内核的性能，而 XNU 内核的微内核部分便是一个被深度定制的 Mach 3.0 内核，所以看到这里我们便可理解那句 **Mach 异常为最底层的内核级异常**。
 
-#### 从《Kernel Programming Guide》中学习 Mach 
+### 从《Kernel Programming Guide》中学习 Mach 
 
 &emsp;下面我们再过一下 [《Kernel Programming Guide》](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html?spm=a2c6h.12873639.0.0.15ee7113vyXhuI#//apple_ref/doc/uid/TP30000905-CH209-TPXREF102) 文档中的 Mach 概述部分，加深对 Mach 微内核的理解。
 
-##### Mach Overview
+#### Mach Overview
 
 &emsp;OS X 内核的基本服务和原语（fundamental services and primitives）基于 Mach 3.0。Apple 已经修改并扩展了 Mach，以更好地满足 OS X 的功能和性能目标。Mach 3.0 最初被设想为一个简单，可扩展的通信微内核。它能够作为独立内核运行，而其他传统操作系统服务（如 I/O、文件系统和网络堆栈）则作为用户模式服务运行。
 
@@ -205,7 +209,7 @@ Software:
 + 经验证的可扩展性和可移植性，例如跨指令集体系结构和在分布式环境中
 + 安全和资源管理是设计的基本原则；所有资源都是虚拟化的
 
-##### Mach Kernel Abstractions
+#### Mach Kernel Abstractions
 
 &emsp;Mach 提供了一小部分抽象（Abstractions），这些抽象（Abstractions）被设计为既简单又强大。以下是主要的内核抽象（Kernel Abstractions）：
 
@@ -219,7 +223,7 @@ Software:
 
 &emsp;在 trap 级别，大多数 Mach 抽象的接口由发送到和来自表示这些对象的内核端口的消息组成。trap-level 接口（如 mach_msg_overwrite_trap）和消息格式本身在正常使用中由 Mach 接口生成器（MIG）抽象。MIG 用于根据对基于消息的 API 的描述，编译这些 API 的过程接口。
 
-##### Tasks and Threads
+#### Tasks and Threads
 
 &emsp;OS X 进程和 POSIX 线程（pthreads）分别在 Mach 任务和线程之上实现。线程是任务中的控制流点，存在一个任务，用于为其包含的线程提供资源，进行此拆分是为了提供并行性和资源共享。
 
@@ -252,7 +256,7 @@ Software:
 
 &emsp;Mach 调度在 [Mach Scheduling and Thread Interfaces](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/scheduler/scheduler.html#//apple_ref/doc/uid/TP30000905-CH211-BEHJDFCA) 中进一步描述。
 
-##### Ports, Port Rights, Port Sets, and Port Namespaces
+#### Ports, Port Rights, Port Sets, and Port Namespaces
 
 &emsp;除了任务的虚拟地址空间之外，所有其他 Mach 资源都是通过称为端口（port）的间接寻址级别访问的。端口是请求服务的客户端和提供服务的服务器之间单向通信通道的端点。如果要为此类服务请求提供回复，则必须使用第二个端口。这相当于 UNIX 术语中的（单向）管道。
 
@@ -274,7 +278,7 @@ Software:
 
 &emsp;当另一个任务将端口权限显式插入其命名空间时，当任务在消息中接收权限时，通过创建返回对象权限的对象，以及通过 Mach 调用某些特殊端口（mach_thread_self、mach_task_self 和 mach_reply_port）时，任务会获取端口权限。
 
-##### Memory Management
+#### Memory Management
 
 &emsp;与大多数现代操作系统一样，Mach 为大型稀疏的虚拟地址空间提供寻址。运行时访问是通过虚拟地址进行的，这些虚拟地址可能与尝试访问的初始时间物理内存中的位置不对应。Mach 负责获取请求的虚拟地址，并在物理内存中为其分配相应的位置。它通过需求分页来实现这一点。
 
@@ -292,7 +296,7 @@ Software:
 
 &emsp;Mach 通过导出命名区域提供了另一种形式的共享。命名区域是命名条目的一种形式，但不是由虚拟内存对象支持，而是由虚拟映射片段支持。此片段可能包含到大量虚拟内存对象的映射。它可以映射到其他虚拟映射中，从而不仅提供了一种继承一组虚拟内存对象，还继承其现有映射关系的方法。此功能在任务设置中提供了显著的优化，例如，在共享用于共享库的地址空间的复杂区域时。
 
-##### Interprocess Communication (IPC)
+#### Interprocess Communication (IPC)
 
 &emsp;任务之间的通信是 Mach philosophy（哲学）的重要元素。Mach 支持客户端/服务器系统结构，其中任务（客户端）通过通信通道发送的消息向其他任务（服务器）发出请求来访问服务。
 
@@ -310,13 +314,13 @@ Software:
 
 &emsp;有两个根本不同的 Mach API 用于端口的原始操作 — mach_ipc 系列和 mach_msg 系列。在合理范围内，两个系列都可以与任何 IPC 对象一起使用，但是在新代码中首选 mach_ipc 调用。mach_ipc 调用在适当的情况下维护状态信息，以支持事务的概念。旧代码支持 mach_msg 调用，但已弃用，它们是 stateless。
 
-##### IPC Transactions and Event Dispatching
+#### IPC Transactions and Event Dispatching
 
 &emsp;当线程调用 mach_ipc_dispatch 时，它会重复处理在注册端口集上传入的事件。这些事件可以是来自 RPC 对象的参数块（作为客户端调用的结果）、正在获取的锁定对象（由于某些其他线程释放锁的结果）、正在发布的通知或信号量，或者来自传统消息队列的消息。
 
 &emsp;这些事件通过 mach_msg_dispatch 的标注进行处理。某些事件意味着在标注的生存期内存在事务。对于锁，状态是锁的所有权。当标注返回时，将释放锁。对于远程过程调用，状态是客户端的标识、参数块和应答端口。当标注返回时，将发送答复。当标注返回时，事务（如果有）完成，线程等待下一个事件。mach_ipc_dispatch 设施旨在支持工作循环。
 
-##### Message Queues
+#### Message Queues
 
 &emsp;最初，Mach 中进程间通信的唯一样式是消息队列。只有一个任务可以保留表示消息队列的端口的接收权限。允许此任务从端口队列接收（读取）消息。多个任务可以拥有对端口的权限，这些权限允许它们将消息发送（写入）到队列中。
 
@@ -331,25 +335,25 @@ Software:
 
 &emsp;消息传输是一个异步操作。消息在逻辑上复制到接收任务中，可能具有写入时复制优化。接收任务中的多个线程可以尝试从给定端口接收消息，但只有一个线程可以接收任何给定消息。
 
-##### Semaphores
+#### Semaphores
 
 &emsp;信号量 IPC 对象支持等待、提交和提交所有操作。这些是计数信号量，因为如果该信号量的等待队列中当前没有线程正在等待，则将保存（计数）帖子。post all 操作将唤醒所有当前正在等待的线程。
 
-##### Notifications
+#### Notifications
 
 &emsp;与信号量一样，通知对象也支持发布和等待操作，但添加了状态字段。状态是在创建通知对象时定义的固定大小、固定格式的字段。每个帖子更新状态字段，每个帖子都覆盖了一个状态。
 
-##### Locks
+#### Locks
 
 &emsp;锁是提供对关键部分的互斥访问的对象。锁的主要接口是面向事务的（请参见 IPC 事务和事件调度）。在事务期间，线程持有锁。当它从事务返回时，将释放锁。
 
-##### Remote Procedure Call (RPC) Objects
+#### Remote Procedure Call (RPC) Objects
 
 &emsp;顾名思义，RPC 对象旨在促进和优化远程过程调用。RPC 对象的主要接口是面向事务的（请参见 IPC 事务和事件调度）
 
 &emsp;创建 RPC 对象时，将定义一组参数块格式。当客户端进行 RPC（对象上的发送）时，它会导致在对象上创建预定义格式之一的消息并排队，然后最终传递给服务器（接收方）。当服务器从事务返回时，应答将返回给发送方。Mach 尝试通过使用客户端的资源执行服务器来优化事务，这称为线程迁移。
 
-##### Time Management
+#### Time Management
 
 &emsp;以 Mach 为单位的传统时间抽象是时钟，它提供了一组基于 mach_timespec_t 的异步报警服务。有一个或多个时钟对象，每个对象定义一个单调递增的时间值，以纳秒为单位表示。实时时钟是内置的，是最重要的，但系统中可能有其他时钟用于其他时间概念。时钟支持获取当前时间、在给定时间段内休眠、设置闹钟（在给定时间发送的通知）等操作。
 
@@ -357,11 +361,11 @@ Software:
 
 &emsp;文档还是蛮晦涩的，只能先试着去理解了，上面提到 Mach 通信使用的 port，如果大家还有印象的话，在 Runloop 的学习中我们见到过很多次 port 端口，Runloop 的唤醒等操作，都是通过 port 来通信完成的，CFRunLoopSource 中的 Source1 内部基于 port 来实现的。(Source1：包含了一个 mach_port 和一个回调（函数指针），被用于通过内核和其他线程相互发送消息，这种 Source 能主动唤醒 RunLoop 的线程。)
 
-### Mach 中的通信机制：port
+## Mach 中的通信机制：port
 
 &emsp;这一小节我们学习下 port(端口)，提到这个我们大概最先想到的就是 runloop 中的基于 port 的 source1 以及 iOS 中基于 port 的线程间通信。这里我们从简单着手，先不着眼于 mach_port_t，首先我们看下在 cocoa 中使用的 NSMachPort，下面我们通过一些示例代码回顾一下在 iOS 中使用 NSMachPort 进行线程间通信。
 
-#### NSMachPort 使用示例
+### NSMachPort 使用示例
 
 &emsp;NSMachPort 是 NSPort 的一个子类，它封装了 mach port，是 macOS 中的基本通信端口，NSMachPort 类的 `@property (readonly) uint32_t machPort` 属性便是取得 NSMachPort 对象对应的 mach port。NSMachPort 只允许本地（在同一台机器上）通信。附带类 NSSocketPort 允许本地和远程分布式对象通信，但是对于本地情况，可能比 NSMachPort 更昂贵。要有效地使用 NSMachPort，你应该熟悉 mach ports、port 访问权限和 mach messages。
 
@@ -502,7 +506,7 @@ NS_ASSUME_NONNULL_END
 
 &emsp;上面的示例代码中我们演示了 NSMachPort 的使用，NSMachPort 以面向对象的思想对 mach_port_t 进行封装，简化了 port 的使用。与直接系统调用不同，这里的用户进程是先向内核申请一个 port 的访问许可，然后利用 IPC 机制向这个 port 发送消息。虽说发送消息的操作同样是系统调用，但 Mach 内核的工作形式有些不同——handler 的工作可以交由其他进程实现。
 
-### Mach 异常产生的流程
+## Mach 异常产生的流程
 
 &emsp;在《深入解析 Mac OS X & iOS 操作系统》一书中介绍了系统对异常处理的流程，以及如下一张示意图：
 
@@ -510,7 +514,7 @@ NS_ASSUME_NONNULL_END
 
 &emsp;以及详细的异常机制，硬件异常/软件异常等，这里就不再摘录了。
 
-### Mach 异常类型有哪些
+## Mach 异常类型有哪些
 
 &emsp;我们可以在 [xnu 版本列表](https://opensource.apple.com/tarballs/xnu/) 下载最新的 XNU 内核源码，当前最新的版本是 xnu-7195.141.2。Mach 异常的类型便被定义在 xnu-7195.141.2/osfmk/mach/exception_types.h 中。
 
@@ -600,14 +604,13 @@ NS_ASSUME_NONNULL_END
 
 &emsp;EXC_BREAKPOINT 是由断点指令或其它 trap 指令产生，由 debugger 使用，对应的信号是 SIGTRAP。
 
-### Mach 异常捕获
+## Mach 异常捕获
 
 &emsp;上面我们看到了 Mach 使用 port 进行线程间通信，而捕获 Mach 异常也正是基于 port 的通信机制来做的，我们可以通过 Mach 提供的 API 实现注册自定义 port（thread 类型/task 类型/host 类型），替换内核接收 Mach 异常消息的 port，然后利用 mach_msg 函数接收异常消息，最后利用 mach_msg 函数将异常消息转发出去，不影响原有的流程。
 
 &emsp;这里替换内核接收 Mach 异常消息的 port 涉及到三个重要函数，我们能分别在 host、task、thread 三者中设置 port。
 
-+ 为 host 层一个或多个异常类型设置异常处理程序。如果没有 task 或特定于 thread 的异常处理程序，或者这些处理程序返回错误，则会为 host 上的所有 thread 调用这些处理程序。
- [host_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/mach/host_priv.defs.auto.html)
++ 为 host 层一个或多个异常类型设置异常处理程序。如果没有 task 或特定于 thread 的异常处理程序，或者这些处理程序返回错误，则会为 host 上的所有 thread 调用这些处理程序：[host_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/mach/host_priv.defs.auto.html)
  
 + 为指定 task 设置异常端口：[task_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/task_set_exception_ports.html)
 + 为指定 thread 设置异常端口：[thread_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/man/thread_set_exception_ports.html)
@@ -735,11 +738,11 @@ static void *exc_handler(void *ignored) {
 
 ![截屏2021-12-07 下午9.41.34.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b0545d10a7c94cc3b0b43394e3a527ad~tplv-k3u1fbpfcp-watermark.image?)
 
-### Unix signals
+## Unix signals
 
 &emsp;上面的示例代码中，我们使用第一条 `mach_msg` 捕获到了 Mach 异常，然后我们第二条 `mach_msg` 继续将 Mach 异常消息转发出去，那么转发出去的 Mach 异常消息会去哪里呢？它会被转换为对应的 UNIX 信号（在上面的 Mach 异常类型中我们已经介绍了 Mach 异常类型与 Unix 信号的对应关系，下面我们会更具体的看一下）。通过上面的 Mach 异常流程图，Mach 异常在 Mach 层被捕获并抛出后，会在 BSD 层被 `catch_mach_exception_raise` 处理，并通过 `ux_exception` 将异常转换为对应的 UNIX 信号，并通过 `threadsignal` 将信号投递到出错线程，iOS 中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。我们可以看下 `ux_exception` 函数实现，其中有 Mach 异常类型和 UNIX signals 的对应关系。
 
-#### Mach 异常转换为 Unix signal
+### Mach 异常转换为 Unix signal
 
 &emsp;ux_exception 函数中明确的对应关系：
 
@@ -831,7 +834,11 @@ ux_exception(int                        exception,
     </tr>
     <tr>
         <td>SIGPIPE(EXC_UNIX_BAD_PIPE)</td>
+    </tr>
+    <tr>
         <td>SIGABRT(EXC_UNIX_ABORT)</td>
+    </tr>
+    <tr>
         <td>SIGKILL(EXC_SOFT_SIGNAL)</td>
     </tr>
     <tr>
@@ -840,7 +847,7 @@ ux_exception(int                        exception,
     </tr>
 </table>
 
-#### Unix signals 有哪些
+### Unix signals 有哪些
 
 &emsp;所有的 Unix signals 值被定义在 xnu-7195.141.2/bsd/machine/signal.h 中。
 
@@ -887,20 +894,13 @@ ux_exception(int                        exception,
 #define SIGUSR2 31      /* user defined signal 2 */
 ```
 
-#### Unix Signal 捕获
+&emsp;
 
-&emsp;这里摘录 [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html) 中的示例代码：
+### Unix Signal 捕获
 
-
+&emsp;这里摘录 [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html) 中的示例代码，做了一些微小的修改：
 
 ```c++
-//
-//  UncaughtExceptionHandler.m
-//  dSYMDemo
-//
-//  Created by HM C on 2021/11/19.
-//
-
 #import "UncaughtExceptionHandler.h"
 
 #import <UIKit/UIDevice.h>
@@ -1115,208 +1115,87 @@ void mySignalHandler(int signal) {
 }
 
 @end
-
 ```
 
+&emsp;backtrace & backtrace_symbols 函数：
+
+&emsp;这里我们做一个延展：示例代码中 `+ (NSArray *)backtrace {...}` 函数用来获取当前函数的回溯信息，即异常发生时的函数调用堆栈。其中用到了 `backtrace` 和 `backtrace_symbols` 函数：
+
 ```c++
-//
-//  AppDelegate.m
-//  dSYMDemo
-//
-//  Created by HM C on 2021/9/24.
-//
+int backtrace(void**,int) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
 
-#import "AppDelegate.h"
-#import "UncaughtExceptionHandler.h"
+char** backtrace_symbols(void* const*,int) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
+void backtrace_symbols_fd(void* const*,int,int) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
+```
 
-// 捕获 Mach 异常涉及到的头文件
-#import <pthread.h>
-#import <mach/mach_init.h>
-#import <mach/mach_port.h>
-#import <mach/task.h>
-#import <mach/message.h>
-#import <mach/thread_act.h>
-#import <mach/host_priv.h>
+&emsp;backtrace 函数用来获取程序中当前函数的回溯信息，即一系列的函数调用关系，获取到的信息被放在参数 `void**` 中。`void**` 是一个数组指针，数组的每个元素保存着每一级被调用函数的返回地址。参数 `int` 指定了 `void**` 中可存放的返回地址的数量。如果函数实际的回溯层级数大于 `int`，则 `void**` 中只能存放最近的函数调用关系，所以，想要得到完整的回溯信息，就要确保 `void**` 参数足够大。
 
-@interface AppDelegate ()
+&emsp;backtrace 函数的返回值为 `void**` 中的条目数量，这个值不一定等于 `int`，因为如果为得到完整回溯信息而将 `int` 设置的足够大，则该函数的返回值为 `void**` 中实际得到的返回地址数量。
+ 
+&emsp;通过 backtrace 函数得到 `void**` 之后，backtrace_symbols 可以将其中的返回地址都对应到具体的函数名，参数 `int` 为 `void**` 中的条目数。backtrace_symbols 函数可以将每一个返回值都翻译成 "函数名 + 函数内偏移量 + 函数返回值"，这样就可以更直观的获得函数的调用关系。经过翻译后的函数回溯信息放到 backtrace_symbols 的返回值中，如果失败则返回 NULL。需要注意，返回值本身是在 backtrace_symbols 函数内部进行 malloc 的，所以必须在后续显式地 free 掉。
+ 
+&emsp;backtrace_symbols_fd 的 `void* const*` 和 `int` 参数和 backtrace_symbols 函数相同，只是它翻译后的函数回溯信息不是放到返回值中，而是一行一行的放到文件描述符 fd 对应的文件中。
 
-@end
+&emsp;然后再加上我们上面的 Mach 异常的捕获代码：
 
-@implementation AppDelegate
-
-/// 注册捕获异常的端口
-// 自定义端口号
-mach_port_name_t myExceptionPort = 10086;
-
-- (void)catchMACHExceptions {
-    // 用自定义端口号初始化一个端口
-    mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &myExceptionPort);
-    // 向端口插入发送权限
-    mach_port_insert_right(mach_task_self(), myExceptionPort, myExceptionPort, MACH_MSG_TYPE_MAKE_SEND);
-    // 设置 Mach 异常的种类
-    exception_mask_t excMask = EXC_MASK_BAD_ACCESS | EXC_MASK_BAD_INSTRUCTION | EXC_MASK_ARITHMETIC | EXC_MASK_SOFTWARE;
-    
-    // 设置内核接收 Mach 异常消息的 thread Port
-    
-//    thread_set_exception_ports(mach_thread_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
-    task_set_exception_ports(mach_task_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
-//    host_set_exception_ports(<#host_priv_t host_priv#>, <#exception_mask_t exception_mask#>, <#mach_port_t new_port#>, <#exception_behavior_t behavior#>, <#thread_state_flavor_t new_flavor#>)
-    
-    // 新建一个线程处理异常消息
-    pthread_t thread;
-    pthread_create(&thread, NULL, exc_handler, NULL);
-}
-
-/// 接收异常消息
-static void *exc_handler(void *ignored) {
-    // 结果
-    mach_msg_return_t rc;
-    // 内核将发送给我们的异常消息的格式，参考 ux_handler() [bsd / uxkern / ux_exception.c] 中对异常消息的定义
-    typedef struct {
-        mach_msg_header_t Head;
-        // start of the kernel processed data
-        mach_msg_body_t msgh_body;
-        mach_msg_port_descriptor_t thread;
-        mach_msg_port_descriptor_t task;
-        // end of the kernel processed data
-        NDR_record_t NDR;
-        exception_type_t exception;
-        mach_msg_type_number_t codeCnt;
-        integer_t code[2];
-        int flavor;
-        mach_msg_type_number_t old_stateCnt;
-        natural_t old_state[144];
-    } exc_msg_t;
-    
-    for (;;) {
-        exc_msg_t exc;
-        
-        // 这里会阻塞，直到接收到 exception message，或者线程被中断
-        rc = mach_msg(&exc.Head, MACH_RCV_MSG | MACH_RCV_LARGE, 0, sizeof(exc_msg_t), myExceptionPort, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
-        if (rc != MACH_MSG_SUCCESS) {
-            //
-            break;
-        };
-        
-        // 打印异常消息
-//        printf("🏵🏵🏵 收到 Mach 异常 ！！！ CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d \n" ,
-//               exc.Head.msgh_id, exc.exception, exc.flavor,
-//               exc.code[0], exc.code[1],
-//               exc.old_stateCnt);
-        
-        NSLog(@"🏵🏵🏵 收到 Mach 异常 ！！！ CatchMACHExceptions %d. Exception : %d Flavor: %d. Code %d/%d. State count is %d", exc.Head.msgh_id, exc.exception, exc.flavor,
-              exc.code[0], exc.code[1], exc.old_stateCnt);
-        
-        // 定义转发出去的消息类型
-        struct rep_msg {
-            mach_msg_header_t Head;
-            NDR_record_t NDR;
-            kern_return_t RetCode;
-        } rep_msg;
-        rep_msg.Head = exc.Head;
-        rep_msg.NDR = exc.NDR;
-        rep_msg.RetCode = KERN_FAILURE;
-        kern_return_t result;
-        if (rc == MACH_MSG_SUCCESS) {
-            // 将异常消息再转发出去
-            result = mach_msg(&rep_msg.Head, MACH_SEND_MSG, sizeof(rep_msg), 0, MACH_PORT_NULL, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
-        }
-    }
-    
-    return NULL;
-}
-
-
+```c++
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
     // Objective-C 异常处理/signal 信号处理
     [UncaughtExceptionHandler installUncaughtExceptionHandler];
-    
     // 自定义捕获 Mach 异常
     [self catchMACHExceptions];
-    
-//    mach_port_t tt;
-//    NSObject *tempObjc = [[NSObject alloc] init];
-//    [tempObjc release];
-//    [tempObjc release];
-    
-//    // 将之前注册的 未捕获异常处理函数 取出并备份
-//    previousUncaughtExceptionHandler = NSGetUncaughtExceptionHandler();
-//    NSLog(@"🏵🏵🏵 currentHandler: %p", previousUncaughtExceptionHandler);
-//    // 设置我们自己准备的 未捕获异常处理函数
-//    NSSetUncaughtExceptionHandler(&uncaughtExceptionHandler);
-    
-    // 信号量截断
-//    signal(SIGABRT, mySignalHandler);
-//    signal(SIGILL, mySignalHandler);
-//    signal(SIGSEGV, mySignalHandler);
-//    signal(SIGFPE, mySignalHandler);
-//    signal(SIGBUS, mySignalHandler);
-//    signal(SIGPIPE, mySignalHandler);
-    
-    // 除0⃣️操作
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-//        int a = 0;
-//        int b = 1;
-//        int result = b / a;
-//        NSLog(@"🏵🏵🏵 %d", result);
-//    });
-    
-    // 野指针访问
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        __unsafe_unretained NSObject *objc = [[NSObject alloc] init];
-        NSLog(@"🏵🏵🏵 objc: %@", objc);
-//    *((int*)(0x1234)) = 122;
-    
-//    char *s = "hello world";
-//    *s = 'H';
-    
-//    });
-    
-    // 数组越界
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-//         NSArray *tempArray = @[@(1), @(2)];
-//         NSLog(@"🏵🏵🏵 %@", tempArray[2]);
-//    abort();
-//    });
-    
-//    pthread_kill(pthread_self(), SIGABRT);
-//    abort();
-    
-    // process handle --notify true
-    // process handle --pass true
-    // process handle --stop false
-    // process handle
-    
-//    NSObject *objc = [[NSObject alloc] init];
-//    [objc performSelector:@selector(TEST)];
-    
-    return YES;
 }
-
-#pragma mark - UISceneSession lifecycle
-
-
-- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
-    // Called when a new scene session is being created.
-    // Use this method to select a configuration to create the new scene with.
-    return [[UISceneConfiguration alloc] initWithName:@"Default Configuration" sessionRole:connectingSceneSession.role];
-}
-
-
-- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions {
-    // Called when the user discards a scene session.
-    // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-    // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
-}
-
-@end
-
-
-
 ```
 
+&emsp;我们便可以捕获三种情况下的异常。
+
+&emsp;除了上面的关闭 Debug executable 选项，我们还可以通过在 LLDB 中关闭拦截，而收到 Signal 的回调。Xcode Debug 模式运行 App 时，App 进程 signal 被 LLDB Debugger 调试器捕获，我们可以使用 LLDB 调试命令，将指定 signal 处理抛到用户层处理，方便调试。 
+
+```c++
+(lldb) process handle --notify true
+Do you really want to update all the signals?: [y/N] y
+...
+(lldb) process handle --stop false
+Do you really want to update all the signals?: [y/N] y
+...
+(lldb) process handle --pass true
+Do you really want to update all the signals?: [y/N] y
+NAME         PASS   STOP   NOTIFY
+===========  =====  =====  ======
+SIGHUP       true   false  true 
+SIGINT       true   false  true 
+SIGQUIT      true   false  true 
+SIGILL       true   false  true 
+SIGTRAP      true   false  true 
+SIGABRT      true   false  true 
+SIGEMT       true   false  true 
+SIGFPE       true   false  true 
+SIGKILL      true   false  true 
+SIGBUS       true   false  true 
+SIGSEGV      true   false  true 
+SIGSYS       true   false  true 
+SIGPIPE      true   false  true 
+SIGALRM      true   false  true 
+SIGTERM      true   false  true 
+SIGURG       true   false  true 
+SIGSTOP      true   false  true 
+SIGTSTP      true   false  true 
+SIGCONT      true   false  true 
+SIGCHLD      true   false  true 
+SIGTTIN      true   false  true 
+SIGTTOU      true   false  true 
+SIGIO        true   false  true 
+SIGXCPU      true   false  true 
+SIGXFSZ      true   false  true 
+SIGVTALRM    true   false  true 
+SIGPROF      true   false  true 
+SIGWINCH     true   false  true 
+SIGINFO      true   false  true 
+SIGUSR1      true   false  true 
+SIGUSR2      true   false  true 
+```
 
 ```c++
 (lldb) help process handle
@@ -1344,9 +1223,11 @@ If no signals are specified, update them all.  If no update option is specified,
      arguments.
 ```
 
+## 总结 Objective-C 异常、Mach 异常、Unix Signals
 
-&emsp;`UncaughtExceptionHandlers` 函数执行结束后， abort() -> pthread_kill 抛出的 `SIGABRT` 信号，使用 `signal(SIGABRT, MySignalHandler);` 捕获不到！ 
+&emsp;未捕获的 Objective-C 异常最终会导致程序向自身发送了 SIGABRT 信号而中止，此时我们并不能捕获到 SIGABRT 信号，如果我们手动调用 `(void)pthread_kill(pthread_self(), SIGABRT)/kill(getpid(), SIGABRT)` 则可以收到 SIGABRT 信号，且它们都是应用级异常，所以 Mach 异常的流程是不会走的。
 
+&emsp;一般情况下 Mach 异常和 Objective-C 异常最终都会转换为 Unix signals，但是还有一些特殊情况，例如 EXC_GUARD 异常，还有发生栈溢出（Stackoverflow）时，Unix signals 在崩溃线程回调，但是已经没有条件(栈空间)再执行回调代码了。
 
 ## 参考链接
 **参考链接:🔗**
@@ -1370,24 +1251,7 @@ If no signals are specified, update them all.  If no update option is specified,
 + [Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
 + [iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
 + [移动端监控体系之技术原理剖析](https://www.jianshu.com/p/8123fc17fe0e)
-
-
-
-
-
-
-
-
-
-
-
-
-
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
-
-
-
-
 + [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
 + [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
 + [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
@@ -1404,5 +1268,6 @@ If no signals are specified, update them all.  If no update option is specified,
 + [iOS异常处理](https://www.jianshu.com/p/59927211b745)
 + [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 + [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)
+
 
 
