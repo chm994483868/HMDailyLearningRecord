@@ -1,4 +1,4 @@
-# iOS App Crash 分析：(二)：dsym 文件讲解
+# iOS App Crash 分析：(四)：dsym 文件讲解
 
 ## DWARF 概述
 

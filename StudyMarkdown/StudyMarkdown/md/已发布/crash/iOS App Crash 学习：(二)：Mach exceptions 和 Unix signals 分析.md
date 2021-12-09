@@ -978,12 +978,14 @@ static void test_signal_action_handler(int signo, siginfo_t *si, void *ucontext)
     
     NSMutableArray *backtrace = [NSMutableArray arrayWithCapacity:frames];
     
-    // 越过当前的 4 个 frame
-    if (backtrace.count > UncaughtExceptionHandlerSkipAddressCount) {
-        for (int i = UncaughtExceptionHandlerSkipAddressCount; i < backtrace.count; ++i) {
+    // 越过最前面的 4 个 frame
+    if (frames > UncaughtExceptionHandlerSkipAddressCount) {
+        for (int i = UncaughtExceptionHandlerSkipAddressCount; i < frames; ++i) {
             [backtrace addObject:[NSString stringWithUTF8String:strs[i]]];
         }
     }
+    
+    NSLog(@"🏵🏵🏵 异常发生时的堆栈：%@", backtrace);
     
     free(strs);
     
@@ -1024,6 +1026,26 @@ static void test_signal_action_handler(int signo, siginfo_t *si, void *ucontext)
     NSDictionary *userInfo = [exception userInfo];
     [self saveCreash:exception file:[userInfo objectForKey:UncaughtExceptionHandlerFileKey]];
     
+    // 这里也可以强行再次运行 runloop 防止程序中止，但是完全没有必要，因为当前程序已经处于完全不可用状态
+//    CFRunLoopRef runLoop = CFRunLoopGetCurrent();
+//    CFArrayRef allModes = CFRunLoopCopyAllModes(runLoop);
+//
+//    while (!dismissed) {
+//        for (NSString *mode in (__bridge NSArray *)allModes) {
+//            CFRunLoopRunInMode((CFStringRef)mode, 0.001, false);
+//        }
+//    }
+    
+    r0 ~ r30 共 31 个寄存器，每个寄存器是 8 个字节 64 位
+    r31 第 32 个寄存器是 zero register 
+    r29 fp frame pointer
+    r30 lr link register 
+    
+    x31 zero register zr XZR/WZR 64/32 位
+    sp 就是 x31 SP/WSP
+    pc 当前执行的指令的地址
+    cpsr spsrs fpsr fpcr 
+     
     NSSetUncaughtExceptionHandler(NULL);
     signal(SIGABRT, SIG_DFL);
     signal(SIGILL, SIG_DFL);
