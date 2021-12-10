@@ -894,7 +894,42 @@ ux_exception(int                        exception,
 #define SIGUSR2 31      /* user defined signal 2 */
 ```
 
-&emsp;
+&emsp;下面介绍其中一些信号：
+
++ #define SIGHUP  1       /* hangup */
+
+&emsp;本信号在用户终端连接(正常或非正常)结束时发出, 通常是在终端的控制进程结束时, 通知同一 session 内的各个作业, 这时它们与控制终端不再关联。
+
++ #define SIGINT  2       /* interrupt */
+
+&emsp;程序终止（interrupt）信号, 在用户键入 INTR 字符时发出，用于通知前台进程组终止进程。
+
++ #define SIGQUIT 3       /* quit */
+
+&emsp;和 SIGINT 类似, 但由 QUIT 字符来控制. 进程在因收到 SIGQUIT 退出时会产生 core 文件, 在这个意义上类似于一个程序错误信号。
+
++ #define SIGILL  4       /* illegal instruction (not reset when caught) */
+
+&emsp;执行了非法指令. 通常是因为可执行文件本身出现错误, 或者试图执行数据段. 堆栈溢出时也有可能产生这个信号。
+
++ #define SIGTRAP 5       /* trace trap (not reset when caught) */
+
+&emsp;由断点指令或其它 trap 指令产生. 由 debugger 使用。
+
++ #define SIGABRT 6       /* abort() */
+
+&emsp;调用 abort 函数生成的信号。SIGABRT is a BSD signal sent by an application to itself when an NSException or obj_exception_throw is not caught.
+
++ #define SIGBUS  10      /* bus error */
+
+&emsp;非法地址, 包括内存地址对齐 (alignment) 出错。比如访问一个四个字长的整数, 但其地址不是 4 的倍数。它与 SIGSEGV 的区别在于后者是由于对合法存储地址的非法访问触发的(如访问不属于自己存储空间或只读存储空间)。
+
+
+
+
+
+
+
 
 ### Unix Signal 捕获
 
@@ -1035,16 +1070,6 @@ static void test_signal_action_handler(int signo, siginfo_t *si, void *ucontext)
 //            CFRunLoopRunInMode((CFStringRef)mode, 0.001, false);
 //        }
 //    }
-    
-    r0 ~ r30 共 31 个寄存器，每个寄存器是 8 个字节 64 位
-    r31 第 32 个寄存器是 zero register 
-    r29 fp frame pointer
-    r30 lr link register 
-    
-    x31 zero register zr XZR/WZR 64/32 位
-    sp 就是 x31 SP/WSP
-    pc 当前执行的指令的地址
-    cpsr spsrs fpsr fpcr 
      
     NSSetUncaughtExceptionHandler(NULL);
     signal(SIGABRT, SIG_DFL);
