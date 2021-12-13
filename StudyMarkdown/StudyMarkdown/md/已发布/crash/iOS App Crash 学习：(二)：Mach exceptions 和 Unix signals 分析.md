@@ -608,7 +608,19 @@ NS_ASSUME_NONNULL_END
 
 &emsp;上面我们看到了 Mach 使用 port 进行线程间通信，而捕获 Mach 异常也正是基于 port 的通信机制来做的，我们可以通过 Mach 提供的 API 实现注册自定义 port（thread 类型/task 类型/host 类型），替换内核接收 Mach 异常消息的 port，然后利用 mach_msg 函数接收异常消息，最后利用 mach_msg 函数将异常消息转发出去，不影响原有的流程。
 
-&emsp;这里替换内核接收 Mach 异常消息的 port 涉及到三个重要函数，我们能分别在 host、task、thread 三者中设置 port。
+&emsp;这里替换内核接收 Mach 异常消息的 port 涉及到三个重要函数，我们能分别在 host、task、thread 三者中设置 port。每个 thread、task、host 都有一个异常端口数组，Mach 的部分 API 暴露给了用户态，用户态的开发者可以直接通过 Mach API 设置 thread、task、host 的异常端口，来捕获 Mach 异常，抓取 Crash 事件。所有未处理的 Mach 异常（如果 Mach 异常的 handler 让程序 exit 了，那么 Unix 信号就永远不会到达这个进程了），它将在 host 层被 ux_exception 转换为相应的 Unix 信号，并通过 threadsignal 将信号投递到出错的线程。iOS 中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。
+
+&emsp;如果优选 Mach 来捕获异常，为什么还要转化为 Unix 信号呢？转换 Unix 信号是为了兼容更为流行的 POSIX 标准(SUS 规范)，这样不必了解 Mach 内核也可以通过 Unix 信号的方式来兼容开发。
+
+> &emsp;为什么第三方库 PLCrashReporter 即使在优选捕获 Mach 异常的情况下，也放弃捕获 Mach 异常 EXC_CRASH，而选择捕获与之对应的 SIGABRT 信号?
+> &emsp;We still need to use signal handlers to catch SIGABRT in-process. The kernel sends an EXC_CRASH mach exception to denote SIGABRT termination. In that case, catching the Mach exception in-process leads to process deadlock in an uninterruptable wait. Thus, we fall back on BSD signal handlers for SIGABRT, and do not register for EXC_CRASH.
+> 
+> &emsp;我们仍然需要使用信号处理程序来捕获进程中的 SIGABRT。内核发送一个 EXC_CRASH Mach 异常来表示 SIGABRT 终止。在这种情况下，在进程中捕获 Mach 异常会导致进程在不间断等待中死锁。因此，对于 SIGABRT，我们依赖 BSD 信号处理程序，而不注册 EXC_CRASH。
+> &emsp注意：因为硬件产生的信号(通过 CPU 陷阱)被 Mach 层捕获，然后才转换为对应的 Unix 信号；苹果为了统一机制，于是操作系统和用户产生的信号(通过调用 kill 和 pthread_kill)也首先沉下来被转换为 Mach 异常，再转换为 Unix 信号。
+> 
+> &emsp;也就是说整个流程是这样的：
+> &emsp;硬件产生信号或者 kill 或 pthread_kill 信号 --> Mach 异常 --> Unix 信号（SIGABRT）[iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
+> &emsp;这里说的 kill 和 pthread_kill 会首先转换为 Mach 异常没有得到验证，或许类似未捕获的 Objective-C 异常最后抛出的 SIGABRT 信号我们自己添加的信号捕获处理函数，无法捕获到一样，这里我们自己添加的 Mach 异常处理，也未收到对应的 Mach 异常回调。
 
 + 为 host 层一个或多个异常类型设置异常处理程序。如果没有 task 或特定于 thread 的异常处理程序，或者这些处理程序返回错误，则会为 host 上的所有 thread 调用这些处理程序：[host_set_exception_ports](https://opensource.apple.com/source/xnu/xnu-7195.141.2/osfmk/mach/host_priv.defs.auto.html)
  
@@ -649,9 +661,9 @@ mach_port_name_t myExceptionPort = 10086;
     exception_mask_t excMask = EXC_MASK_BAD_ACCESS | EXC_MASK_BAD_INSTRUCTION | EXC_MASK_ARITHMETIC | EXC_MASK_SOFTWARE;
     
     // 设置内核接收 Mach 异常消息的 thread Port
-    thread_set_exception_ports(mach_thread_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
-//    task_set_exception_ports(mach_task_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
-//    host_set_exception_ports(<#host_priv_t host_priv#>, <#exception_mask_t exception_mask#>, <#mach_port_t new_port#>, <#exception_behavior_t behavior#>, <#thread_state_flavor_t new_flavor#>)
+    // thread_set_exception_ports(mach_thread_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+    task_set_exception_ports(mach_task_self(), excMask, myExceptionPort, EXCEPTION_DEFAULT, MACHINE_THREAD_STATE);
+    // host_set_exception_ports(<#host_priv_t host_priv#>, <#exception_mask_t exception_mask#>, <#mach_port_t new_port#>, <#exception_behavior_t behavior#>, <#thread_state_flavor_t new_flavor#>)
     
     // 新建一个线程处理异常消息
     pthread_t thread;
@@ -858,12 +870,18 @@ ux_exception(int                        exception,
 #define SIGILL  4       /* illegal instruction (not reset when caught) */
 #define SIGTRAP 5       /* trace trap (not reset when caught) */
 #define SIGABRT 6       /* abort() */
+
 #if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
+
 #define SIGPOLL 7       /* pollable event ([XSR] generated, not supported) */
+
 #else   /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
 #define SIGIOT  SIGABRT /* compatibility */
 #define SIGEMT  7       /* EMT instruction */
+
 #endif  /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
 #define SIGFPE  8       /* floating point exception */
 #define SIGKILL 9       /* kill (cannot be caught or ignored) */
 #define SIGBUS  10      /* bus error */
@@ -879,17 +897,21 @@ ux_exception(int                        exception,
 #define SIGCHLD 20      /* to parent on child stop or exit */
 #define SIGTTIN 21      /* to readers pgrp upon background tty read */
 #define SIGTTOU 22      /* like TTIN for output if (tp->t_local&LTOSTOP) */
+
 #if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
 #define SIGIO   23      /* input/output possible signal */
 #endif
+
 #define SIGXCPU 24      /* exceeded CPU time limit */
 #define SIGXFSZ 25      /* exceeded file size limit */
 #define SIGVTALRM 26    /* virtual time alarm */
 #define SIGPROF 27      /* profiling time alarm */
+
 #if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
 #define SIGWINCH 28     /* window size changes */
 #define SIGINFO 29      /* information request */
 #endif
+
 #define SIGUSR1 30      /* user defined signal 1 */
 #define SIGUSR2 31      /* user defined signal 2 */
 ```
@@ -1299,19 +1321,10 @@ If no signals are specified, update them all.  If no update option is specified,
 + [iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
 + [移动端监控体系之技术原理剖析](https://www.jianshu.com/p/8123fc17fe0e)
 + [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
-+ [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
-+ [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
 + [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
-+ [NSException抛出异常&NSError简单介绍](https://www.jianshu.com/p/23913bbc4ee5)
-+ [NSException:错误处理机制---调试中以及上架后的产品如何收集错误日志](https://blog.csdn.net/lcl130/article/details/41891273)
 + [Exception Programming Topics](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Exceptions.html#//apple_ref/doc/uid/10000012-BAJGFBFB)
-+ [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
-+ [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
-+ [异常处理NSException的使用（思维篇）](https://www.cnblogs.com/cchHers/p/15116833.html)
-+ [异常统计- IOS 收集崩溃信息 NSEXCEPTION类](https://www.freesion.com/article/939519506/)
-+ [NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
-+ [iOS Crash之NSGenericException](https://blog.csdn.net/skylin19840101/article/details/51945558)
 + [iOS异常处理](https://www.jianshu.com/p/1e4d5421d29c)
 + [iOS异常处理](https://www.jianshu.com/p/59927211b745)
 + [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 + [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)
++ [iOS信号量报错](https://blog.csdn.net/u014600626/article/details/119490157)
