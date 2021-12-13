@@ -754,6 +754,8 @@ static void *exc_handler(void *ignored) {
 
 &emsp;上面的示例代码中，我们使用第一条 `mach_msg` 捕获到了 Mach 异常，然后我们第二条 `mach_msg` 继续将 Mach 异常消息转发出去，那么转发出去的 Mach 异常消息会去哪里呢？它会被转换为对应的 UNIX 信号（在上面的 Mach 异常类型中我们已经介绍了 Mach 异常类型与 Unix 信号的对应关系，下面我们会更具体的看一下）。通过上面的 Mach 异常流程图，Mach 异常在 Mach 层被捕获并抛出后，会在 BSD 层被 `catch_mach_exception_raise` 处理，并通过 `ux_exception` 将异常转换为对应的 UNIX 信号，并通过 `threadsignal` 将信号投递到出错线程，iOS 中的 POSIX API 就是通过 Mach 之上的 BSD 层实现的。我们可以看下 `ux_exception` 函数实现，其中有 Mach 异常类型和 UNIX signals 的对应关系。
 
+&emsp;在计算机科学中，信号（英语：Signals）是 Unix、类 Unix 以及其它 POSIX 兼容的操作系统中进程间通讯的一种有限制的方式。它是一种异步的通知机制，用来提醒进程一个事件已经发生。当一个信号发送给一个进程，操作系统中断了进程正常的控制流程，此时，任何非原子操作都将被中断。如果进程定义了信号的处理函数，那么它将被执行，否则就执行默认的处理函数。[iOS信号量报错](https://blog.csdn.net/u014600626/article/details/119490157)
+
 ### Mach 异常转换为 Unix signal
 
 &emsp;ux_exception 函数中明确的对应关系：
@@ -918,40 +920,66 @@ ux_exception(int                        exception,
 
 &emsp;下面介绍其中一些信号：
 
-+ #define SIGHUP  1       /* hangup */
++ `#define SIGSEGV 11      /* segmentation violation */`
 
-&emsp;本信号在用户终端连接(正常或非正常)结束时发出, 通常是在终端的控制进程结束时, 通知同一 session 内的各个作业, 这时它们与控制终端不再关联。
+&emsp;SIGSEGV 是当一个进程执行了一个无效的内存引用，或发生段错误时发送给它的信号。意味着指针所对应的地址是无效地址，没有物理内存对应该地址。
 
-+ #define SIGINT  2       /* interrupt */
+1. invalid memory access (segmentation fault) 不合法的内存访问(内存段错误)。
+2. 访问已经释放的内存，无效的内存地址引用信号(常见的野指针访问，所指向的对象被释放或者收回，但是该指针没有作任何的修改，以至于该指针仍旧指向已经回收的内存地址，这个指针就是野指针。)
+3. 非 ARC 模式下，iOS 中经常会出现在 Delegate 对象野指针访问。
+4. ARC 模式下，iOS 经常会出现在 Block 代码块内 强持有可能释放的对象。
+5. 试图对只读映射区域进行写操作。
 
-&emsp;程序终止（interrupt）信号, 在用户键入 INTR 字符时发出，用于通知前台进程组终止进程。
++ `#define SIGHUP  1       /* hangup */`
 
-+ #define SIGQUIT 3       /* quit */
+&emsp;本信号在用户终端连接(正常或非正常)结束时发出，通常是在终端的控制进程结束时，通知同一 session 内的各个作业，这时它们与控制终端不再关联。
 
-&emsp;和 SIGINT 类似, 但由 QUIT 字符来控制. 进程在因收到 SIGQUIT 退出时会产生 core 文件, 在这个意义上类似于一个程序错误信号。
++ `#define SIGINT  2       /* interrupt */`
 
-+ #define SIGILL  4       /* illegal instruction (not reset when caught) */
+&emsp;程序终止（interrupt）信号，在用户键入 INTR 字符时发出，用于通知前台进程组终止进程，通常由用户输入产生的中断信号，比如唤起键盘，在 iOS 中一般不会处理到该信号。external interrupt, usually initiated by the user.
 
-&emsp;执行了非法指令. 通常是因为可执行文件本身出现错误, 或者试图执行数据段. 堆栈溢出时也有可能产生这个信号。
++ `#define SIGQUIT 3       /* quit */`
 
-+ #define SIGTRAP 5       /* trace trap (not reset when caught) */
+&emsp;和 SIGINT 类似，但由 QUIT 字符来控制。进程在因收到 SIGQUIT 退出时会产生 core 文件，在这个意义上类似于一个程序错误信号。
 
-&emsp;由断点指令或其它 trap 指令产生. 由 debugger 使用。
++ `#define SIGILL  4       /* illegal instruction (not reset when caught) */`
 
-+ #define SIGABRT 6       /* abort() */
+&emsp;invalid program image, such as invalid instruction, (无效的程序镜像，例如无效指令)，不管在任何情况下得杀死进程的信号，由于 iOS 应用程序平台的限制，在 iOS APP 内禁止 kill 掉进程，所以一般不会处理。执行了非法指令。通常是因为可执行文件本身出现错误，或者试图执行数据段。堆栈溢出时也有可能产生这个信号。
 
-&emsp;调用 abort 函数生成的信号。SIGABRT is a BSD signal sent by an application to itself when an NSException or obj_exception_throw is not caught.
++ `#define SIGTRAP 5       /* trace trap (not reset when caught) */`
 
-+ #define SIGBUS  10      /* bus error */
+&emsp;由断点指令或其它 trap 指令产生。由 debugger 使用。TRAP 是陷阱的意思。它并不是一个真正的崩溃信号。它会在处理器执行 trap 指令时发送。LLDB 调试器通常会处理此信号，并在指定的断点处停止运行。如果你收到了原因不明的 SIGTRAP，先清除上次的输出，然后重新进行构建通常能解决这个问题。该异常是由于打算给一个附加的调试器在执行特定的断点来中断进程时触发。你可以在自己的代码中使用 `__builtin_trap()` 方法来触发此异常。如果没有被调试器所附加，那么进程将会结束并且生成一份崩溃报告。
 
-&emsp;非法地址, 包括内存地址对齐 (alignment) 出错。比如访问一个四个字长的整数, 但其地址不是 4 的倍数。它与 SIGSEGV 的区别在于后者是由于对合法存储地址的非法访问触发的(如访问不属于自己存储空间或只读存储空间)。
++ `#define SIGABRT 6       /* abort() */`
 
+&emsp;abnormal termination condition, as is e.g. initiated by abort(). 通常由于异常引起的中断信号，异常发生时系统会调用 abort() 函数发出该信号，有可能是 NSException 也有可能是 Mach 异常。多线程访问可变数组，可变字典，多线程添加/删除元素导致。一种是由于方法调用错误(调用了不能调用的方法)，一种是由于数组访问越界，这样一般是先抛异常，从异常就可以明显看出错误原因。SIGABRT is a BSD signal sent by an application to itself when an NSException or obj_exception_throw is not caught.
 
++ `#define SIGBUS  10      /* bus error */`
 
+&emsp;总线错误，意思是该地址有效，但是总线不能读取。非法地址，包括内存地址对齐 (alignment) 出错。比如访问一个四个字长的整数，但其地址不是 4 的倍数，BUS_ADRALN 未对齐的内存, ARM 不支持非对齐的内存访问，要求对齐访问，否则向当前进程分发 SIGBUS 信号。它与 SIGSEGV 的区别在于后者是由于对合法存储地址的非法访问触发的(如访问不属于自己存储空间或只读存储空间)。SIGBUS 与 SIGSEGV 信号一样，可以正常捕获，SIGBUS 的缺省行为是终止当前进程并产生 core dump。
 
+1. SIGBUS(Bus error) 意味着指针所对应的地址是有效地址，但总线不能正常使用该指针，通常是未对齐的数据访问所致。
+2. SIGSEGV(Segment fault) 意味着指针所对应的地址是无效地址，没有物理内存对应该地址。
 
++ `#define SIGFPE  8       /* floating point exception */`
 
+&emsp;erroneous arithmetic operation such as divide by zero. 浮点数异常的信号通知，一般是由于除数为 0 引起的。
 
++ `#define SIGTERM 15      /* software termination signal from kill */`
+
+&emsp;程序结束(terminate)信号，与 SIGKILL 不同的是该信号可以被阻塞和处理。通常用来要求程序自己正常退出，iOS 中一般不会处理到这个信号。
+
++ `#define SIGPIPE 13      /* write on a pipe with no one to read it */`
+
+&emsp;管道破裂。程序 Socket 发送失败中止信号，还有可能在进程间通信产生，比如采用 FIFO(管道)通信的两个进程，读管道没打开或者意外终止就往管道写，写进程会收到 SIGPIPE 信号。此外用 Socket 通信的两个进程，写进程在写 Socket 的时候，读进程已经终止。比如客户端程序向服务器端程序发送了消息，然后关闭客户端，服务器端返回消息的时候就会收到内核给的 SIGPIPE 信号。TCP 的全双工信道其实是两条单工信道，client 端调用 close 的时候，虽然本意是关闭两条信道，但是其实只能关闭它发送的那一条单工信道，还是可以接受数据，server 端还是可以发送数据，并不知道 client 端已经完全关闭了。[Linux SIGPIPE信号产生原因与解决方法](https://blog.csdn.net/u010821666/article/details/81841755)
+
++ 在以上列出的信号中，程序不可捕获、阻塞或忽略的信号有：SIGKILL、SIGSTOP 
++ 不能恢复至默认动作的信号有：SIGILL、SIGTRAP 
++ 默认会导致进程流产的信号有：SIGABRT、SIGBUS、SIGFPE、SIGILL、SIGIOT、SIGQUIT、SIGSEGV、SIGTRAP、SIGXCPU、SIGXFSZ
++ 默认会导致进程退出的信号有: SIGALRM、SIGHUP、SIGINT、SIGKILL、SIGPIPE、SIGPOLL、SIGPROF、SIGSYS、SIGTERM、SIGUSR1、SIGUSR2、SIGVTALRM 
++ 默认会导致进程停止的信号有：SIGSTOP、SIGTSTP、SIGTTIN、SIGTTOU 
++ 默认进程忽略的信号有：SIGCHLD、SIGPWR、SIGURG、SIGWINCH 
++ 此外，SIGIO 在 SVR4 是退出，在 4.3 BSD 中是忽略；SIGCONT 在进程挂起时是继续，否则是忽略，不能被阻塞。
 
 ### Unix Signal 捕获
 
@@ -1186,7 +1214,291 @@ void mySignalHandler(int signal) {
 @end
 ```
 
-&emsp;backtrace & backtrace_symbols 函数：
+&emsp;上面一段代码对 Unix Signals 的处理进行了覆盖，也可以参考如下代码，将先前别人注册的信号的处理函数进行备份然后在自己记录完毕后调用之前的备份，防止覆盖别人的处理。
+
+```c++
+#import "NWCrashSignalExceptionHandler.h"
+#import <execinfo.h>
+
+typedef void(*SignalHandler)(int signal, siginfo_t *info, void *context);
+ 
+static SignalHandler previousABRTSignalHandler = NULL;
+static SignalHandler previousBUSSignalHandler = NULL;
+static SignalHandler previousFPESignalHandler = NULL;
+static SignalHandler previousILLSignalHandler = NULL;
+static SignalHandler previousPIPESignalHandler = NULL;
+static SignalHandler previousSEGVSignalHandler = NULL;
+static SignalHandler previousSYSSignalHandler = NULL;
+static SignalHandler previousTRAPSignalHandler = NULL;
+
+@implementation NWCrashSignalExceptionHandler
+
++ (void)registerHandler {
+    // 将先前别人注册的handler取出并备份
+    [self backupOriginalHandler];
+    
+    [self signalRegister];
+}
+
++ (void)backupOriginalHandler {
+    struct sigaction old_action_abrt;
+    
+    sigaction(SIGABRT, NULL, &old_action_abrt);
+    if (old_action_abrt.sa_sigaction) {
+        previousABRTSignalHandler = old_action_abrt.sa_sigaction;
+    }
+    
+    struct sigaction old_action_bus;
+    sigaction(SIGBUS, NULL, &old_action_bus);
+    if (old_action_bus.sa_sigaction) {
+        previousBUSSignalHandler = old_action_bus.sa_sigaction;
+    }
+    
+    struct sigaction old_action_fpe;
+    sigaction(SIGFPE, NULL, &old_action_fpe);
+    if (old_action_fpe.sa_sigaction) {
+        previousFPESignalHandler = old_action_fpe.sa_sigaction;
+    }
+    
+    struct sigaction old_action_ill;
+    sigaction(SIGILL, NULL, &old_action_ill);
+    if (old_action_ill.sa_sigaction) {
+        previousILLSignalHandler = old_action_ill.sa_sigaction;
+    }
+    
+    struct sigaction old_action_pipe;
+    sigaction(SIGPIPE, NULL, &old_action_pipe);
+    if (old_action_pipe.sa_sigaction) {
+        previousPIPESignalHandler = old_action_pipe.sa_sigaction;
+    }
+    
+    struct sigaction old_action_segv;
+    sigaction(SIGSEGV, NULL, &old_action_segv);
+    if (old_action_segv.sa_sigaction) {
+        previousSEGVSignalHandler = old_action_segv.sa_sigaction;
+    }
+    
+    struct sigaction old_action_sys;
+    sigaction(SIGSYS, NULL, &old_action_sys);
+    if (old_action_sys.sa_sigaction) {
+        previousSYSSignalHandler = old_action_sys.sa_sigaction;
+    }
+    
+    struct sigaction old_action_trap;
+    sigaction(SIGTRAP, NULL, &old_action_trap);
+    if (old_action_trap.sa_sigaction) {
+        previousTRAPSignalHandler = old_action_trap.sa_sigaction;
+    }
+}
+
++ (void)signalRegister {
+    NWSignalRegister(SIGABRT);
+    NWSignalRegister(SIGBUS);
+    NWSignalRegister(SIGFPE);
+    NWSignalRegister(SIGILL);
+    NWSignalRegister(SIGPIPE);
+    NWSignalRegister(SIGSEGV);
+    NWSignalRegister(SIGSYS);
+    NWSignalRegister(SIGTRAP);
+}
+ 
+#pragma mark - Private
+ 
+#pragma mark Register Signal
+ 
+static void NWSignalRegister(int signal) {
+    struct sigaction action;
+    action.sa_sigaction = NWSignalHandler;
+    action.sa_flags = SA_NODEFER | SA_SIGINFO;
+    sigemptyset(&action.sa_mask);
+    
+    sigaction(signal, &action, 0);
+}
+
+#pragma mark SignalCrash Handler
+ 
+static void NWSignalHandler(int signal, siginfo_t* info, void* context) {
+    NSMutableString *mstr = [[NSMutableString alloc] init];
+    [mstr appendString:@"Signal Exception:\n"];
+    [mstr appendString:[NSString stringWithFormat:@"Signal %@ was raised.\n", signalName(signal)]];
+    [mstr appendString:@"Call Stack:\n"];
+    
+    // 这里过滤掉第一行日志
+    // 因为注册了信号崩溃回调方法，系统会来调用，将记录在调用堆栈上，因此此行日志需要过滤掉
+    for (NSUInteger index = 1; index < NSThread.callStackSymbols.count; index++) {
+        NSString *str = [NSThread.callStackSymbols objectAtIndex:index];
+        [mstr appendString:[str stringByAppendingString:@"\n"]];
+    }
+    
+    [mstr appendString:@"threadInfo:\n"];
+    [mstr appendString:[[NSThread currentThread] description]];
+    
+    // 保存崩溃日志到沙盒cache目录
+//    [NWCrashTool saveCrashLog:[NSString stringWithString:mstr] fileName:@"Crash(Signal)"];
+    
+    NWClearSignalRegister();
+    
+    // 调用之前崩溃的回调函数
+    // 在自己 handler 处理完后自觉把别人的 handler 注册回去，规规矩矩的传递
+    previousSignalHandler(signal, info, context);
+    
+    kill(getpid(), SIGKILL);
+}
+
+#pragma mark Signal To Name
+ 
+static NSString *signalName(int signal) {
+    NSString *signalName;
+    switch (signal) {
+        case SIGABRT:
+            signalName = @"SIGABRT";
+            break;
+        case SIGBUS:
+            signalName = @"SIGBUS";
+            break;
+        case SIGFPE:
+            signalName = @"SIGFPE";
+            break;
+        case SIGILL:
+            signalName = @"SIGILL";
+            break;
+        case SIGPIPE:
+            signalName = @"SIGPIPE";
+            break;
+        case SIGSEGV:
+            signalName = @"SIGSEGV";
+            break;
+        case SIGSYS:
+            signalName = @"SIGSYS";
+            break;
+        case SIGTRAP:
+            signalName = @"SIGTRAP";
+            break;
+        default:
+            break;
+    }
+    return signalName;
+}
+
+#pragma mark  Previous Signal
+ 
+static void previousSignalHandler(int signal, siginfo_t *info, void *context) {
+    SignalHandler previousSignalHandler = NULL;
+    switch (signal) {
+        case SIGABRT:
+            previousSignalHandler = previousABRTSignalHandler;
+            break;
+        case SIGBUS:
+            previousSignalHandler = previousBUSSignalHandler;
+            break;
+        case SIGFPE:
+            previousSignalHandler = previousFPESignalHandler;
+            break;
+        case SIGILL:
+            previousSignalHandler = previousILLSignalHandler;
+            break;
+        case SIGPIPE:
+            previousSignalHandler = previousPIPESignalHandler;
+            break;
+        case SIGSEGV:
+            previousSignalHandler = previousSEGVSignalHandler;
+            break;
+        case SIGSYS:
+            previousSignalHandler = previousSYSSignalHandler;
+            break;
+        case SIGTRAP:
+            previousSignalHandler = previousTRAPSignalHandler;
+            break;
+        default:
+            break;
+    }
+    
+    if (previousSignalHandler) {
+        previousSignalHandler(signal, info, context);
+    }
+}
+
+#pragma mark Clear
+ 
+static void NWClearSignalRegister() {
+    signal(SIGSEGV,SIG_DFL);
+    signal(SIGFPE,SIG_DFL);
+    signal(SIGBUS,SIG_DFL);
+    signal(SIGTRAP,SIG_DFL);
+    signal(SIGABRT,SIG_DFL);
+    signal(SIGILL,SIG_DFL);
+    signal(SIGPIPE,SIG_DFL);
+    signal(SIGSYS,SIG_DFL);
+}
+
+@end
+```
+
+&emsp;对比两份代码我们还可以发现不同，它们分别使用的 `signal` 和 `sigaction` 来设置信号处理函数，它们有一定的区别。
+
+&emsp;`signal` 函数非常基础，只提供了最低限度的信号管理的标准。而 `sigaction` 系统调用，提供更强大的信号管理能力。当信号处理程序运行时，可以用来阻塞特定信号的接收，也可以用来获取信号发送时各种操作系统和进程状态的信息。
+
+```c++
+// 设置自定义信号处理函数
++ (void)setSignalHandlerInAdvance {
+    struct sigaction act;
+    
+    // 当sa_flags设为SA_SIGINFO时，设定sa_sigaction来指定信号处理函数
+    act.sa_flags = SA_SIGINFO;
+    act.sa_sigaction = test_signal_action_handler;
+    
+    sigaction(SIGABRT, &act, NULL);
+}
+
+static void test_signal_action_handler(int signo, siginfo_t *si, void *ucontext) {
+    // ...
+}
+```
+
+&emsp;**备用信号栈：**
+
+&emsp;`signal` 方法可以监控到大部分的 Signal 异常，但是我们会发现如果遇到死循环这类的 Crash，就没法监控了。原因是一般情况下，信号处理函数被调用时，内核会在进程的栈上为其创建一个栈帧。但这里就会有一个问题，如果之前栈的增长达到了栈的最大长度，或是栈没有达到最大长度但也比较接近，那么就会导致信号处理函数不能得到足够栈帧分配。为了解决这个问题，我们需要设定一个可选的栈帧：
+
+1. 申请一块内存空间作为可选的信号处理函数栈使用。
+2. 使用 `sigaltstack` 函数通知系统可选的信号处理栈帧的存在及其位置。
+3. 当使用 `sigaction` 函数建立一个信号处理函数时，通过指定 `SA_ONSTACK` 标志通知系统这个信号处理函数应该在可选的栈帧上面执行注册的信号处理函数。
+
+&emsp;如下示例代码：
+
+```c++
+void installSignalHandler() {
+    stack_t ss;
+    struct sigaction sa;
+    struct timespec req, rem;
+    long ret;
+
+    ss.ss_flags = 0;
+    ss.ss_size = SIGSTKSZ;
+    ss.ss_sp = malloc(ss.ss_size);
+    sigaltstack(&ss, NULL);
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handleSignalException;
+    sa.sa_flags = SA_ONSTACK;
+    sigaction(SIGABRT, &sa, NULL);
+}
+```
+
+&emsp;**解除监听:**
+
+&emsp;上面的异常处理结束后都调用了类似如下代码：
+
+```c++
+NSSetUncaughtExceptionHandler(NULL);
+signal(SIGHUP, SIG_DFL);
+```
+
+&emsp;这是因为:
+
+1. 保证一个 Crash 只会被一个 Handler 处理，避免多次处理。
+2. 防止可能出现死锁导致应用不能退出。
+
+&emsp;backtrace & backtrace_symbols 函数（也可以使用 NSThread.callStackSymbols 读取函数调用堆栈）：
 
 &emsp;这里我们做一个延展：示例代码中 `+ (NSArray *)backtrace {...}` 函数用来获取当前函数的回溯信息，即异常发生时的函数调用堆栈。其中用到了 `backtrace` 和 `backtrace_symbols` 函数：
 
@@ -1300,6 +1612,7 @@ If no signals are specified, update them all.  If no update option is specified,
 
 ## 参考链接
 **参考链接:🔗**
++ [漫谈 iOS Crash 收集框架](https://mp.weixin.qq.com/s?__biz=MjM5NTIyNTUyMQ==&mid=208483273&idx=1&sn=37ee88e06e7426f59f3074c536370317&scene=21)
 + [Mach-维基百科](https://zh.wikipedia.org/wiki/Mach)
 + [iOS 异常信号思考](https://minosjy.com/2021/04/10/00/377/)
 + [Linux 多线程环境下 进程线程终止函数小结](https://www.cnblogs.com/biyeymyhjob/archive/2012/10/11/2720377.html)
@@ -1328,3 +1641,5 @@ If no signals are specified, update them all.  If no update option is specified,
 + [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
 + [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)
 + [iOS信号量报错](https://blog.csdn.net/u014600626/article/details/119490157)
++ [Xcode特性Address Sanitizer](https://blog.csdn.net/u014600626/article/details/119506854)
++ [iOS 启动连续闪退保护方案](https://blog.csdn.net/jiang314/article/details/52574307?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_title~default-0.highlightwordscore&spm=1001.2101.3001.4242.1)

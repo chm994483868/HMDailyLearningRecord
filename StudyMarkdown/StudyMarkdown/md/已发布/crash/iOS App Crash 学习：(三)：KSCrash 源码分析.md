@@ -1,12 +1,15 @@
 # iOS App Crash 学习：(三)：KSCrash 源码分析
 
 
+BSBacktraceLogger 源码
+KSCrash 源码
+PLCrashReporter 源码
+GYBootingProtection 源码
 
-
-
-
-
-
++ [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
++ [iOS中Crash采集及PLCrashReporter使用](https://www.jianshu.com/p/930d7f77df6c)
++ [iOS 启动连续闪退保护方案](https://blog.csdn.net/jiang314/article/details/52574307?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_title~default-0.highlightwordscore&spm=1001.2101.3001.4242.1)
++ [iOS/OSX Crash：捕捉异常](https://zhuanlan.zhihu.com/p/271282052)
 
 
 
