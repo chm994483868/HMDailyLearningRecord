@@ -16,11 +16,39 @@
 }
 ```
 
-&emsp;KSCrash 提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，如 KSCrashInstallationStandard、KSCrashInstallationEmail、KSCrashInstallationHockey、KSCrashInstallationQuincy、KSCrashInstallationVictory，我们只能选择其中一个 installation 使用。这里我们仅以标准 installation（KSCrashInstallationStandard）作为学习的主线。  
+&emsp;KSCrash 框架提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，如下:
 
-&emsp;调用 makeStandardInstallation 函数，取得 KSCrashInstallationStandard 类的单例对象 installation，并为它的 url 属性赋值，此 url 会用来在 App 启动时如果本地有崩溃 log 的话，会上传到此 url。
++ KSCrashInstallationStandard
++ KSCrashInstallationEmail
++ KSCrashInstallationHockey
++ KSCrashInstallationQuincy
++ KSCrashInstallationVictory
 
-&emsp;KSCrashInstallationStandard 类的单例对象 installation 调用其 `install` 函数，此函数继承自父类 KSCrashInstallation，KSCrashInstallationStandard 作为子类，并没有重写 `install` 函数。`install` 函数的作用是安装 **崩溃处理程序**，此操作应该尽早的完成，它会记录所有出现的崩溃，但是它并不会自动的去上传崩溃记录。
+&emsp;我们只能选择其中一个 installation 使用。这里我们仅以标准 installation（KSCrashInstallationStandard）作为学习的主线。  
+
+&emsp;`installCrashHandler` 函数第一行便是调用 `makeStandardInstallation` 函数，取得 KSCrashInstallationStandard 类的单例对象 `installation`，并为它的 url 属性赋值，此 url 会用在 App 启动时如果本地有崩溃 log 的话，会上传到此 url。
+
+&emsp;接下来 KSCrashInstallationStandard 类的单例对象 `installation` 调用其 `install` 函数，此函数继承自父类 KSCrashInstallation，KSCrashInstallationStandard 作为子类并没有重写 `install` 函数，此函数的作用是安装 **崩溃处理程序**，即取得 KSCrash 类的单例对象。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+此操作应该尽早的完成，它会记录所有出现的崩溃，但是它并不会自动的去上传崩溃记录。
 
 &emsp;这里指的 **崩溃处理程序** 是 KSCrash 类的单例对象。
 
@@ -66,7 +94,18 @@
 
 
 
-
++ [kstenerud/KSCrash](https://github.com/kstenerud/KSCrash)
++ [KSCrash源码分析](https://cloud.tencent.com/developer/article/1370201)
++ [iOS中Crash采集及PLCrashReporter使用](https://www.jianshu.com/p/930d7f77df6c)
++ [iOS KSCrash的使用](https://www.jianshu.com/p/d9ec5f3f144e)
++ [使用KSCrash进行崩溃日志的采集](https://www.jianshu.com/p/7847b7aaef0b)
++ [KSCrash翻译](https://www.jianshu.com/p/95102419c29b)
++ [iOS崩溃日志使用KSCrash收集、分析](https://www.jianshu.com/p/329684cf1e51)
++ [iOS开源库分析之KSCrash](https://xiaozhuanlan.com/topic/7193860452)
++ [KSCrash源码阅读（Monitors）](https://blog.csdn.net/qq_22389025/article/details/84784796)
++ [KSCrash崩溃收集原理浅析](https://www.it610.com/article/1191455498289913856.htm)
++ [KSCrash源码学习](https://www.jianshu.com/p/8c2dc3ce8545)
++ [KSCrash+Symbolicatecrash日志分析](https://www.jianshu.com/p/d88b39acea7d)
 
 
 
