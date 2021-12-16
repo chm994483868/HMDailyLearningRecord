@@ -2,12 +2,66 @@
 
 &emsp;[kstenerud/KSCrash](https://github.com/kstenerud/KSCrash) The Ultimate Crash Reporter! 
 
+## KSCrash 使用过程
+
+&emsp;在 App 启动后开始安装 **崩溃处理程序**。
+
+```c++
+- (BOOL) application:(__unused UIApplication *) application didFinishLaunchingWithOptions:(__unused NSDictionary *) launchOptions {
+
+    // App 启动后开始安装 崩溃处理程序
+    [self installCrashHandler];
+    
+    return YES;
+}
+```
+
+&emsp;KSCrash 提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，如 KSCrashInstallationStandard、KSCrashInstallationEmail、KSCrashInstallationHockey、KSCrashInstallationQuincy、KSCrashInstallationVictory，我们只能选择其中一个 installation 使用。这里我们仅以标准 installation（KSCrashInstallationStandard）作为学习的主线。  
+
+&emsp;调用 makeStandardInstallation 函数，取得 KSCrashInstallationStandard 类的单例对象 installation，并为它的 url 属性赋值，此 url 会用来在 App 启动时如果本地有崩溃 log 的话，会上传到此 url。
+
+&emsp;KSCrashInstallationStandard 类的单例对象 installation 调用其 `install` 函数，此函数继承自父类 KSCrashInstallation，KSCrashInstallationStandard 作为子类，并没有重写 `install` 函数。`install` 函数的作用是安装 **崩溃处理程序**，此操作应该尽早的完成，它会记录所有出现的崩溃，但是它并不会自动的去上传崩溃记录。
+
+&emsp;这里指的 **崩溃处理程序** 是 KSCrash 类的单例对象。
+
+```c++
+- (void) installCrashHandler {
+    // Create an installation (choose one)
+    
+    KSCrashInstallation* installation = [self makeStandardInstallation];
+    
+//    KSCrashInstallation* installation = [self makeEmailInstallation];
+//    KSCrashInstallation* installation = [self makeHockeyInstallation];
+//    KSCrashInstallation* installation = [self makeQuincyInstallation];
+//    KSCrashInstallation *installation = [self makeVictoryInstallation];
+    
+    // Install the crash handler. This should be done as early as possible.
+    // This will record any crashes that occur, but it doesn't automatically send them.
+    [installation install];
+    
+    [KSCrash sharedInstance].deleteBehaviorAfterSendAll = KSCDeleteNever; // TODO: Remove this
 
 
+    // Send all outstanding reports. You can do this any time; it doesn't need to happen right as the app launches.
+    // Advanced-Example shows how to defer displaying the main view controller until crash reporting completes.
+    [installation sendAllReportsWithCompletion:^(NSArray* reports, BOOL completed, NSError* error) {
+        if (completed) {
+            NSLog(@"🐹🐹🐹 Sent %d reports", (int)[reports count]);
+        } else {
+            NSLog(@"🐹🐹🐹 Failed to send reports: %@", error);
+        }
+    }];
+}
 
+- (KSCrashInstallation*) makeStandardInstallation {
+    NSURL* url = [NSURL URLWithString:@"http://put.your.url.here"];
+    
+    KSCrashInstallationStandard* standard = [KSCrashInstallationStandard sharedInstance];
+    standard.url = url;
 
-
-
+    return standard;
+}
+```
 
 
 
