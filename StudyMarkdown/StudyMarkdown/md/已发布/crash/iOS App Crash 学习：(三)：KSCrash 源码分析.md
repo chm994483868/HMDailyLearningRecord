@@ -2,9 +2,33 @@
 
 &emsp;[kstenerud/KSCrash](https://github.com/kstenerud/KSCrash) The Ultimate Crash Reporter! 
 
+## KSCrash 简述
+
+&emsp;以下内容来自 KSCrash 首页描述。
+
+&emsp;虽然现有的 crash reporters 确实报告了崩溃，但是他们可以做的还有很多。
+
+&emsp;以下是 KSCrash 的一些主要功能：
+
++ 以支持离线重新符号化的方式在设备上进行符号化（对于许多功能已被编辑的 iOS 版本是必需的）。
++ 生成完整的 Apple 报告（KSCrashEmailReportStyleApple、KSCrashEmailReportStyleJSON），并填写每个字段。
++ 支持 32 位和 64 位模式。
++ 支持所有苹果设备，包括 Apple Watch。
++ 处理只能在 mach level 捕获的错误，例如堆栈溢出（stack overflow 只能在 mach level 捕获到，它不同于其他异常，它不会转化为对应的 Unix Signal（这里还不确定会不会转化），即使能转化，但是常规情况下 Unix signals 要在崩溃线程执行回调，此时由于堆栈溢出已经没有条件（堆栈空间）执行回调代码了）。
++ 跟踪未捕获的 C++ 异常的真正原因。
+
+
++ 处理崩溃处理程序本身（或用户崩溃处理程序回调）中的崩溃。
+
+
+
+
+
+
+
 ## KSCrash 使用过程
 
-&emsp;在 App 启动后开始安装 **崩溃处理程序**。
+&emsp;在 `application:didFinishLaunchingWithOptions:` 函数中安装 **崩溃处理程序**。
 
 ```c++
 - (BOOL) application:(__unused UIApplication *) application didFinishLaunchingWithOptions:(__unused NSDictionary *) launchOptions {
@@ -16,7 +40,7 @@
 }
 ```
 
-&emsp;KSCrash 框架提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，如下:
+&emsp;KSCrash 框架根据不同的发送日志的方式提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，如下:
 
 + KSCrashInstallationStandard
 + KSCrashInstallationEmail
