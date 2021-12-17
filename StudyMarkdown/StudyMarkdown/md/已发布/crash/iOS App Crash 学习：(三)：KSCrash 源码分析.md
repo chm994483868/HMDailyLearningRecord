@@ -6,6 +6,8 @@
 
 &emsp;以下内容来自 KSCrash 首页描述。
 
+### Another crash reporter? Why? 
+
 &emsp;虽然现有的 crash reporters 确实报告了崩溃，但是他们可以做的还有很多。
 
 &emsp;以下是 KSCrash 的一些主要功能：
@@ -14,11 +16,226 @@
 + 生成完整的 Apple 报告（KSCrashEmailReportStyleApple、KSCrashEmailReportStyleJSON），并填写每个字段。
 + 支持 32 位和 64 位模式。
 + 支持所有苹果设备，包括 Apple Watch。
-+ 处理只能在 mach level 捕获的错误，例如堆栈溢出（stack overflow 只能在 mach level 捕获到，它不同于其他异常，它不会转化为对应的 Unix Signal（这里还不确定会不会转化），即使能转化，但是常规情况下 Unix signals 要在崩溃线程执行回调，此时由于堆栈溢出已经没有条件（堆栈空间）执行回调代码了）。
++ 能处理只能在 mach level 捕获的错误，例如堆栈溢出（stack overflow 只能在 mach level 捕获到，它不同于其他异常，它不会转化为对应的 Unix Signal（这里还不确定会不会转化为 Unix Signal），即使能转化，但是常规情况下 Unix signals 要在崩溃线程执行回调，此时由于堆栈溢出已经没有条件（堆栈空间）执行回调函数了）。
 + 跟踪未捕获的 C++ 异常的真正原因。
++ 在崩溃处理程序本身（或用户崩溃处理程序回调）中处理崩溃。
++ 检测 zombie（deallocated）object 访问尝试。
++ 在 zombies 或内存损坏的情况下恢复丢失的 NSException 消息。
++ introspects 寄存器和堆栈中的对象（C 字符串和 Objective-C 对象，包括 ivars）。
++ 提取有关异常引用的对象的信息（例如 "发送到实例 0xa26d9a0 无法识别的选择器"）。
++ 其可插拔的服务器报告体系结构使其可以轻松适应任何 API 服务。（邮件、上传服务器、Hockey、Quincy、Victory）
++ dumps 堆栈内容。
++ diagnoses 崩溃原因（Crash Docto）。
++ 以 JSON 格式记录大量超出 Apple 崩溃报告范围的信息。
++ 支持包含程序员提供的额外数据（before and during a crash）。
+
+### KSCrash 处理以下类型的崩溃
+
++ Mach kernel exceptions（Mach 内核异常）
++ Fatal signals（Unix Signals）
++ C++ exceptions（C++ 异常）
++ Objective-C exceptions（Objective-C 异常） 
++ Main thread deadlock（experimental）主线程死锁检测（实验性质）
++ Custom crashes（e.g. from scripting languages）自定义异常
+
+### KSCrash can report to the following servers:
+
++ Hockey
++ QuincyKit
++ Victory
++ Email
+
+### C++ Exception Handling
+
+&emsp;没错！通常，如果你的应用由于未捕获的 C++ exception 而终止，你得到的只是： 
+
+```c++
+Thread 0 name:  Dispatch queue: com.apple.main-thread
+Thread 0 Crashed:
+0   libsystem_kernel.dylib          0x9750ea6a 0x974fa000 + 84586 (__pthread_kill + 10)
+1   libsystem_sim_c.dylib           0x04d56578 0x4d0f000 + 292216 (abort + 137)
+2   libc++abi.dylib                 0x04ed6f78 0x4ed4000 + 12152 (abort_message + 102)
+3   libc++abi.dylib                 0x04ed4a20 0x4ed4000 + 2592 (_ZL17default_terminatev + 29)
+4   libobjc.A.dylib                 0x013110d0 0x130b000 + 24784 (_ZL15_objc_terminatev + 109)
+5   libc++abi.dylib                 0x04ed4a60 0x4ed4000 + 2656 (_ZL19safe_handler_callerPFvvE + 8)
+6   libc++abi.dylib                 0x04ed4ac8 0x4ed4000 + 2760 (_ZSt9terminatev + 18)
+7   libc++abi.dylib                 0x04ed5c48 0x4ed4000 + 7240 (__cxa_rethrow + 77)
+8   libobjc.A.dylib                 0x01310fb8 0x130b000 + 24504 (objc_exception_rethrow + 42)
+9   CoreFoundation                  0x01f2af98 0x1ef9000 + 204696 (CFRunLoopRunSpecific + 360)
+...
+```
+
+&emsp;无法跟踪异常是什么或从哪里抛出！
+
+&emsp;现在，使用 KSCrash，你可以获得未捕获的异常类型、描述以及它从何处抛出：
+
+```c++
+Application Specific Information:
+*** Terminating app due to uncaught exception 'MyException', reason: 'Something bad happened...'
+
+Thread 0 name:  Dispatch queue: com.apple.main-thread
+Thread 0 Crashed:
+0   Crash-Tester                    0x0000ad80 0x1000 + 40320 (-[Crasher throwUncaughtCPPException] + 0)
+1   Crash-Tester                    0x0000842e 0x1000 + 29742 (__32-[AppDelegate(UI) crashCommands]_block_invoke343 + 78)
+2   Crash-Tester                    0x00009523 0x1000 + 34083 (-[CommandEntry executeWithViewController:] + 67)
+3   Crash-Tester                    0x00009c0a 0x1000 + 35850 (-[CommandTVC tableView:didSelectRowAtIndexPath:] + 154)
+4   UIKit                           0x0016f285 0xb4000 + 766597 (-[UITableView _selectRowAtIndexPath:animated:scrollPosition:notifyDelegate:] + 1194)
+5   UIKit                           0x0016f4ed 0xb4000 + 767213 (-[UITableView _userSelectRowAtPendingSelectionIndexPath:] + 201)
+6   Foundation                      0x00b795b3 0xb6e000 + 46515 (__NSFireDelayedPerform + 380)
+7   CoreFoundation                  0x01f45376 0x1efa000 + 308086 (__CFRUNLOOP_IS_CALLING_OUT_TO_A_TIMER_CALLBACK_FUNCTION__ + 22)
+8   CoreFoundation                  0x01f44e06 0x1efa000 + 306694 (__CFRunLoopDoTimer + 534)
+9   CoreFoundation                  0x01f2ca82 0x1efa000 + 207490 (__CFRunLoopRun + 1810)
+10  CoreFoundation                  0x01f2bf44 0x1efa000 + 204612 (CFRunLoopRunSpecific + 276)
+...
+```
+
+### Custom Crashes & Stack Traces
+
+&emsp;You can now report your own custom crashes and stack traces (think scripting languages):
+
+```c++
+- (void) reportUserException:(NSString*) name
+                  reason:(NSString*) reason
+              lineOfCode:(NSString*) lineOfCode
+              stackTrace:(NSArray*) stackTrace
+        terminateProgram:(BOOL) terminateProgram;
+```
+
+&emsp;See KSCrash.h for details.
+
+### Unstable Features
+
+&emsp;The following features should be considered "unstable" and are disabled by default:
+
++ Deadlock detection
+
+## How to Use KSCrash
+
+1. 将 framework 添加到项目中（或将 KSCrash 项目添加为依赖项）。
+2. 将以下系统 frameworks 和 libraries 添加到你的项目中：
+
++ libc++.dylib (libc++.tbd in newer versions)
++ libz.dylib (libz.tbd in newer versions)
++ MessageUI.framework (iOS only)
++ SystemConfiguration.framework
+
+3. Add the flag "-ObjC" to Other Linker Flags in your Build Settings。
+4. Add the following to your `[application: didFinishLaunchingWithOptions:]` method in your app delegate:
+
+```c++
+#import <KSCrash/KSCrash.h>
+
+// Include to use the standard reporter.
+#import <KSCrash/KSCrashInstallationStandard.h>
+
+// Include to use Quincy or Hockey.
+#import <KSCrash/KSCrashInstallationQuincyHockey.h>
+
+// Include to use the email reporter.
+#import <KSCrash/KSCrashInstallationEmail.h>
+
+// Include to use Victory.
+#import <KSCrash/KSCrashInstallationVictory.h>
+
+- (BOOL)application:(UIApplication*) application didFinishLaunchingWithOptions:(NSDictionary*) launchOptions {
+KSCrashInstallationStandard* installation = [KSCrashInstallationStandard sharedInstance];
+installation.url = [NSURL URLWithString:@"http://put.your.url.here"];
+
+// OR:
+
+KSCrashInstallationQuincy* installation = [KSCrashInstallationQuincy sharedInstance];
+installation.url = [NSURL URLWithString:@"http://put.your.url.here"];
+
+// OR:
+
+KSCrashInstallationHockey* installation = [KSCrashInstallationHockey sharedInstance];
+installation.appIdentifier = @"PUT_YOUR_HOCKEY_APP_ID_HERE";
+
+// OR:
+
+KSCrashInstallationEmail* installation = [KSCrashInstallationEmail sharedInstance];
+installation.recipients = @[@"some@email.address"];
+
+// Optional (Email): Send Apple-style reports instead of JSON
+[installation setReportStyle:KSCrashEmailReportStyleApple useDefaultFilenameFormat:YES]; 
+
+// Optional: Add an alert confirmation (recommended for email installation)（使用 KSCrashInstallationEmail 时，本地有崩溃日志时，弹出提示框是否发送邮件）
+[installation addConditionalAlertWithTitle:@"Crash Detected"
+                                 message:@"The app crashed last time it was launched. Send a crash report?"
+                               yesAnswer:@"Sure!"
+                                noAnswer:@"No thanks"];
+
+// OR:
+
+KSCrashInstallationVictory* installation = [KSCrashInstallationVictory sharedInstance];
+installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash/<application key>"];
+
+[installation install];
+    …
+}
+```
+
+&emsp;这将安装 crash monitor system（该系统拦截崩溃并将报告存储到磁盘）。请注意，你可以并且可能希望为各种 installations 设置其他属性。
+
+&emsp;Once you're ready to send any outstanding crash reports, call the following:
+
+```c++
+[installation sendAllReportsWithCompletion:^(NSArray *filteredReports, BOOL completed, NSError *error) {
+    // Stuff to do when report sending is complete（报告发送完成后要做的事情）
+    ...
+}];
+```
+
+## Recommended Reading
+
+&emsp;如果可能，你应该阅读以下头文件，以充分了解 KSCrash 具有哪些功能以及如何使用它们：
+
++ KSCrash.h
++ KSCrashInstallation.h
++ KSCrashInstallation(SPECIFIC TYPE).h
++ Architecture.md
+
+## Understanding the KSCrash Codebase
+
+&emsp;
 
 
-+ 处理崩溃处理程序本身（或用户崩溃处理程序回调）中的崩溃。
+## Advanced Usage
+
+### Enabling on-device symbolication
+
+&emsp;设备上的符号化要求在最终版本中存在基本符号。若要启用此功能，请转到应用的生成设置，并将"条带样式"设置为"调试符号"。这样做会将最终的二进制大小增加约 5%，但您会得到设备上的符号化。
+
+### Enabling advanced functionality:
+
+&emsp;KSCrash 具有高级功能，在野外检查崩溃报告时非常有用。有些涉及次要的权衡，因此默认情况下，它们中的大多数都是禁用的。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
