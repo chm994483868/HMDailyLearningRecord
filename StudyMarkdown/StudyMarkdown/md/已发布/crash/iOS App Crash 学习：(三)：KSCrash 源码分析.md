@@ -197,20 +197,131 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 ## Understanding the KSCrash Codebase
 
-&emsp;
+&emsp;快速代码教程。[CODE_TOUR](https://github.com/kstenerud/KSCrash/blob/master/CODE_TOUR.md)
+
+### A Brief Tour of the KSCrash Code and Architecture（KSCrash 代码和体系结构简介）
+
+&emsp;KSCrash 曾经足够简单，快速阅读源代码就足以理解它是如何工作的，但是现在它已经足够大了，应该有一些指南来帮助读者。本文档向你介绍 KSCrash 的主要代码区域。
+
+#### The Heart of KSCrash
+
+&emsp;KSCrash 的核心在 [KSCrash/Source/KSCrash/Recording/KSCrashC.c](https://github.com/kstenerud/KSCrash/blob/master/Source/KSCrash/Recording/KSCrashC.c) 文件。
+
+&emsp;此文件包含 KSCrash 系统的所有 important access points。
+
+&emsp;KSCrash.c 的功能也被 Objective-c/Swift 包装在 [KSCrash/Source/KSCrash/Recording/KSCrash.m](https://github.com/kstenerud/KSCrash/blob/master/Source/KSCrash/Recording/KSCrash.m) 文件。
+
+&emsp;以下是 KSCrashC.c 的主要部分：
+
+##### Installation
+
+&emsp;`kscrash_install()` 安装并准备 KSCrash 系统以处理崩溃。你可以在安装之前或之后使用此文件中的各种配置函数（`kscrash_setMonitoring()` 等）配置 KSCrash。
+
+##### Configuration
+
+&emsp;所有主要配置设置都是通过 `kscrash_setXYZ()` 设置的。
+
+##### App State
+
+&emsp;Apple 操作环境提供了许多通知，告诉你当前的应用状态。它们被 hooked 到各种 `kscrash_notifyXYZ()` 函数中。
+
+##### Crash Entry Point
+
+&emsp;`onCrash` 函数是在报告崩溃后调用的主要函数。它处理检查应用程序状态，编写 JSON 崩溃报告，然后允许崩溃自然进行。
+
+##### Report Management
+
+&emsp;此文件还包含用于管理崩溃报告的 low level primitive 函数：`kscrash_getReportCount()`、`kscrash_getReportIDs()`、`kscrash_readReport()`、`kscrash_deleteReportWithID()`。
+
+##### Enabling/Disabling KSCrash
+
+&emsp;可以使用 `kscrash_setMonitoring()` 在运行时有效地启用或禁用崩溃报告。
+
+#### Detecting Crashes
+
+&emsp;崩溃是通过其中一个 [KSCrash/Source/KSCrash/Recording/Monitors/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Recording/Monitors) 检测到的，该 monitor 在将控制权传递给 `onCrash()` 函数之前以一致的方式设置数据。这些文件有点 tricky，因为其中一些必须跳过一些 hoops 才能解决操作系统差异，系统特性以及简单的错误。
+
+#### Recording Crashes
+
+&emsp;崩溃通过 [KSCrash/Source/KSCrash/Recording/KSCrashReport.c](https://github.com/kstenerud/KSCrash/blob/master/Source/KSCrash/Recording/KSCrashReport.c) 中的 `kscrashreport_writeStandardReport()` 记录到 JSON 文件中。它利用许多 [KSCrash/Source/KSCrash/Recording/Tools/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Recording/Tools) 来实现这一点。
+
+#### Report Management
+
+&emsp;报告管理主要在 [KSCrash/Source/KSCrash/Recording/KSCrashReportStore.c](https://github.com/kstenerud/KSCrash/blob/master/Source/KSCrash/Recording/KSCrashReportStore.c) 中完成。
+
+#### Reporting
+
+&emsp;报告是使用可能过于复杂的 [filters]() 和 [KSCrash/Source/KSCrash/Reporting/Sinks/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Reporting/Sinks) 系统完成的。通常，为了使 KSCrash 适应你的需求，你需要创建自己的 sink。
+
+#### Installations
+
+&emsp;[KSCrash/Source/KSCrash/Installations/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Installations) 系统试图通过将大多数过滤器/接收器隐藏在更简单的界面后面来使用户API更容易一些。它的成功是值得商榷的...
+
+&emsp;没有代码取决于安装代码，KSCrash 实际上可以在没有它的情况下正常工作。
+
+
+
+
+
+
+
+
+
+
 
 
 ## Advanced Usage
 
-### Enabling on-device symbolication
+### Enabling on-device symbolication（支持在设备上进行离线符号化的工作）
 
-&emsp;设备上的符号化要求在最终版本中存在基本符号。若要启用此功能，请转到应用的生成设置，并将"条带样式"设置为"调试符号"。这样做会将最终的二进制大小增加约 5%，但您会得到设备上的符号化。
+&emsp;大多数平台的日志解析都需要我们上传对应的符号表文件，用于日志的符号化。其实可以暂时使用这种方式直接得到解析过后的日志。开启 on-device symbolication 需要在构建版本中包含基本符号表（basic symbols），要在 **build settings** 中设置 **Strip Style** 为 **Debugging Symbols**，这样做会将最终二进制文件大小增加约 **5%** （测试这个数字大概不止 5%）。（毕竟包含了符号表，所以必导致的二进制文件大小增加。）
 
-### Enabling advanced functionality:
+### Enabling advanced functionality:（启用高级功能：）
 
-&emsp;KSCrash 具有高级功能，在野外检查崩溃报告时非常有用。有些涉及次要的权衡，因此默认情况下，它们中的大多数都是禁用的。
+&emsp;KSCrash 具有高级功能，examining crash reports in the wild 时非常有用。有些涉及次要的权衡，因此默认情况下，它们中的大多数都是禁用的。
 
+#### Custom User Data (userInfo in KSCrash.h)
 
+&emsp;你可以通过在 KSCrash.h 中设置 userInfo 属性，将自定义用户数据存储到下一个崩溃报告中。
+
+#### Zombie Tracking (KSCrashMonitorTypeZombie in KSCrashMonitorType.h)
+
+&emsp;KSCrash 具有检测 zombie 对象实例（悬垂指向已解除分配对象的指针
+：野指针、悬垂指针）的能力。它通过记录任何被释放的对象的地址和类来实现此目的。它将这些值存储在缓存中，并键控解除分配对象的地址。这意味着你设置的缓存大小越小，发生哈希冲突并丢失有关以前解除分配的对象的信息的可能性就越大。
+
+&emsp;启用 zombie tracking 后，KSCrash 还将检测到丢失的 NSException 并打印其内容。某些类型的内存损坏或堆栈损坏崩溃可能会导致 exception 提前解除分配，从而进一步阻碍调试应用的工作，因此此功能有时非常方便。
+
+&emsp;Trade off: Zombie tracking 的代价是为对象解除分配增加了非常轻微的开销，并保留了一些内存。
+
+#### Deadlock Detection (KSCrashMonitorTypeMainThreadDeadlock in KSCrashMonitorType.h)
+
+&emsp;**WARNING WARNING WARNING WARNING WARNING WARNING WARNING**
+
+&emsp;**此功能不稳定！它可能会误报并使你的应用程序崩溃！**
+
+&emsp;如果主线程死锁，则用户界面将无响应，用户必须手动关闭应用（对此不会有崩溃报告）。启用死锁检测后，将设置 watchdog 计时器。如果有任何内容占用主线程的时间超过 watchdog 计时器持续时间，KSCrash 将关闭应用程序，并为你提供一个堆栈跟踪（stack trace），显示主线程当时正在执行的操作。
+
+&emsp;这很棒，但你必须小心：应用程序初始化通常发生在主线程上。如果你的初始化代码花费的时间比 watchdog 计时器长，你的应用将在启动期间被强制关闭！如果启用此功能，则必须确保正常运行的代码中，没有一个 hold 主线程的时间超过 watchdog 值！同时，你需要将计时器设置为足够低的值，以便用户不会变得不耐烦并在 watchdog 触发之前手动关闭应用程序！
+
+&emsp;Trade off: Deadlock detection，但你必须更加小心在主线程上运行的内容！
+
+#### Memory Introspection (introspectMemory in KSCrash.h)
+
+&emsp;当应用崩溃时，内存中通常会有堆栈、寄存器甚至异常消息引用的对象和字符串。启用后，KSCrash 将自省这些内存区域，并将其内容存储在崩溃报告中。
+
+&emsp;你还可以通过在 KSCrash 中设置 doNotIntrospectClasses 属性来指定不应自省的类的列表。
+
+#### Custom crash handling code (onCrash in KSCrash.h)
+
+&emsp;如果要在发生崩溃后执行一些额外的处理（可能是向崩溃报告中添加更多上下文数据），则可以执行此操作。
+
+&emsp;但是，你必须确保仅使用异步安全代码，最重要的是永远不要从该方法调用 Objective-C 代码！在许多情况下，你无论如何都可以逃脱惩罚，但是在某些类型的崩溃中，忽略此警告的处理程序代码将导致崩溃处理程序崩溃！请注意，如果发生这种情况，KSCrash 将检测到它并编写完整的崩溃报告，尽管你的自定义处理程序代码可能无法完全运行。
+
+&emsp;Trade off: 自定义崩溃处理代码，但你必须小心放入其中的内容！
+
+#### KSCrash log redirection
+
+&emsp;这将获取 KSCrash 将打印到控制台的任何内容，并将其写入文件。主要用它来调试 KSCrash 本身，但它可能对其他目的有用，所以为它公开了一个 API。
 
 
 
