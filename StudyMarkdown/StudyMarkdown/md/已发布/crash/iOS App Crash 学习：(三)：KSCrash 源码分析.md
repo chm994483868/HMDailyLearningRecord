@@ -25,7 +25,7 @@
 + 提取有关异常引用的对象的信息（例如 "发送到实例 0xa26d9a0 无法识别的选择器"）。
 + 其可插拔的服务器报告体系结构使其可以轻松适应任何 API 服务。（邮件、上传服务器、Hockey、Quincy、Victory）
 + dumps 堆栈内容。
-+ diagnoses 崩溃原因（Crash Docto）。
++ diagnoses 崩溃原因（Crash Doctor）。
 + 以 JSON 格式记录大量超出 Apple 崩溃报告范围的信息。
 + 支持包含程序员提供的额外数据（before and during a crash）。
 
@@ -251,30 +251,21 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 #### Reporting
 
-&emsp;报告是使用可能过于复杂的 [filters]() 和 [KSCrash/Source/KSCrash/Reporting/Sinks/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Reporting/Sinks) 系统完成的。通常，为了使 KSCrash 适应你的需求，你需要创建自己的 sink。
+&emsp;报告是使用可能过于复杂的 [KSCrash/Source/KSCrash/Reporting/Filters/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Reporting/Filters) 和 [KSCrash/Source/KSCrash/Reporting/Sinks/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Reporting/Sinks) 系统完成的。通常，为了使 KSCrash 适应你的需求，你需要创建自己的 sink。
 
 #### Installations
 
-&emsp;[KSCrash/Source/KSCrash/Installations/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Installations) 系统试图通过将大多数过滤器/接收器隐藏在更简单的界面后面来使用户API更容易一些。它的成功是值得商榷的...
+&emsp;[KSCrash/Source/KSCrash/Installations/](https://github.com/kstenerud/KSCrash/tree/master/Source/KSCrash/Installations) system 试图通过将大多数 filter/sink 隐藏在更简单的接口后面来使用户 API 更容易一些。它的成功是值得商榷的...
 
-&emsp;没有代码取决于安装代码，KSCrash 实际上可以在没有它的情况下正常工作。
-
-
-
-
-
-
-
-
-
-
-
+&emsp;没有代码取决于 installation code，KSCrash 实际上可以在没有它的情况下正常工作。
 
 ## Advanced Usage
 
 ### Enabling on-device symbolication（支持在设备上进行离线符号化的工作）
 
-&emsp;大多数平台的日志解析都需要我们上传对应的符号表文件，用于日志的符号化。其实可以暂时使用这种方式直接得到解析过后的日志。开启 on-device symbolication 需要在构建版本中包含基本符号表（basic symbols），要在 **build settings** 中设置 **Strip Style** 为 **Debugging Symbols**，这样做会将最终二进制文件大小增加约 **5%** （测试这个数字大概不止 5%）。（毕竟包含了符号表，所以必导致的二进制文件大小增加。）
+&emsp;大多数平台的日志解析都需要我们上传对应的符号表文件，用于日志的符号化。其实可以暂时使用这种方式直接得到解析过后的日志。开启 on-device symbolication 需要在构建版本中包含基本符号表（basic symbols），要在 **build settings** 中设置 **Strip Style** 为 **Debugging Symbols**，这样做会将最终二进制文件大小增加约 **5%** （测试这个数字大概不止 5%）。（毕竟包含了符号表，所以必会导致二进制文件大小增加。）
+
+> &emsp;但是得到的行号还是可能有误的，如果需要具体的行号，还是需要 dsym 的解析。[使用KSCrash进行崩溃日志的采集](https://www.jianshu.com/p/7847b7aaef0b)
 
 ### Enabling advanced functionality:（启用高级功能：）
 
@@ -323,38 +314,11 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 &emsp;这将获取 KSCrash 将打印到控制台的任何内容，并将其写入文件。主要用它来调试 KSCrash 本身，但它可能对其他目的有用，所以为它公开了一个 API。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;上面便是 KSCrash 首页的所有内容，下面我们便深入源码来学习 KSCrash。
 
 ## KSCrash 使用过程
+
+&emsp;下面我们跟着官方代码 [kstenerud/KSCrash](https://github.com/kstenerud/KSCrash) 来学习 KSCrash。
 
 &emsp;在 `application:didFinishLaunchingWithOptions:` 函数中安装 **崩溃处理程序**。
 
@@ -368,7 +332,9 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 }
 ```
 
-&emsp;KSCrash 框架根据不同的发送日志的方式提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，如下:
+&emsp;KSCrash 支持可插拔的崩溃日志后台报告架构。支持 Email、Hockey、QuincyKit、Victory 四种日志发送方式，此外还有一个 Standard 方式，就是我们提供一个发送接口，直接把崩溃报告发送到我们的服务器。
+
+&emsp;KSCrash 框架根据不同的发送日志的方式提供几种不同的 installation，它们都是 KSCrashInstallation 的子类，KSCrashInstallation 作为一个抽象基类使用，KSCrash 框架提供了如下安装器:
 
 + KSCrashInstallationStandard
 + KSCrashInstallationEmail
@@ -378,36 +344,20 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 &emsp;我们只能选择其中一个 installation 使用。这里我们仅以标准 installation（KSCrashInstallationStandard）作为学习的主线。  
 
-&emsp;`installCrashHandler` 函数第一行便是调用 `makeStandardInstallation` 函数，取得 KSCrashInstallationStandard 类的单例对象 `installation`，并为它的 url 属性赋值，此 url 会用在 App 启动时如果本地有崩溃 log 的话，会上传到此 url。
+&emsp;`installCrashHandler` 函数第一行便是调用 `makeStandardInstallation` 函数，取得 KSCrashInstallationStandard 类的单例对象 `installation`，并为它的 url 属性赋值，此 url 会用在 App 启动时如果本地有崩溃报告的话，会上传到此 url。
 
-&emsp;接下来 KSCrashInstallationStandard 类的单例对象 `installation` 调用其 `install` 函数，此函数继承自父类 KSCrashInstallation，KSCrashInstallationStandard 作为子类并没有重写 `install` 函数，此函数的作用是安装 **崩溃处理程序**，即取得 KSCrash 类的单例对象。
+&emsp;接下来 KSCrashInstallationStandard 类的单例对象 `installation` 调用其 `install` 函数，此函数继承自父类 KSCrashInstallation，KSCrashInstallationStandard 作为子类并没有重写 `install` 函数，此函数的作用是安装 **崩溃处理程序**，即取得 KSCrash 类的单例对象并对其基础属性进行配置。
 
+&emsp;KSCrash 类的单例对象便是 KSCrash 框架处理异常的的核心，KSCrash 类的单例对象初始化时设置了默认的本地存储崩溃信息的路径（/Library/Caches/KSCrash/Simple-Example 首先获取 APP 沙盒 Caches 路径，然后拼接 KSCrash 和 APP 的 BundleName）、设置 deleteBehaviorAfterSendAll 属性为 KSCDeleteAlways 表示发送崩溃报告成功后删除本地的崩溃记录、设置 introspectMemory 属性为 YES 表示崩溃发生时 introspect memory（堆栈指针附近的任何 Objective-C 对象或 C 字符串，或者 cpu 寄存器或异常引用的任何 Objective-C 对象或 C 字符串，连同其内容都将记录在崩溃报告中）、catchZombies 属性设置为 NO 表示不追踪对 Objective/Swift 僵尸对象的访问、maxReportCount 属性设置为 5 表示删除旧报告之前磁盘上允许的最大报告数为 5、searchQueueNames 属性设置为 NO 表示不会尝试获取每个正在运行的线程的调度队列名称、monitoring 属性设置为 KSCrashMonitorTypeProductionSafeMinimal 表示监听所有在生产环境下可以进行安全监听的异常类型（即排除 KSCrashMonitorTypeZombie 和 KSCrashMonitorTypeMainThreadDeadlock 之外的所有异常类型）。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-此操作应该尽早的完成，它会记录所有出现的崩溃，但是它并不会自动的去上传崩溃记录。
+&emsp;然后 KSCrashInstallation 类的 `install` 函数，使用 @synchronized 锁以线程安全的方式，设置了 KSCrash 类的单例对象的 onCrash 属性为默认值（`static void crashCallback(const KSCrashReportWriter* writer) {...}`），然后调用 KSCrash 类的单例对象的 `install` 函数。
 
 &emsp;这里指的 **崩溃处理程序** 是 KSCrash 类的单例对象。
 
 ```c++
 - (void) installCrashHandler {
     // Create an installation (choose one)
-    
+    // 这里以 KSCrashInstallationStandard 为例
     KSCrashInstallation* installation = [self makeStandardInstallation];
     
 //    KSCrashInstallation* installation = [self makeEmailInstallation];
@@ -417,13 +367,16 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
     
     // Install the crash handler. This should be done as early as possible.
     // This will record any crashes that occur, but it doesn't automatically send them.
+    // 安装崩溃处理程序，这应该尽早完成，这将记录发生的任何崩溃，但不会自动发送它们（仅把崩溃报告记录在本地）。
     [installation install];
     
+    // 设置本地记录的崩溃报告发出以后，怎么处理本地的崩溃报告
     [KSCrash sharedInstance].deleteBehaviorAfterSendAll = KSCDeleteNever; // TODO: Remove this
 
 
     // Send all outstanding reports. You can do this any time; it doesn't need to happen right as the app launches.
     // Advanced-Example shows how to defer displaying the main view controller until crash reporting completes.
+    // 发送所有未完成的报告（内部使用 KSCrash 类的单例对象发送），你可以随时执行此操作;它不需要在应用程序启动时立即进行，Advanced-Example 演示了如何推迟显示主视图控制器，直到崩溃报告完成。
     [installation sendAllReportsWithCompletion:^(NSArray* reports, BOOL completed, NSError* error) {
         if (completed) {
             NSLog(@"🐹🐹🐹 Sent %d reports", (int)[reports count]);
@@ -442,6 +395,32 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
     return standard;
 }
 ```
+
+&emsp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
