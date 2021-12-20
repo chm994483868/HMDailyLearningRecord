@@ -348,11 +348,25 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 &emsp;接下来 KSCrashInstallationStandard 类的单例对象 `installation` 调用其 `install` 函数，此函数继承自父类 KSCrashInstallation，KSCrashInstallationStandard 作为子类并没有重写 `install` 函数，此函数的作用是安装 **崩溃处理程序**，即取得 KSCrash 类的单例对象并对其基础属性进行配置。
 
-&emsp;KSCrash 类的单例对象便是 KSCrash 框架处理异常的的核心，KSCrash 类的单例对象初始化时设置了默认的本地存储崩溃信息的路径（/Library/Caches/KSCrash/Simple-Example 首先获取 APP 沙盒 Caches 路径，然后拼接 KSCrash 和 APP 的 BundleName）、设置 deleteBehaviorAfterSendAll 属性为 KSCDeleteAlways 表示发送崩溃报告成功后删除本地的崩溃记录、设置 introspectMemory 属性为 YES 表示崩溃发生时 introspect memory（堆栈指针附近的任何 Objective-C 对象或 C 字符串，或者 cpu 寄存器或异常引用的任何 Objective-C 对象或 C 字符串，连同其内容都将记录在崩溃报告中）、catchZombies 属性设置为 NO 表示不追踪对 Objective/Swift 僵尸对象的访问、maxReportCount 属性设置为 5 表示删除旧报告之前磁盘上允许的最大报告数为 5、searchQueueNames 属性设置为 NO 表示不会尝试获取每个正在运行的线程的调度队列名称、monitoring 属性设置为 KSCrashMonitorTypeProductionSafeMinimal 表示监听所有在生产环境下可以进行安全监听的异常类型（即排除 KSCrashMonitorTypeZombie 和 KSCrashMonitorTypeMainThreadDeadlock 之外的所有异常类型）。
+&emsp;KSCrash 类的单例对象便是 KSCrash 框架处理异常的的核心，KSCrash 类的单例对象初始化时:
 
-&emsp;然后 KSCrashInstallation 类的 `install` 函数，使用 @synchronized 锁以线程安全的方式，设置了 KSCrash 类的单例对象的 onCrash 属性为默认值（`static void crashCallback(const KSCrashReportWriter* writer) {...}`），然后调用 KSCrash 类的单例对象的 `install` 函数。
++ 设置了默认的本地存储崩溃信息的路径（/Library/Caches/KSCrash/Simple-Example 首先获取 APP 沙盒 Caches 路径，然后拼接 KSCrash 和 APP 的 BundleName）
++ 设置 deleteBehaviorAfterSendAll 属性为 KSCDeleteAlways 表示发送崩溃报告成功后删除本地的崩溃记录
++ 设置 introspectMemory 属性为 YES 表示崩溃发生时 introspect memory（堆栈指针附近的任何 Objective-C 对象或 C 字符串，或者 cpu 寄存器或异常引用的任何 Objective-C 对象或 C 字符串，连同其内容都将记录在崩溃报告中）
++ catchZombies 属性设置为 NO 表示不追踪对 Objective/Swift 僵尸对象的访问
++ maxReportCount 属性设置为 5 表示删除旧报告之前磁盘上允许的最大报告数为 5
++ searchQueueNames 属性设置为 NO 表示不会尝试获取每个正在运行的线程的调度队列名称
++ monitoring 属性设置为 KSCrashMonitorTypeProductionSafeMinimal 表示监听所有在生产环境下可以进行安全监听的异常类型（即排除 KSCrashMonitorTypeZombie 和 KSCrashMonitorTypeMainThreadDeadlock 之外的所有异常类型）。
 
-&emsp;这里指的 **崩溃处理程序** 是 KSCrash 类的单例对象。
+&emsp;然后 KSCrashInstallation 类的 `install` 函数，使用 @synchronized 锁以线程安全的方式，设置了 KSCrash 类的单例对象的 onCrash 属性为默认值（`static void crashCallback(const KSCrashReportWriter* writer) {...}`），然后调用 KSCrash 类的单例对象的 `install` 函数，该函数是整个 KSCrash 框架的核心，我们放在后面再看，现在 KSCrash 的使用代码我们看完了，我们先看一下 KSCrash 捕获异常的结果。
+
+```c++
+- (BOOL) application:(__unused UIApplication *) application didFinishLaunchingWithOptions:(__unused NSDictionary *) launchOptions {
+    [self installCrashHandler];
+    
+    return YES;
+}
+```
 
 ```c++
 - (void) installCrashHandler {
@@ -373,7 +387,6 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
     // 设置本地记录的崩溃报告发出以后，怎么处理本地的崩溃报告
     [KSCrash sharedInstance].deleteBehaviorAfterSendAll = KSCDeleteNever; // TODO: Remove this
 
-
     // Send all outstanding reports. You can do this any time; it doesn't need to happen right as the app launches.
     // Advanced-Example shows how to defer displaying the main view controller until crash reporting completes.
     // 发送所有未完成的报告（内部使用 KSCrash 类的单例对象发送），你可以随时执行此操作;它不需要在应用程序启动时立即进行，Advanced-Example 演示了如何推迟显示主视图控制器，直到崩溃报告完成。
@@ -385,7 +398,9 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
         }
     }];
 }
+```
 
+```c++
 - (KSCrashInstallation*) makeStandardInstallation {
     NSURL* url = [NSURL URLWithString:@"http://put.your.url.here"];
     
@@ -396,9 +411,23 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 }
 ```
 
-&emsp;
+## KSCrash 崩溃报告写入和发送 
 
+&emsp;上面一个小节我们浅层次的学习了 KSCrash 的安装以及初始化的代码，这个小节我们看一下 KSCrash 对崩溃报告的记录和上传。
 
+&emsp;首先我们在 Edit Scheme... 中关闭 Debug executable 的选项，Debug 模式下 KSCrash 不进行崩溃报告收集。我们在模拟器下调试 KSCrash，方便看本地的沙盒中写入的文件内容。初次启动时会在 /Library/Caches/KSCrash/Simple-Example/data/ 路径下创建有两份日志文件：
+
++ ConsoleLog.txt 用于记录控制台的打印（初始时为空文件）。
++ CrashState.json 记录一些崩溃信息，有这些字段：version 版本、crashedLastLaunch 布尔值表示上次启动是否崩溃、activeDurationSinceLastCrash 上次运行崩溃从启动到崩溃运行了多久、backgroundDurationSinceLastCrash 上次运行崩溃从启动到崩溃在后台运行了多久、launchesSinceLastCrash 自上次崩溃启动过多少次、sessionsSinceLastCrash。
+
+&emsp;运行如下 crash 代码，App 闪退，然后在 /Library/Caches/KSCrash/Simple-Example/Reports/Simple-Example-report-0074db9096800000.json 记录下崩溃文件。
+
+```c++
+- (IBAction) onCrash:(__unused id) sender {
+    char* ptr = (char*)-1;
+    *ptr = 10;
+}
+```
 
 
 
