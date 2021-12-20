@@ -350,7 +350,7 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 &emsp;KSCrash 类的单例对象便是 KSCrash 框架处理异常的的核心，KSCrash 类的单例对象初始化时:
 
-+ 设置了默认的本地存储崩溃信息的路径（/Library/Caches/KSCrash/Simple-Example 首先获取 APP 沙盒 Caches 路径，然后拼接 KSCrash 和 APP 的 BundleName）
++ 设置了默认的本地存储崩溃信息的路径（/Library/Caches/KSCrash/Simple-Example 首先获取 App 沙盒 Caches 路径，然后拼接 KSCrash 和 App 的 BundleName）
 + 设置 deleteBehaviorAfterSendAll 属性为 KSCDeleteAlways 表示发送崩溃报告成功后删除本地的崩溃记录
 + 设置 introspectMemory 属性为 YES 表示崩溃发生时 introspect memory（堆栈指针附近的任何 Objective-C 对象或 C 字符串，或者 cpu 寄存器或异常引用的任何 Objective-C 对象或 C 字符串，连同其内容都将记录在崩溃报告中）
 + catchZombies 属性设置为 NO 表示不追踪对 Objective/Swift 僵尸对象的访问
@@ -415,12 +415,12 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
 
 &emsp;上面一个小节我们浅层次的学习了 KSCrash 的安装以及初始化的代码，这个小节我们看一下 KSCrash 对崩溃报告的记录和上传。
 
-&emsp;首先我们在 Edit Scheme... 中关闭 Debug executable 的选项，Debug 模式下 KSCrash 不进行崩溃报告收集。我们在模拟器下调试 KSCrash，方便看本地的沙盒中写入的文件内容。初次启动时会在 /Library/Caches/KSCrash/Simple-Example/data/ 路径下创建有两份日志文件：
+&emsp;首先我们在 Edit Scheme... 中关闭 Debug executable 的选项，Debug 模式下 KSCrash 不进行崩溃报告收集。我们在模拟器下调试 KSCrash，方便看本地的沙盒中写入的文件内容。初次启动时会在 /Library/Caches/KSCrash/Simple-Example/Data/ 路径下创建有两份日志文件：
 
 + ConsoleLog.txt 用于记录控制台的打印（初始时为空文件）。
 + CrashState.json 记录一些崩溃信息，有这些字段：version 版本、crashedLastLaunch 布尔值表示上次启动是否崩溃、activeDurationSinceLastCrash 上次运行崩溃从启动到崩溃运行了多久、backgroundDurationSinceLastCrash 上次运行崩溃从启动到崩溃在后台运行了多久、launchesSinceLastCrash 自上次崩溃启动过多少次、sessionsSinceLastCrash。
 
-&emsp;运行如下 crash 代码，App 闪退，然后在 /Library/Caches/KSCrash/Simple-Example/Reports/Simple-Example-report-0074db9096800000.json 记录下崩溃文件。
+&emsp;运行如下三份典型的 crash 代码（Unix signal、Mach 异常、Objective-C 异常），App 闪退，然后在 /Library/Caches/KSCrash/Simple-Example/Reports/Simple-Example-report-0074db9096800000.json 记录三份 json 格式的崩溃文件。
 
 ```c++
 - (IBAction) onCrash:(__unused id) sender {
@@ -428,6 +428,141 @@ installation.url = [NSURL URLWithString:@"https://put.your.url.here/api/v1/crash
     *ptr = 10;
 }
 ```
+
+```c++
+- (IBAction) onCrash:(__unused id) sender {
+    NSArray *array = @[@(1), @(2), @(3)];
+    NSLog(@"%@", array[3]);
+}
+```
+
+```c++
+- (IBAction) onCrash:(__unused id) sender {
+    [self onCrash:sender];
+}
+```
+
+&emsp;然后 App 再次启动时，会把上面写入本地的崩溃报告 json 文件上传到我们指定的后台接口中。
+
+&emsp;Simple-Example-report-0074db9096800000.json 文件记录了详细的崩溃信息，由于内容过长这里就不展示了。
+
+## KSCrash 源码解读
+
+&emsp;上面我们看完了 KSCrash 的安装和使用，那么下面我们开始阅读 KSCrash 的源码。
+
+&emsp;展开 KSCrash-iOS 的文件夹，我们能清晰的看到有四个主题：Crash Recording、Crash Reporting、Installation、KSCrash，分别对应记录、上报、安装、初始化。
+
+### KSCrash 类分析 
+
+&emsp;下面我们看一下 KSCrash 类的定义。
+
+&emsp;KSCrash 类重写了 +load 和 +initialize 函数，
+
+#### KSCrash +load 函数
+
+&emsp;KSCrash 类的 +load 函数用来指示 KSCrash 已加载，然后对 `static KSCrash_AppState g_state;` 这个表示 App 的 KSCrash 状态的静态全局变量进行设置（App 的 KSCrash 状态：可以理解为 App 的状态或者是当发生 Crash 时 App 的状态）。 
+
+```c++
+void kscrashstate_notifyObjCLoad(void)
+{
+    KSLOG_TRACE("KSCrash has been loaded!");
+    
+    // g_state 的内存空间置为 0 
+    memset(&g_state, 0, sizeof(g_state));
+    
+    g_state.applicationIsInForeground = false;
+    g_state.applicationIsActive = true;
+    
+    // int gettimeofday(struct timeval * tv, struct timezone * tz);
+    // gettimeofday 是计算机函数，使用 C 语言编写程序需要获得当前精确时间（1970 年 1 月 1 日到现在的时间），或者为执行计时，可以使用 gettimeofday 函数
+    // 其参数 tv 是保存获取时间结果的结构体（此结构体有两个成员变量：秒和微秒），参数 tz 用于保存时区结果。它获得的时间精确到微秒（1e-6 s)量级，在一段代码前后分别使用 gettimeofday 可以计算代码执行时间。
+    
+    g_state.appStateTransitionTime = getCurentTime();
+}
+```
+
+&emsp;这里我们看下 g_state 这个静态全局变量的类型：KSCrash_AppState 结构体，它的成员变量正对应 /Library/Caches/KSCrash/Simple-Example/Data/CrashState.json 中的内容。 
+
+```c++
+typedef struct
+{
+    // Saved data
+    
+    /** Total active time elapsed since the last crash. */
+    double activeDurationSinceLastCrash;
+    
+    /** Total time backgrounded elapsed since the last crash. */
+    double backgroundDurationSinceLastCrash;
+    
+    /** Number of app launches since the last crash. */
+    int launchesSinceLastCrash;
+    
+    /** Number of sessions (launch, resume from suspend) since last crash. */
+    int sessionsSinceLastCrash;
+    
+    /** Total active time elapsed since launch. */
+    double activeDurationSinceLaunch;
+    
+    /** Total time backgrounded elapsed since launch. */
+    double backgroundDurationSinceLaunch;
+    
+    /** Number of sessions (launch, resume from suspend) since app launch. */
+    int sessionsSinceLaunch;
+    
+    /** If true, the application crashed on the previous launch. */
+    bool crashedLastLaunch;
+    
+    // Live data
+    
+    /** If true, the application crashed on this launch.  */
+    bool crashedThisLaunch;
+    
+    /** Timestamp for when the app state was last changed (active<->inactive, background<->foreground) 上次更改应用状态的时间戳（active<->inactive, background<->foreground）*/
+    double appStateTransitionTime;
+    
+    /** If true, the application is currently active. */
+    bool applicationIsActive;
+    
+    /** If true, the application is currently in the foreground. */
+    bool applicationIsInForeground;
+    
+} KSCrash_AppState;
+```
+
+&emsp;KSCrash_AppState 结构体中 Saved data 部分的成员变量的值会在 App crash 时写入本地。
+
+#### KSCrash +initialize 函数
+
+&emsp;KSCrash 类的 +initialize 函数主要内容是订阅 App 的如下通知：
+
++ UIApplicationDidBecomeActiveNotification
++ UIApplicationWillResignActiveNotification
++ UIApplicationDidEnterBackgroundNotification
++ UIApplicationWillEnterForegroundNotification
++ UIApplicationWillTerminateNotification
+
+&emsp;在通知的回调函数中在 `static KSApplicationState g_lastApplicationState = KSApplicationStateNone;` 这个全局静态变量中记录程序的状态，以及更新 `static KSCrash_AppState g_state;` 这个静态全局变量的成员变量的值。在 App 进入后台和终止时会把 g_state 的信息写入本地（/Library/Caches/KSCrash/Simple-Example/Data/CrashState.json 中）。
+
+#### KSCrash install 函数
+
+&emsp;下面进入最最重要的 KSCrash 类的 install 函数。
+
+```c++
+- (BOOL)install {
+    _monitoring = kscrash_install(self.bundleName.UTF8String,
+                                          self.basePath.UTF8String);
+    if(self.monitoring == 0) {
+        return false;
+    }
+
+    return true;
+}
+```
+
+&emsp;
+
+
+
 
 
 
@@ -499,6 +634,7 @@ GYBootingProtection 源码
 
 ## 参考链接
 **参考链接:🔗**
++ [gettimeofday](https://baike.baidu.com/item/gettimeofday/3369586?fr=aladdin)
 + [iOS App 连续闪退时如何上报 crash 日志](https://zhuanlan.zhihu.com/p/35436876)
 
 
