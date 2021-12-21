@@ -559,7 +559,55 @@ typedef struct
 }
 ```
 
-&emsp;
+&emsp;install 函数内部调用了 kscrash_install 函数，kscrash_install 函数返回一个 KSCrashMonitorType 枚举值，并把此值赋给了 KSCrash 类的 `@property(nonatomic,readwrite,assign) KSCrashMonitorType monitoring;` 属性，在上一个小节我们还记得 monitoring 属性的默认值是：KSCrashMonitorTypeProductionSafeMinimal（除 KSCrashMonitorTypeZombie 和 KSCrashMonitorTypeMainThreadDeadlock 之外的 KSCrashMonitorType 枚举的所有值）。
+
+&emsp;下面我们看一下 KSCrashMonitorType 枚举值都有哪些，可看到它基本是和异常类型对应的：
+
+```c++
+/** Various aspects of the system that can be monitored:
+ * - Mach kernel exception
+ * - Fatal signal
+ * - Uncaught C++ exception
+ * - Uncaught Objective-C NSException
+ * - Deadlock on the main thread
+ * - User reported custom exception
+ */
+typedef enum
+{
+    /* Captures and reports Mach exceptions. */
+    KSCrashMonitorTypeMachException      = 0x01,
+    
+    /* Captures and reports POSIX signals. */
+    KSCrashMonitorTypeSignal             = 0x02,
+    
+    /* Captures and reports C++ exceptions.
+     * Note: This will slightly slow down exception processing.
+     */
+    KSCrashMonitorTypeCPPException       = 0x04,
+    
+    /* Captures and reports NSExceptions. */
+    KSCrashMonitorTypeNSException        = 0x08,
+    
+    /* Detects and reports a deadlock in the main thread. */
+    KSCrashMonitorTypeMainThreadDeadlock = 0x10,
+    
+    /* Accepts and reports user-generated exceptions. */
+    KSCrashMonitorTypeUserReported       = 0x20,
+    
+    /* Keeps track of and injects system information. */
+    KSCrashMonitorTypeSystem             = 0x40,
+    
+    /* Keeps track of and injects application state. */
+    KSCrashMonitorTypeApplicationState   = 0x80,
+    
+    /* Keeps track of zombies, and injects the last zombie NSException. */
+    KSCrashMonitorTypeZombie             = 0x100,
+} KSCrashMonitorType;
+```
+
+&emsp;KSCrashMonitorType 枚举值用来表示 KSCrash 框架监视的类型，它的每个值还是比较好理解的。前面几个值表示捕获并报告：Mach 异常
+
+#### KSCrash kscrash_install 函数
 
 
 
@@ -601,7 +649,8 @@ typedef struct
 + [KSCrash崩溃收集原理浅析](https://www.it610.com/article/1191455498289913856.htm)
 + [KSCrash源码学习](https://www.jianshu.com/p/8c2dc3ce8545)
 + [KSCrash+Symbolicatecrash日志分析](https://www.jianshu.com/p/d88b39acea7d)
-
++ [了解和分析iOS Crash](https://wetest.qq.com/lab/view/404.html?from=content_zhihu)
++ [wakeup in XNU](https://djs66256.github.io/2021/04/03/2021-04-03-wakeup-in-XNU/)
 
 
 
