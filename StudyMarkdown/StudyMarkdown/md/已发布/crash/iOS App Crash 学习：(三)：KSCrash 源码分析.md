@@ -559,7 +559,7 @@ typedef struct
 }
 ```
 
-&emsp;install 函数内部调用了 kscrash_install 函数，kscrash_install 函数返回一个 KSCrashMonitorType 枚举值，并把此值赋给了 KSCrash 类的 `@property(nonatomic,readwrite,assign) KSCrashMonitorType monitoring;` 属性，在上一个小节我们还记得 monitoring 属性的默认值是：KSCrashMonitorTypeProductionSafeMinimal（除 KSCrashMonitorTypeZombie 和 KSCrashMonitorTypeMainThreadDeadlock 之外的 KSCrashMonitorType 枚举的所有值）。
+&emsp;install 函数内部调用了 kscrash_install 函数，kscrash_install 函数返回一个 KSCrashMonitorType 枚举值，并把此值赋给了 KSCrash 类的 `@property(nonatomic,readwrite,assign) KSCrashMonitorType monitoring;` 属性，表示当前 KSCrash 要监视 App 的哪些内容（或者说监视哪些异常行为），在上一个小节我们还记得 monitoring 属性的默认值是：KSCrashMonitorTypeProductionSafeMinimal（除 KSCrashMonitorTypeZombie 和 KSCrashMonitorTypeMainThreadDeadlock 之外的 KSCrashMonitorType 枚举的所有值）。
 
 &emsp;下面我们看一下 KSCrashMonitorType 枚举值都有哪些，可看到它基本是和异常类型对应的：
 
@@ -605,14 +605,101 @@ typedef enum
 } KSCrashMonitorType;
 ```
 
-&emsp;KSCrashMonitorType 枚举值用来表示 KSCrash 框架监视的类型，它的每个值还是比较好理解的。前面几个值表示捕获并报告：Mach 异常
+&emsp;KSCrashMonitorType 枚举值用来表示 KSCrash 框架监视的类型，它的每个值还是比较好理解的。前面几个值表示捕获并报告：Mach 异常、Unix Signals、C++ 异常、Objective-C 异常、用户自定义异常、监听系统信息、监听程序状态、监听僵尸对象访问。
 
 #### KSCrash kscrash_install 函数
 
+&emsp;`static volatile bool g_installed = 0;` 静态全局变量用来指示 KSCrash 是否执行过安装，同时标记 kscrash_install 函数在 App 每次运行只能执行一次，当再次调用后会直接 return g_monitoring。
 
+```c++
+KSCrashMonitorType kscrash_install(const char* appName, const char* const installPath) {
+    KSLOG_DEBUG("Installing crash reporter.");
 
+    // 如果已经执行过安装，则直接 return 当前的监听类型
+    if(g_installed)
+    {
+        KSLOG_DEBUG("Crash reporter already installed.");
+        return g_monitoring;
+    }
+    g_installed = 1;
 
+    // #define KSFU_MAX_PATH_LENGTH 500
+    // KSFU 前缀是 KSFileUtils.h 文件名的缩写，KSFileUtils.h 为 KSCrash 提供 基本文件 读/写 功能。 
+    
+    char path[KSFU_MAX_PATH_LENGTH];
+    
+    // 把 App 沙盒路径 /Library/Caches/KSCrash/Simple-Example/Reports 字符串复制到 path 变量中  
+    snprintf(path, sizeof(path), "%s/Reports", installPath);
+    
+    // 创建本地路径 /Library/Caches/KSCrash/Simple-Example/Reports
+    ksfu_makePath(path);
+    
+    // 使用 pthread_mutex_t 互斥锁进行初始化，
+    // 把 App 名字记录在 g_appName 变量中，
+    // 把 Reports 路径记录在 g_reportsPath 中，
+    // 如果本地崩溃报告数据大于 g_maxReportCount 则把之前的旧的删除，
+    // 对 g_nextUniqueIDHigh 和 g_nextUniqueIDLow 赋值，它们表示最大和最小崩溃报告 ID 值
+    kscrs_initialize(appName, path);
 
+    // 创建本地路径 /Library/Caches/KSCrash/Simple-Example/Data
+    snprintf(path, sizeof(path), "%s/Data", installPath);
+    ksfu_makePath(path);
+    
+    // 把 CrashState.json 路径记录在 g_stateFilePath 中，
+    // 初始化 CrashState.json 文件
+    snprintf(path, sizeof(path), "%s/Data/CrashState.json", installPath);
+    kscrashstate_initialize(path);
+
+    // ConsoleLog.txt 文件用来记录控制台输出 
+    snprintf(g_consoleLogPath, sizeof(g_consoleLogPath), "%s/Data/ConsoleLog.txt", installPath);
+    if(g_shouldPrintPreviousLog)
+    {
+        printPreviousLog(g_consoleLogPath);
+    }
+    kslog_setLogFilename(g_consoleLogPath, true);
+    
+    // ksccd 是 KSCrashCachedData.h 的首字母缩写，
+    // 更新 task 的线程列表，在一个子线程做异步操作，好像是把旧线程释放掉
+    ksccd_init(60);
+
+    // kscm 是 KSCrashMonitor.c 的首字母缩写，
+    // 把 onCrash 这个静态全局函数作为回调传递给崩溃处理程序，当发生崩溃时会调用它，onCrash 函数，
+    // 默认进行 /Library/Caches/KSCrash/Simple-Example/Data/CrashState.json 文件记录，如果记录崩溃记录的崩溃则调用 kscrashreport_writeRecrashReport 记录崩溃问题，
+    // 如果是正常崩溃则调用 kscrashreport_writeStandardReport 在本地 /Library/Caches/KSCrash/Simple-Example/Reports/Simple-Example-report-0074dbe70c800000.json 这样路径写崩溃日志
+    kscm_setEventCallback(onCrash);
+    
+    // 设置监听类型并开启监听，最最核心的函数
+    KSCrashMonitorType monitors = kscrash_setMonitoring(g_monitoring);
+
+    // log 安装完成
+    KSLOG_DEBUG("Installation complete.");
+
+    // 根据当前 App 的状态，更新 CrashState.json 文件中的内容
+    notifyOfBeforeInstallationState();
+
+    return monitors;
+}
+```
+
+&emsp;总结一下 kscrash_install 函数的整个过程：
+
+#### KSCrash kscrash_setMonitoring 函数
+
+&emsp;
+
+```c++
+KSCrashMonitorType kscrash_setMonitoring(KSCrashMonitorType monitors) {
+    g_monitoring = monitors;
+    
+    if(g_installed) {
+        kscm_setActiveMonitors(monitors);
+        return kscm_getActiveMonitors();
+    }
+    
+    // Return what we will be monitoring in future.
+    return g_monitoring;
+}
+```
 
 
 
