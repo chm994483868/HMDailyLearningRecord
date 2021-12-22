@@ -659,7 +659,7 @@ KSCrashMonitorType kscrash_install(const char* appName, const char* const instal
     kslog_setLogFilename(g_consoleLogPath, true);
     
     // ksccd 是 KSCrashCachedData.h 的首字母缩写，
-    // 更新 task 的线程列表，在一个子线程做异步操作，好像是把旧线程释放掉
+    // 好像是更新 task 的线程列表，没看懂，在一个子线程做异步操作，能看到 com.apple.uikit.eventfetch-thread 线程
     ksccd_init(60);
 
     // kscm 是 KSCrashMonitor.c 的首字母缩写，
@@ -683,24 +683,45 @@ KSCrashMonitorType kscrash_install(const char* appName, const char* const instal
 
 &emsp;总结一下 kscrash_install 函数的整个过程：
 
+1. 使用 g_installed 静态全局变量，保证 kscrash_install 函数内部的内容在 App 运行周期内只执行一次。
+2. 创建本地路径 /Library/Caches/KSCrash/Simple-Example/Reports，用于在里面记录每个崩溃报告。
+3. 记录 App 名字记录在 g_appName 静态全局变量中，Reports 路径记录在 g_reportsPath 中，如果本地崩溃报告数据大于 g_maxReportCount 则把之前的旧的删除，对 g_nextUniqueIDHigh 和 g_nextUniqueIDLow 赋值，它们表示最大和最小崩溃报告 ID 值。
+4. 创建本地路径 /Library/Caches/KSCrash/Simple-Example/Data，会用于在其中存储 ConsoleLog.txt 和 CrashState.json 文件。
+5. 把 CrashState.json 路径记录在 g_stateFilePath 中，初始化 CrashState.json 文件。
+6. 初始化 ConsoleLog.txt 文件用来记录控制台输出。
+7. ksccd_init(60) 好像是更新 task 的线程列表，没看懂，在一个子线程做异步操作，能看到 com.apple.uikit.eventfetch-thread 线程名。
+8. 把 onCrash 这个静态全局函数作为回调传递给崩溃处理程序，当发生崩溃时会调用它。
+9. 设置监听类型并开启监听，最最核心的函数。
+10. 根据当前 App 的状态，更新 CrashState.json 文件中的内容。
+11. 返回 monitors 监视类型。
+
 #### KSCrash kscrash_setMonitoring 函数
 
-&emsp;
+&emsp;kscrash_setMonitoring 函数设置 KSCrash 框架监视内容，同时激活对应的监视类型。
 
 ```c++
 KSCrashMonitorType kscrash_setMonitoring(KSCrashMonitorType monitors) {
     g_monitoring = monitors;
     
+    // 这里确保调用 install 时，才进行激活监视类型，
+    // 在 KSCrash 单例类实例初始化时给 monitoring 属性设置默认值时调用了 kscrash_setMonitoring 函数，只是把默认值记录在 g_monitoring 这个静态全局变量中，并不进行激活监视类型 
     if(g_installed) {
+        // 当我们调用 KSCrash 的 install 函数时，才真正激活监视类型
         kscm_setActiveMonitors(monitors);
         return kscm_getActiveMonitors();
     }
     
     // Return what we will be monitoring in future.
+    // 返回我们将来将要监视的内容。
     return g_monitoring;
 }
 ```
 
+&emsp;
+
+```c++
+
+```
 
 
 
