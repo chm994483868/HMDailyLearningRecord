@@ -705,26 +705,155 @@ KSCrashMonitorType kscrash_setMonitoring(KSCrashMonitorType monitors) {
     
     // 这里确保调用 install 时，才进行激活监视类型，
     // 在 KSCrash 单例类实例初始化时给 monitoring 属性设置默认值时调用了 kscrash_setMonitoring 函数，只是把默认值记录在 g_monitoring 这个静态全局变量中，并不进行激活监视类型 
-    if(g_installed) {
-        // 当我们调用 KSCrash 的 install 函数时，才真正激活监视类型
+    if (g_installed) {
+        // 当我们调用 KSCrash 的 install 函数时，才真正激活监视类型，
+        // kscm_setActiveMonitors 是核心中的核心！下面我们会详细分析。
         kscm_setActiveMonitors(monitors);
+        
+        // kscm_getActiveMonitors 函数则比较简单，仅仅是返回 static KSCrashMonitorType g_activeMonitors = KSCrashMonitorTypeNone; 这个静态全局变量的值，
+        // 它的默认是 0，经过上面的 kscm_setActiveMonitors 函数，g_activeMonitors 会记录当前已经激活的监视类型。
         return kscm_getActiveMonitors();
     }
     
     // Return what we will be monitoring in future.
-    // 返回我们将来将要监视的内容。
+    // 返回我们将来将要监视的内容类型。
     return g_monitoring;
 }
 ```
 
-&emsp;
+&emsp;下面我们看一下 kscm_setActiveMonitors 函数。  
 
 ```c++
+void kscm_setActiveMonitors(KSCrashMonitorType monitorTypes) {
+    // 如果当前进程正在被 traced 则关闭 Debugger Unsafe 的监视类型
+    if(ksdebug_isBeingTraced() && (monitorTypes & KSCrashMonitorTypeDebuggerUnsafe)) {
+        // 用 hasWarned 这个静态局部变量来控制下面的警告语句只输出一次
+        static bool hasWarned = false;
+        if(!hasWarned) {
+            hasWarned = true;
+            KSLOGBASIC_WARN("    ************************ Crash Handler Notice ************************");
+            KSLOGBASIC_WARN("    *     App is running in a debugger. Masking out unsafe monitors.     *");
+            KSLOGBASIC_WARN("    * This means that most crashes WILL NOT BE RECORDED while debugging! *");
+            KSLOGBASIC_WARN("    **********************************************************************");
+        }
+        
+        // & 操作，在 monitorTypes 中只留下 Debugger Safe 的监视类型
+        monitorTypes &= KSCrashMonitorTypeDebuggerSafe;
+    }
+    
+    // 同上，如果开启了 Async Safety 但是 monitorTypes 中有 Async Unsafe 的类型，则只留下 Async Safe 的监视类型
+    if(g_requiresAsyncSafety && (monitorTypes & KSCrashMonitorTypeAsyncUnsafe)) {
+        KSLOG_DEBUG("Async-safe environment detected. Masking out unsafe monitors.");
+        monitorTypes &= KSCrashMonitorTypeAsyncSafe;
+    }
 
+    // g_activeMonitors 是一个静态全局变量，记录当前激活的监听类型，下面会激活 monitorTypes 中可以激活的监视类型
+    KSLOG_DEBUG("Changing active monitors from 0x%x tp 0x%x.", g_activeMonitors, monitorTypes);
+
+    // 局部变量，用于记录下面 for 循环中可以成功激活的监视类型
+    KSCrashMonitorType activeMonitors = KSCrashMonitorTypeNone;
+    
+    // 下面这个 for 循环会激活 monitorTypes 中要激活的监视类型，同时也会把其它的监视类型都失活，
+    // 下面用到了两个全局变量 g_monitorsCount、g_monitors 和一个 Monitor 结构体，由于它们涉及的内容有点多，我们可以先跳到下面看一下它们的分析，然后再看下面这个 for 循环中的内容，这样会比较好理解 
+    for(int i = 0; i < g_monitorsCount; i++) {
+        
+        // 根据索引从静态全局的 Monitor 结构体数组 g_monitors 中取出对应的 Monitor 结构体的地址  
+        Monitor* monitor = &g_monitors[i];
+        
+        // 根据变量 monitor 中对应的监视类型和 monitorTypes 做 & 操作，判断是否要打开此监视类型，
+        bool isEnabled = monitor->monitorType & monitorTypes;
+        
+        // 调用 monitor 结构体实例中的 void (*setEnabled)(bool isEnabled) 函数，根据 isEnabled 的值，激活或者失活 monitor 中记录的监视类型
+        setMonitorEnabled(monitor, isEnabled);
+        
+        // 调用 monitor 结构体实例中的 bool (*isEnabled)(void) 函数，判断 monitor 中记录的监视类型是激活或者失活状态
+        if(isMonitorEnabled(monitor)) {
+            // 记录 monitor 中记录的监视类型处于激活状态
+            activeMonitors |= monitor->monitorType;
+        } else {
+            // 记录 monitor 中记录的监视类型处于失活状态
+            activeMonitors &= ~monitor->monitorType;
+        }
+    }
+    
+    // log 当前处于激活状态的监视类型
+    KSLOG_DEBUG("Active monitors are now 0x%x.", activeMonitors);
+    
+    // 把当前激活的监视类型记录到 static KSCrashMonitorType g_activeMonitors = KSCrashMonitorTypeNone 这个
+    g_activeMonitors = activeMonitors;
+}
 ```
 
+&emsp;这里我们看一下 g_monitorsCount、g_monitors 和 Monitor 结构体。
 
+```c++
+typedef struct
+{
+    void (*setEnabled)(bool isEnabled);
+    bool (*isEnabled)(void);
+    void (*addContextualInfoToEvent)(struct KSCrash_MonitorContext* eventContext);
+} KSCrashMonitorAPI;
+```
 
+```c++
+typedef struct
+{
+    KSCrashMonitorType monitorType;
+    KSCrashMonitorAPI* (*getAPI)(void);
+} Monitor;
+```
+
+```c++
+static Monitor g_monitors[] =
+{
+#if KSCRASH_HAS_MACH
+    {
+        .monitorType = KSCrashMonitorTypeMachException,
+        .getAPI = kscm_machexception_getAPI,
+    },
+#endif
+#if KSCRASH_HAS_SIGNAL
+    {
+        .monitorType = KSCrashMonitorTypeSignal,
+        .getAPI = kscm_signal_getAPI,
+    },
+#endif
+#if KSCRASH_HAS_OBJC
+    {
+        .monitorType = KSCrashMonitorTypeNSException,
+        .getAPI = kscm_nsexception_getAPI,
+    },
+    {
+        .monitorType = KSCrashMonitorTypeMainThreadDeadlock,
+        .getAPI = kscm_deadlock_getAPI,
+    },
+    {
+        .monitorType = KSCrashMonitorTypeZombie,
+        .getAPI = kscm_zombie_getAPI,
+    },
+#endif
+    {
+        .monitorType = KSCrashMonitorTypeCPPException,
+        .getAPI = kscm_cppexception_getAPI,
+    },
+    {
+        .monitorType = KSCrashMonitorTypeUserReported,
+        .getAPI = kscm_user_getAPI,
+    },
+    {
+        .monitorType = KSCrashMonitorTypeSystem,
+        .getAPI = kscm_system_getAPI,
+    },
+    {
+        .monitorType = KSCrashMonitorTypeApplicationState,
+        .getAPI = kscm_appstate_getAPI,
+    },
+};
+```
+
+```c++
+static int g_monitorsCount = sizeof(g_monitors) / sizeof(*g_monitors);
+```
 
 
 
