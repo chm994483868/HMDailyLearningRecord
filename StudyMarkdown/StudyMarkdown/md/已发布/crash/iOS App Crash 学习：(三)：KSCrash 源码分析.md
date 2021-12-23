@@ -779,12 +779,14 @@ void kscm_setActiveMonitors(KSCrashMonitorType monitorTypes) {
     // log 当前处于激活状态的监视类型
     KSLOG_DEBUG("Active monitors are now 0x%x.", activeMonitors);
     
-    // 把当前激活的监视类型记录到 static KSCrashMonitorType g_activeMonitors = KSCrashMonitorTypeNone 这个
+    // 把当前激活的监视类型记录到 static KSCrashMonitorType g_activeMonitors = KSCrashMonitorTypeNone 这个静态全局变量中
     g_activeMonitors = activeMonitors;
 }
 ```
 
 &emsp;这里我们看一下 g_monitorsCount、g_monitors 和 Monitor 结构体。
+
+&emsp;KSCrashMonitorAPI 结构体的成员变量是三个函数指针，它用来描述 KSCrashMonitorType 枚举列出的每种监视类型都有的三个可使用的 API：setEnabled 打开/关闭指定的监视类型、isEnabled 判断当前指定监视类型是否打开、addContextualInfoToEvent 为当前的监视类型添加上下文信息（KSCrash_MonitorContext 是个超长的结构体，内部包含崩溃发生时一些处理方式、Mach 异常/Objective-C 异常/C++ 异常/Unix Signals/用户自定义异常/Zombie 异常 的异常信息、App 的一些状态、用户的设备信息、等）。
 
 ```c++
 typedef struct
@@ -795,6 +797,8 @@ typedef struct
 } KSCrashMonitorAPI;
 ```
 
+&emsp;Monitor 结构体有两个成员变量，它用来完整的描述一个监视类型和该监视类型可使用的 API。
+
 ```c++
 typedef struct
 {
@@ -802,6 +806,8 @@ typedef struct
     KSCrashMonitorAPI* (*getAPI)(void);
 } Monitor;
 ```
+
+&emsp;g_monitors 是一个静态全局的 Monitor 结构体数组，
 
 ```c++
 static Monitor g_monitors[] =
