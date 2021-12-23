@@ -807,7 +807,17 @@ typedef struct
 } Monitor;
 ```
 
-&emsp;g_monitors 是一个静态全局的 Monitor 结构体数组，
+&emsp;g_monitors 是一个静态全局的 Monitor 结构体数组，数组的每个元素都是一个监视类型和其对应的 API。每个元素的 API 对应 KSCrash 项目 KSCrash/Crash Recording/Monitors/ 文件夹下的一对文件：
+
++ KSCrashMonitorTypeMachException -> KSCrashMonitor_MachException.h/.c Mach 异常
++ KSCrashMonitorTypeSignal -> KSCrashMonitor_Signal.h/.c Unix 信号
++ KSCrashMonitorTypeNSException -> KSCrashMonitor_NSException.h/.m Objective-C 异常
++ KSCrashMonitorTypeMainThreadDeadlock -> KSCrashMonitor_Deadlock.h/.m 主线程死锁
++ KSCrashMonitorTypeZombie -> KSCrashMonitor_Zombie.h/.c 僵尸对象访问
++ KSCrashMonitorTypeCPPException -> KSCrashMonitor_CPPException.h/.cpp C++ 异常
++ KSCrashMonitorTypeUserReported -> KSCrashMonitor_User.h/.c 用户自定义
++ KSCrashMonitorTypeSystem -> KSCrashMonitor_System.h/.m 系统信息
++ KSCrashMonitorTypeApplicationState -> KSCrashMonitor_AppState.h/.c APP 状态
 
 ```c++
 static Monitor g_monitors[] =
@@ -857,12 +867,34 @@ static Monitor g_monitors[] =
 };
 ```
 
+&emsp;g_monitorsCount 静态全局变量即 g_monitors 数组的元素个数。
+
 ```c++
 static int g_monitorsCount = sizeof(g_monitors) / sizeof(*g_monitors);
 ```
 
+&emsp;上面 for 循环中，调用 setMonitorEnabled(monitor, isEnabled) 和 isMonitorEnabled(monitor) 函数就是调用监视类型对应 API 的 setEnabled 和 isEnabled 函数。   
 
+```c++
+static inline void setMonitorEnabled(Monitor* monitor, bool isEnabled) {
+    KSCrashMonitorAPI* api = getAPI(monitor);
+    if(api != NULL && api->setEnabled != NULL) {
+        api->setEnabled(isEnabled);
+    }
+}
 
+static inline bool isMonitorEnabled(Monitor* monitor) {
+    KSCrashMonitorAPI* api = getAPI(monitor);
+    if(api != NULL && api->isEnabled != NULL) {
+        return api->isEnabled();
+    }
+    return false;
+}
+```
+
+&emsp;看到这里我们就明白了，所谓的 激活/失活 监视类型，就是遍历调用监视类型的 setEnabled 函数根据其入参 YES 或 NO 来激活/失活监视类型。
+
+&emsp;下面要一个一个学习它们的安装过程吗？
 
 
 
