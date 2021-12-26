@@ -1,4 +1,4 @@
-# iOS App Crash 学习：(三)：KSCrash 源码分析
+# iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）
 
 &emsp;[kstenerud/KSCrash](https://github.com/kstenerud/KSCrash) The Ultimate Crash Reporter! 
 
@@ -1112,7 +1112,7 @@ failed:
 
 #### uninstallExceptionHandler
 
-&emsp;
+&emsp;uninstallExceptionHandler 函数用来卸载 Mach 异常处理程序，内部实现还是比较清晰的，首先调用 restoreExceptionPorts 函数还原原始的 mach 异常端口（即重新安装旧的 Mach 异常端口）。然后终止 g_primaryPThread、g_secondaryPThread 两条用来处理 Mach 异常的子线程，并把我们的 g_exceptionPort 置为 MACH_PORT_NULL。
 
 ```c++
 static void uninstallExceptionHandler() {
@@ -1120,63 +1120,96 @@ static void uninstallExceptionHandler() {
     
     // NOTE: Do not deallocate the exception port. If a secondary crash occurs it will hang the process.
     
+    // 还原原始的 mach 异常端口（即重新安装旧的 Mach 异常端口）
     restoreExceptionPorts();
     
+    // KSThread ksthread_self()
+    // {
+    //     thread_t thread_self = mach_thread_self();
+    //     mach_port_deallocate(mach_task_self(), thread_self);
+    //     return (KSThread)thread_self;
+    // }
+
+    // 取得当前线程（并且释放了当前线程持有的 port 吗？）
     thread_t thread_self = (thread_t)ksthread_self();
     
-    if(g_primaryPThread != 0 && g_primaryMachThread != thread_self)
-    {
+    // 取消 g_primaryPThread 线程
+    if (g_primaryPThread != 0 && g_primaryMachThread != thread_self) {
         KSLOG_DEBUG("Canceling primary exception thread.");
-        if(g_isHandlingCrash)
-        {
+        if (g_isHandlingCrash) {
             thread_terminate(g_primaryMachThread);
-        }
-        else
-        {
+        } else {
             pthread_cancel(g_primaryPThread);
         }
+        
         g_primaryMachThread = 0;
         g_primaryPThread = 0;
     }
-    if(g_secondaryPThread != 0 && g_secondaryMachThread != thread_self)
-    {
+    
+    // 取消 g_secondaryPThread
+    if (g_secondaryPThread != 0 && g_secondaryMachThread != thread_self) {
         KSLOG_DEBUG("Canceling secondary exception thread.");
-        if(g_isHandlingCrash)
-        {
+        if (g_isHandlingCrash) {
             thread_terminate(g_secondaryMachThread);
-        }
-        else
-        {
+        } else {
             pthread_cancel(g_secondaryPThread);
         }
+        
         g_secondaryMachThread = 0;
         g_secondaryPThread = 0;
     }
     
+    // 放弃 g_exceptionPort 端口
     g_exceptionPort = MACH_PORT_NULL;
+    
     KSLOG_DEBUG("Mach exception handlers uninstalled.");
 }
 ``` 
 
+&emsp;restoreExceptionPorts 函数用来还原原始的 mach 异常端口。
 
+```c++
+/** Restore the original mach exception ports. */
+static void restoreExceptionPorts(void) {
+    KSLOG_DEBUG("Restoring original exception ports.");
+    
+    // 如果 g_previousExceptionPorts 保存的有关以前安装的 Mach 异常处理程序的异常端口为 0，则不能进行还原。
+    if (g_previousExceptionPorts.count == 0) {
+        KSLOG_DEBUG("Original exception ports were already restored.");
+        
+        return;
+    }
 
+    // 取得 task
+    const task_t thisTask = mach_task_self();
+    kern_return_t kr;
 
+    // Reinstall old exception ports.
+    for (mach_msg_type_number_t i = 0; i < g_previousExceptionPorts.count; i++) {
+        KSLOG_TRACE("Restoring port index %d", i);
+        
+        // 调用 task_set_exception_ports 函数进行还原
+        kr = task_set_exception_ports(thisTask,
+                                      g_previousExceptionPorts.masks[i],
+                                      g_previousExceptionPorts.ports[i],
+                                      g_previousExceptionPorts.behaviors[i],
+                                      g_previousExceptionPorts.flavors[i]);
+        if (kr != KERN_SUCCESS) {
+            KSLOG_ERROR("task_set_exception_ports: %s", mach_error_string(kr));
+        }
+    }
+    
+    KSLOG_DEBUG("Exception ports restored.");
+    g_previousExceptionPorts.count = 0;
+}
+```
 
+&emsp;handleExceptions 函数涉及的内容太多了，我们留在下一篇统一学习吧！
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 参考链接
+**参考链接:🔗**
++ [gettimeofday](https://baike.baidu.com/item/gettimeofday/3369586?fr=aladdin)
++ [iOS App 连续闪退时如何上报 crash 日志](https://zhuanlan.zhihu.com/p/35436876)
 + [XNU IPC - Mach messages](https://dmcyk.xyz/post/xnu_ipc_i_mach_messages/)
 + [kstenerud/KSCrash](https://github.com/kstenerud/KSCrash)
 + [KSCrash源码分析](https://cloud.tencent.com/developer/article/1370201)
@@ -1192,90 +1225,8 @@ static void uninstallExceptionHandler() {
 + [KSCrash+Symbolicatecrash日志分析](https://www.jianshu.com/p/d88b39acea7d)
 + [了解和分析iOS Crash](https://wetest.qq.com/lab/view/404.html?from=content_zhihu)
 + [wakeup in XNU](https://djs66256.github.io/2021/04/03/2021-04-03-wakeup-in-XNU/)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-BSBacktraceLogger 源码
-KSCrash 源码
-PLCrashReporter 源码
-GYBootingProtection 源码
-
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
 + [iOS中Crash采集及PLCrashReporter使用](https://www.jianshu.com/p/930d7f77df6c)
 + [iOS 启动连续闪退保护方案](https://blog.csdn.net/jiang314/article/details/52574307?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_title~default-0.highlightwordscore&spm=1001.2101.3001.4242.1)
 + [iOS/OSX Crash：捕捉异常](https://zhuanlan.zhihu.com/p/271282052)
-
-
-
-
-
-## 参考链接
-**参考链接:🔗**
-+ [gettimeofday](https://baike.baidu.com/item/gettimeofday/3369586?fr=aladdin)
-+ [iOS App 连续闪退时如何上报 crash 日志](https://zhuanlan.zhihu.com/p/35436876)
-
-
-
-
-
-
-
-
-
-
-
-
-
-+ [Mach-维基百科](https://zh.wikipedia.org/wiki/Mach)
-+ [iOS 异常信号思考](https://minosjy.com/2021/04/10/00/377/)
-+ [Linux 多线程环境下 进程线程终止函数小结](https://www.cnblogs.com/biyeymyhjob/archive/2012/10/11/2720377.html)
-+ [pthread_kill引发的争论](https://www.jianshu.com/p/756240e837dd)
-+ [线程的信号pthread_kill()函数（线程四）](https://blog.csdn.net/littesss/article/details/71156793)
-+ [原子操作atomic_fetch_add](https://www.jianshu.com/p/985fb2e9c201)
-+ [iOS Crash 分析攻略](https://zhuanlan.zhihu.com/p/159301707)
-+ [Handling unhandled exceptions and signals](https://www.cocoawithlove.com/2010/05/handling-unhandled-exceptions-and.html)
-+ [Apple 源码文件下载列表](https://opensource.apple.com/tarballs/)
-+ [iOS @try @catch异常机制](https://www.jianshu.com/p/f28b9b3f8e44)
 + [一文读懂崩溃原理](https://juejin.cn/post/6873868181635760142)
-+ [软件测试之SDK开发(ios)——Mach捕获](https://blog.csdn.net/lfdanding/article/details/100024022)
-+ [[史上最全] iOS Crash/崩溃/异常 捕获](https://www.jianshu.com/p/3f6775c02257)
-+ [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
-+ [KSCrash源码分析](https://cloud.tencent.com/developer/article/1370201)
-+ [iOS线程通信和进程通信的例子（NSMachPort和NSTask，NSPipe）](https://blog.csdn.net/yxh265/article/details/51483822)
-+ [iOS开发·RunLoop源码与用法完全解析(输入源，定时源，观察者，线程间通信，端口间通信，NSPort，NSMessagePort，NSMachPort，NSPortMessage)](https://sg.jianshu.io/p/07313bc6fd24)
-+ [Delivering Notifications To Particular Threads](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Notifications/Articles/Threading.html#//apple_ref/doc/uid/20001289-CEGJFDFG)
-+ [iOS开发之线程间的MachPort通信与子线程中的Notification转发](https://cloud.tencent.com/developer/article/1018076)
-+ [移动端监控体系之技术原理剖析](https://www.jianshu.com/p/8123fc17fe0e)
-+ [iOS性能优化实践：头条抖音如何实现OOM崩溃率下降50%+](https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247486858&idx=1&sn=ec5964b0248b3526836712b26ef1b077&chksm=e9d0c668dea74f7e1e16cd5d65d1436c28c18e80e32bbf9703771bd4e0563f64723294ba1324&cur_album_id=1590407423234719749&scene=189#wechat_redirect)
-+ [iOS Crash之NSInvalidArgumentException](https://blog.csdn.net/skylin19840101/article/details/51941540)
-+ [iOS调用reloadRowsAtIndexPaths Crash报异常NSInternalInconsistencyException](https://blog.csdn.net/sinat_27310637/article/details/62225658)
-+ [iOS开发质量的那些事](https://zhuanlan.zhihu.com/p/21773994)
-+ [NSException抛出异常&NSError简单介绍](https://www.jianshu.com/p/23913bbc4ee5)
-+ [NSException:错误处理机制---调试中以及上架后的产品如何收集错误日志](https://blog.csdn.net/lcl130/article/details/41891273)
-+ [Exception Programming Topics](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Exceptions/Exceptions.html#//apple_ref/doc/uid/10000012-BAJGFBFB)
-+ [iOS被开发者遗忘在角落的NSException-其实它很强大](https://www.jianshu.com/p/05aad21e319e)
-+ [iOS runtime实用篇--和常见崩溃say good-bye！](https://www.jianshu.com/p/5d625f86bd02)
-+ [异常处理NSException的使用（思维篇）](https://www.cnblogs.com/cchHers/p/15116833.html)
-+ [异常统计- IOS 收集崩溃信息 NSEXCEPTION类](https://www.freesion.com/article/939519506/)
-+ [NSException异常处理](https://www.cnblogs.com/fuland/p/3668004.html)
-+ [iOS Crash之NSGenericException](https://blog.csdn.net/skylin19840101/article/details/51945558)
-+ [iOS异常处理](https://www.jianshu.com/p/1e4d5421d29c)
-+ [iOS异常处理](https://www.jianshu.com/p/59927211b745)
-+ [iOS crash分类,Mach异常、Unix 信号和NSException 异常](https://blog.csdn.net/u014600626/article/details/119517507?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link)
-+ [iOS Mach异常和signal信号](https://developer.aliyun.com/article/499180)
-
-
-
