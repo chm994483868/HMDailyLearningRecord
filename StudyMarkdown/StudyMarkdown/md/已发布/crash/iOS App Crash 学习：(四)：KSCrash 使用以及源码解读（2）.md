@@ -116,8 +116,9 @@ static void* handleExceptions(void* const userData) {
         crashContext->offendingMachineContext = machineContext;
         
         // static KSStackCursor g_stackCursor; 是一个静态全局变量，KSStackCursor 是一个描述 stack trace 的结构体，下面是对 g_stackCursor 进行初始化，
-        // 其中最重要的是：cursor->symbolicate = kssymbolicator_symbolicate; symbolicate 在 KSStackCursor 结构体中是一个函数指针用来尝试对当前地址进行符号化，填写 stackEntry 中的字段，
-        // stackEntry 是 KSStackCursor 结构体中内嵌的一个结构体，用来描述 ......
+        // 其中最重要的是：cursor->symbolicate = kssymbolicator_symbolicate; symbolicate 在 KSStackCursor 结构体中是一个函数指针，指向一个用来尝试对当前地址进行符号化的函数，
+        // 用于填写 KSStackCursor 结构体中嵌套定义的 stackEntry 结构体中的字段。
+        // stackEntry 是 KSStackCursor 结构体中内嵌的一个结构体，用来描述 stack trace 中某个地址对应的符号的信息，kssc_initCursor 涉及的内容挺多，下面我们会单独分析一下。
         kssc_initCursor(&g_stackCursor, NULL, NULL);
         
         if (ksmc_getContextForThread(exceptionMessage.thread.name, machineContext, true)) {
@@ -176,3 +177,24 @@ static void* handleExceptions(void* const userData) {
 }
 ```
 
+## kssc_initCursor
+
+&emsp;这里 kssc 前缀中的 sc 即是 Stack Cursor 的首字母缩写。那么 stack cursor 是什么呢？
+
+```c++
+void kssc_initCursor(KSStackCursor *cursor,
+                     void (*resetCursor)(KSStackCursor*),
+                     bool (*advanceCursor)(KSStackCursor*))
+{
+    cursor->symbolicate = kssymbolicator_symbolicate;
+    cursor->advanceCursor = advanceCursor != NULL ? advanceCursor : g_advanceCursor;
+    cursor->resetCursor = resetCursor != NULL ? resetCursor : kssc_resetCursor;
+    cursor->resetCursor(cursor);
+}
+```
+
+
+## 参考链接
+**参考链接:🔗**
++ [NSThead和内核线程的转换](https://www.qingheblog.online/原理分析/NSThead和内核线程的转换/)
++ [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
