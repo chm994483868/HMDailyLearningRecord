@@ -115,7 +115,9 @@ static void* handleExceptions(void* const userData) {
         // offendingMachineContext 是 event 的 machine context
         crashContext->offendingMachineContext = machineContext;
         
-        // static KSStackCursor g_stackCursor; 是一个静态全局变量，KSStackCursor 是一个描述 stack trace 的结构体，下面是对 g_stackCursor 进行初始化
+        // static KSStackCursor g_stackCursor; 是一个静态全局变量，KSStackCursor 是一个描述 stack trace 的结构体，下面是对 g_stackCursor 进行初始化，
+        // 其中最重要的是：cursor->symbolicate = kssymbolicator_symbolicate; symbolicate 在 KSStackCursor 结构体中是一个函数指针用来尝试对当前地址进行符号化，填写 stackEntry 中的字段，
+        // stackEntry 是 KSStackCursor 结构体中内嵌的一个结构体，用来描述 ......
         kssc_initCursor(&g_stackCursor, NULL, NULL);
         
         if (ksmc_getContextForThread(exceptionMessage.thread.name, machineContext, true)) {
