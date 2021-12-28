@@ -121,6 +121,10 @@ static void* handleExceptions(void* const userData) {
         // stackEntry 是 KSStackCursor 结构体中内嵌的一个结构体，用来描述 stack trace 中某个地址对应的符号的信息，kssc_initCursor 涉及的内容挺多，下面我们会单独分析一下。
         kssc_initCursor(&g_stackCursor, NULL, NULL);
         
+        
+        // 暂停在这里 ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+        
+        
         if (ksmc_getContextForThread(exceptionMessage.thread.name, machineContext, true)) {
         
             kssc_initWithMachineContext(&g_stackCursor, KSSC_MAX_STACK_DEPTH, machineContext);
@@ -181,17 +185,60 @@ static void* handleExceptions(void* const userData) {
 
 &emsp;这里 kssc 前缀中的 sc 即是 Stack Cursor 的首字母缩写。那么 stack cursor 是什么呢？
 
+&emsp;在上面 handleExceptions 函数内部调用 kssc_initCursor 函数时，cursor 参数传递了一个静态全局变量 static KSStackCursor g_stackCursor，kssc_initCursor 函数内便对此变量进行初始化操作，g_stackCursor 会被作为后续 Stack Cursor 使用。
+
+&emsp;聚焦在 KSStackCursor.h/.c 一对文件中内容，其实还是挺清晰的。KSStackCursor 结构体中的 stackEntry 结构体描述函数堆栈中某个元素（函数调用）的入口，内部的成员变量包含：stack trace 当前地址、此地址对应的 image（镜像）名称、此镜像的起始地址、最接近当前地址的符号的名称（如果有）、最接近当前地址的符号的地址，然后是 state 结构体描述当前遍历堆栈的状态，内部的成员变量包含：遍历堆栈的当前深度（基于 1）、是否已放弃遍历堆栈。
+
+&emsp;再往下则是三个函数指针：resetCursor 重置 Stack Cursor（即把上面的各个结构体的成员变量置 0/NULL/）、advanceCursor 前进 Stack Cursor 到下一个 Stack Entry、symbolicate 尝试对当前地址进行符号化，对 stackEntry 结构体中的各个成员变量赋值、context 是一个长度为 100 的 void 指针数组用来存储上下文的内部信息。
+
+```c++
+kssc_initCursor(&g_stackCursor, NULL, NULL);
+```
+
 ```c++
 void kssc_initCursor(KSStackCursor *cursor,
                      void (*resetCursor)(KSStackCursor*),
-                     bool (*advanceCursor)(KSStackCursor*))
-{
+                     bool (*advanceCursor)(KSStackCursor*)) {
+    // 这里给 symbolicate 函数指针默认赋值为 kssymbolicator_symbolicate 函数
     cursor->symbolicate = kssymbolicator_symbolicate;
+    
+    // 
     cursor->advanceCursor = advanceCursor != NULL ? advanceCursor : g_advanceCursor;
+    
+    // 
     cursor->resetCursor = resetCursor != NULL ? resetCursor : kssc_resetCursor;
+    
+    // 
     cursor->resetCursor(cursor);
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## 参考链接
