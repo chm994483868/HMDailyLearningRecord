@@ -109,7 +109,8 @@ static void* handleExceptions(void* const userData) {
         
         KSMC_NEW_CONTEXT(machineContext);
         
-        // KSCrash_MonitorContext 是一个成员变量超多的结构体，它内部记录了大量的信息，g_monitorContext 是一个此类型的静态全局变量：`static KSCrash_MonitorContext g_monitorContext;`
+        // KSCrash_MonitorContext 是一个成员变量超多的结构体，它内部记录了大量的信息，例如：崩溃类型信息/崩溃时的 APP 状态/系统信息 等等...
+        // g_monitorContext 是一个此类型的静态全局变量：static KSCrash_MonitorContext g_monitorContext，
         KSCrash_MonitorContext* crashContext = &g_monitorContext;
         
         // offendingMachineContext 是 event 的 machine context
@@ -124,13 +125,16 @@ static void* handleExceptions(void* const userData) {
         
         // 暂停在这里 ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
         
-        
+        // 获取 Mach 异常发生时所在线程的上下文信息
         if (ksmc_getContextForThread(exceptionMessage.thread.name, machineContext, true)) {
-        
+            
+            // 根据取得的上下文信息接着去初始化 g_stackCursor 这个静态全局变量 
             kssc_initWithMachineContext(&g_stackCursor, KSSC_MAX_STACK_DEPTH, machineContext);
             
+            // faultAddress 和 instructionAddress 地址
             KSLOG_TRACE("Fault address %p, instruction address %p", kscpu_faultAddress(machineContext), kscpu_instructionAddress(machineContext));
             
+            // 根据异常了类型来为 faultAddress 属性赋值
             if (exceptionMessage.exception == EXC_BAD_ACCESS) {
                 crashContext->faultAddress = kscpu_faultAddress(machineContext);
             } else {
@@ -139,32 +143,46 @@ static void* handleExceptions(void* const userData) {
         }
 
         KSLOG_DEBUG("Filling out context.");
+        
+        // 崩溃上下文信息
         crashContext->crashType = KSCrashMonitorTypeMachException;
         crashContext->eventID = eventID;
         crashContext->registersAreValid = true;
+        
+        // Mach 异常的类型、code、subcode
         crashContext->mach.type = exceptionMessage.exception;
         crashContext->mach.code = exceptionMessage.code[0] & (int64_t)MACH_ERROR_CODE_MASK;
         crashContext->mach.subcode = exceptionMessage.code[1] & (int64_t)MACH_ERROR_CODE_MASK;
         
+        // 如果是堆栈溢出的 Mach 异常
         if (crashContext->mach.code == KERN_PROTECTION_FAILURE && crashContext->isStackOverflow) {
             // A stack overflow should return KERN_INVALID_ADDRESS, but
             // when a stack blasts through the guard pages at the top of the stack,
             // it generates KERN_PROTECTION_FAILURE. Correct for this.
+            
+            // 堆栈溢出应返回 KERN_INVALID_ADDRESS，但是当堆栈通过堆栈顶部的保护页时，它会生成 KERN_PROTECTION_FAILURE。请正确执行此操作。
             crashContext->mach.code = KERN_INVALID_ADDRESS;
         }
         
+        // 根据 Mach 异常类型转换为对应的 Unix Signal 
         crashContext->signal.signum = signalForMachException(crashContext->mach.type, crashContext->mach.code);
+        // 函数堆栈 "探针"
         crashContext->stackCursor = &g_stackCursor;
-
+    
         kscm_handleException(crashContext);
 
         KSLOG_DEBUG("Crash handling complete. Restoring original handlers.");
         g_isHandlingCrash = false;
+        
+        // 恢复线程
         ksmc_resumeEnvironment(threads, numThreads);
     }
 
     KSLOG_DEBUG("Replying to mach exception message.");
+    
     // Send a reply saying "I didn't handle this exception".
+    // 发送回复，指出"我没有处理此异常"，我们自己处理完成以后，还需要把 Mach 异常消息抛出
+    
     replyMessage.header = exceptionMessage.header;
     replyMessage.NDR = exceptionMessage.NDR;
     replyMessage.returnCode = KERN_FAILURE;
@@ -183,13 +201,18 @@ static void* handleExceptions(void* const userData) {
 
 ## kssc_initCursor
 
-&emsp;这里 kssc 前缀中的 sc 即是 Stack Cursor 的首字母缩写。那么 stack cursor 是什么呢？
+&emsp;这里 kssc 前缀中的 sc 即是 Stack Cursor 的首字母缩写。那么 Stack Cursor 是什么呢？
 
-&emsp;在上面 handleExceptions 函数内部调用 kssc_initCursor 函数时，cursor 参数传递了一个静态全局变量 static KSStackCursor g_stackCursor，kssc_initCursor 函数内便对此变量进行初始化操作，g_stackCursor 会被作为后续 Stack Cursor 使用。
+&emsp;在上面 handleExceptions 函数内部调用 kssc_initCursor 函数时，cursor 参数传递了一个静态全局变量 static KSStackCursor g_stackCursor，kssc_initCursor 函数执行过程中便对此变量进行初始化操作，g_stackCursor 会被作为后续 Stack Cursor 使用。
 
-&emsp;聚焦在 KSStackCursor.h/.c 一对文件中内容，其实还是挺清晰的。KSStackCursor 结构体中的 stackEntry 结构体描述函数堆栈中某个元素（函数调用）的入口，内部的成员变量包含：stack trace 当前地址、此地址对应的 image（镜像）名称、此镜像的起始地址、最接近当前地址的符号的名称（如果有）、最接近当前地址的符号的地址，然后是 state 结构体描述当前遍历堆栈的状态，内部的成员变量包含：遍历堆栈的当前深度（基于 1）、是否已放弃遍历堆栈。
+&emsp;聚焦在 KSStackCursor.h/.c 一对文件中内容，其实还是挺清晰的：
 
-&emsp;再往下则是三个函数指针：resetCursor 重置 Stack Cursor（即把上面的各个结构体的成员变量置 0/NULL/）、advanceCursor 前进 Stack Cursor 到下一个 Stack Entry、symbolicate 尝试对当前地址进行符号化，对 stackEntry 结构体中的各个成员变量赋值、context 是一个长度为 100 的 void 指针数组用来存储上下文的内部信息。
+1. 首先是 KSStackCursor 结构体中的 stackEntry 结构体描述函数堆栈中某个栈帧（函数调用）的入口，内部的成员变量包含：stack trace 当前地址、此地址对应的 image（镜像）名称、此镜像的起始地址、最接近当前地址的符号的名称（如果有）、最接近当前地址的符号的地址。
+2. 然后是 state 结构体描述当前遍历函数堆栈的状态，内部的成员变量包含：遍历函数堆栈的当前深度（基于 1）、是否已放弃遍历堆栈。
+3. 再往下则是三个函数指针：resetCursor 重置 Stack Cursor（即把上面 stackEntry 和 state 两个结构体的所有成员变量置 0/false/NULL）、advanceCursor 前进 Stack Cursor 到下一个 Stack Entry、symbolicate 尝试对当前地址进行符号化并把值记录在 stackEntry 结构体中的成员变量中。
+4. 最后的 context 是一个长度为 100 的 void 指针数组用来存储上下文的内部信息。
+
+&emsp;看到这里，我们大概明白了一些 Stack Cursor 大概是用来做函数堆栈回溯的。
 
 ```c++
 kssc_initCursor(&g_stackCursor, NULL, NULL);
@@ -199,19 +222,48 @@ kssc_initCursor(&g_stackCursor, NULL, NULL);
 void kssc_initCursor(KSStackCursor *cursor,
                      void (*resetCursor)(KSStackCursor*),
                      bool (*advanceCursor)(KSStackCursor*)) {
-    // 这里给 symbolicate 函数指针默认赋值为 kssymbolicator_symbolicate 函数
+    // 给 symbolicate 函数指针默认赋值为 kssymbolicator_symbolicate 函数
     cursor->symbolicate = kssymbolicator_symbolicate;
     
-    // 
+    // 默认为 g_advanceCursor 
     cursor->advanceCursor = advanceCursor != NULL ? advanceCursor : g_advanceCursor;
     
-    // 
+    // 默认为 kssc_resetCursor
     cursor->resetCursor = resetCursor != NULL ? resetCursor : kssc_resetCursor;
     
-    // 
+    // 调用 resetCursor 函数，把 cursor 各成员变量置为 0/false/NULL 
     cursor->resetCursor(cursor);
 }
 ```
+
+&emsp;在上面 kssc_initCursor 函数中 kssymbolicator_symbolicate 函数格外瞩目，它牵涉的内容很对，下面我们一起看一下。
+
+## kssymbolicator_symbolicate
+
+&emsp;kssymbolicator_symbolicate 函数用于对 Stack Cursor 进行符号化。
+
+```c++
+bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
+    Dl_info symbolsBuffer;
+    
+    if (ksdl_dladdr(CALL_INSTRUCTION_FROM_RETURN_ADDRESS(cursor->stackEntry.address), &symbolsBuffer)) {
+        cursor->stackEntry.imageAddress = (uintptr_t)symbolsBuffer.dli_fbase;
+        cursor->stackEntry.imageName = symbolsBuffer.dli_fname;
+        cursor->stackEntry.symbolAddress = (uintptr_t)symbolsBuffer.dli_saddr;
+        cursor->stackEntry.symbolName = symbolsBuffer.dli_sname;
+        return true;
+    }
+    
+    cursor->stackEntry.imageAddress = 0;
+    cursor->stackEntry.imageName = 0;
+    cursor->stackEntry.symbolAddress = 0;
+    cursor->stackEntry.symbolName = 0;
+    return false;
+}
+```
+
+&emsp;
+
 
 
 
@@ -244,4 +296,5 @@ void kssc_initCursor(KSStackCursor *cursor,
 ## 参考链接
 **参考链接:🔗**
 + [NSThead和内核线程的转换](https://www.qingheblog.online/原理分析/NSThead和内核线程的转换/)
++ [浅谈函数调用栈](https://www.qingheblog.online/原理分析/浅谈函数调用栈/)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
