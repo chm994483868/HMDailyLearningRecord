@@ -6,7 +6,7 @@
 
 &emsp;在前面学习 mach-o 和 dyld 的过程中，我们看到了 dyld 任意的加载 mach-o 文件中指定 segment 的各个 section 中的内容，那么，我们可不可以干预 Xcode 生成 mach-o 文件的过程呢？那么，有没有一种方式，可以允许我们在 Xcode Build 过程中动态的在 mach-o 中插入新的 segment 和 section 呢？答案是可以的，下面我们直接揭晓答案：使用 `__attribute__ section` 将指定的数据储存到指定的 segment 和 section 中。
 
-### \_\_attribute__ 知识点扩展 
+### \_\_attribute\_\_ 知识点扩展 
 
 &emsp;下面我们首先做一个知识点的延展，看一下 `__attribute__` 相关的信息，`__attribute__` 可以用来设置函数属性（Function Attribute）、变量属性（Variable Attribute）和类型属性（Type Attribute）。它的书写特征是：`__attribute__` 前后都有两个下划线，并且后面会紧跟一对原括弧，括弧里面是相应的 `__attribute__` 参数，语法格式：`__attribute__((attribute-list))` 另外，它必须放于声明的尾部 `;` 之前。下面我们看一些比较常用的 `gcc Attribute syntax`。
 
@@ -31,7 +31,7 @@
 
 #### \_\_attribute__((objc_root_class))
 
-&emsp;这里我们再延伸一个可能被我们忽略了，但是还挺重要的知识点。我们大概一直都知道的 NSObject 作为根类（root_class），它的父类是 nil，我们日常使用的每个类都是 NSObject 的子类（NSProxy 除外，它是另外一个根类，它仅遵循 NSObject 协议，并不继承 NSObject 类。）那么我们能不能自己创建一个不继承 NSObject 的类来使用呢？这篇文章 [不使用 NSOBJECT 的 OBJECTIVE-C CLASS](https://uranusjr.com/blog/post/53/objective-c-class-without-nsobject/) 会给我们答案。
+&emsp;这里我们再延伸一个可能被我们忽略了，但是还挺重要的知识点。我们大概一直都知道的 NSObject 作为根类（root_class），它的父类是 nil，我们日常使用的每个类都是 NSObject 的子类（NSProxy 除外，它是另外一个根类，它仅遵循 NSObject 协议，并不继承 NSObject 类）那么我们能不能自己创建一个不继承 NSObject 的类来使用呢？这篇文章 [不使用 NSOBJECT 的 OBJECTIVE-C CLASS](https://uranusjr.com/blog/post/53/objective-c-class-without-nsobject/) 会给我们答案。
 
 &emsp;作为根类使用的类会使用 `NS_ROOT_CLASS` 宏来声明，例如：
 
@@ -44,6 +44,7 @@ NS_ROOT_CLASS
 }
 ...
 ```
+
 + NSObject
 
 ```c++
@@ -70,7 +71,7 @@ OBJC_EXPORT
 #endif
 ```
 
-### \_\_attribute__ ((section ("segment, section"))) 使用
+### \_\_attribute\_\_ ((section ("segment, section"))) 使用
 
 &emsp;下面我们看一个示例代码：
 

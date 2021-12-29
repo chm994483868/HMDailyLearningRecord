@@ -240,7 +240,7 @@ void kssc_initCursor(KSStackCursor *cursor,
 
 ## kssymbolicator_symbolicate
 
-&emsp;kssymbolicator_symbolicate 函数用于对 Stack Cursor 进行符号化。
+&emsp;kssymbolicator_symbolicate 函数用于对 Stack Cursor 进行符号化。看到 Dl_info 时我们是不是有一丝熟悉呢，还有它对应的 dladdr 函数，之前我们学习 Mach-O 和 fishhook 时有详细学习过，现在我们再回顾一下。
 
 ```c++
 bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
