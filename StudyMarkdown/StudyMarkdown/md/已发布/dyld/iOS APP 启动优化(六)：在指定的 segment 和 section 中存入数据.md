@@ -29,7 +29,7 @@
 
 + `__attribute__((destructor))` 和 `attribute((constructor))` 相反：被 `attribute((destructor))` 标记的函数，会在 `main` 函数退出或动态库卸载时执行。在 mach-o 中此类函数会放在 `_DATA` 段的 `__mod_term_func` 区中。
 
-#### \_\_attribute__((objc_root_class))
+#### \_\_attribute\_\_((objc_root_class))
 
 &emsp;这里我们再延伸一个可能被我们忽略了，但是还挺重要的知识点。我们大概一直都知道的 NSObject 作为根类（root_class），它的父类是 nil，我们日常使用的每个类都是 NSObject 的子类（NSProxy 除外，它是另外一个根类，它仅遵循 NSObject 协议，并不继承 NSObject 类）那么我们能不能自己创建一个不继承 NSObject 的类来使用呢？这篇文章 [不使用 NSOBJECT 的 OBJECTIVE-C CLASS](https://uranusjr.com/blog/post/53/objective-c-class-without-nsobject/) 会给我们答案。
 

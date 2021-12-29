@@ -240,29 +240,99 @@ void kssc_initCursor(KSStackCursor *cursor,
 
 ## kssymbolicator_symbolicate
 
-&emsp;kssymbolicator_symbolicate 函数用于对 Stack Cursor 进行符号化。看到 Dl_info 时我们是不是有一丝熟悉呢，还有它对应的 dladdr 函数，之前我们学习 Mach-O 和 fishhook 时有详细学习过，现在我们再回顾一下。
+&emsp;kssymbolicator_symbolicate 函数用于对 Stack Cursor 进行符号化。看到 Dl_info 时我们是不是有一丝熟悉呢，还有它对应的 dladdr 函数，之前我们学习 Mach-O 和 fishhook 时有详细学习过，现在我们再回顾一下。[iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据](https://juejin.cn/post/6980545001126101005)
+
+&emsp;`int dladdr(const void *, Dl_info *)` 函数用于获取某个地址的符号信息，进程可通过 dladdr 获取有关最接近定义给定地址的符号信息。dladdr 可确定指定的地址是否位于构成进程的地址空间中的一个加载模块（可执行库或共享库）内。如果某个地址位于在其上面映射加载模块的基址和为该加载模块映射的最高虚拟地址之间（包括两端），则认为该地址在加载模块的范围内。如果某个加
+载模块符合这个条件，则会搜索其动态符号表，以查找与指定的地址最接近的符号。最接近的符号是指其值等于或最为接近但小于指定的地址的符号。
+
+&emsp;dladdr 函数中的 `Dl_info *` 参数是一个指向 Dl_info 结构体的指针，该结构体必须由用户创建分配，如果 dladdr 函数指定的地址在其中一个加载模块的范围内，则 Dl_info 结构体成员变量的值由 dladdr 函数设置。
+
+&emsp;看上面的文字有点晕，看如下的示例代码，我们首先通过 class_getMethodImplementation 函数获取到 NSArray 类的 description 函数的地址，然后使用 dladdr 函数获取 description 函数的符号信息。
+
+```c++
+#import <dlfcn.h>
+#include <objc/objc.h>
+#include <objc/runtime.h>
+#include <stdio.h>
+
+int main(int argc, const char * argv[]) {
+    
+    Dl_info info;
+    IMP imp = class_getMethodImplementation(objc_getClass("NSArray"), sel_registerName("description"));
+    
+    printf("✳️✳️✳️ pointer %p\n", imp);
+    
+    if (dladdr((const void *)(imp), &info)) {
+        printf("✳️✳️✳️ dli_fname: %s\n", info.dli_fname);
+        printf("✳️✳️✳️ dli_fbase: %p\n", info.dli_fbase);
+        printf("✳️✳️✳️ dli_sname: %s\n", info.dli_sname);
+        printf("✳️✳️✳️ dli_saddr: %p\n", info.dli_saddr);
+    } else {
+        printf("error: can't find that symbol.\n");
+    }
+    
+    return 0;
+}
+
+// ⬇️ 控制台打印内容如下：
+✳️✳️✳️ pointer 0x7fff203f44dd
+✳️✳️✳️ dli_fname: /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+✳️✳️✳️ dli_fbase: 0x7fff20387000
+✳️✳️✳️ dli_sname: -[NSArray description]
+✳️✳️✳️ dli_saddr: 0x7fff203f44dd
+```
+
+&emsp;Dl_info 结构体的成员变量：
+
++ dli_fname 一个 char 指针，指向包含指定地址的加载模块的路径。
++ dli_fbase 加载模块的句柄，该句柄可用作 dlsym 的第一个参数。
++ dli_sname 一个 char 指针，指向与指定的地址最接近的符号的名称，该符号要么带有相同的地址，要么是带有低位地址的最接近符号。
++ dli_saddr 最接近符号的实际地址。
+
+&emsp;dladdr 函数是有一个 int 类型的返回值的，如果指定的地址不在其中一个加载模块的范围内，则返回 0，且不修改 `Dl_info` 结构体的成员变量，否则，将返回一个非零值，同时设置 `Dl_info` 结构体的各成员变量的值。
+
+```c++
+/*
+ * Structure filled in by dladdr().
+ */
+typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+} Dl_info;
+
+extern int dladdr(const void *, Dl_info *);
+```
 
 ```c++
 bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
+    // 记录指定地址的符号信息
     Dl_info symbolsBuffer;
     
+    // 如果 cursor->stackEntry.address 在一个加载模块的范围内则返回非 0 值
     if (ksdl_dladdr(CALL_INSTRUCTION_FROM_RETURN_ADDRESS(cursor->stackEntry.address), &symbolsBuffer)) {
+    
+        // 找到了 cursor->stackEntry.address 的符号信息，则把值赋给 cursor->stackEntry 的各个成员变量   
         cursor->stackEntry.imageAddress = (uintptr_t)symbolsBuffer.dli_fbase;
         cursor->stackEntry.imageName = symbolsBuffer.dli_fname;
         cursor->stackEntry.symbolAddress = (uintptr_t)symbolsBuffer.dli_saddr;
         cursor->stackEntry.symbolName = symbolsBuffer.dli_sname;
+        
         return true;
     }
     
+    // 未找到的话全部置为 0
     cursor->stackEntry.imageAddress = 0;
     cursor->stackEntry.imageName = 0;
     cursor->stackEntry.symbolAddress = 0;
     cursor->stackEntry.symbolName = 0;
+    
     return false;
 }
 ```
 
-&emsp;
+&emsp;上面我们看学习了 dladdr 函数的内容，但发现 ksdl_dladdr 函数并不是对 dladdr 函数的封装，ksdl_dladdr 函数内部是直接查找 image -> 查找 LC_SYMTAB -> 比较符号地址。
 
 
 
@@ -297,4 +367,5 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 **参考链接:🔗**
 + [NSThead和内核线程的转换](https://www.qingheblog.online/原理分析/NSThead和内核线程的转换/)
 + [浅谈函数调用栈](https://www.qingheblog.online/原理分析/浅谈函数调用栈/)
++ [动态链接库加载拾遗&dladdr函数使用](https://www.jianshu.com/p/1ef4460b63db)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
