@@ -360,7 +360,7 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 
 
 
-
++ [chinese](https://faisalmemon.github.io/ios-crash-dump-analysis-book/zh/)
 
 
 ## 参考链接
@@ -368,4 +368,5 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 + [NSThead和内核线程的转换](https://www.qingheblog.online/原理分析/NSThead和内核线程的转换/)
 + [浅谈函数调用栈](https://www.qingheblog.online/原理分析/浅谈函数调用栈/)
 + [动态链接库加载拾遗&dladdr函数使用](https://www.jianshu.com/p/1ef4460b63db)
++ [ios-crash-dump-analysis-book](https://github.com/faisalmemon/ios-crash-dump-analysis-book)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
