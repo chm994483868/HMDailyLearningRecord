@@ -334,7 +334,104 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 
 &emsp;上面我们看学习了 dladdr 函数的内容，但发现 ksdl_dladdr 函数并不是对 dladdr 函数的封装，ksdl_dladdr 函数内部是直接查找 image -> 查找 LC_SYMTAB -> 比较符号地址。
 
+&emsp;下面我们快速的过一遍 ksdl_dladdr 函数的内容，这里需要对 Mach-O 结构比较熟悉，[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
+        // LHGCV367XN8035292 1012
+&emsp;
 
+```c++
+bool ksdl_dladdr(const uintptr_t address, Dl_info* const info)
+{
+    info->dli_fname = NULL;
+    info->dli_fbase = NULL;
+    info->dli_sname = NULL;
+    info->dli_saddr = NULL;
+    
+    // 获取指定地址 address 所属的 image 的索引，如果未找到的话，则返回 UINT_MAX（#define UINT_MAX  (__INT_MAX__  *2U +1U)）
+    //（通过 dyld 取得所有的 image 然后进行遍历，然后再遍历每个 image 的 load_command，只查看其中 LC_SEGMENT/LC_SEGMENT_64 类型的 load_command，
+    // 然后比较 address 是属于哪个 load_command 的地址范围内，然后返回对应的 image 的索引）
+    const uint32_t idx = imageIndexContainingAddress(address);
+    if (idx == UINT_MAX) {
+        return false;
+    }
+    
+    // 取得上面 address 所属的 image 的头部的地址
+    const struct mach_header* header = _dyld_get_image_header(idx);
+    
+    // 取得 image 虚拟地址的 slide
+    const uintptr_t imageVMAddrSlide = (uintptr_t)_dyld_get_image_vmaddr_slide(idx);
+    const uintptr_t addressWithSlide = address - imageVMAddrSlide;
+    
+    const uintptr_t segmentBase = segmentBaseOfImageIndex(idx) + imageVMAddrSlide;
+    
+    if (segmentBase == 0) {
+        return false;
+    }
+
+    // 给 dli_fname 成员变量赋值，记录包含 address 的 image 的路径
+    info->dli_fname = _dyld_get_image_name(idx);
+    // 给 dli_fbase 成员变量赋值，记录 address 所属的 image 的起始地址
+    info->dli_fbase = (void*)header;
+
+    // Find symbol tables and get whichever symbol is closest to the address.
+    // 查找符号表并获取最接近地址的符号。
+    
+    const nlist_t* bestMatch = NULL;
+    uintptr_t bestDistance = ULONG_MAX;
+    uintptr_t cmdPtr = firstCmdAfterHeader(header);
+    
+    if (cmdPtr == 0) {
+        return false;
+    }
+    
+    for(uint32_t iCmd = 0; iCmd < header->ncmds; iCmd++) {
+        const struct load_command* loadCmd = (struct load_command*)cmdPtr;
+        if(loadCmd->cmd == LC_SYMTAB)
+        {
+            const struct symtab_command* symtabCmd = (struct symtab_command*)cmdPtr;
+            const nlist_t* symbolTable = (nlist_t*)(segmentBase + symtabCmd->symoff);
+            const uintptr_t stringTable = segmentBase + symtabCmd->stroff;
+
+            for(uint32_t iSym = 0; iSym < symtabCmd->nsyms; iSym++)
+            {
+                // If n_value is 0, the symbol refers to an external object.
+                if(symbolTable[iSym].n_value != 0)
+                {
+                    uintptr_t symbolBase = symbolTable[iSym].n_value;
+                    uintptr_t currentDistance = addressWithSlide - symbolBase;
+                    if((addressWithSlide >= symbolBase) &&
+                       (currentDistance <= bestDistance))
+                    {
+                        bestMatch = symbolTable + iSym;
+                        bestDistance = currentDistance;
+                    }
+                }
+            }
+            if(bestMatch != NULL)
+            {
+                info->dli_saddr = (void*)(bestMatch->n_value + imageVMAddrSlide);
+                if(bestMatch->n_desc == 16)
+                {
+                    // This image has been stripped. The name is meaningless, and
+                    // almost certainly resolves to "_mh_execute_header"
+                    info->dli_sname = NULL;
+                }
+                else
+                {
+                    info->dli_sname = (char*)((intptr_t)stringTable + (intptr_t)bestMatch->n_un.n_strx);
+                    if(*info->dli_sname == '_')
+                    {
+                        info->dli_sname++;
+                    }
+                }
+                break;
+            }
+        }
+        cmdPtr += loadCmd->cmdsize;
+    }
+    
+    return true;
+}
+```
 
 
 
@@ -368,5 +465,6 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 + [NSThead和内核线程的转换](https://www.qingheblog.online/原理分析/NSThead和内核线程的转换/)
 + [浅谈函数调用栈](https://www.qingheblog.online/原理分析/浅谈函数调用栈/)
 + [动态链接库加载拾遗&dladdr函数使用](https://www.jianshu.com/p/1ef4460b63db)
++ [thread_local与\_\_thread的区别](https://blog.csdn.net/weixin_43705457/article/details/106624781)
 + [ios-crash-dump-analysis-book](https://github.com/faisalmemon/ios-crash-dump-analysis-book)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
