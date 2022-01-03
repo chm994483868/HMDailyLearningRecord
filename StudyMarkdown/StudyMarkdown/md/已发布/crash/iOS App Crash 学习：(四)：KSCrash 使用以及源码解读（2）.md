@@ -331,7 +331,7 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 }
 ```
 
-&emsp;上面我们看学习了 dladdr 函数的内容，但发现 ksdl_dladdr 函数并不是对 dladdr 函数的封装，ksdl_dladdr 函数内部是直接查找 image -> 查找 LC_SYMTAB -> 比较符号地址。
+&emsp;上面我们看学习了 dladdr 函数的内容，但发现 ksdl_dladdr 函数并不是对 dladdr 函数的封装，ksdl_dladdr 函数内部是：直接查找地址所在的 image -> 查找 LC_SYMTAB 段 -> 比较符号地址。
 
 &emsp;下面我们快速的过一遍 ksdl_dladdr 函数的内容，这里需要对 Mach-O 结构足够熟悉，[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
 
@@ -373,57 +373,63 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
     // Find symbol tables and get whichever symbol is closest to the address.
     // 查找符号表并获取最接近地址的符号。
     
+    // typedef struct nlist_64 nlist_t; 
+    // nlist_64 是一个结构体，用来描述符号表中每个条目的结构信息，比如包含：符号名的字符串在 string Table 中的索引、符号的类型、所在的 section number、符号偏移值
     const nlist_t* bestMatch = NULL;
     uintptr_t bestDistance = ULONG_MAX;
+    
+    // 获取 header 后面的第一个 load command 的地址 
     uintptr_t cmdPtr = firstCmdAfterHeader(header);
     
-    if (cmdPtr == 0) {
-        return false;
-    }
+    if (cmdPtr == 0) { return false; }
     
+    // 下面便是开始遍历 load_command 
     for(uint32_t iCmd = 0; iCmd < header->ncmds; iCmd++) {
         const struct load_command* loadCmd = (struct load_command*)cmdPtr;
-        if(loadCmd->cmd == LC_SYMTAB)
-        {
+        
+        // 找到类型是 LC_SYMTAB 的 load_command 它便是符号表所在的位置
+        if (loadCmd->cmd == LC_SYMTAB) {
+            // The symtab_command contains the offsets and sizes of the link-edit 4.3 BSD "stab" style symbol table information as described in the header files <nlist.h> and <stab.h>.
+            
+            // load_command 指针转换为 symtab_command 指针 
             const struct symtab_command* symtabCmd = (struct symtab_command*)cmdPtr;
+            
+            // 根据 load command 中记录的符号表和 string table 的偏移距离，找到 符号表 和 string 表的位置
             const nlist_t* symbolTable = (nlist_t*)(segmentBase + symtabCmd->symoff);
             const uintptr_t stringTable = segmentBase + symtabCmd->stroff;
 
-            for(uint32_t iSym = 0; iSym < symtabCmd->nsyms; iSym++)
-            {
+            // symtabCmd->nsyms 的值是符号表条目数
+            // 遍历符号表的条目
+            for (uint32_t iSym = 0; iSym < symtabCmd->nsyms; iSym++) {
                 // If n_value is 0, the symbol refers to an external object.
-                if(symbolTable[iSym].n_value != 0)
-                {
+                // 如果n_value为 0，则符号引用外部对象。
+                
+                if (symbolTable[iSym].n_value != 0) {
                     uintptr_t symbolBase = symbolTable[iSym].n_value;
                     uintptr_t currentDistance = addressWithSlide - symbolBase;
-                    if((addressWithSlide >= symbolBase) &&
-                       (currentDistance <= bestDistance))
-                    {
+                    if((addressWithSlide >= symbolBase) && (currentDistance <= bestDistance)) {
                         bestMatch = symbolTable + iSym;
                         bestDistance = currentDistance;
                     }
                 }
             }
-            if(bestMatch != NULL)
-            {
+            
+            if (bestMatch != NULL) {
                 info->dli_saddr = (void*)(bestMatch->n_value + imageVMAddrSlide);
-                if(bestMatch->n_desc == 16)
-                {
+                if (bestMatch->n_desc == 16) {
                     // This image has been stripped. The name is meaningless, and
                     // almost certainly resolves to "_mh_execute_header"
                     info->dli_sname = NULL;
-                }
-                else
-                {
+                } else {
                     info->dli_sname = (char*)((intptr_t)stringTable + (intptr_t)bestMatch->n_un.n_strx);
-                    if(*info->dli_sname == '_')
-                    {
+                    if (*info->dli_sname == '_') {
                         info->dli_sname++;
                     }
                 }
                 break;
             }
         }
+        
         cmdPtr += loadCmd->cmdsize;
     }
     
