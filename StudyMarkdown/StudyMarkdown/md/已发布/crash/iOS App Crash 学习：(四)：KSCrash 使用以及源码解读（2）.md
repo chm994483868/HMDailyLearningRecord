@@ -89,7 +89,6 @@ static void* handleExceptions(void* const userData) {
 // TODO: This was put here to avoid a freeze. Does secondary thread ever fire?
             restoreExceptionPorts();
             
-            //
             if (thread_resume(g_secondaryMachThread) != KERN_SUCCESS) {
                 KSLOG_DEBUG("Could not activate secondary thread. Restoring original exception ports.");
             }
@@ -122,9 +121,6 @@ static void* handleExceptions(void* const userData) {
         // stackEntry 是 KSStackCursor 结构体中内嵌的一个结构体，用来描述 stack trace 中某个地址对应的符号的信息，kssc_initCursor 涉及的内容挺多，下面我们会单独分析一下。
         kssc_initCursor(&g_stackCursor, NULL, NULL);
         
-        
-        // 暂停在这里 ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-        
         // 获取 Mach 异常发生时所在线程的上下文信息
         if (ksmc_getContextForThread(exceptionMessage.thread.name, machineContext, true)) {
             
@@ -134,10 +130,12 @@ static void* handleExceptions(void* const userData) {
             // faultAddress 和 instructionAddress 地址
             KSLOG_TRACE("Fault address %p, instruction address %p", kscpu_faultAddress(machineContext), kscpu_instructionAddress(machineContext));
             
-            // 根据异常了类型来为 faultAddress 属性赋值
+            // 根据异常类型来为 faultAddress 属性赋值
             if (exceptionMessage.exception == EXC_BAD_ACCESS) {
+                // return context->machineContext.__es.__faultvaddr; 看不懂此行
                 crashContext->faultAddress = kscpu_faultAddress(machineContext);
             } else {
+                // return context->machineContext.__ss.__rip; 看不懂此行
                 crashContext->faultAddress = kscpu_instructionAddress(machineContext);
             }
         }
@@ -168,7 +166,8 @@ static void* handleExceptions(void* const userData) {
         crashContext->signal.signum = signalForMachException(crashContext->mach.type, crashContext->mach.code);
         // 函数堆栈 "探针"
         crashContext->stackCursor = &g_stackCursor;
-    
+        
+        // 记录异常类型等
         kscm_handleException(crashContext);
 
         KSLOG_DEBUG("Crash handling complete. Restoring original handlers.");
@@ -207,12 +206,12 @@ static void* handleExceptions(void* const userData) {
 
 &emsp;聚焦在 KSStackCursor.h/.c 一对文件中内容，其实还是挺清晰的：
 
-1. 首先是 KSStackCursor 结构体中的 stackEntry 结构体描述函数堆栈中某个栈帧（函数调用）的入口，内部的成员变量包含：stack trace 当前地址、此地址对应的 image（镜像）名称、此镜像的起始地址、最接近当前地址的符号的名称（如果有）、最接近当前地址的符号的地址。
+1. 首先是 KSStackCursor 结构体中的 stackEntry 结构体描述函数堆栈中某个栈帧（函数调用）的内容，内部的成员变量包含：stack trace 当前地址、此地址对应的 image（镜像）名称、此镜像的起始地址、最接近当前地址的符号的名称（如果有）、最接近当前地址的符号的地址（此两个地址）。
 2. 然后是 state 结构体描述当前遍历函数堆栈的状态，内部的成员变量包含：遍历函数堆栈的当前深度（基于 1）、是否已放弃遍历堆栈。
 3. 再往下则是三个函数指针：resetCursor 重置 Stack Cursor（即把上面 stackEntry 和 state 两个结构体的所有成员变量置 0/false/NULL）、advanceCursor 前进 Stack Cursor 到下一个 Stack Entry、symbolicate 尝试对当前地址进行符号化并把值记录在 stackEntry 结构体中的成员变量中。
 4. 最后的 context 是一个长度为 100 的 void 指针数组用来存储上下文的内部信息。
 
-&emsp;看到这里，我们大概明白了一些 Stack Cursor 大概是用来做函数堆栈回溯的。
+&emsp;看到这里，我们大概明白了一些 Stack Cursor 是用来做函数堆栈回溯的。
 
 ```c++
 kssc_initCursor(&g_stackCursor, NULL, NULL);
@@ -236,7 +235,7 @@ void kssc_initCursor(KSStackCursor *cursor,
 }
 ```
 
-&emsp;在上面 kssc_initCursor 函数中 kssymbolicator_symbolicate 函数格外瞩目，它牵涉的内容很对，下面我们一起看一下。
+&emsp;在上面 kssc_initCursor 函数中 kssymbolicator_symbolicate 函数格外瞩目，它牵涉的内容很多，下面我们一起看一下。
 
 ## kssymbolicator_symbolicate
 
@@ -247,7 +246,7 @@ void kssc_initCursor(KSStackCursor *cursor,
 
 &emsp;dladdr 函数中的 `Dl_info *` 参数是一个指向 Dl_info 结构体的指针，该结构体必须由用户创建分配，如果 dladdr 函数指定的地址在其中一个加载模块的范围内，则 Dl_info 结构体成员变量的值由 dladdr 函数设置。
 
-&emsp;看上面的文字有点晕，看如下的示例代码，我们首先通过 class_getMethodImplementation 函数获取到 NSArray 类的 description 函数的地址，然后使用 dladdr 函数获取 description 函数的符号信息。
+&emsp;看上面的文字有点晕，看如下的示例代码，我们首先通过 class_getMethodImplementation 函数获取到 NSArray 类的 description 函数的地址，然后以此地址为参数使用 dladdr 函数获取 description 函数的符号信息。
 
 ```c++
 #import <dlfcn.h>
@@ -334,13 +333,12 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 
 &emsp;上面我们看学习了 dladdr 函数的内容，但发现 ksdl_dladdr 函数并不是对 dladdr 函数的封装，ksdl_dladdr 函数内部是直接查找 image -> 查找 LC_SYMTAB -> 比较符号地址。
 
-&emsp;下面我们快速的过一遍 ksdl_dladdr 函数的内容，这里需要对 Mach-O 结构比较熟悉，[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
-        // LHGCV367XN8035292 1012
-&emsp;
+&emsp;下面我们快速的过一遍 ksdl_dladdr 函数的内容，这里需要对 Mach-O 结构足够熟悉，[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
+
+&emsp;下面每行代码的注释都很清晰。
 
 ```c++
-bool ksdl_dladdr(const uintptr_t address, Dl_info* const info)
-{
+bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
     info->dli_fname = NULL;
     info->dli_fbase = NULL;
     info->dli_sname = NULL;
@@ -432,8 +430,6 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info)
     return true;
 }
 ```
-
-
 
 
 
