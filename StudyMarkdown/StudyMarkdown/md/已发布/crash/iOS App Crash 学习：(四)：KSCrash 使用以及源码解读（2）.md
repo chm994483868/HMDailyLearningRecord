@@ -283,10 +283,10 @@ int main(int argc, const char * argv[]) {
 
 &emsp;Dl_info 结构体的成员变量：
 
-+ dli_fname 一个 char 指针，指向包含指定地址的加载模块的路径。
-+ dli_fbase 加载模块的句柄，该句柄可用作 dlsym 的第一个参数。
-+ dli_sname 一个 char 指针，指向与指定的地址最接近的符号的名称，该符号要么带有相同的地址，要么是带有低位地址的最接近符号。
-+ dli_saddr 最接近符号的实际地址。
++ dli_fname 一个 char 指针，指向包含指定地址的加载模块（image）的路径。
++ dli_fbase 加载模块（image）的句柄（地址），该句柄（地址）可用作 dlsym 的第一个参数。
++ dli_sname 一个 char 指针，指向与指定地址最接近的符号的名称，该符号要么带有相同的地址，要么是带有低位地址的最接近符号。
++ dli_saddr 指定地址最接近的符号的实际地址。
 
 &emsp;dladdr 函数是有一个 int 类型的返回值的，如果指定的地址不在其中一个加载模块的范围内，则返回 0，且不修改 `Dl_info` 结构体的成员变量，否则，将返回一个非零值，同时设置 `Dl_info` 结构体的各成员变量的值。
 
@@ -331,8 +331,12 @@ bool kssymbolicator_symbolicate(KSStackCursor *cursor) {
 }
 ```
 
+## ksdl_dladdr
+ 
 &emsp;上面我们看学习了 dladdr 函数的内容，但发现 ksdl_dladdr 函数并不是对 dladdr 函数的封装，ksdl_dladdr 函数内部是：直接查找地址所在的 image -> 查找 LC_SYMTAB 段 -> 比较符号地址。
 
+&emsp;ksdl_dladdr 函数是 dladdr 的异步安全版本。此方法在 dynamic loader 中搜索有关包含指定地址的任何 image 的信息。它可能无法完全成功地查找信息，在这种情况下，它找不到符号时 info 参数的任何字段都将设置为 NULL。与 dladdr 不同，此方法不使用锁，也不调用异步不安全函数。
+ 
 &emsp;下面我们快速的过一遍 ksdl_dladdr 函数的内容，这里需要对 Mach-O 结构足够熟悉，[iOS APP 启动优化(一)：ipa 包和 Mach-O( Mach Object File Format)概述](https://juejin.cn/post/6952503696945070116)。
 
 &emsp;下面每行代码的注释都很清晰。
@@ -374,7 +378,8 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
     // 查找符号表并获取最接近地址的符号。
     
     // typedef struct nlist_64 nlist_t; 
-    // nlist_64 是一个结构体，用来描述符号表中每个条目的结构信息，比如包含：符号名的字符串在 string Table 中的索引、符号的类型、所在的 section number、符号偏移值
+    // nlist_64 是一个结构体，用来描述符号表中每个条目的结构信息，比如包含：符号名的字符串在 string Table 中的索引、符号的类型、所在的 section number、符号偏移值，
+    // bestMatch 临时变量记录最接近 address 的符号
     const nlist_t* bestMatch = NULL;
     uintptr_t bestDistance = ULONG_MAX;
     
@@ -399,28 +404,38 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
             const uintptr_t stringTable = segmentBase + symtabCmd->stroff;
 
             // symtabCmd->nsyms 的值是符号表条目数
-            // 遍历符号表的条目
+            // 遍历符号表的条目，找到和 address 最近的符号并记录在 bestMatch 中
             for (uint32_t iSym = 0; iSym < symtabCmd->nsyms; iSym++) {
                 // If n_value is 0, the symbol refers to an external object.
-                // 如果n_value为 0，则符号引用外部对象。
+                // 如果 n_value 为 0，则符号引用外部对象。
                 
                 if (symbolTable[iSym].n_value != 0) {
+                    
+                    // 取到符号的地址
                     uintptr_t symbolBase = symbolTable[iSym].n_value;
+                    // 取得符号和 address 的距离
                     uintptr_t currentDistance = addressWithSlide - symbolBase;
+                    
                     if((addressWithSlide >= symbolBase) && (currentDistance <= bestDistance)) {
+                        // 记录当前匹配的符号
                         bestMatch = symbolTable + iSym;
+                        // 更新最近距离
                         bestDistance = currentDistance;
                     }
                 }
             }
             
+            // 找到匹配的符号后，更新 info 参数的各个值，记录此匹配符号的信息
             if (bestMatch != NULL) {
+                // 记录 address 最接近的符号的实际地址
                 info->dli_saddr = (void*)(bestMatch->n_value + imageVMAddrSlide);
+                
+                // 构建版本中不包含符号表，无法取得对应的符号名字
                 if (bestMatch->n_desc == 16) {
-                    // This image has been stripped. The name is meaningless, and
-                    // almost certainly resolves to "_mh_execute_header"
+                    // This image has been stripped. The name is meaningless, and almost certainly resolves to "_mh_execute_header"
                     info->dli_sname = NULL;
                 } else {
+                    // 从 string table 中找到符号对应的名字的字符串
                     info->dli_sname = (char*)((intptr_t)stringTable + (intptr_t)bestMatch->n_un.n_strx);
                     if (*info->dli_sname == '_') {
                         info->dli_sname++;
@@ -429,7 +444,7 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
                 break;
             }
         }
-        
+        // cmdPtr 指针偏移到下一个 load_command
         cmdPtr += loadCmd->cmdsize;
     }
     
@@ -437,30 +452,13 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
 }
 ```
 
+&emsp;至此 ksdl_dladdr 函数就看完了，如果熟悉 Mach-O 的话还是特别清晰的，kssymbolicator_symbolicate 作为任何类型异常发生时的函数堆栈回溯符号化的公共函数。
 
+&emsp;根据目前的知识储备虽然能看懂 Mach-O 的内容，但是我对函数堆栈回溯还是好迷糊，准备再详细学习一下函数调用堆栈的内容。
 
+&emsp;KSCrash 对不同的类型的异常处理都集中在 Monitors 文件夹中，这里就不在一一列举了。 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-+ [chinese](https://faisalmemon.github.io/ios-crash-dump-analysis-book/zh/)
-
+&emsp;这里 KSCrash 框架不再做过多停留了，下面集中精力阅读 [ios-crash-dump-analysis-book/zh](https://faisalmemon.github.io/ios-crash-dump-analysis-book/zh/)。⛽️⛽️
 
 ## 参考链接
 **参考链接:🔗**
@@ -469,4 +467,5 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info) {
 + [动态链接库加载拾遗&dladdr函数使用](https://www.jianshu.com/p/1ef4460b63db)
 + [thread_local与\_\_thread的区别](https://blog.csdn.net/weixin_43705457/article/details/106624781)
 + [ios-crash-dump-analysis-book](https://github.com/faisalmemon/ios-crash-dump-analysis-book)
++ [ios-crash-dump-analysis-book/zh](https://faisalmemon.github.io/ios-crash-dump-analysis-book/zh/)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
