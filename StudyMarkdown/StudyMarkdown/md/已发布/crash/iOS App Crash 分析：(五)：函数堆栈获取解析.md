@@ -18,9 +18,21 @@
 
 &emsp;CPSR 状态寄存器
 
+```c++
+/* Get the current mach thread ID.
+ * mach_thread_self() receives a send right for the thread port which needs to be deallocated to balance the reference count. This function takes care of all of that for you.
+ *
+ * @return The current thread ID.
+ */
+KSThread ksthread_self(void);
 
-
-
+KSThread ksthread_self()
+{
+    thread_t thread_self = mach_thread_self();
+    mach_port_deallocate(mach_task_self(), thread_self);
+    return (KSThread)thread_self;
+}
+```
 
 
 
@@ -40,6 +52,8 @@
 + [ios-crash-dump-analysis-book/zh](https://faisalmemon.github.io/ios-crash-dump-analysis-book/zh/)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
 + [iOS堆栈信息解析（函数地址与符号关联）](https://www.jianshu.com/p/df5b08330afd)
-
++ [Mach微内核简介](https://wangkejie.com/iOS/kernelarchitecture/mach.html)
++ [Mach Overview](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html)
++ [谈谈iOS堆栈那些事](https://joey520.github.io/2020/03/15/谈谈msgSend为什么不会出现在堆栈中/)
 + [iOS 的崩溃捕获-堆栈符号化-崩溃分析](https://www.jianshu.com/p/302ed945e9cf)
 + [iOS/OSX Crash：捕捉异常](https://zhuanlan.zhihu.com/p/271282052)
