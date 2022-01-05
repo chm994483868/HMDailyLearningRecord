@@ -10,7 +10,13 @@
 
 &emsp;x29(FP) 通常用作帧指针 fp (frame pointer 寄存器) ，栈帧基址寄存器，指向当前函数栈帧的栈底。
 
-&emsp;x30(LR) 
+&emsp;x30(LR) 链接寄存器（link register）。它保存了当目前函数返回时下一个函数的地址。
+
+&emsp;SP 栈指针（stack pointer）存放指向栈顶的指针，使用 SP/WSP 来进行对 SP 寄存器的访问。
+
+&emsp;PC 程序计数器（program counter）它存放了当前执行指令的地址，在每个指令执行完成后会自动增加。
+
+&emsp;CPSR 状态寄存器
 
 
 
