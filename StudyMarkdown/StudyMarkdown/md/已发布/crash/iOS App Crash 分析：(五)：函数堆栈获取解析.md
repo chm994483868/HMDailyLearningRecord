@@ -1,5 +1,157 @@
 # iOS App Crash 分析：(五)：函数堆栈获取解析
 
+&emsp;虽然我们日常开发大部分情况下不需要直接编写汇编指令，但是能看懂汇编指令能分析对应的代码逻辑对我们理解计算机运行逻辑还是有极大促进作用的（内功）。特别是当我们解决 Crash 问题时，利用汇编调试技巧进行反汇编更易使我们定位到问题根源。
+ 
+&emsp;学习函数调用栈相关的内容之前我们需要了解汇编相关的三个重要概念：寄存器、堆栈、指令集，其中寄存器、指令集在不同的架构下有不同的名字，但是基本概念都是一致的，这里我们使用 x86 和 arm64 为例来学习。
+
+## 寄存器
+
+> &emsp;寄存器（Register）是计算机 CPU 内用来暂存指令、数据和地址的内部存储器。
+> 寄存器的存贮容量有限，读写速度非常快。在计算机体系结构里，寄存器存储在已知时间点所做计算的中间结果，通过快速地访问数据来加速计算机程序的执行。
+> &emsp;寄存器位于存储器层次结构的最顶端，也是CPU可以读写的最快的存储器，事实上所谓的暂存已经不像存储器，而是非常短暂的读写少量信息并马上用到，因为通常程序执行的步骤中，这期间就会一直使用它。寄存器通常都是以他们可以保存的比特数量来计量，举例来说，一个8位寄存器或32位寄存器。在中央处理器中，包含寄存器的部件有指令寄存器（IR）、程序计数器和累加器。寄存器现在都以寄存器数组的方式来实现，但是他们也可能使用单独的触发器、高速的核心存储器、薄膜存储器以及在数种机器上的其他方式来实现出来。
+寄存器也可以指代由一个指令之输出或输入可以直接索引到的寄存器组群，这些寄存器的更确切的名称为“架构寄存器”。例如，x86指令集定义八个32位寄存器的集合，但一个实现x86指令集的CPU内部可能会有八个以上的寄存器。
+
+
+
+
+```c++
+#if __LP64__
+// true arm64
+
+#define SUPPORT_TAGGED_POINTERS 1
+#define PTR .quad
+#define PTRSIZE 8
+#define PTRSHIFT 3  // 1<<PTRSHIFT == PTRSIZE
+// "p" registers are pointer-sized
+#define UXTP UXTX
+#define p0  x0
+#define p1  x1
+#define p2  x2
+#define p3  x3
+#define p4  x4
+#define p5  x5
+#define p6  x6
+#define p7  x7
+#define p8  x8
+#define p9  x9
+#define p10 x10
+#define p11 x11
+#define p12 x12
+#define p13 x13
+#define p14 x14
+#define p15 x15
+#define p16 x16
+#define p17 x17
+
+// true arm64
+#else
+// arm64_32
+
+#define SUPPORT_TAGGED_POINTERS 0
+#define PTR .long
+#define PTRSIZE 4
+#define PTRSHIFT 2  // 1<<PTRSHIFT == PTRSIZE
+// "p" registers are pointer-sized
+#define UXTP UXTW
+#define p0  w0
+#define p1  w1
+#define p2  w2
+#define p3  w3
+#define p4  w4
+#define p5  w5
+#define p6  w6
+#define p7  w7
+#define p8  w8
+#define p9  w9
+#define p10 w10
+#define p11 w11
+#define p12 w12
+#define p13 w13
+#define p14 w14
+#define p15 w15
+#define p16 w16
+#define p17 w17
+
+// arm64_32
+#endif
+```
+
+&emsp;
+
+```c++
+(lldb) help register
+Commands to access registers for the current thread and stack frame.
+
+Syntax: register [read|write] ...
+
+The following subcommands are supported:
+
+      read  -- Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.
+      write -- Modify a single register value.
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+```c++
+(lldb) help register read
+Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.
+
+Syntax: register read <cmd-options> [<register-name> [<register-name> [...]]]
+
+Command Options Usage:
+  register read [-A] [-f <format>] [-G <gdb-format>] [-s <index>] [<register-name> [<register-name> [...]]]
+  register read [-Aa] [-f <format>] [-G <gdb-format>] [<register-name> [<register-name> [...]]]
+
+       -A ( --alternate )
+            Display register names using the alternate register name if there is one.
+
+       -G <gdb-format> ( --gdb-format <gdb-format> )
+            Specify a format using a GDB format specifier string.
+
+       -a ( --all )
+            Show all register sets.
+
+       -f <format> ( --format <format> )
+            Specify a format to be used for display.
+
+       -s <index> ( --set <index> )
+            Specify which register sets to dump by index.
+     
+     This command takes options and free-form arguments.  
+     If your arguments resemble option specifiers (i.e., they start with a - or --), you must use ' -- ' between the end of the command options and the beginning of the
+     arguments.
+```
+
+```c++
+(lldb) register read -A
+General Purpose Registers:
+       rax = 0x0000000000000000
+       rbx = 0x00007f83746262e0
+      arg4 = 0x0000000203227600  dyld`_main_thread
+      arg3 = 0x000000000000010e
+      arg1 = 0x00007f83746262e0
+      arg2 = 0x0000000127ebe99d  "viewDidLoad"
+        fp = 0x000000030a1baf70
+        sp = 0x000000030a1baf50
+      arg5 = 0x000000010d1ee0b0  libsystem_pthread.dylib`_pthread_keys
+      arg6 = 0x00007f8374831140
+       r10 = 0x0000000102f6f362  (void *)0xf9b80000000102f6
+       r11 = 0x0000000102f62220  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:33
+       r12 = 0x0000000000000278
+       r13 = 0x000000010ba103c0  libobjc.A.dylib`objc_msgSend
+       r14 = 0x0000000000000000
+       r15 = 0x000000010ba103c0  libobjc.A.dylib`objc_msgSend
+        pc = 0x0000000102f62230  TEST_MENU`-[ViewController viewDidLoad] + 16 at ViewController.m:34:5
+     flags = 0x0000000000000206
+        cs = 0x000000000000002b
+        fs = 0x0000000000000000
+        gs = 0x0000000000000000
+
+```
+
+
+
+
 &emsp;搞清楚函数调用栈是怎么获取的，就必须了解这个机制。
 
 &emsp;函数调用栈有个大致的印象，栈帧图：
