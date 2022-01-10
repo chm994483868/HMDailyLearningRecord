@@ -4,12 +4,83 @@
  
 &emsp;学习函数调用栈相关的内容之前我们需要了解汇编相关的三个重要概念：寄存器、堆栈、指令集，其中寄存器、指令集在不同的架构下有不同的名字，但是基本概念都是一致的，这里我们使用 x86 和 arm64 为例来学习。
 
-## 寄存器
+## 寄存器概述
 
-> &emsp;寄存器（Register）是计算机 CPU 内用来暂存指令、数据和地址的内部存储器。
-> 寄存器的存贮容量有限，读写速度非常快。在计算机体系结构里，寄存器存储在已知时间点所做计算的中间结果，通过快速地访问数据来加速计算机程序的执行。
-> &emsp;寄存器位于存储器层次结构的最顶端，也是CPU可以读写的最快的存储器，事实上所谓的暂存已经不像存储器，而是非常短暂的读写少量信息并马上用到，因为通常程序执行的步骤中，这期间就会一直使用它。寄存器通常都是以他们可以保存的比特数量来计量，举例来说，一个8位寄存器或32位寄存器。在中央处理器中，包含寄存器的部件有指令寄存器（IR）、程序计数器和累加器。寄存器现在都以寄存器数组的方式来实现，但是他们也可能使用单独的触发器、高速的核心存储器、薄膜存储器以及在数种机器上的其他方式来实现出来。
-寄存器也可以指代由一个指令之输出或输入可以直接索引到的寄存器组群，这些寄存器的更确切的名称为“架构寄存器”。例如，x86指令集定义八个32位寄存器的集合，但一个实现x86指令集的CPU内部可能会有八个以上的寄存器。
+&emsp;寄存器是 CPU 内部用来存放数据的一些小型存储器，用来暂时存放参与运算的数据和运算结果。其实寄存器就是一种常用的时序逻辑电路，但这种时序逻辑电路只包含存储电路。寄存器的存储电路是由锁存器或触发器构成的，因为一个锁存器或触发器能存储 1 位二进制数，所以由 N 个锁存器或触发器可以构成 N 位寄存器。寄存器是 CPU 内的组成部分。寄存器是有限存储容量的高速存储部件，它们可用来暂存指令、数据和位址。
+
+&emsp;在计算机领域，寄存器是 CPU 内部的元件，按功能划分包括：通用寄存器、专用寄存器和控制寄存器。寄存器拥有非常高的读写速度，所以在寄存器之间的数据传送非常快。
+
+&emsp;寄存器有串行和并行两种数码存取方式。将 n 位二进制数一次存入寄存器或从寄存器中读出的方式称为并行方式。将 n 位二进制数以每次 1 位，分成 n 次存入寄存器并从寄存器读出，这种方式称为串行方式。
+
+&emsp;并行方式只需一个时钟脉冲就可以完成数据操作，工作速度快，但需要 n 根输入和输出数据线。串行方式要使用几个时钟脉冲完成输入或输出操作，工作速度慢，但只需要一根输入或输出数据线，传输线少，适用于远距离传输。[寄存器-百度百科](https://baike.baidu.com/item/寄存器/187682?fr=aladdin)
+
+## 寄存器类型
+
+&emsp;在看具体的寄存器之前，我们先学习一下 LLDB 中的 regist 命令。
+
+### LLDB regist 命令
+
+```c++
+(lldb) help regist
+Commands to access registers for the current thread and stack frame.
+
+Syntax: register [read|write] ...
+
+The following subcommands are supported:
+
+      read  -- Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.
+      write -- Modify a single register value.
+
+For more help on any particular subcommand, type 'help <command> <subcommand>'.
+```
+
+&emsp;regist 用于访问当前线程和 stack frame 的寄存器的命令。它有两条子命令：
+
++ read：从当前 frame Dump 一个或多个寄存器中存储的内容。如果未指定寄存器，则把它们全部 Dump 出来。直白一点理解就是读取寄存器中存储的内容直接打印出来。
++ write：修改单个寄存器的值。
+
+&emsp;下面看一下两个子命令后面都可以使用哪些选项：
+
+```c++
+(lldb) help regist read
+Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.
+
+Syntax: register read <cmd-options> [<register-name> [<register-name> [...]]]
+
+Command Options Usage:
+  register read [-A] [-f <format>] [-G <gdb-format>] [-s <index>] [<register-name> [<register-name> [...]]]
+  register read [-Aa] [-f <format>] [-G <gdb-format>] [<register-name> [<register-name> [...]]]
+
+       -A ( --alternate )
+            Display register names using the alternate register name if there
+            is one.
+
+       -G <gdb-format> ( --gdb-format <gdb-format> )
+            Specify a format using a GDB format specifier string.
+
+       -a ( --all )
+            Show all register sets.
+
+       -f <format> ( --format <format> )
+            Specify a format to be used for display.
+
+       -s <index> ( --set <index> )
+            Specify which register sets to dump by index.
+     
+     This command takes options and free-form arguments.  If your arguments
+     resemble option specifiers (i.e., they start with a - or --), you must use
+     ' -- ' between the end of the command options and the beginning of the
+     arguments.
+
+```
+
+
+
+
+
+
+
+
 
 
 
