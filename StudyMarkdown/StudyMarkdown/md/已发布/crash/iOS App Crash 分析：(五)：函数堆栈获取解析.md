@@ -2,26 +2,28 @@
 
 &emsp;虽然我们日常开发大部分情况下不需要直接编写汇编指令，但是能看懂汇编指令能分析对应的代码逻辑对我们理解计算机运行逻辑还是有极大促进作用的（内功）。特别是当我们解决 Crash 问题时，利用汇编调试技巧进行反汇编更易使我们定位到问题根源。
  
-&emsp;学习函数调用栈相关的内容之前我们需要了解汇编相关的三个重要概念：寄存器、堆栈、指令集，其中寄存器、指令集在不同的架构下有不同的名字，但是基本概念都是一致的，这里我们使用 x86 和 arm64 为例来学习。
+&emsp;学习函数调用栈相关的内容之前我们需要了解汇编相关的三个重要概念：寄存器、堆栈、指令集，其中寄存器、指令集在不同的架构下有不同的名字，但是基本概念都是一致的，这里我们以 x86 和 arm64 为例来学习。
 
 ## 寄存器概述
 
-&emsp;寄存器是 CPU 内部用来存放数据的一些小型存储器，用来暂时存放参与运算的数据和运算结果。其实寄存器就是一种常用的时序逻辑电路，但这种时序逻辑电路只包含存储电路。寄存器的存储电路是由锁存器或触发器构成的，因为一个锁存器或触发器能存储 1 位二进制数，所以由 N 个锁存器或触发器可以构成 N 位寄存器。寄存器是 CPU 内的组成部分。寄存器是有限存储容量的高速存储部件，它们可用来暂存指令、数据和位址。
+&emsp;寄存器是 CPU 内部用来存放数据的一些小型存储器，用来暂时存放参与运算的数据和运算结果。其实寄存器就是一种常用的时序逻辑电路，但这种时序逻辑电路只包含存储电路。寄存器的存储电路是由锁存器或触发器构成的，因为一个锁存器或触发器能存储 1 位二进制数，所以由 N 个锁存器或触发器可以构成 N 位寄存器。
+
+&emsp;寄存器是 CPU 内的组成部分。寄存器是有限存储容量的高速存储部件，它们可用来暂存指令、数据和位址。
 
 &emsp;在计算机领域，寄存器是 CPU 内部的元件，按功能划分包括：通用寄存器、专用寄存器和控制寄存器。寄存器拥有非常高的读写速度，所以在寄存器之间的数据传送非常快。
 
-&emsp;寄存器有串行和并行两种数码存取方式。将 n 位二进制数一次存入寄存器或从寄存器中读出的方式称为并行方式。将 n 位二进制数以每次 1 位，分成 n 次存入寄存器并从寄存器读出，这种方式称为串行方式。
+&emsp;寄存器有串行和并行两种数码存取方式。将 N 位二进制数一次存入寄存器或从寄存器中读出的方式称为并行方式。将 N 位二进制数以每次 1 位，分成 N 次存入寄存器或从寄存器读出，这种方式称为串行方式。
 
-&emsp;并行方式只需一个时钟脉冲就可以完成数据操作，工作速度快，但需要 n 根输入和输出数据线。串行方式要使用几个时钟脉冲完成输入或输出操作，工作速度慢，但只需要一根输入或输出数据线，传输线少，适用于远距离传输。[寄存器-百度百科](https://baike.baidu.com/item/寄存器/187682?fr=aladdin)
+&emsp;并行方式只需一个时钟脉冲就可以完成数据操作，工作速度快，但需要 N 根输入和输出数据线。串行方式要使用几个时钟脉冲完成输入或输出操作，工作速度慢，但只需要一根输入或输出数据线，传输线少，适用于远距离传输。[寄存器-百度百科](https://baike.baidu.com/item/寄存器/187682?fr=aladdin)
 
 ## 寄存器类型
 
-&emsp;在看具体的寄存器之前，我们先学习一下 LLDB 中的 regist 命令。
+&emsp;在看具体的寄存器之前，我们先学习一下 LLDB 中的 register 命令。
 
-### LLDB regist 命令
+### LLDB register 命令
 
 ```c++
-(lldb) help regist
+(lldb) help register
 Commands to access registers for the current thread and stack frame.
 
 Syntax: register [read|write] ...
@@ -34,7 +36,7 @@ The following subcommands are supported:
 For more help on any particular subcommand, type 'help <command> <subcommand>'.
 ```
 
-&emsp;regist 用于访问当前线程和 stack frame 的寄存器的命令。它有两条子命令：
+&emsp;register 命令用于访问当前线程和 stack frame 的寄存器的命令。它有两条子命令：
 
 + read：从当前 frame Dump 一个或多个寄存器中存储的内容。如果未指定寄存器，则把它们全部 Dump 出来。直白一点理解就是读取寄存器中存储的内容直接打印出来。
 + write：修改单个寄存器的值。
@@ -51,35 +53,185 @@ Command Options Usage:
   register read [-A] [-f <format>] [-G <gdb-format>] [-s <index>] [<register-name> [<register-name> [...]]]
   register read [-Aa] [-f <format>] [-G <gdb-format>] [<register-name> [<register-name> [...]]]
 
-       -A ( --alternate )
-            Display register names using the alternate register name if there
-            is one.
+       -A ( --alternate ) Display register names using the alternate register name if there is one.
 
-       -G <gdb-format> ( --gdb-format <gdb-format> )
-            Specify a format using a GDB format specifier string.
+       -G <gdb-format> ( --gdb-format <gdb-format> ) Specify a format using a GDB format specifier string.
 
-       -a ( --all )
-            Show all register sets.
+       -a ( --all ) Show all register sets.
 
-       -f <format> ( --format <format> )
-            Specify a format to be used for display.
+       -f <format> ( --format <format> ) Specify a format to be used for display.
 
-       -s <index> ( --set <index> )
-            Specify which register sets to dump by index.
+       -s <index> ( --set <index> ) Specify which register sets to dump by index.
      
-     This command takes options and free-form arguments.  If your arguments
-     resemble option specifiers (i.e., they start with a - or --), you must use
-     ' -- ' between the end of the command options and the beginning of the
+     This command takes options and free-form arguments.  
+     If your arguments resemble option specifiers (i.e., they start with a - or --), you must use ' -- ' between the end of the command options and the beginning of the
      arguments.
-
 ```
 
+&emsp;-A/-a 选项都是打印出当前所有寄存器，其中 -A 使用 alternate 寄存器名称（如果有）显示寄存器名称，-a 显示所有寄存器的集合。
+
+```c++
+(lldb) help register write
+Modify a single register value.
+
+Syntax: register write <register-name> <value>
+```
+
+&emsp;修改指定寄存器的值。
+
+### 不同平台 LLDB register 命令使用示例
+
+&emsp;然后我们在 ARM64 和 x86 平台下看一下它们都有哪些寄存器。我们分别选择以模拟器或真机进入 LLDB 调试模式，然后在 Xcode 控制台使用 register read 命令查看打印内容。
+
+#### ARM64
+
+&emsp;已知 iPhone 系列都是 ARM 架构的 CPU，且自 iPhone 5s 以来开始进入 64 位的 arm64 架构。
+
+&emsp;这里我们使用 viewDidLoad 函数为示例代码，下面学习指令集时也以 viewDidLoad 函数为示例代码，在 viewDidLoad 函数处打一个断点，选中真机（iPhone X）然后运行程序，断点命中后进入 LLDB 调试模式，使用 `register read --all` 命令打印所有寄存器，可看到其中包括：General Purpose Registers、Floating Point Registers、Exception State Registers。
+
+&emsp;这里我们只专注于 General Purpose Registers，看到 ARM64 下有：x0-x28（通用寄存器）、fp（x29 frame pointer 栈底寄存器）、lr（x30 link register 链接寄存器）、sp（x31 stack pointer 栈顶寄存器）、pc（x32 program counter 程序计数器）、cpsr（x33 状态寄存器）共 34 个 64 bit 的 General Purpose Registers，w0-w28 是 x0-x28 的低 32 bit。
+
+```c++
+(lldb) register read --all
+General Purpose Registers:
+        x0 = 0x0000000149e09700  // w0 = 0x49e09700
+        x1 = 0x000000019b043c57  // w1 = 0x9b043c57
+        x2 = 0x0000000000000001  // w2 = 0x00000001
+        x3 = 0x000000016dbf1b90  // w3 = 0x6dbf1b90
+        x4 = 0x0000000000000010  // w4 = 0x00000010
+        x5 = 0x0000000000000020  // w5 = 0x00000020
+        x6 = 0x000000016dbf1890  // w6 = 0x6dbf1890
+        x7 = 0x0000000000000000  // w7 = 0x00000000
+        x8 = 0x000000019b043000  // w8 = 0x9b043000
+        x9 = 0x0000000000000000  // w9 = 0x00000000
+       x10 = 0x000000000000002f  // w10 = 0x0000002f
+       x11 = 0x000000014a824ef8  // w11 = 0x4a824ef8
+       x12 = 0x000000000000002f  // w12 = 0x0000002f
+       x13 = 0x0000000000000000  // w13 = 0x00000000
+       x14 = 0x000000014a824c00  // w14 = 0x4a824c00
+       x15 = 0x000000014a824c00  // w15 = 0x4a824c00
+       x16 = 0x0000000102219302  (void *)0x78e0000000010221  // w16 = 0x02219302
+       x17 = 0x0000000102211d6c  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:16  // w17 = 0x02211d6c
+       x18 = 0x0000000000000000  // w18 = 0x00000000
+       x19 = 0x0000000149e09700  // w19 = 0x49e09700
+       x20 = 0x0000000000000000  // w20 = 0x00000000
+       x21 = 0x00000001f2d9c000  (void *)0x000000019efcba50  // w21 = 0xf2d9c000
+       x22 = 0x000000019ba00157  // w22 = 0x9ba00157
+       x23 = 0x000000019af2039d  // w23 = 0x9af2039d
+       x24 = 0x0000000000000000  // w24 = 0x00000000
+       x25 = 0x00000001f3987000  UIKitCore`_UIWindowSceneActivationSettings._pinchActivationScaleThreshold  // w25 = 0xf3987000
+       x26 = 0x0000000149e083b0  // w26 = 0x49e083b0
+       x27 = 0x000000019b639957  // w27 = 0x9b639957
+       x28 = 0x00000001f84cf4f0  CoreFoundation`__NSArray0__struct  // w28 = 0xf84cf4f0
+        fp = 0x000000016dbf1a00
+        lr = 0x00000001830f26c8  UIKitCore`-[UIViewController _sendViewDidLoadWithAppearanceProxyObjectTaggingEnabled] + 104
+        sp = 0x000000016dbf19e0
+        pc = 0x0000000102211d80  TEST_MENU`-[ViewController viewDidLoad] + 20 at ViewController.m:17:5
+      cpsr = 0x40000000
+      
+Floating Point Registers:
+        ...
+
+Exception State Registers:
+        ...
+```
+
+&emsp;同时我们使用 register read --alternate/register read -A 命令打印，看一下寄存器的备用名，可看到我们说的最多的 
 
 
 
 
 
 
+&emsp;然后选择模拟器，在 Xcode 控制台 x86 架构下如下，分组依然是：General Purpose Registers、Floating Point Registers、Exception State Registers 的分组。
+
+&emsp;General Purpose Registers: rax、rbx、rcx、rdx、rdi、rsi、rbp、rsp、r8、r9、r10、r11、r12、r13、r14、r15、rip、rflags、cs、fs、gs。
+
+```c++
+(lldb) register read --all
+General Purpose Registers:
+       rax = 0x0000000000000000
+       rbx = 0x00007fba8450e120
+       rcx = 0x0000000202633600  dyld`_main_thread
+       rdx = 0x000000000000010d
+       rdi = 0x00007fba8450e120
+       rsi = 0x000000012722799d  "viewDidLoad"
+       rbp = 0x000000030893bf70
+       rsp = 0x000000030893bf50
+        r8 = 0x000000010c5570b0  libsystem_pthread.dylib`_pthread_keys
+        r9 = 0x00007fba83837e70
+       r10 = 0x00000001022de49a  (void *)0x89b800000001022d
+       r11 = 0x00000001022d6d00  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:16
+       r12 = 0x0000000000000278
+       r13 = 0x000000010ad793c0  libobjc.A.dylib`objc_msgSend
+       r14 = 0x0000000000000000
+       r15 = 0x000000010ad793c0  libobjc.A.dylib`objc_msgSend
+       rip = 0x00000001022d6d10  TEST_MENU`-[ViewController viewDidLoad] + 16 at ViewController.m:17:5
+    rflags = 0x0000000000000206
+        cs = 0x000000000000002b
+        fs = 0x0000000000000000
+        gs = 0x0000000000000000
+       ...
+
+Floating Point Registers:
+        ...
+
+Exception State Registers:
+        ...
+```
+
+| 64 bit | 低 32 bit | 低 16 bit | 低 8 bit |
+| -- | -- | -- | -- |
+| rax = 0x0000000000000000 | eax = 0x00000000 | ax = 0x0000 | ah = 0x00 al = 0x00 |
+| rbx = 0x00007fba8450e120 | ebx = 0x8450e120 | bx = 0xe120 | bh = 0xe1 bl = 0x20 |
+| rcx = 0x0000000202633600 | ecx = 0x02633600 | cx = 0x3600 | ch = 0x36 cl = 0x00 |
+| rdx = 0x000000000000010d | edx = 0x0000010d | dx = 0x010d | dh = 0x01 dl = 0x0d |
+| rdi = 0x00007fba8450e120 | edi = 0x8450e120 | di = 0xe120 | dil = 0x20 |
+| rsi = 0x000000012722799d | esi = 0x2722799d | si = 0x799d | sil = 0x9d |
+| rbp = 0x000000030893bf70 | ebp = 0x0893bf70 | bp = 0xbf70 | bpl = 0x70 |
+| rsp = 0x000000030893bf50 | esp = 0x0893bf50 | sp = 0xbf50 | spl = 0x50 |
+| r8 = 0x000000010c5570b0 | r8d = 0x0c5570b0 | r8w = 0x70b0 | r8l = 0xb0 |
+| r9 = 0x00007fba83837e70 | r9d = 0x83837e70 | r9w = 0x7e70 | r9l = 0x70 |
+| r10 = 0x00000001022de49a | r10d = 0x022de49a | r10w = 0xe49a | r10l = 0x9a |
+| r11 = 0x00000001022d6d00 | r11d = 0x022d6d00 | r11w = 0x6d00 | r11l = 0x00 |
+| r12 = 0x0000000000000278 | r12d = 0x00000278 | r12w = 0x0278 | r12l = 0x78 |
+| r13 = 0x000000010ad793c0 | r13d = 0x0ad793c0 | r13w = 0x93c0 | r13l = 0xc0 |
+| r14 = 0x0000000000000000 | r14d = 0x00000000 | r14w = 0x0000 | r14l = 0x00 |
+| r15 = 0x000000010ad793c0 | r15d = 0x0ad793c0 | r15w = 0x93c0 | r15l = 0xc0 |
+| rip = 0x00000001022d6d10 | - | - | - |
+| rflags = 0x0000000000000206 | - | - | - |
+| cs = 0x000000000000002b | - | - | - |
+| fs = 0x0000000000000000 | - | - | - |
+| gs = 0x0000000000000000 | - | - | - |
+| rax = 0x0000000000000000 | - | - | - |
+| rax = 0x0000000000000000 | - | - | - |
+| rax = 0x0000000000000000 | - | - | - |
+| rax = 0x0000000000000000 | - | - | - |
+| rax = 0x0000000000000000 | - | - | - |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```c++
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+```
 
 
 
@@ -149,49 +301,6 @@ Command Options Usage:
 
 &emsp;
 
-```c++
-(lldb) help register
-Commands to access registers for the current thread and stack frame.
-
-Syntax: register [read|write] ...
-
-The following subcommands are supported:
-
-      read  -- Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.
-      write -- Modify a single register value.
-
-For more help on any particular subcommand, type 'help <command> <subcommand>'.
-```
-
-```c++
-(lldb) help register read
-Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.
-
-Syntax: register read <cmd-options> [<register-name> [<register-name> [...]]]
-
-Command Options Usage:
-  register read [-A] [-f <format>] [-G <gdb-format>] [-s <index>] [<register-name> [<register-name> [...]]]
-  register read [-Aa] [-f <format>] [-G <gdb-format>] [<register-name> [<register-name> [...]]]
-
-       -A ( --alternate )
-            Display register names using the alternate register name if there is one.
-
-       -G <gdb-format> ( --gdb-format <gdb-format> )
-            Specify a format using a GDB format specifier string.
-
-       -a ( --all )
-            Show all register sets.
-
-       -f <format> ( --format <format> )
-            Specify a format to be used for display.
-
-       -s <index> ( --set <index> )
-            Specify which register sets to dump by index.
-     
-     This command takes options and free-form arguments.  
-     If your arguments resemble option specifiers (i.e., they start with a - or --), you must use ' -- ' between the end of the command options and the beginning of the
-     arguments.
-```
 
 ```c++
 (lldb) register read -A
