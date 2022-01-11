@@ -79,7 +79,7 @@ Syntax: register write <register-name> <value>
 
 &emsp;修改指定寄存器的值。
 
-### 不同平台 LLDB register 命令使用示例
+### 使用 LLDB register 命令查看不同平台的寄存器
 
 &emsp;然后我们在 ARM64 和 x86 平台下看一下它们都有哪些寄存器。我们分别选择以模拟器或真机进入 LLDB 调试模式，然后在 Xcode 控制台使用 register read 命令查看打印内容。
 
@@ -87,65 +87,94 @@ Syntax: register write <register-name> <value>
 
 &emsp;已知 iPhone 系列都是 ARM 架构的 CPU，且自 iPhone 5s 以来开始进入 64 位的 arm64 架构。
 
-&emsp;这里我们使用 viewDidLoad 函数为示例代码，下面学习指令集时也以 viewDidLoad 函数为示例代码，在 viewDidLoad 函数处打一个断点，选中真机（iPhone X）然后运行程序，断点命中后进入 LLDB 调试模式，使用 `register read --all` 命令打印所有寄存器，可看到其中包括：General Purpose Registers、Floating Point Registers、Exception State Registers。
+&emsp;这里我们使用 viewDidLoad 函数为示例代码，下面学习指令集时也以 viewDidLoad 函数为示例代码，在 viewDidLoad 函数处打一个断点，选中真机（iPhone X）然后运行程序，断点命中后进入 LLDB 调试模式，使用 `register read --all` 命令打印所有寄存器，可看到其中包括：General Purpose Registers、Floating Point Registers、Exception State Registers 三个分组。
 
-&emsp;这里我们只专注于 General Purpose Registers，看到 ARM64 下有：x0-x28（通用寄存器）、fp（x29 frame pointer 栈底寄存器）、lr（x30 link register 链接寄存器）、sp（x31 stack pointer 栈顶寄存器）、pc（x32 program counter 程序计数器）、cpsr（x33 状态寄存器）共 34 个 64 bit 的 General Purpose Registers，w0-w28 是 x0-x28 的低 32 bit。
+&emsp;这里我们只专注于 General Purpose Registers 分组，看到 ARM64 下有：x0-x28（通用寄存器）、fp（x29 frame pointer 栈底寄存器）、lr（x30 link register 链接寄存器）、sp（x31 stack pointer 栈顶寄存器）、pc（x32 program counter 程序计数器）、cpsr（x33 状态寄存器）共 34 个 64 bit 的 General Purpose Registers，w0-w28 表示 x0-x28 的低 32 bit。
 
 ```c++
 (lldb) register read --all
 General Purpose Registers:
-        x0 = 0x0000000149e09700  // w0 = 0x49e09700
+        x0 = 0x0000000102d08360  // w0 = 0x02d08360
         x1 = 0x000000019b043c57  // w1 = 0x9b043c57
         x2 = 0x0000000000000001  // w2 = 0x00000001
-        x3 = 0x000000016dbf1b90  // w3 = 0x6dbf1b90
+        x3 = 0x000000016d59db90  // w3 = 0x6d59db90
         x4 = 0x0000000000000010  // w4 = 0x00000010
         x5 = 0x0000000000000020  // w5 = 0x00000020
-        x6 = 0x000000016dbf1890  // w6 = 0x6dbf1890
+        x6 = 0x000000016d59d890  // w6 = 0x6d59d890
         x7 = 0x0000000000000000  // w7 = 0x00000000
         x8 = 0x000000019b043000  // w8 = 0x9b043000
         x9 = 0x0000000000000000  // w9 = 0x00000000
        x10 = 0x000000000000002f  // w10 = 0x0000002f
-       x11 = 0x000000014a824ef8  // w11 = 0x4a824ef8
-       x12 = 0x000000000000002f  // w12 = 0x0000002f
+       x11 = 0x0000000103023258  // w11 = 0x03023258
+       x12 = 0x0000000000000025  // w12 = 0x00000025
        x13 = 0x0000000000000000  // w13 = 0x00000000
-       x14 = 0x000000014a824c00  // w14 = 0x4a824c00
-       x15 = 0x000000014a824c00  // w15 = 0x4a824c00
-       x16 = 0x0000000102219302  (void *)0x78e0000000010221  // w16 = 0x02219302
-       x17 = 0x0000000102211d6c  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:16  // w17 = 0x02211d6c
+       x14 = 0x0000000000000000  // w14 = 0x00000000
+       x15 = 0xffffffffffffffff  // w15 = 0xffffffff
+       x16 = 0x000000010286d2b2  (void *)0x78e0000000010286  // w16 = 0x0286d2b2
+       x17 = 0x0000000102865f60  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:16 // w17 = 0x02865f60
        x18 = 0x0000000000000000  // w18 = 0x00000000
-       x19 = 0x0000000149e09700  // w19 = 0x49e09700
+       x19 = 0x0000000102d08360  // w19 = 0x02d08360
        x20 = 0x0000000000000000  // w20 = 0x00000000
        x21 = 0x00000001f2d9c000  (void *)0x000000019efcba50  // w21 = 0xf2d9c000
        x22 = 0x000000019ba00157  // w22 = 0x9ba00157
        x23 = 0x000000019af2039d  // w23 = 0x9af2039d
        x24 = 0x0000000000000000  // w24 = 0x00000000
        x25 = 0x00000001f3987000  UIKitCore`_UIWindowSceneActivationSettings._pinchActivationScaleThreshold  // w25 = 0xf3987000
-       x26 = 0x0000000149e083b0  // w26 = 0x49e083b0
+       x26 = 0x0000000102d06280  // w26 = 0x02d06280
        x27 = 0x000000019b639957  // w27 = 0x9b639957
        x28 = 0x00000001f84cf4f0  CoreFoundation`__NSArray0__struct  // w28 = 0xf84cf4f0
-        fp = 0x000000016dbf1a00
+        fp = 0x000000016d59da00
         lr = 0x00000001830f26c8  UIKitCore`-[UIViewController _sendViewDidLoadWithAppearanceProxyObjectTaggingEnabled] + 104
-        sp = 0x000000016dbf19e0
-        pc = 0x0000000102211d80  TEST_MENU`-[ViewController viewDidLoad] + 20 at ViewController.m:17:5
+        sp = 0x000000016d59d9e0
+        pc = 0x0000000102865f74  TEST_MENU`-[ViewController viewDidLoad] + 20 at ViewController.m:17:5
       cpsr = 0x40000000
       
 Floating Point Registers:
         ...
 
 Exception State Registers:
-        ...
+       ...
+
 ```
 
-&emsp;同时我们使用 register read --alternate/register read -A 命令打印，看一下寄存器的备用名，可看到我们说的最多的 
+&emsp;然后我们再使用 register read --alternate/register read -A 命令打印，看一下寄存器的备用名（alternate register name）。
 
+```c++
+(lldb) register read --alternate
+General Purpose Registers:
+      arg1 = 0x0000000102d08360
+      arg2 = 0x000000019b043c57  
+      arg3 = 0x0000000000000001
+      arg4 = 0x000000016d59db90
+      arg5 = 0x0000000000000010
+      arg6 = 0x0000000000000020
+      arg7 = 0x000000016d59d890
+      arg8 = 0x0000000000000000
+      ...
+```
 
+&emsp;可看到我们听过了很多次的说 x0-x7 是参数寄存器，这里也得到了印证 x0-x7 寄存器的备用名正是 arg1-arg8，如下我们直接读取 x0/arg1 打印的都是 x0，然后我们打印 self，看到其值也正是 x0 寄存器中保存的值，然后打印 `_cmd` 的值是 viewDidLoad，然后把 x1 寄存器的值强转为 SEL 后看到的也是 viewDidLoad，即当前 x0 x1 寄存器中存的值正是当前的函数参数。
 
+```c++
+(lldb) register read x0
+      x0 = 0x0000000102d08360
+(lldb) register read arg1
+      x0 = 0x0000000102d08360
+(lldb) p self
+(ViewController *) $0 = 0x0000000102d08360
+(lldb) p _cmd
+(SEL) $1 = "viewDidLoad"
+(lldb) p (SEL)0x000000019b043c57
+(SEL) $2 = "viewDidLoad"
+```
 
+#### x86
 
+&emsp;下面我们看一下 x86 架构下都有哪些寄存器。
 
-&emsp;然后选择模拟器，在 Xcode 控制台 x86 架构下如下，分组依然是：General Purpose Registers、Floating Point Registers、Exception State Registers 的分组。
+&emsp;同样的操作，这次我们选择模拟器运行调试，在断点命中后在 Xcode 控制台输入 register read --all 命令，看到寄存器分组依然是：General Purpose Registers、Floating Point Registers、Exception State Registers，不过这次寄存器的名字完全发生了变化。
 
-&emsp;General Purpose Registers: rax、rbx、rcx、rdx、rdi、rsi、rbp、rsp、r8、r9、r10、r11、r12、r13、r14、r15、rip、rflags、cs、fs、gs。
+&emsp;General Purpose Registers : rax、rbx、rcx、rdx、rdi、rsi、rbp、rsp、r8、r9、r10、r11、r12、r13、r14、r15、rip、rflags、cs、fs、gs。
 
 ```c++
 (lldb) register read --all
@@ -203,13 +232,42 @@ Exception State Registers:
 | cs = 0x000000000000002b | - | - | - |
 | fs = 0x0000000000000000 | - | - | - |
 | gs = 0x0000000000000000 | - | - | - |
-| rax = 0x0000000000000000 | - | - | - |
-| rax = 0x0000000000000000 | - | - | - |
-| rax = 0x0000000000000000 | - | - | - |
-| rax = 0x0000000000000000 | - | - | - |
-| rax = 0x0000000000000000 | - | - | - |
 
 
+```c++
+(lldb) register read --alternate
+General Purpose Registers:
+       rax = 0x0000000000000000
+       rbx = 0x00007fac55909bf0
+      arg4 = 0x000000010d1c1600  dyld`_main_thread
+      arg3 = 0x000000000000010d
+      arg1 = 0x00007fac55909bf0
+      arg2 = 0x00007fff6c456797
+        fp = 0x00007ff7b6a17f80
+        sp = 0x00007ff7b6a17f60
+      arg5 = 0x00007fff862a40c0  libsystem_pthread.dylib`_pthread_keys
+      arg6 = 0x00007fac5a80d400
+       r10 = 0x00000001094ed3f2  (void *)0xdd3800000001094e
+       r11 = 0x00000001094e5ec0  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:16
+       r12 = 0x0000000000000278
+       r13 = 0x00007fff201803c0  libobjc.A.dylib`objc_msgSend
+       r14 = 0x0000000000000000
+       r15 = 0x00007fff201803c0  libobjc.A.dylib`objc_msgSend
+        pc = 0x00000001094e5ed0  TEST_MENU`-[ViewController viewDidLoad] + 16 at ViewController.m:17:5
+     flags = 0x0000000000000206
+        cs = 0x000000000000002b
+        fs = 0x0000000000000000
+        gs = 0x0000000000000000
+
+(lldb) p 0x00007fac55909bf0
+(long) $2 = 140378146642928
+(lldb) p self
+(ViewController *) $3 = 0x00007fac55909bf0
+(lldb) p (SEL)0x00007fff6c456797
+(SEL) $4 = "viewDidLoad"
+```
+
+&emsp;
 
 
 
