@@ -94,7 +94,7 @@ Syntax: register write <register-name> <value>
 }
 ```
 
-&emsp;这里我们使用 viewDidLoad 函数为示例代码，下面学习指令集时也以 viewDidLoad 函数为示例代码，在 viewDidLoad 函数处打一个断点，选中真机（iPhone X）然后运行程序，断点命中后进入 LLDB 调试模式，使用 `register read --all` 命令打印所有寄存器，可看到其中包括：General Purpose Registers、Floating Point Registers、Exception State Registers 三个分组。
+&emsp;这里我们使用 viewDidLoad 函数为示例代码，下面学习指令集时也以 viewDidLoad 函数为示例代码，在 viewDidLoad 函数处打一个断点，选中真机（iPhone X）然后运行程序，断点命中后进入 LLDB 调试模式，使用 `register read --all` 命令打印所有寄存器，可看到其中包括：General Purpose Registers、Floating Point Registers、Exception State Registers 三个分组的寄存器。
 
 &emsp;这里我们只专注于 General Purpose Registers 分组，看到 ARM64 下有：x0-x28（通用寄存器）、fp（x29 frame pointer 栈底寄存器）、lr（x30 link register 链接寄存器）、sp（x31 stack pointer 栈顶寄存器）、pc（x32 program counter 程序计数器）、cpsr（x33 状态寄存器）共 34 个 64 bit 的 General Purpose Registers，w0-w28 表示 x0-x28 的低 32 bit。
 
@@ -300,8 +300,29 @@ Exception State Registers:
 
 &emsp;x86 和 ARM64 的主要寄存器大概就是这些了，下面的我们详细的看一下这些寄存器的具体作用。
 
-### 栈
+&emsp;看到这里我们零零散散的看了 x86 和 ARM64 架构下的常见寄存器，然后知道寄存器位于 CPU 内部，那么他们的记录的值
 
+
+&emsp;那么怎么把 task、thread、thread state、register 它们连起来呢，register 中保存的值正是 thread 的某个 state 下的值...
+
+&emsp;头文件摘取出来备用
+
+```c++
+#import <i386/_types.h>
+
+#import <i386/_mcontext.h>
+#include <mach/i386/_structs.h>
+#include <mach/arm/_structs.h>
+
+#import <mach/thread_act.h>
+```
+
+
+
+
+## 栈
+
+&emsp;
 
 
 
