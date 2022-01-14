@@ -33,6 +33,8 @@
 		8E3327D926F0227600753049 /* iOS App 启动优化(十四)：clang.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十四)：clang.md"; sourceTree = "<group>"; };
 		8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(六)：dsym文件讲解.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
+		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记.md"; sourceTree = "<group>"; };
+		8E50F0022791A30C00A4DBE1 /* Shell 笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Shell 笔记.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
@@ -158,7 +160,6 @@
 		8E5E58D92686A0010088C814 /* memmove函数使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "memmove函数使用.md"; sourceTree = "<group>"; };
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
-		8E65EF6827844C14000808A3 /* iOS App Crash 分析：(五)：函数堆栈获取解析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：函数堆栈获取解析.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
@@ -170,6 +171,7 @@
 		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
+		8EE78D252791A6EF00287E51 /* 123.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = 123.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -212,10 +214,26 @@
 				8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */,
 				8E1B718727618434005D2CD3 /* iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）.md */,
 				8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */,
-				8E65EF6827844C14000808A3 /* iOS App Crash 分析：(五)：函数堆栈获取解析.md */,
+				8EE78D252791A6EF00287E51 /* 123.md */,
 				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */,
 			);
 			path = crash;
+			sourceTree = "<group>";
+		};
+		8E50EFFF27919E5700A4DBE1 /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记.md */,
+			);
+			path = SwiftUI;
+			sourceTree = "<group>";
+		};
+		8E50F0012791A2EC00A4DBE1 /* Shell */ = {
+			isa = PBXGroup;
+			children = (
+				8E50F0022791A30C00A4DBE1 /* Shell 笔记.md */,
+			);
+			path = Shell;
 			sourceTree = "<group>";
 		};
 		8E53C9F226B29D6400FB0AD7 /* Swift */ = {
@@ -265,7 +283,8 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
-				8E9F7F092767A4DC009C53E1 /* 觉得有必要再写一个Xcode 特性或者调试技巧 */,
+				8E50F0012791A2EC00A4DBE1 /* Shell */,
+				8E50EFFF27919E5700A4DBE1 /* SwiftUI */,
 				8E110CCF270F48A30016FF16 /* LLDB */,
 				8E3327F026F2C38000753049 /* crash */,
 				8E2137B326D2382E00CB9B03 /* Flutter */,
@@ -527,13 +546,6 @@
 				8E5E58922686A0010088C814 /* iOS《Key-Value Observing Programming Guide》官方文档.md */,
 			);
 			path = KVCKVO;
-			sourceTree = "<group>";
-		};
-		8E9F7F092767A4DC009C53E1 /* 觉得有必要再写一个Xcode 特性或者调试技巧 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "觉得有必要再写一个Xcode 特性或者调试技巧";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
