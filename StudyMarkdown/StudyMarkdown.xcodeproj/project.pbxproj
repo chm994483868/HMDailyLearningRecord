@@ -174,6 +174,7 @@
 		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
+		8EEBDE302796408600957397 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -220,6 +221,7 @@
 				8EAFFB4027930EFF00B70023 /* 汇编知识临时文件.md */,
 				8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */,
 				8EAFFB452795979800B70023 /* Temp.md */,
+				8EEBDE302796408600957397 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇.md */,
 			);
 			path = crash;
 			sourceTree = "<group>";
