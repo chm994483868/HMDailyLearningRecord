@@ -200,7 +200,7 @@ General Purpose Registers:
 (SEL) $2 = "viewDidLoad"
 ```
 
-&emsp;下面我们挑选 ARM64 中比较重要的寄存器来分析其功能/作用。(注意这里是 ARM64 架构，和 x86 架构是有一些重要区别的，例如当前函数结束后的返回地址，ARM64 下是保存在 lr 寄存器内，而 x86 则是存在栈底。)
+&emsp;下面我们挑选 ARM64 中比较重要的寄存器来分析其功能/作用。(注意这里是 ARM64 架构，和 x86 架构是有一些重要区别的，例如当前函数结束后的返回地址，ARM64 下是保存在 lr 寄存器内，但是 lr 寄存器只有一个，连续函数调用的话会被覆盖，所有每次函数调用还是会把下一条指令的地址保存在栈低，而 x86 则是没有对应的 lr 寄存器，函数调用时则是直接保存在栈底。)
 
 ##### fp/sp
 
@@ -297,14 +297,14 @@ General Purpose Registers:
 General Purpose Registers:
        rax = 0x0000000000000000  // rax = 0x0000000000000000
        rbx = 0x00007fab1a20a9f0  // rbx = 0x00007fab1a20a9f0
-       rcx = 0x0000000204d16600  dyld`_main_thread  // arg4 = 0x0000000204d16600  dyld`_main_thread（寄存器残留值，寄存器是没有清空操作的，之前函数调用时用到的参数这里还会被残留下来）
-       rdx = 0x000000000000010d  // arg3 = 0x000000000000010d
-       rdi = 0x00007fab1a20a9f0  // arg1 = 0x00007fab1a20a9f0
-       rsi = 0x0000000129c5d99d  "viewDidLoad"  // arg2 = 0x0000000129c5d99d  "viewDidLoad"
+       rcx = 0x0000000204d16600  dyld`_main_thread  // 4⃣️ arg4 = 0x0000000204d16600  dyld`_main_thread（寄存器残留值，寄存器是没有清空操作的，之前函数调用时用到的参数这里还会被残留下来）
+       rdx = 0x000000000000010d  // 3⃣️ arg3 = 0x000000000000010d
+       rdi = 0x00007fab1a20a9f0  // 1⃣️ arg1 = 0x00007fab1a20a9f0
+       rsi = 0x0000000129c5d99d  "viewDidLoad"  // 2⃣️ arg2 = 0x0000000129c5d99d  "viewDidLoad"
        rbp = 0x000000030d789f70  // fp = 0x000000030d789f70
        rsp = 0x000000030d789f50  // sp = 0x000000030d789f50
-        r8 = 0x000000010ec960b0  libsystem_pthread.dylib`_pthread_keys  // arg5 = 0x000000010ec960b0  libsystem_pthread.dylib`_pthread_keys
-        r9 = 0x00007fab1d009720  // arg6 = 0x00007fab1d009720
+        r8 = 0x000000010ec960b0  libsystem_pthread.dylib`_pthread_keys  // 5⃣️ arg5 = 0x000000010ec960b0  libsystem_pthread.dylib`_pthread_keys
+        r9 = 0x00007fab1d009720  // 6⃣️ arg6 = 0x00007fab1d009720
        r10 = 0x0000000104a4949a  (void *)0xe9b80000000104a4 // r10 = 0x0000000104a4949a  (void *)0xe9b80000000104a4
        r11 = 0x0000000104a41d00  TEST_MENU`-[ViewController viewDidLoad] at ViewController.m:16  // r11 = 0x0000000104a41d00
        r12 = 0x0000000000000278  // r12 = 0x0000000000000278
