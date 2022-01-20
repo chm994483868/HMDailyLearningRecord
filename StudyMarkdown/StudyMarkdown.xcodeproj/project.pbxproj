@@ -176,6 +176,7 @@
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
 		8EDF2B552796FF4F005E4B62 /* 汇编指令.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编指令.md"; sourceTree = "<group>"; };
 		8EDF2B5727983E00005E4B62 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇2.md"; sourceTree = "<group>"; };
+		8EDF2B582799A7FD005E4B62 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇3.md"; sourceTree = "<group>"; };
 		8EEBDE302796408600957397 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -226,6 +227,7 @@
 				8EEBDE302796408600957397 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇.md */,
 				8EDF2B552796FF4F005E4B62 /* 汇编指令.md */,
 				8EDF2B5727983E00005E4B62 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇2.md */,
+				8EDF2B582799A7FD005E4B62 /* iOS App Crash 分析：(五)：汇编知识点学习-汇编指令篇3.md */,
 			);
 			path = crash;
 			sourceTree = "<group>";
