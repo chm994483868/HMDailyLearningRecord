@@ -1,22 +1,22 @@
 # iOS App Crash 分析：(五)：汇编知识点学习-指令集篇
 
-&emsp;汇编语言作为机器语言的助记语言应运而生，当你深入的应用它时就会发现汇编语言其实并没有那么的复杂。在一个程序所使用的机器指令中，大部分的指令所做的事情除了计算外就是将数据在寄存器与寄存器之间以及寄存器与内存之间进行移动。在高级语言中我们可以定义名字非常个性化的变量以及无限制数量的变量，而在低级语言中我们则只能使用那几个有限的寄存器来作为临时变量，以及像访问数组那样根据绝对地址/相对地址去访问内存中指定地址保存的数据。
+&emsp;汇编语言作为机器语言（或机器指令）的助记语言应运而生，当你深入的应用它时就会发现汇编语言其实并没有那么的复杂。在一个程序所使用的机器指令中，大部分的指令所做的事情除了计算外就是将数据在寄存器与寄存器之间以及寄存器与内存之间进行移动。在高级语言中我们可以定义名字非常个性化的变量以及无限制数量的变量，而在低级语言中我们则只能使用那几个有限的寄存器来作为临时变量，以及像访问数组那样根据绝对地址/相对地址去访问内存中指定地址保存的数据。
 
 &emsp;下面我们对一些基础知识做一个铺垫。
 
-&emsp;常见的指令集：
+&emsp;常见的指令集有哪些：
 
-+ Intel：x86（1978），EM64T，MMX（1996.10.12 公布），SSE（1999.5.1 随 Pentium 3 CPU 时推出），SSE2（2000.11.1 随 Pentium 4 CPU 推出），SSE3（2004.2.1），SSSE3 (Super SSE3 2006.1.1)，SSE4A（2007.11.11），SSE4.1，SSE4.2，AVX（2008.3.1），AVX2（2011.6.13），AVX-512，VMX 等指令集。
++ Intel：x86（1978），EM64T，MMX（1996.10.12 公布），SSE（1999.5.1 随 Pentium 3 CPU 时推出），SSE2（2000.11.1 随 Pentium 4 CPU 推出），SSE3（2004.2.1），SSSE3 (Super SSE3 2006.1.1)，SSE4A（2007.11.11），SSE4.1，SSE4.2，AVX（2008.3.1），AVX2（2011.6.13），AVX-512，VMX 等指令集（基本均是在 x86 架构中使用的指令集）。
   （SSE 指令集是 x86 架构下的一系列指令，一条指令可以实现多项数据运算，即 SIMD-Single Instruction Multiple Data。）
   
 [x86:SIMD指令集发展历程表（MMX、SSE、AVX 等）](https://blog.csdn.net/weixin_34122604/article/details/86271850?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_default&utm_relevant_index=2)
 
-+ AMD：x86，x86-64，3D-Now!（1998.1.1）（重点提高了 AMD 公司 K6 系列 CPU 对 3D 图形的处理能力）指令集。
++ AMD：x86，x86-64（1999），3D-Now!（1998.1.1）（重点提高了 AMD 公司 K6 系列 CPU 对 3D 图形的处理能力）指令集。
 
 &emsp;常见的 CPU 架构：
 
-+ Inter x86 架构
-+ ARM armv7、armv8、arm64、arm64e 架构
++ Inter x86（x86-64、x64）架构
++ ARM armv7、armv8、arm64、arm64e 等架构
 + IBM PowerPC 架构
 
 ## 指令集（指令系统）概述
@@ -156,3 +156,4 @@
 + [iOS/OSX Crash：捕捉异常](https://zhuanlan.zhihu.com/p/271282052)
 + [汇编过程调用是怎样操作栈的？](https://www.zhihu.com/question/49410551/answer/115870825)
 + [ARM三级流水线](https://blog.csdn.net/qq_34127958/article/details/72791382)
+
