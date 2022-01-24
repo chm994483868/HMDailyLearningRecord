@@ -10,7 +10,7 @@
 
 ## Shell 类型
 
-&emsp;sh(全称 Bourne Shell)，是 UNIX 最初使用的 shell，而且在每种 UNIX上 都可以使用。
+&emsp;sh(全称 Bourne Shell)，是 UNIX 最初使用的 shell，而且在每种 UNIX 上都可以使用。
 
 &emsp;Bourne Shell 在 shell 编程方便相当优秀，但在处理与用户的交互方便作得不如其他几种 shell。
 
@@ -22,7 +22,7 @@
 
 &emsp;Tcsh 是 Linux 提供的 C Shell 的一个扩展版本。
 
-&emsp;Tcsh 包括命令行编辑，可编程单词补全，拼写校正，历史命令替换，作业控制和类似 C 语言的语法，他不仅和 Bash Shell 提示符兼容，而且还提供比 Bash Shell 更多的提示符参数。ksh(全称 Korn Shell)，集合了 C Shell 和 Bourne Shell 的优点并且和 Bourne Shell 完全兼容。
+&emsp;Tcsh 包括命令行编辑，可编程单词补全，拼写校正，历史命令替换，作业控制和类似 C 语言的语法，它不仅和 Bash Shell 提示符兼容，而且还提供比 Bash Shell 更多的提示符参数。ksh(全称 Korn Shell)，集合了 C Shell 和 Bourne Shell 的优点并且和 Bourne Shell 完全兼容。
 
 &emsp;pdksh，是 Linux 系统提供的 ksh 的扩展。
 
@@ -116,6 +116,7 @@ source FileName
 
 ## 参考链接
 **参考链接:🔗**
++ [Bash 脚本教程](https://wangdoc.com/bash/)
 + [shell（shell简介）](https://www.cnblogs.com/du-z/p/10959013.html)
 + [shell简介](https://blog.csdn.net/qq_43943846/article/details/88014144)
 + [Shell介绍](https://zhuanlan.zhihu.com/p/115642982)
