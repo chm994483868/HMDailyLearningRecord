@@ -289,6 +289,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8ECD64EE27A041B4002E63A7 /* Python */,
 				8E50F0012791A2EC00A4DBE1 /* Shell */,
 				8E50EFFF27919E5700A4DBE1 /* SwiftUI */,
 				8E110CCF270F48A30016FF16 /* LLDB */,
@@ -552,6 +553,13 @@
 				8E5E58922686A0010088C814 /* iOS《Key-Value Observing Programming Guide》官方文档.md */,
 			);
 			path = KVCKVO;
+			sourceTree = "<group>";
+		};
+		8ECD64EE27A041B4002E63A7 /* Python */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Python;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

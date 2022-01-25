@@ -126,3 +126,4 @@ source FileName
 + [快，学会 shell](https://zhuanlan.zhihu.com/p/75373580)
 + [Shell 编程入门](https://zhuanlan.zhihu.com/p/97566547)
 + [浅谈shell 基础，思想和技巧](https://zhuanlan.zhihu.com/p/129268123)
++ [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
