@@ -141,9 +141,55 @@
 
 ## otool 
 
-&emsp;otool（object file displaying tool）：针对目标文件的展示工具，用来发现应用中使用到了哪些系统库，调用了其中哪些方法，使用了库中哪些对象及属性，它是 Xcode 自带的常用工具。下面是一些常用的命令：
+&emsp;在接下来的内容开始之前，我们先学习一个工具：otool（object file displaying tool），它是 Xcode 自带的一个可以帮助我们分析目标文件的一个工具。
 
+&emsp;otool（object file displaying tool）是一个针对目标文件（例如 .ipa 中的可执行文件，Unix 可执行文件）的展示工具，用来发现应用中使用到了哪些系统库，调用了其中哪些方法，使用了库中哪些对象及属性等。
 
+&emsp;我们在终端执行 `otool help` 命令查看 otool 都有哪些详细功能。
+
+```c++
+hmc@localhost ~ % otool help
+Usage: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool [-arch arch_type] [-fahlLDtdorSTMRIHGvVcXmqQjCP] [-mcpu=arg] [--version] <object file> ...
+    -f print the fat headers
+    -a print the archive header
+    -h print the mach header
+    -l print the load commands
+    -L print shared libraries used
+    -D print shared library id name
+    -t print the text section (disassemble with -v)
+    -x print all text sections (disassemble with -v)
+    -p <routine name>  start dissassemble from routine name
+    -s <segname> <sectname> print contents of section
+    -d print the data section
+    -o print the Objective-C segment
+    -r print the relocation entries
+    -S print the table of contents of a library (obsolete)
+    -T print the table of contents of a dynamic shared library (obsolete)
+    -M print the module table of a dynamic shared library (obsolete)
+    -R print the reference table of a dynamic shared library (obsolete)
+    -I print the indirect symbol table
+    -H print the two-level hints table (obsolete)
+    -G print the data in code table
+    -v print verbosely (symbolically) when possible
+    -V print disassembled operands symbolically
+    -c print argument strings of a core file
+    -X print no leading addresses or headers
+    -m don't use archive(member) syntax
+    -B force Thumb disassembly (ARM objects only)
+    -q use llvm's disassembler (the default)
+    -Q use otool(1)'s disassembler
+    -mcpu=arg use `arg' as the cpu for disassembly
+    -j print opcode bytes
+    -P print the info plist section as strings
+    -C print linker optimization hints
+    --version print the version of /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool
+```
+
+&emsp;看到 otool 位于：/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool，然后我们 Shift + command + g 直接在文件夹中找到 otool 文件， 右键显示简介发现它是 llvm-otool 的替身文件。macOS 中的替身文件类似于 windows 的快捷方式，我们可以把替身文件放在桌面，放在任意可以放的地方，然后就可以直接通过替身文件打开或使用对应的原始文件，可以省掉我们一层一层扒文件夹找原始文件的麻烦。
+
+&emsp;那么既然 otool 是分析的目标文件用的，那索性我们就用它分析它自己，下面我们使用 otool 支持的各个选项来分析一下 llvm-otool Unix 可执行文件。
+
+&emsp;
 
 
 
