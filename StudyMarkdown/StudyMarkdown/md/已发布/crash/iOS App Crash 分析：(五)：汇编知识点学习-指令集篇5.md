@@ -143,12 +143,12 @@
 
 &emsp;在接下来的内容开始之前，我们先学习一个工具：otool（object file displaying tool），它是 Xcode 自带的一个可以帮助我们分析目标文件的一个工具。
 
-&emsp;otool（object file displaying tool）是一个针对目标文件（例如 .ipa 中的可执行文件，Unix 可执行文件）的展示工具，用来发现应用中使用到了哪些系统库，调用了其中哪些方法，使用了库中哪些对象及属性等。
+&emsp;otool（object file displaying tool）是一个针对目标文件（例如 .ipa 中的可执行文件：Unix 可执行文件）的展示工具，用来发现可执行文件中使用到了哪些系统库，调用了其中哪些方法，使用了库中哪些对象及属性等等等。
 
-&emsp;我们在终端执行 `otool help` 命令查看 otool 都有哪些详细功能。
+&emsp;我们在终端执行 `otool` 命令查看 otool 的详细功能。
 
 ```c++
-hmc@localhost ~ % otool help
+hmc@localhost ~ % otool
 Usage: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool [-arch arch_type] [-fahlLDtdorSTMRIHGvVcXmqQjCP] [-mcpu=arg] [--version] <object file> ...
     -f print the fat headers
     -a print the archive header
@@ -185,16 +185,108 @@ Usage: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctool
     --version print the version of /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool
 ```
 
-&emsp;看到 otool 位于：/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool，然后我们 Shift + command + g 直接在文件夹中找到 otool 文件， 右键显示简介发现它是 llvm-otool 的替身文件。macOS 中的替身文件类似于 windows 的快捷方式，我们可以把替身文件放在桌面，放在任意可以放的地方，然后就可以直接通过替身文件打开或使用对应的原始文件，可以省掉我们一层一层扒文件夹找原始文件的麻烦。
+&emsp;首先从帮助信息中我们看到 otool 位于：/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/otool，然后我们 Shift + command + g 直接在文件夹中找到 otool 文件， 根据 otool 文件的图标以及通过右键显示简介发现它是 llvm-otool 的替身文件。macOS 中的替身文件类似于 windows 的快捷方式，我们可以把替身文件放在桌面，放在任意可以放的地方以及可以直接复制一份放在其它地方，然后就可以快速的直接双击替身文件就可以打开或使用对应的原始文件，可以省掉我们一层一层扒文件夹找原始文件的麻烦。
 
-&emsp;那么既然 otool 是分析的目标文件用的，那索性我们就用它分析它自己，下面我们使用 otool 支持的各个选项来分析一下 llvm-otool Unix 可执行文件。
+&emsp;那么既然 otool 是分析的目标文件用的，那索性我们就用它分析它自己，下面我们使用 otool 支持的各个选项来分析一下 llvm-otool 这个 Unix 可执行文件。（把 llvm-otool 文件复制出来放在桌面的 temp 文件夹中）
 
-&emsp;
+### file llvm-otool
 
+&emsp;首先通过 `file llvm-otool` 命令查看一下 llvm-otool 文件，可发现它是 x86_64 和 arm64 两个 64 bit 架构平台合并在一起的一份 fat Mach-O 可执行文件。
 
+```c++
+➜  temp file llvm-otool 
+llvm-otool: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit executable x86_64] [arm64:Mach-O 64-bit executable arm64]
+llvm-otool (for architecture x86_64):    Mach-O 64-bit executable x86_64
+llvm-otool (for architecture arm64):    Mach-O 64-bit executable arm64
+```
 
+### otool 一些用途
 
+&emsp;下面我们对 otool 的一些命令和功能进行演示测试。
 
+#### otool -f/-a/-h
+
+&emsp;我们可以通过 `otool -f：print the fat headers / otool -a：print the archive header / otool -h：print the mach header` 来查看 llvm-otool 的 fat headers 中的头信息。
+
+```c++
+➜  temp otool -f llvm-otool 
+Fat headers
+fat_magic 0xcafebabe
+nfat_arch 2
+architecture 0
+    cputype 16777223
+    cpusubtype 3
+    capabilities 0x0
+    offset 16384
+    size 73264
+    align 2^14 (16384)
+architecture 1
+    cputype 16777228
+    cpusubtype 0
+    capabilities 0x0
+    offset 98304
+    size 89776
+    align 2^14 (16384)
+```
+
+```c++
+➜  temp otool -h llvm-otool 
+llvm-otool:
+Mach header
+      magic  cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+ 0xfeedfacf 16777223          3  0x00           2    17       1760 0x00200085
+```
+
+#### otool -l
+
+&emsp;`otool -l：print the load commands` 打印目标文件的所有的 load commands，load command 我们都已经特别熟悉了这里就不展开了。
+
+#### otool -L
+
+&emsp;`otool -L：print shared libraries used` 打印目标文件引入的所有系统库以及第三方库。
+
+```c++
+➜  temp otool -L llvm-otool 
+llvm-otool:
+    /usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1200.3.0)
+    /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1311.0.0)
+```
+
+#### otool -t/-x
+
+&emsp;`otool -t：print the text section (disassemble with -v) / otool -x：print all text sections (disassemble with -v)` 打印目标文件 text section 中的内容，我们知道 text section 中存放的都是函数代码（指令内容），如果我们直接使用 otool -t 打印的的话是以 16 进制打印 text 地址段中存储的值，如果我们再加上 -v 参数就可以直接对函数代码进行反汇编。
+
+```c++
+➜  temp otool -t llvm-otool     
+llvm-otool:
+(__TEXT,__text) section
+0000000100003d84 55 48 89 e5 41 57 41 56 41 55 41 54 53 48 81 ec 
+0000000100003d94 d8 00 00 00 48 89 75 c0 48 8b 06 48 89 05 92 47 
+0000000100003da4 00 00 31 c0 89 05 42 48 00 00 89 05 64 48 00 00 
+...
+```
+
+&emsp;x86_64 架构下的汇编指令： 
+
+```c++
+➜  temp otool -t -v llvm-otool 
+llvm-otool:
+(__TEXT,__text) section
+_main:
+0000000100003d84    pushq    %rbp
+0000000100003d85    movq    %rsp, %rbp
+0000000100003d88    pushq    %r15
+0000000100003d8a    pushq    %r14
+0000000100003d8c    pushq    %r13
+0000000100003d8e    pushq    %r12
+0000000100003d90    pushq    %rbx
+0000000100003d91    subq    $0xd8, %rsp
+0000000100003d98    movq    %rsi, -0x40(%rbp)
+0000000100003d9c    movq    (%rsi), %rax
+0000000100003d9f    movq    %rax, 0x4792(%rip)
+0000000100003da6    xorl    %eax, %eax
+...
+```
 
 
 
@@ -230,3 +322,4 @@ Usage: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctool
 3. [ios-crash-dump-analysis-book/zh](https://faisalmemon.github.io/ios-crash-dump-analysis-book/zh/)
 4. Mach 内核/汇编语言/逆向 三本书要读。
 5. 汇编语言/函数调用栈回溯。
+
