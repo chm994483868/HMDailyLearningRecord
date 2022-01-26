@@ -52,6 +52,8 @@ hmc@localhost ~ % cat /etc/shells
 /bin/zsh
 ```
 
+https://apptrailers.itunes.apple.com/apple-assets-us-std-000001/PurpleVideo7/v4/ff/9b/d4/ff9bd4a2-2762-baac-1237-df7a81f2dbdb/P37356270_default.m3u8
+
 &emsp;Linux 的 Shell 种类众多，常见的有：
 
 + Bourne Shell（/usr/bin/sh 或 /bin/sh）

@@ -161,6 +161,7 @@
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
+		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
 		8EAFFB4027930EFF00B70023 /* 汇编知识临时文件.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编知识临时文件.md"; sourceTree = "<group>"; };
@@ -289,7 +290,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
-				8ECD64EE27A041B4002E63A7 /* Python */,
+				8E79139627A0D0CC00900CDA /* Python */,
 				8E50F0012791A2EC00A4DBE1 /* Shell */,
 				8E50EFFF27919E5700A4DBE1 /* SwiftUI */,
 				8E110CCF270F48A30016FF16 /* LLDB */,
@@ -555,9 +556,10 @@
 			path = KVCKVO;
 			sourceTree = "<group>";
 		};
-		8ECD64EE27A041B4002E63A7 /* Python */ = {
+		8E79139627A0D0CC00900CDA /* Python */ = {
 			isa = PBXGroup;
 			children = (
+				8E79139727A0D10600900CDA /* Python笔记.md */,
 			);
 			path = Python;
 			sourceTree = "<group>";
