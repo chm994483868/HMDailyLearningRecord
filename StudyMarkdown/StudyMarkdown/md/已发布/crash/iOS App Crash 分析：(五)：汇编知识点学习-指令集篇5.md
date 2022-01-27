@@ -241,9 +241,18 @@ Mach header
 
 &emsp;`otool -l：print the load commands` 打印目标文件的所有的 load commands，load command 我们都已经特别熟悉了这里就不展开了。
 
+&emsp;`otool -l <object file> | grep crypt` 可以查看 `<object file>` 是否已经砸壳，cryptid 为 0 则已经砸壳，为 1 未砸壳。
+
+```c++
+hmc@localhost Temp % otool -l Test_ipa_Simple| grep crypt
+     cryptoff 16384
+    cryptsize 16384
+      cryptid 0
+```
+
 #### otool -L
 
-&emsp;`otool -L：print shared libraries used` 打印目标文件引入的所有系统库以及第三方库。
+&emsp;`otool -L：print shared libraries used` 打印目标文件引入的所有系统库以及第三方库（.dylib、.framework）。
 
 ```c++
 ➜  temp otool -L llvm-otool 
@@ -255,6 +264,8 @@ llvm-otool:
 #### otool -t/-x
 
 &emsp;`otool -t：print the text section (disassemble with -v) / otool -x：print all text sections (disassemble with -v)` 打印目标文件 text section 中的内容，我们知道 text section 中存放的都是函数代码（指令内容），如果我们直接使用 otool -t 打印的的话是以 16 进制打印 text 地址段中存储的值，如果我们再加上 -v 参数就可以直接对函数代码进行反汇编。
+
+&emsp;`-v print verbosely (symbolically) when possible / -V print disassembled operands symbolically` 可看到使用 -v 和 -V 参数是不一样的，它们竟然区分大小写，-V 可以反汇编操作数。
 
 ```c++
 ➜  temp otool -t llvm-otool     
@@ -288,6 +299,28 @@ _main:
 ...
 ```
 
+#### otool -s
+
+&emsp;`otool -s <segname> <sectname>：print contents of section` 打印指定段中某个 section 的内容。
+
+```c++
+➜  temp otool -s __TEXT __stubs -V llvm-otool 
+llvm-otool:
+Contents of (__TEXT,__stubs) section
+0000000100006a28    jmpq    *0x15f2(%rip)
+0000000100006a2e    jmpq    *0x15f4(%rip)
+...
+```
+
+&emsp;otool 就看到这里吧，主要帮助我们用来分析 Mach-O 文件，其它参数有兴趣的伙伴自己测试一下吧。
+
+&emsp;
+
+
+
+
+
+
 
 
 
@@ -301,6 +334,7 @@ _main:
 + [x86:SIMD指令集发展历程表（MMX、SSE、AVX 等）](https://blog.csdn.net/weixin_34122604/article/details/86271850?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_default&utm_relevant_index=2)
 + [什么是i386,x86和x64, 一文了解处理器架构](https://baike.baidu.com/tashuo/browse/content?id=5d5bb1f8a73bd4495d7b21a5&lemmaId=433177&fromLemmaModule=pcBottom&lemmaTitle=Intel%2080386)
 + [深入iOS系统底层系列文章目录](https://www.jianshu.com/p/139f0899335d)
++ [Man Page(man otool)](https://wangwangok.gitbooks.io/mac-terminal-tool/content/otool.html)
 + [iOS逆向 ：初识汇编](https://www.jianshu.com/p/139f0899335d)
 + [iOS Crash/崩溃/异常 堆栈获取](https://www.jianshu.com/p/8ece78d71b3d)
 + [iOS堆栈信息解析（函数地址与符号关联）](https://www.jianshu.com/p/df5b08330afd)
