@@ -164,9 +164,8 @@
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
-		8EAFFB4027930EFF00B70023 /* 汇编知识临时文件.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编知识临时文件.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
-		8EAFFB452795979800B70023 /* Temp.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Temp.md; sourceTree = "<group>"; };
+		8EAFFB452795979800B70023 /* iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md"; sourceTree = "<group>"; };
 		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		8EB2848F2687EFD000CCD5FB /* iOS App 启动优化(七)：NSProcessInfo 解析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(七)：NSProcessInfo 解析.md"; sourceTree = "<group>"; };
 		8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md"; sourceTree = "<group>"; };
@@ -219,12 +218,8 @@
 				8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */,
 				8E1B718727618434005D2CD3 /* iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）.md */,
 				8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */,
-				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */,
-				8EAFFB4027930EFF00B70023 /* 汇编知识临时文件.md */,
-				8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */,
-				8EAFFB452795979800B70023 /* Temp.md */,
-				8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */,
-				8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */,
+				8ECD64F227B2BC6A002E63A7 /* dsym */,
+				8ECD64F127B2BC3D002E63A7 /* 汇编知识点 */,
 			);
 			path = crash;
 			sourceTree = "<group>";
@@ -564,6 +559,25 @@
 				8E79139727A0D10600900CDA /* Python笔记.md */,
 			);
 			path = Python;
+			sourceTree = "<group>";
+		};
+		8ECD64F127B2BC3D002E63A7 /* 汇编知识点 */ = {
+			isa = PBXGroup;
+			children = (
+				8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */,
+				8EAFFB452795979800B70023 /* iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md */,
+				8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */,
+				8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */,
+			);
+			path = "汇编知识点";
+			sourceTree = "<group>";
+		};
+		8ECD64F227B2BC6A002E63A7 /* dsym */ = {
+			isa = PBXGroup;
+			children = (
+				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */,
+			);
+			path = dsym;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

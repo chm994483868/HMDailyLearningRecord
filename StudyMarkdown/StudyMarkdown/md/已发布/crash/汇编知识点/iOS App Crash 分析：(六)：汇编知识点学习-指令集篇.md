@@ -314,19 +314,6 @@ Contents of (__TEXT,__stubs) section
 
 &emsp;otool 就看到这里吧，主要帮助我们用来分析 Mach-O 文件，其它参数有兴趣的伙伴自己测试一下吧。
 
-&emsp;
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 参考链接
 **参考链接:🔗**

@@ -2,41 +2,13 @@
 
 ## Shell 概述
 
-&emsp;Shell 是一个 C 语言编写的脚本语言，它是用户与 Linux 的桥梁，用户输入命令交给 Shell 处理，shell 是一个命令解释器，是一个工具箱，Shell 将相应的操作传递给内核（Kernel），内核把处理的结果输出给用户。
+&emsp;操作系统的外壳：操作系统是由多个功能模块组成的功能庞大、复杂的软件系统。任何通用的操作系统，都要提供一个称为 shell（外壳）的程序，用户（操作人员）使用这个程序来操作计算机系统进行工作。DOS 中有一个程序 command.com，这个程序在 DOS 中称为命令解释器，也就是 DOS 系统的 shell。[汇编语言（第 3 版）](https://book.douban.com/subject/25726019/)
 
-&emsp;Shell 是一个用 C 语言编写的程序，它是用户使用 Linux 的桥梁。**Shell 既是一种命令语言，又是一种程序设计语言。**
-
-&emsp;shell 也是操作系统中的一个软件，它包含在 Linux 内核的外面，为用户和内核之间的交互提供了一个接口，目前最流行的 shell 为 bash shell（GUN Bourne-Again Shell）。用户的命令用 shell 去解释，再发送给 Linxu 内核，shell 接收系统方回应的输出并显示其到屏幕中。
+&emsp;在 Linux 中，shell 是一个用 C 语言编写的程序。用户输入命令交给 shell 处理（例如：cd、dir、type 等），shell 是一个命令解释器，是一个工具箱，shell 将相应的操作传递给内核（Kernel），内核把处理的结果输出给用户。shell 也是操作系统中的一个软件，它包含在 Linux 内核的外面，为用户和内核之间的交互提供了一个接口，目前最流行的 shell 为 bash shell（GUN Bourne-Again Shell）。用户的命令用 shell 去解释，再发送给 Linxu 内核，shell 接收系统方回应的输出并显示其到屏幕中。
 
 ## Shell 类型
 
-&emsp;sh(全称 Bourne Shell)，是 UNIX 最初使用的 shell，而且在每种 UNIX 上都可以使用。
-
-&emsp;Bourne Shell 在 shell 编程方便相当优秀，但在处理与用户的交互方便作得不如其他几种 shell。
-
-&emsp;bash（全称 Bourne Again Shell），Linux 默认的，它是 Bourne Shell 的扩展。
-
-&emsp;与 Bourne Shell 完全兼容，并且在 Bourne Shell 的基础上增加了很多特性。可以提供命令补全，命令编辑和命令历史等功能。它还包含了很多 C Shell 和 Korn Shell 中的优点，有灵活和强大的编辑接口，同时又很友好的用户界面。
-
-&emsp;csh(全称 C Shell)，是一种比 Bourne Shell 更适合的变种 Shell，它的语法与 C 语言很相似。
-
-&emsp;Tcsh 是 Linux 提供的 C Shell 的一个扩展版本。
-
-&emsp;Tcsh 包括命令行编辑，可编程单词补全，拼写校正，历史命令替换，作业控制和类似 C 语言的语法，它不仅和 Bash Shell 提示符兼容，而且还提供比 Bash Shell 更多的提示符参数。ksh(全称 Korn Shell)，集合了 C Shell 和 Bourne Shell 的优点并且和 Bourne Shell 完全兼容。
-
-&emsp;pdksh，是 Linux 系统提供的 ksh 的扩展。
-
-&emsp;pdksh 支持人物控制，可以在命令行上挂起，后台执行，唤醒或终止程序。
-
-## Shell 脚本
-
-&emsp;什么是 shell 脚本？脚本就是 shell 命令组成的文件，这些命令都是可执行程序的名字，脚本不用编译即可通过解释器解释运行。它是一种解释型语言，我们可以用 shell 脚本操存执行动作，用脚本判定命令的执行条件，用脚本来实现动作的批量执行。
-
-&emsp;Shell 脚本（shell script），是一种为 shell 编写的脚本程序。大家口中所说的 shell 通常都是指 shell 脚本，但我们自己则要知道，shell 和 shell script 是两个不同的概念。由于习惯的原因，简洁起见，本文出现的 "shell 编程" 都是指 shell 脚本编程，不是指开发 shell 自身。
-
-&emsp;Shell 脚本编程跟 JavaScript、php 编程一样，只要有一个能编写代码的文本编辑器和一个能解释执行的脚本解释器就可以了。
-
-&emsp;使用 `cat /etc/shells` 可看到 m1 的 macMini 系统自带如下 shell 解释器。
+&emsp;使用 `cat /etc/shells` 可看到 macOS 自带如下 shell 解释器。
 
 ```c++
 hmc@localhost ~ % cat /etc/shells
@@ -52,7 +24,16 @@ hmc@localhost ~ % cat /etc/shells
 /bin/zsh
 ```
 
-https://apptrailers.itunes.apple.com/apple-assets-us-std-000001/PurpleVideo7/v4/ff/9b/d4/ff9bd4a2-2762-baac-1237-df7a81f2dbdb/P37356270_default.m3u8
+&emsp;我们也可直接在 bin 目录下看到不同类型 shell 解释器的可执行文件。
+
+![截屏2022-02-09 上午6.39.58.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5336ffa338b64a429512cc391ffb54ac~tplv-k3u1fbpfcp-watermark.image?)
+
++ bash（全称 Bourne Again Shell），是 Linux 和 Mac 的默认 shell（命令行环境），现在最流行，也是大多数 Linux 系统默认的 Shell。它是 Bourne Shell 的扩展，与 Bourne Shell 完全兼容，并且在 Bourne Shell 的基础上增加了很多特性。可以提供命令补全，命令编辑和命令历史等功能。它还包含了很多 C Shell 和 Korn Shell 中的优点，有灵活和强大的编辑接口，同时又很友好的用户界面。
++ csh（全称 C Shell），是一种比 Bourne Shell 更适合的变种 shell，它的语法与 C 语言很相似。
++ ksh（全称 Korn Shell），集合了 C Shell 和 Bourne Shell 的优点并且和 Bourne Shell 完全兼容。
++ sh（全称 Bourne Shell），是 UNIX 最初使用的 shell，而且在每种 UNIX 上都可以使用。Bourne Shell 在 shell 编程方便相当优秀，但在处理与用户的交互方便作得不如其他几种 shell。
++ Tcsh 是 Linux 提供的 C Shell 的一个扩展版本。Tcsh 包括命令行编辑，可编程单词补全，拼写校正，历史命令替换，作业控制和类似 C 语言的语法，它不仅和 Bash Shell 提示符兼容，而且还提供比 Bash Shell 更多的提示符参数。
++ pdksh，是 Linux 系统提供的 ksh 的扩展。pdksh 支持人物控制，可以在命令行上挂起，后台执行，唤醒或终止程序。
 
 &emsp;Linux 的 Shell 种类众多，常见的有：
 
@@ -64,6 +45,16 @@ https://apptrailers.itunes.apple.com/apple-assets-us-std-000001/PurpleVideo7/v4/
 ...
 
 &emsp;在一般情况下，人们并不区分 Bourne Shell 和 Bourne Again Shell，所以，像 `#!/bin/sh`，它同样也可以改为 `#!/bin/bash`。`#!` 告诉系统其后路径所指定的程序即是解释此 Shell 脚本文件的 Shell 程序，`#!` 是一个约定的标记，它告诉系统这个 Shell 脚本需要什么解释器来执行，即使用哪一种 Shell。
+
+## Shell 脚本
+
+&emsp;shell 既是一种命令语言，又是一种程序设计语言。那么什么是 shell 脚本呢？脚本就是 shell 命令组成的文件，这些命令都是可执行程序的名字，脚本不用编译即可通过解释器解释运行。它是一种解释型语言，我们可以用 shell 脚本操存执行动作，用脚本判定命令的执行条件，用脚本来实现动作的批量执行。
+
+&emsp;Shell 脚本（shell script），是一种为 shell 编写的脚本程序。大家口中所说的 shell 通常都是指 shell 脚本，但我们自己则要知道，shell 和 shell script 是两个不同的概念。由于习惯的原因，简洁起见，本文出现的 "shell 编程" 都是指 shell 脚本编程，不是指开发 shell 自身。
+
+&emsp;Shell 脚本编程跟 JavaScript、php 编程一样，只要有一个能编写代码的文本编辑器和一个能解释执行的脚本解释器就可以了。
+
+
 
 ## 运行 Shell 脚本有不同的方式
 
