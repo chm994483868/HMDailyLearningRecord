@@ -2,10 +2,17 @@
 
 ## Shell 概述
 
-&emsp;操作系统的外壳：操作系统是由多个功能模块组成的功能庞大、复杂的软件系统。任何通用的操作系统，都要提供一个称为 shell（外壳）的程序，用户（操作人员）使用这个程序来操作计算机系统进行工作。DOS 中有一个程序 command.com，这个程序在 DOS 中称为命令解释器，也就是 DOS 系统的 shell。[汇编语言（第 3 版）](https://book.douban.com/subject/25726019/)
+&emsp;操作系统的外壳：操作系统是由多个功能模块组成的功能庞大、复杂的软件系统。任何通用的操作系统，都要提供一个称为 shell（外壳）的程序（shell 这个单词的原意是 "外壳"，跟 kernel（内核）相对应，比喻内核外面的一层，即用户跟内核交互的对话界面），用户（操作人员）使用这个程序来操作计算机系统进行工作。DOS 中有一个程序 command.com，这个程序在 DOS 中称为命令解释器，也就是 DOS 系统的 shell。[汇编语言（第 3 版）](https://book.douban.com/subject/25726019/)
 
 &emsp;在 Linux 中，shell 是一个用 C 语言编写的程序。用户输入命令交给 shell 处理（例如：cd、dir、type 等），shell 是一个命令解释器，是一个工具箱，shell 将相应的操作传递给内核（Kernel），内核把处理的结果输出给用户。shell 也是操作系统中的一个软件，它包含在 Linux 内核的外面，为用户和内核之间的交互提供了一个接口，目前最流行的 shell 为 bash shell（GUN Bourne-Again Shell）。用户的命令用 shell 去解释，再发送给 Linxu 内核，shell 接收系统方回应的输出并显示其到屏幕中。
 
+> 具体来说，Shell 这个词有多种含义。
+  首先，Shell 是一个程序，提供一个与用户对话的环境。这个环境只有一个命令提示符，让用户从键盘输入命令，所以又称为命令行环境（command line interface，简写为 CLI）。Shell 接收到用户输入的命令，将命令送入操作系统执行，并将结果返回给用户。本书中，除非特别指明，Shell 指的就是命令行环境。
+  
+  其次，Shell 是一个命令解释器，解释用户输入的命令。它支持变量、条件判断、循环操作等语法，所以用户可以用 Shell 命令写出各种小程序，又称为脚本（script）。这些脚本都通过 Shell 的解释执行，而不通过编译。
+  
+  最后，Shell 是一个工具箱，提供了各种小工具，供用户方便地使用操作系统的功能。[Bash 简介](https://wangdoc.com/bash/intro.html)
+  
 ## Shell 类型
 
 &emsp;使用 `cat /etc/shells` 命令，直接打印 /etc 目录下 shells 文稿文件中的内容，可看到 macOS 系统自带如下一系列 shell。
@@ -47,6 +54,14 @@ hmc@localhost ~ % cat /etc/shells
 ...
 
 &emsp;在一般情况下，人们并不区分 Bourne Shell 和 Bourne Again Shell，所以，像 `#!/bin/sh`，它同样也可以改为 `#!/bin/bash`。`#!` 告诉系统其后路径所指定的程序即是解释此 shell 脚本文件的 shell 程序（shell 解释器），`#!` 是一个约定的标记，它告诉系统当前这个 shell 脚本需要什么解释器来执行，即使用哪一种 shell。（如果直接在执行 shell 脚本文件时指定 shell 则会忽略 shell 脚本顶部指定的 `#!/xxx`。）
+
+&emsp;使用 `echo $SHELL` 可以查看当前运行的 Shell。
+
+```c++
+➜  ~ echo $SHELL
+/bin/zsh
+➜  ~ 
+```
 
 ## Shell 脚本
 
@@ -108,6 +123,9 @@ source FileName
 
 
 
+
+
+
 ## 参考链接
 **参考链接:🔗**
 + [Bash 脚本教程](https://wangdoc.com/bash/)
@@ -121,4 +139,5 @@ source FileName
 + [Shell 编程入门](https://zhuanlan.zhihu.com/p/97566547)
 + [浅谈shell 基础，思想和技巧](https://zhuanlan.zhihu.com/p/129268123)
 + [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
+
 
