@@ -97,10 +97,11 @@ source FileName
 
 
 
++ [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
++ [macOS各个文件夹的作用](https://www.jianshu.com/p/0c08f2c7748d)
++ [MacOS 修改系统环境变量$Path](https://www.mzh.ren/macos-system-environment-variables.html)
 
-
-
-
+&emsp;今日学习安排：先把 [在 Mac 上将 zsh 用作默认 Shell]、[MacOS 修改系统环境变量$Path]、[macOS各个文件夹的作用] 文章看完，然后整理一下 shell 概述部分，然后开始专心学习 阮一峰老师 的 bash shell 教程。
 
 
 
