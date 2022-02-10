@@ -134,11 +134,67 @@ chmod +x ./FileName.sh  # 使脚本具有执行权限
 source FileName
 ```
 
-&emsp;在当前 bash 环境下读取并执行 FileName 中的命令。该 FileName 文件可以无 "执行权限"。该命令通常用命令 . 来替代。
+&emsp;在当前 shell 环境下读取并执行 FileName 脚本。该 FileName 文件可以无 "执行权限"。该命令通常用命令 . 来替代。
 
 ## shell(bash) 的基本使用
 
-&emsp; 
+&emsp;下面我们以 bash 为例来学习 shell 的知识。 
+
+&emsp;波浪线扩展。波浪线 `~` 会自动扩展成当前用户的主目录。
+
+```c++
+➜  ~ echo ~
+/Users/hmc
+➜  ~ cd ~/foo
+cd: no such file or directory: /Users/hmc/foo
+➜  ~ cd ~/Postman
+➜  Postman 
+```
+
+&emsp;`~user` 表示扩展成用户 `user` 的主目录，`~user` 会根据波浪线后面的用户名，返回该用户的主目录。如果 `~user` 的 `user` 是不存在的用户名，则波浪号扩展不起作用。 
+
+```c++
+bash-3.2$ echo ~
+/Users/hmc
+bash-3.2$ echo ~foo
+~foo
+bash-3.2$ echo ~hmc
+/Users/hmc
+bash-3.2$ echo ~root
+/var/root
+bash-3.2$ 
+```
+
+&emsp;`~+` 会扩展成当前所在的目录，等同于 `pwd` 命令。
+
+```c++
+bash-3.2$ echo ~+
+/Users/hmc
+bash-3.2$ cd ~/Postman
+bash-3.2$ echo ~+
+/Users/hmc/Postman
+bash-3.2$ pwd
+/Users/hmc/Postman
+bash-3.2$ 
+```
+
+&emsp;Bash 将美元符号 `$` 开头的词元视为变量，将其扩展成变量值。变量名除了放在美元符号后面，也可以放在 `${}` 里面。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -175,5 +231,6 @@ source FileName
 + [Shell 编程入门](https://zhuanlan.zhihu.com/p/97566547)
 + [浅谈shell 基础，思想和技巧](https://zhuanlan.zhihu.com/p/129268123)
 + [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
+
 
 
