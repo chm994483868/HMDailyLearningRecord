@@ -12,7 +12,36 @@
   其次，Shell 是一个命令解释器，解释用户输入的命令。它支持变量、条件判断、循环操作等语法，所以用户可以用 Shell 命令写出各种小程序，又称为脚本（script）。这些脚本都通过 Shell 的解释执行，而不通过编译。
   
   最后，Shell 是一个工具箱，提供了各种小工具，供用户方便地使用操作系统的功能。[Bash 简介](https://wangdoc.com/bash/intro.html)
-  
+
+&emsp;在 macOS 下打开终端程序便进入了 shell 命令行环境，在 macOS Monterey 中默认是 zsh，我们也可以直接执行 `bash` 命令切换到 bash，退出则可以使用 `exit` 命令，或者同时按下 control + d。`bash --version` 可以查看当前 bash 的版本。也可以切换到 bash 后使用 `echo $BASH_VERSION` 查看。
+
+```c++
+hmc@localhost ~ % bash
+
+The default interactive shell is now zsh.
+To update your account to use zsh, please run `chsh -s /bin/zsh`.
+For more details, please visit https://support.apple.com/kb/HT208050.
+bash-3.2$ exit
+exit
+hmc@localhost ~ % 
+
+...
+bash-3.2$ echo $BASH_VERSION
+3.2.57(1)-release
+...
+
+hmc@localhost ~ % bash --version
+GNU bash, version 3.2.57(1)-release (x86_64-apple-darwin21)
+Copyright (C) 2007 Free Software Foundation, Inc.
+```
+
+&emsp;`pwd` 可以查看当前所在的目录。
+
+```c++
+hmc@localhost ~ % pwd
+/Users/hmc
+```
+
 ## Shell 类型
 
 &emsp;使用 `cat /etc/shells` 命令，直接打印 /etc 目录下 shells 文稿文件中的内容，可看到 macOS 系统自带如下一系列 shell。
@@ -55,7 +84,7 @@ hmc@localhost ~ % cat /etc/shells
 
 &emsp;在一般情况下，人们并不区分 Bourne Shell 和 Bourne Again Shell，所以，像 `#!/bin/sh`，它同样也可以改为 `#!/bin/bash`。`#!` 告诉系统其后路径所指定的程序即是解释此 shell 脚本文件的 shell 程序（shell 解释器），`#!` 是一个约定的标记，它告诉系统当前这个 shell 脚本需要什么解释器来执行，即使用哪一种 shell。（如果直接在执行 shell 脚本文件时指定 shell 则会忽略 shell 脚本顶部指定的 `#!/xxx`。）
 
-&emsp;使用 `echo $SHELL` 可以查看当前运行的 Shell。
+&emsp;使用 `echo $SHELL` 可以查看当前运行的 shell。
 
 ```c++
 ➜  ~ echo $SHELL
@@ -107,10 +136,14 @@ source FileName
 
 &emsp;在当前 bash 环境下读取并执行 FileName 中的命令。该 FileName 文件可以无 "执行权限"。该命令通常用命令 . 来替代。
 
+## shell(bash) 的基本使用
+
+&emsp; 
 
 
 
 
+1⃣️
 
 + [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
 + [macOS各个文件夹的作用](https://www.jianshu.com/p/0c08f2c7748d)
@@ -118,6 +151,9 @@ source FileName
 
 &emsp;今日学习安排：先把 [在 Mac 上将 zsh 用作默认 Shell]、[MacOS 修改系统环境变量$Path]、[macOS各个文件夹的作用] 文章看完，然后整理一下 shell 概述部分，然后开始专心学习 阮一峰老师 的 bash shell 教程。
 
+2⃣️
+
+&emsp;今日学习安排：Shell 的相关知识点已经铺垫完成，接下来阅读 阮一峰老师 的 bash 教程的正文部分。
 
 
 
