@@ -180,8 +180,7 @@ bash-3.2$
 
 &emsp;Bash 将美元符号 `$` 开头的词元视为变量，将其扩展成变量值。变量名除了放在美元符号后面，也可以放在 `${}` 里面。
 
-
-
+&emsp;Bash 变量分为环境变量和自定义变量两类。
 
 
 
@@ -231,6 +230,8 @@ bash-3.2$
 + [Shell 编程入门](https://zhuanlan.zhihu.com/p/97566547)
 + [浅谈shell 基础，思想和技巧](https://zhuanlan.zhihu.com/p/129268123)
 + [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
+
+
 
 
 
