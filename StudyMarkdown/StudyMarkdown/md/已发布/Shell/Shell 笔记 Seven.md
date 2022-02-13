@@ -1,4 +1,4 @@
-# Shell 笔记
+# Shell 学习笔记
 
 ## Shell 概述
 
@@ -82,7 +82,21 @@ hmc@localhost ~ % cat /etc/shells
 + Shell for Root（/sbin/sh）
 ...
 
-&emsp;在一般情况下，人们并不区分 Bourne Shell 和 Bourne Again Shell，所以，像 `#!/bin/sh`，它同样也可以改为 `#!/bin/bash`。`#!` 告诉系统其后路径所指定的程序即是解释此 shell 脚本文件的 shell 程序（shell 解释器），`#!` 是一个约定的标记，它告诉系统当前这个 shell 脚本需要什么解释器来执行，即使用哪一种 shell。（如果直接在执行 shell 脚本文件时指定 shell 则会忽略 shell 脚本顶部指定的 `#!/xxx`。）
+&emsp;在一般情况下，人们并不区分 Bourne Shell 和 Bourne Again Shell，所以，像 `#!/bin/sh`，它同样也可以改为 `#!/bin/bash`。`#!` 告诉当前的命令行环境，其后所指定的程序（程序的路径）即是解释此 shell 脚本文件的 shell 程序（shell 解释器），`#!` 是一个约定的标记，它告诉系统当前这个 shell 脚本需要什么解释器来执行，即使用哪一种 shell 程序来执行此 shell 脚本。
+
+&emsp;那么有没有一种情况，`#!` 后面指定的 shell 程序不存在呢？或者指定路径时指定错了，不在 /bin 目录中，则 shell 脚本就无法执行了。为了保险，也可以写成下面这样：
+
+```c++
+#!/usr/bin/env bash
+``` 
+
+&emsp;上面命令使用 `env` 命令（这个命令总是在 /usr/bin 目录）直接返回 bash 程序的位置，前提是 bash 的路径是在 `$PATH` 里面。
+
+&emsp;`env` 命令总是指向 /usr/bin/env 文件，或者说，这个二进制文件总是在目录 /usr/bin。
+
+&emsp;`#!/usr/bin/env NAME` 这个语法的意思是，让 shell 查找 `$PATH` 环境变量里面第一个匹配的 NAME。如果你不知道某个命令的具体路径，或者希望兼容其他用户的机器，这样的写法就很有用。
+
+&emsp;如果直接在执行 shell 脚本时指定使用哪个 shell 程序，则会忽略 shell 脚本顶部指定的 `#!/xxx`，例如：`/bin/bash FileName.sh` 会直接使用 `bash` 程序执行 FileName.sh 脚本。
 
 &emsp;使用 `echo $SHELL` 可以查看当前运行的 shell。
 
@@ -134,7 +148,9 @@ chmod +x ./FileName.sh  # 使脚本具有执行权限
 source FileName
 ```
 
-&emsp;在当前 shell 环境下读取并执行 FileName 脚本。该 FileName 文件可以无 "执行权限"。该命令通常用命令 . 来替代。
+&emsp;在当前 shell 环境下读取并执行 FileName 脚本。该 FileName 文件可以无 "执行权限"。`source` 有一个简写形式，可以使用一个点（.）来表示。
+
+&emsp;`source` 命令最大的特点是在当前 shell 执行脚本，不像直接执行脚本时，会新建一个子 shell。所以 `source` 命令执行脚本时，不需要 export 变量。
 
 ## shell(bash) 的基本使用
 
@@ -182,10 +198,13 @@ bash-3.2$
 
 &emsp;Bash 变量分为环境变量和自定义变量两类。
 
+&emsp;脚本（script）就是包含一系列命令的一个文本文件。Shell 读取这个文件，依次执行里面的所有命令，就好像这些命令是直接输入到命令行一样。所有能够在命令行完成的任务，都能够用脚本完成。
 
+&emsp;脚本的好处是可以重复使用，也可以指定在特定场合自动调用，比如系统启动或关闭时自动执行脚本。
 
+&emsp;if 和 then 写在同一行时，需要分号分隔，分号是 bash 的命令分隔符，它们也可以写成两行，这时不需要分号。
 
-
+&emsp;上面的 `declare` 命令不仅会输出函数名，还会输出所有定义。输出顺序是按照函数名的字母表顺序。由于会输出很多内容，最好通过管道命令配合 more 或 less 使用。
 
 
 
@@ -230,6 +249,7 @@ bash-3.2$
 + [Shell 编程入门](https://zhuanlan.zhihu.com/p/97566547)
 + [浅谈shell 基础，思想和技巧](https://zhuanlan.zhihu.com/p/129268123)
 + [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
+
 
 
 
