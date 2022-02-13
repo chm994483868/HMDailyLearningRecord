@@ -315,6 +315,14 @@ Contents of (__TEXT,__stubs) section
 &emsp;otool 就看到这里吧，主要帮助我们用来分析 Mach-O 文件，其它参数有兴趣的伙伴自己测试一下吧。
 
 
+
+&emsp;看完并记忆这个链接的内容：[Man Page(man otool)](https://wangwangok.gitbooks.io/mac-terminal-tool/content/otool.html)
+
+
+
+
+
+
 ## 参考链接
 **参考链接:🔗**
 + [Intel x86](https://baike.baidu.com/item/Intel%20x86/1012845?fromtitle=x86&fromid=6150538)
