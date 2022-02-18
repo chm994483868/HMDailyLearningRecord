@@ -35,3 +35,99 @@
 &emsp;JavaScript 是脚本语言，浏览器会在读取代码时，逐行地执行脚本代码。而对于传统编程来说，会在执行前对所有代码进行编译。
 
 &emsp;`let` 声明的变量只在其声明的块或子块中可用，这一点，与 `var` 相似。二者之间最主要的区别在于 `var` 声明的变量的作用域是整个封闭函数。
+
+```c++
+function myFunction() {
+    var x = 1;
+    if (true) {
+        var x = 2; // 同样的变量
+        console.log(x); // 2
+    }
+    console.log(x); // 2，这里即使出了 if 的范围，x 依然等于 2
+}
+
+function myFunction() {
+    let x = 1;
+    if (true) {
+        let x = 2; // 不同的变量
+        console.log(x); // 2
+    }
+    console.log(x); // 1，和上面相比，这里的 x 还是 if 上面声明的 x
+}
+```
+
+&emsp;JavaScript 声明变量的时候，虽然用 `var` 关键字声明和不用关键字声明，很多时候运行并没有问题，但是这两种方式还是有区别的。可以正常运行的代码并不代表是合适的代码。
+
+```c++
+// num1 为全局变量，num2 为 window 的一个属性
+var num1 = 1;
+num2 = 2;
+
+// delete num1; 无法删除
+// delete num2; 删除
+function model() {
+var num1 = 1; // 本地变量
+num2 = 2; // window 的属性
+
+// 匿名函数
+(function(){
+    var num = 1; // 本地变量
+    num1 = 2; // 继承作用域（闭包）
+    num3 = 3; // window 的属性
+}())
+}
+```
+
+&emsp;`const` 关键字用来声明 JavaScript 中的常量（与变量相对，不可修改，但同样是用于存储信息的 "容器"。），常量的值不能通过重新赋值来改变，并且不能重新声明。
+
+```c++
+// 定义常量 a 并赋值为 0
+const a = 0;
+
+// 报错（不能重新赋值）
+a = 1;
+
+// 报错 (不能重新声明)
+const a = 2;
+
+// 输出 0
+console.log("a is: " + a);
+```
+
+&emsp;JavaScript 允许重复声明变量，后声明的覆盖之前的。（注意：这是和 OC、Swift、C、C++ 等语言相比的一个很明显的区别。）
+
+```c++
+var a = 1;
+var a = "x";
+console.log(a); // 输出 x, 1 已经被覆盖了
+```
+
+&emsp;JavaScript 除了同名变量会覆盖，同样的函数也会覆盖。
+
+&emsp;JavaScript 允许重复定义函数，JavaScript 没有重载这个概念，它依据函数名来区分函数。后定义的同名函数覆盖之前的，与参数无关。
+
+```c++
+function test() {
+    console.log("test");
+}
+test(); // 输出：test arg number: 0 arg1: undefined
+
+function test(arg1) {
+    console.log("test arg number: " + arguments.length + " arg1: " + arg1);
+}
+test(1, 2); // 输出：test arg number: 2 arg1: 1
+```
+
+&emsp;实参个数如果比形参少，那么剩下的默认赋值为 `undefined`，如果实参传的比形参数量多，那么是全部都会被传进去的，只不过没有对应的形参可以引用（但可以用 `arguments` 来获取剩下的参数）。
+
+```c++
+function test(arg1) {
+    for(var i = 0; i < arguments.length; i++) {
+        console.log(arguments[i]);
+    }
+}
+test(1, 2);
+// 输出：
+// 1
+// 2
+```
