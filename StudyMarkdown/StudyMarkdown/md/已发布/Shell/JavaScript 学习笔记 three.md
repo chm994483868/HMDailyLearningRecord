@@ -1,0 +1,469 @@
+# JavaScript 学习笔记
+
+&emsp;JavaScript 是 web 开发人员必须学习的 3 门语言中的一门：
+
+1. HTML 定义了网页的内容。
+2. CSS 描述了网页的布局。
+3. JavaScript 控制了网页的行为。
+
+&emsp;JavaScript 是一种轻量级的编程语言。JavaScript 是可插入 HTML 页面的编程代码。JavaScript 插入 HTML 页面后，可由所有的现代浏览器执行。
+
+&emsp;你会经常看到 document.getElementById("some id")。这个方法是 HTML DOM 中定义的。
+
+&emsp;DOM(Document Object Model)（文档对象模型）是用于访问 HTML 元素的正式 W3C 标准。
+
+&emsp;JavaScript 与 Java 是两种完全不同的语言，无论在概念上还是设计上。Java（由 Sun 发明）是更复杂的编程语言。ECMA-262 是 JavaScript 标准的官方名称。JavaScript 是由 Brendan Eich 发明。它于 1995 年出现在 Netscape 中（该浏览器已停止更新），并于 1997 年被 ECMA（一个标准协会）采纳。
+
+&emsp;`document.write` 是直接写入到页面的内容流，如果在写之前没有调用 `document.open`，浏览器会自动调用 `open`。每次写完关闭之后重新调用该函数，会导致页面被重写。
+
+&emsp;`innerHTML` 则是 DOM 页面元素的一个属性，代表该元素的 html 内容。你可以精确到某一个具体的元素来进行更改。如果想修改 document 的内容，则需要修改 `document.documentElement.innerElement`。
+
+&emsp;`innerHTML` 很多情况下都优于 `document.write`，其原因在于其允许更精确的控制要刷新页面的那一个部分。
+
+&emsp;DOM：你会经常看到 `document.getElementById("id")`，这个方法是 HTML DOM 中定义的。DOM (Document Object Model)（文档对象模型）是用于访问 HTML 元素的正式 W3C 标准。
+
+&emsp;`window.alert(5+6)` 与 `window.alert("5+6")` 输出的值是不一样的。window.alert(5+6) 会输出 11，而window.alert("5+6") 会输出 5+6。这是因为当用引号时会认为引号中是字符串，从而直接将引号中的内容打印出来。
+
+&emsp;JavaScript 是一个程序语言，语法规则定义了语言结构。JavaScript 是一个脚本语言。它是一个轻量级，但功能强大的编程语言。
+
+&emsp;JavaScript 对大小写是敏感的。
+
+&emsp;JavaScript 是弱类型编程语言。定义变量都使用 var 定义，与 Java 这种强类型语言有区别。在定义后可以通过 `typeOf()` 来获取 JavaScript 中变量的数据类型。
+
+&emsp;有个特殊情况，`typeOf` 不能用来判断 Array 还是 Object。`var arr = []; typeOf(arr) === 'object' // true` 结果为 true。
+
+&emsp;JavaScript 是脚本语言，浏览器会在读取代码时，逐行地执行脚本代码。而对于传统编程来说，会在执行前对所有代码进行编译。
+
+## JavaScript 变量
+
+&emsp;`let` 声明的变量只在其声明的块或子块中可用，这一点，与 `var` 相似。二者之间最主要的区别在于 `var` 声明的变量的作用域是整个封闭函数。
+
+```c++
+function myFunction() {
+    var x = 1;
+    if (true) {
+        var x = 2; // 同样的变量
+        console.log(x); // 2
+    }
+    console.log(x); // 2，这里即使出了 if 的范围，x 依然等于 2
+}
+
+function myFunction() {
+    let x = 1;
+    if (true) {
+        let x = 2; // 不同的变量
+        console.log(x); // 2
+    }
+    console.log(x); // 1，和上面相比，这里的 x 还是 if 上面声明的 x
+}
+```
+
+&emsp;JavaScript 声明变量的时候，虽然用 `var` 关键字声明和不用关键字声明，很多时候运行并没有问题，但是这两种方式还是有区别的。可以正常运行的代码并不代表是合适的代码。
+
+```c++
+// num1 为全局变量，num2 为 window 的一个属性
+var num1 = 1;
+num2 = 2;
+
+// delete num1; 无法删除
+// delete num2; 删除
+function model() {
+var num1 = 1; // 本地变量
+num2 = 2; // window 的属性
+
+// 匿名函数
+(function(){
+    var num = 1; // 本地变量
+    num1 = 2; // 继承作用域（闭包）
+    num3 = 3; // window 的属性
+}())
+}
+```
+
+&emsp;`const` 关键字用来声明 JavaScript 中的常量（与变量相对，不可修改，但同样是用于存储信息的 "容器"。），常量的值不能通过重新赋值来改变，并且不能重新声明。
+
+```c++
+// 定义常量 a 并赋值为 0
+const a = 0;
+
+// 报错（不能重新赋值）
+a = 1;
+
+// 报错 (不能重新声明)
+const a = 2;
+
+// 输出 0
+console.log("a is: " + a);
+```
+
+&emsp;**JavaScript 允许重复声明变量，后声明的覆盖之前的。（注意：这是和 OC、Swift、C、C++ 等语言相比的一个很明显的区别。）**
+
+```c++
+var a = 1;
+var a = "x";
+console.log(a); // 输出 x, 1 已经被覆盖了
+```
+
+&emsp;这里对 **覆盖** 还有一些解释。首先我们要把定义一个变量分为两个过程：**声明** 和 **赋值**。
+
+&emsp;JavaScript 允许变量被重复声明，在声明变量时 JavaScript 会自行判断这个变量是否已经被声明了，如果已经被声明（即已经存在），那么重复声明（即除了变量的非首次声明）会被跳过，不再执行声明的操作。
+
+&emsp;JavaScript 变量的值是可以被重复赋值的，最后的赋值是这个变量最后的结果。
+
+&emsp;打印仅声明不赋值的变量会输出：undefined。
+
+```c++
+var a;
+console.log(a); // 输出：undefined
+```
+
+```c++
+var a;
+console.log(a); // 输出：undefined
+a = 2; // a 赋值 2
+
+// var a 相当于什么都没做，a 在上面已经声明过了，直接打印 a 看到 a 的值是前面赋值的 2，并不是 undefined 
+var a;
+console.log(a); // 输出：2
+
+// 这里则可以理解为赋值覆盖，把前面 a 赋值的 2 覆盖为 3
+var a = 3;
+console.log(a); // 输出 3
+```
+
+&emsp;JavaScript 除了同名变量会覆盖，同样的函数也会覆盖。
+
+&emsp;JavaScript 允许重复定义函数，JavaScript 没有重载这个概念，它依据函数名来区分函数。后定义的同名函数覆盖之前的，与参数无关。
+
+```c++
+function test() {
+    console.log("test");
+}
+test(); // 输出：test arg number: 0 arg1: undefined
+
+function test(arg1) {
+    console.log("test arg number: " + arguments.length + " arg1: " + arg1);
+}
+test(1, 2); // 输出：test arg number: 2 arg1: 1
+```
+
+&emsp;实参个数如果比形参少，那么剩下的默认赋值为 `undefined`，如果实参传的比形参数量多，那么是全部都会被传进去的，只不过没有对应的形参可以引用（但可以用 `arguments` 来获取剩下的参数）。
+
+```c++
+function test(arg1) {
+    for(var i = 0; i < arguments.length; i++) {
+        console.log(arguments[i]);
+    }
+}
+test(1, 2);
+// 输出：
+// 1
+// 2
+```
+
+&emsp;变量与函数重名的时候，变量生效。
+
+&emsp;这涉及到变量和函数的预解析：
+
++ 变量声明会被顶置，函数声明也会被顶置且比变量更先声明。
++ 变量的声明和赋值语句一起写时，JS 引擎在解析时，会将其拆成声明和赋值两部分，声明置顶，赋值保留在原来位置。
++ 声明过的变量不会再重复声明。
+
+```c++
+var a = 100;
+
+function a() {
+    return "function";
+}
+console.log(a); // 输出 100
+console.log(a()); // 报错：Uncaught TypeError: a is not a function
+```
+
+&emsp;JavaScript 中有两种函数，一种是普通函数，一种是函数对象。下面的这种就是 "函数对象"，它实际上是声明一个匿名函数，然后将该函数的 `init` 方法赋值给该变量。
+
+```c++
+var a = 100;
+var a = function() {
+    return "function";
+}
+console.log(a);
+console.log(a());
+
+// 分别输出：
+
+ƒ () {
+            return "function";
+        }
+        
+function
+```
+
+&emsp;函数与内部变量重名。
+
+&emsp;定义普通函数，即在 `window` 变量下，定义一个 `key`，它的名字为该函数名，值为该函数的地址。函数内部的 `this` 指向 `window` 对象。
+
+```c++
+function a() {
+    console.log(this);
+    this.a = 1;
+    var a = 5;
+    a = 10;
+    var v = "value";
+    return "function";
+}
+console.log(a); // 输出函数 a 的内容
+console.log(a()); // 输出 window 和 "function" 字符串
+console.log(a); // 输出 1 （此时执行了 a 函数以后，this.a = 1，已经把 a 覆盖为一个变量了，函数 a 已经不存在了）
+console.log(v); // Uncaught ReferenceError: v is not defined
+```
+
+## JavaScript 数据类型
+
+&emsp;**值类型（基本类型）：** 字符串（String）、数字（Number）、布尔（Boolean）、对空（Null）、未定义（Undefined）、Symbol。
+
+&emsp;**引用数据类型：** 对象（Object）、数组（Array）、函数（Function）。
+
+> 注：Symbol 是 ES6 引入了一种新的原始数据类型，表示独一无二的值。
+
+&emsp;JavaScript 拥有动态类型，这意味着相同的变量可用作不同的类型。
+
+```c++
+var x; // x 为 undefined
+console.log(x); // 输出 undefined
+var x = 5; // 现在 x 为数字
+console.log(x); // 输出 5
+var x = "John"; // 现在 x 为字符串
+console.log(x); // 输出 John
+```
+
+&emsp;`Undefined` 和 `Null`，`Undefined` 这个值表示变量不含有值，可以通过将变量的值设置为 `null` 来清空变量。
+
+```c++
+var person;
+var car = "Volvo";
+
+document.write(person + "<br>"); // undefined
+document.write(car + "<br>"); // Volvo
+
+var car = null;
+document.write(car + "<br>"); // null
+```
+
+&emsp;**声明变量类型**
+
+&emsp;当你声明新变量时，可以使用关键字 `new` 来声明其类型。
+
+```c++
+var carname = new String;
+var x = new Number;
+var y = new Boolean;
+var cars = new Array;
+var person = new Object;
+```
+
+> JavaScript 变量均为对象。当你声明一个变量时，就创建了一个新的对象。
+
+## JavaScript 对象
+
+&emsp;JavaScript 对象是拥有属性和方法的数据。
+
+&emsp;JavaScript 对象是属性和方法的容器。
+
+&emsp;JavaScript 对象是键值对的容器，"键" 必须为字符串，"值" 可以是 JavaScript 中包括 `null` 和 `undefined` 的任意数据类型。
+
+## JavaScript 函数
+
+&emsp;函数是由事件驱动的或者当它被调用时执行的可重复使用的代码块。
+
+&emsp;JavaScript 变量的生命周期从它们被声明的时间开始。
+
+&emsp;局部变量会在函数运行以后被删除。
+
+&emsp;全局变量会在页面关闭后删除。
+
+&emsp;向未声明的 JavaScript 变量分配值。
+
+&emsp;如果把值赋值给尚未声明的变量，该变量将被自动作为 window 的一个属性。非严格模式下给未声明变量赋值创建的全局变量，是全局对象的可配置属性，可以删除。
+
+```c++
+var var1 = 1; // 不可配置全局属性
+var2 = 2; // 没有使用 var 声明，可配置全局属性
+
+console.log(this.var1); // 1
+console.log(window.var1); // 1
+console.log(window.var2); // 2
+
+console.log(delete var1); // false（无法删除）
+console.log(delete var2); // true（可以删除）
+console.log(var2); // 已经删除，报错变量未定义（Uncaught ReferenceError: var2 is not defined）
+```
+
+## JavaScript 作用域
+
+&emsp;作用域是可访问变量的合集。
+
+&emsp;如果变量在函数内没有声明（没有使用 var 关键字），该变量为全局变量。如下示例代码，`carName`在 `myFunction` 函数内，但是为全局变量。
+
+```c++
+myFunction();
+document.getElementById("demo").innerHTML = "我可以显示 " + carName;
+
+function myFunction() {
+    carName = "Volvo";
+}
+```
+
+&emsp;JavaScript 变量生命周期在它声明时初始化。
+
+&emsp;局部变量在函数执行完毕后销毁。
+
+&emsp;全局变量在页面关闭后销毁。
+
+&emsp;函数参数只在函数内起作用，是局部变量。
+
+&emsp;在 HTML 中，全局变量是 window 对象；所有数据变量都属于 window 对象。
+
+> 你的全局变量，或者函数，可以覆盖 window 对象的变量或者函数。局部变量，包括 window 对象可以覆盖全局变量和函数。
+
+&emsp;作用域是指程序源代码中定义变量的区域。
+
+&emsp;作用域规定了如何查找变量，也就是确定当前执行代码对变量的访问权限。
+
+&emsp;JavaScript 采用词法作用域（lexical scoping），也就是静态作用域。
+
+```c++
+var value = 1;
+
+function foo() {
+    console.log(value);
+}
+
+function bar() {
+    var value = 2;
+    foo();
+}
+
+bar(); // 输出 1，并不是 2
+```
+
+&emsp;假设 JavaScript 采用静态作用域，让我们分析下执行过程：
+
+&emsp;执行 `foo` 函数，先从 `foo` 函数内部查找是否有局部变量 `value`，如果没有，就根据书写位置，查找上面一层的代码，也就是 `value` 等于 1，所以结果会打印 1。
+
+&emsp;假设 JavaScript 采用动态作用域，让我们分析下执行过程：
+
+&emsp;执行 `foo` 函数，依然是从 `foo` 函数内部查找是否有局部变量 `value`。如果没有，就从调用函数的作用域，也就是 `bar` 函数内部查找 `value` 变量，所以结果会打印 2。
+
+&emsp;因为 JavaScript 采用的是静态作用域，所以上面示例代码中打印的结果是 1。
+
+## JavaScript 事件
+
+## JavaScript 字符串
+
+&emsp;JavaScript 字符串用于存储和处理文本。
+
+&emsp;不要创建 String 对象。它会拖慢执行速度，并可能产生其他副作用。
+
+```c++
+var x = "John"; // x 是一个字符串
+var y = new String("John"); // y 是一个对象
+document.getElementById("demo").innerHTML = typeof x + " " + typeof y; // string object
+```
+
+```c++
+var x = "John"; // x 是一个字符串
+var y = new String("John"); // y 是一个对象
+// document.getElementById("demo").innerHTML = typeof x + " " + typeof y;
+document.getElementById("demo").innerHTML = x === y; // false，因为 x 是字符串，y 是对象
+```
+
+&emsp;`===` 为绝对相等，即数据类型与值都必须相等。
+
+&emsp;JavaScript 中 `==` 与 `===` 区别。
+
+1. 对于 `string`、`number` 等基础类型，`==` 和 `===` 是有区别的。
+
++ 不同类型间比较，`==` 之比较 "转化成同一类型后的值" 看 "值" 是否相等，`===` 如果类型不同，其结果就是不等。
++ 同类型比较，直接进行 "值" 比较，两者结果一样。
+
+2. 对于 `Array`、`Object` 等高级类型，`==` 和 `===` 是没有区别的，进行 "指针地址" 比较。
+
+3. 基础类型与高级类型，`==` 和 `===` 是有区别的。
+
++ 对于 `==`，将高级转化为基础类型，进行 "值" 比较。
++ 因为类型不同，`===` 结果为 false。
+
+4. `!=` 为 `==` 的非运算，`!==` 为 `===` 的非运算。
+
+&emsp;双引号 " " 中用单引号 ' ' 可以不用加反斜杠，例如：
+
+```c++
+var x = "my name 'is' xxx"; // 此处不需要加反斜杠
+```
+
+&emsp;双引号 " " 中用双引号 " " 需要加反斜杠，例如：
+
+```c++
+var x = "my name \"is\" xxx"; // 此处需要在两个上引号前各加一个加反斜杠
+```
+
+&emsp;单引号 ' ' 中用双引号 " " 不需要加反斜杠，当然加了也可以，例如：
+
+```c++
+var x1 = 'my name "is" xxx'; // 此处不需要加反斜杠（推荐）
+var x2 = 'my name \"is\" xxx'; // 添加反斜杠效果也一样（不推荐）
+```
+
+## JavaScript 运算符
+
+&emsp;如果把数字与字符串相加，结果将成为字符串。
+
+```c++
+var result1 = 5 + 5 + "abc";
+console.log(result1); // 输出：10abc
+
+var result2 = "" + 5 + 5 + "abc";
+console.log(result2); // 输出：55abc
+```
+
+&emsp;空文本 + 数字得到的运算结果都是把数字转成字符串，无论文本有多少空格，但是空格会计入长度。
+
+```c++
+var result1 = "" + 5;
+console.log(result1); // 输出："5"
+
+var result2 = " " + 5;
+console.log(result2); // 输出：" 5"
+
+var result3 = "     " + 5;
+console.log(result3); // 输出："     5"
+```
+
+&emsp;数字和布尔值相加，布尔值 false 转成 0，true 转成 1。
+
+&emsp;字符串与布尔值相加，布尔值转化成字符串。
+
+&emsp;取模运算的结果符号只与左边值的符号有关。
+
++ 如果 `%` 左边的操作数是正数，则模除的结果为正数或零。
++ 如果 `%` 左边的操作数是负数，则模除的结果为负数或零。
+
+&emsp;数字与 `null` 相加，`null` 转化为数字 0，字符串与 `null` 相加，`null` 转化为字符串：
+
+```c++
+var car = null + 3 + 4;
+console.log(car); // 输出：7
+
+var car2 = null + 'a';
+console.log(car2); // 输出：nulla
+```
+
+1. 字符串一个很能强大的数据类型；在执行加 `+` 时，将被加的对象统一处理为字符串。
+2. `bool` 类型在与数字类型进行相加时，视为 0 或者 1 处理。
+3. `null` 类型与数字类型进行累加时，视为 0 处理。
+4. `bool` 类型与 `null` 类型进行累加时，视为其与整数类型累加处理。
+5. `undefined` 除了与字符串进行累加时有效（`undefined` 视为字符串 "undefined" 处理），其他情况皆返回 `NaN`。
+
+## JavaScript 比较 和 逻辑运算符
+
+&emsp; 
