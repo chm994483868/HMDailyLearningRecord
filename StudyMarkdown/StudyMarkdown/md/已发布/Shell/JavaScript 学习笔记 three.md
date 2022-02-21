@@ -466,4 +466,34 @@ console.log(car2); // 输出：nulla
 
 ## JavaScript 比较 和 逻辑运算符
 
-&emsp; 
+&emsp;`null`、`undefined`、`0`、`NaN`、空字符串转换为 `false`，其他转换为 `true`。
+
+&emsp;**逻辑与 &&** 
+
+```c++
+ console.log(true || 10);
+ console.log(false || b);
+ console.log(100 || false);
+ console.log(undefined || 9);
+ console.log(NaN || false);
+ console.log(null || a);
+ console.log('' || false);
+ console.log(0 || 100);
+ console.log(5 || 100);
+ console.log(a || b);
+ console.log(obj || 200);
+```
+
+```c++
+ console.log(true && 10);
+ console.log(false && b);
+ console.log(100 && false);
+ console.log(undefined && false);
+ console.log(NaN && false);
+ console.log(null && false);
+ console.log('' && false);
+ console.log(0 && 100);
+ console.log(5 && 100);
+ console.log(a && b);
+ console.log(obj && 200);
+```
