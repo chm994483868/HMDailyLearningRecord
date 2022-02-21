@@ -468,32 +468,69 @@ console.log(car2); // 输出：nulla
 
 &emsp;`null`、`undefined`、`0`、`NaN`、空字符串转换为 `false`，其他转换为 `true`。
 
-&emsp;**逻辑与 &&** 
+&emsp;**逻辑与 &&** 返回的不是单纯的 `true` 或 `false`，而是具体的值，若是第一个值转换布尔值为 `true`，就返回第二个值，反之，返回第一个值。
+
+&emsp;**逻辑或 ||** 同 `&&` 类似，返回的不是单纯的 `true` 或 `false`，而是具体的值，它是从头开始，遇到能转换为 `true` 的值，就返回那个值，如果没有 `true` 的就返回最后一个值。
 
 ```c++
- console.log(true || 10);
- console.log(false || b);
- console.log(100 || false);
- console.log(undefined || 9);
- console.log(NaN || false);
- console.log(null || a);
- console.log('' || false);
- console.log(0 || 100);
- console.log(5 || 100);
- console.log(a || b);
- console.log(obj || 200);
+<script>
+    var a = [1, 2, 3]
+    var b = "hello";
+    var obj = new Object();
+    var d;
+
+    console.log(true && 10); // 10
+    console.log(false && b); // false
+    console.log(100 && false); // false
+    console.log(undefined && false); // undefined
+    console.log(NaN && false); // NaN
+    console.log(null && false); // null
+    console.log('' && false); // ''
+    console.log(0 && 100); // 0
+    console.log(5 && 100); // 100
+    console.log(a && b); // hello
+    console.log(obj && 200); // 200
+
+    console.log(true || 10); // true
+    console.log(false || b); // b
+    console.log(100 || false); // 100
+    console.log(undefined || 9); // 9
+    console.log(NaN || false); // false
+    console.log(null || a); // a
+    console.log('' || false); // false
+    console.log(0 || 100); // 100
+    console.log(5 || 100); // 5
+    console.log(a || b); // a
+    console.log(obj || 200); // obj
+</script>
 ```
 
+## JavaScript 条件语句
+
+## JavaScript switch 语句
+
+## JavaScript for 循环
+
+&emsp;`while` 遍历数组的例子中，如果数组中有 0、null、false、undefined 或者空字符串等在 js 中被认为等价于 `false` 的值，会提前结束遍历，改成判断数组长度即可避免该问题。
+
 ```c++
- console.log(true && 10);
- console.log(false && b);
- console.log(100 && false);
- console.log(undefined && false);
- console.log(NaN && false);
- console.log(null && false);
- console.log('' && false);
- console.log(0 && 100);
- console.log(5 && 100);
- console.log(a && b);
- console.log(obj && 200);
+while (cars[i]) {
+    document.write(cars[i] + "<br>");
+    i++;
+}
+
+// 修改为 
+
+while (i < cars.length) {
+    document.write(cars[i] + "<br>");
+    i++;
+}
 ```
+
+## JavaScript break 和 continue 语句
+
+&emsp;`break` 语句用于跳出循环。
+
+&emsp;`continue` 用于跳出循环中的一个迭代。
+
+
