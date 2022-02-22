@@ -533,4 +533,61 @@ while (i < cars.length) {
 
 &emsp;`continue` 用于跳出循环中的一个迭代。
 
+## JavaScript 标签
 
+&emsp;通过标签引用，`break` 语句可用于跳出任何 JavaScript 代码块：
+
+```c++
+cars = ["BMW", "Volvo", "Saab", "Ford"]
+list: {
+    document.write(cars[0] + "<br>");
+    document.write(cars[1] + "<br>");
+    document.write(cars[2] + "<br>");
+    break list;
+    document.write(cars[3] + "<br>");
+    document.write(cars[4] + "<br>");
+    document.write(cars[5] + "<br>");
+}
+
+// 仅执行到：Saab，后面的 Ford、undefined、undefined 不会写入
+```
+
+&emsp;关于 JavaScript 标签与 `break`、`continue` 一起使用的细节：
+
+&emsp;`break` 的作用是 **跳出代码块**，所以 `break` 可以使用于循环和 `switch` 等。`continue` 的作用是进入下一个迭代，所以 `continue` 只能用于循环的代码块，代码块基本是指 `{}` 大括号之间的内容。 
+
+&emsp;默认标签的情况，当 `break` 和 `continue` 同时用于循环时，没有加标签，此时默认标签为当前循环的代码块。当 `break` 用于 `switch` 时，默认标签为当前的 `switch` 代码块。
+
+## JavaScript typeof、null、undefined
+
+&emsp;使用 `typeof` 操作符来检测变量的数据类型，注意这里的 `typeof` 是一个操作符，直接在变量前面使用，并不是一个函数。
+
+```c++
+typeof "john" // string
+typeof 3.14 // number
+typeof false // boolean
+typeof [1, 2, 3, 4] // object
+typeof {name: 'john', age: 34} // object
+```
+
+&emsp;在 JavaScript 中，数组是一种特殊的对象类型，因此 `typeof [1, 2, 3, 4]` 返回的是 `object`。
+
+### null
+
+&emsp;在 JavaScript 中 `null` 表示：什么都没有。`null` 是一个只有一个值的特殊类型，表示一个空对象引用。用 `typeof` 检测 `null` 返回的是 `object`。
+
+&emsp;可以把变量设置为 `null` 来清空对象。
+
+```c++
+var person = null; // 值为 null(空)，但类型是对象 
+```
+
+&emsp;可以把变量设置为 `undefined` 来清空对象。
+
+```c++
+var person = undefined; // 值为 undefined，类型为 undefined
+```
+
+### undefined
+
+&emsp;在 JavaScript 中，`undefined` 是一个没有设置值的变量。`typeof` 一个没有值的变量会返回 `undefined`。
