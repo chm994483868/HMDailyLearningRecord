@@ -591,3 +591,253 @@ var person = undefined; // 值为 undefined，类型为 undefined
 ### undefined
 
 &emsp;在 JavaScript 中，`undefined` 是一个没有设置值的变量。`typeof` 一个没有值的变量会返回 `undefined`。
+
+&emsp;`null` 和 `undefined` 的值相等，但类型不同。
+
+```c++
+typeof undefined // undefined
+typeof null // object
+(null === undefined) // false
+(null == undefined) // true
+```
+
+&emsp;`undefined` 是所有没有赋值变量的默认值，自动赋值。
+
+&emsp;`null` 主动释放一个变量引用的对象，表示一个变量不再指向任何对象地址。
+
+## JavaScript 类型转换
+
+&emsp;`Number()` 转换为数字，`String()` 转换为字符串，`Boolean()` 转换为布尔值。
+
+### JavaScript 数据类型
+
+&emsp;在 JavaScript 中有 6 种不同的数据类型：
+
++ `string`
++ `number`
++ `boolean`
++ `object`
++ `function`
++ `symbol`
+
+&emsp;3 种对象类型：
+
++ `Object`
++ `Date`
++ `Array`
+
+&emsp;2 个不包含任何值的数据类型：
+
++ `null`
++ `undefined`
+
+&emsp;请注意：
+
++ `NaN` 的数据类型是 `number`
++ 数组(Array)的数据类型是 `object`
++ 日期(Date)的数据类型为 `object`
++ `null` 的数据类型是 `object`
++ 未定义变量的数据类型为 `undefined`
+
+&emsp;如果对象是 JavaScript `Array` 或 JavaScript `Date`，我们就无法通过 `typeof` 来判断他们的类型，因为都是返回 `object`。
+
+&emsp;`constructor` 属性返回所有 JavaScript 变量的构造函数。
+
+```c++
+<p>constructor 属性返回变量或对象的构造函数。</p>
+<p id="demo"></p>
+<script>
+    document.getElementById("demo").innerHTML =
+        "john".constructor + "<br>" +
+        (3.14).constructor + "<br>" +
+        false.constructor + "<br>" + [1, 2, 3, 4].constructor + "<br>" + {
+            name: "john",
+            age: 34
+        }.constructor + "<br>" +
+        new Date().constructor + "<br>" +
+        function() {}.constructor;
+</script>
+
+// 输出：
+
+function String() { [native code] }
+function Number() { [native code] }
+function Boolean() { [native code] }
+function Array() { [native code] }
+function Object() { [native code] }
+function Date() { [native code] }
+function Function() { [native code] }
+``` 
+
+&emsp;可以使用 `constructor` 属性来查看对象是否为数组（包含字符串 "Array"）:
+
+```c++
+function isArray(myArray) {
+    return myArray.constructor.toString().indexOf("Array") > -1;
+}
+```
+
+&emsp;可以使用 `constructor` 属性来查看对象是否为日期（包含字符串 "Date"）:
+
+```c++
+function isDate(myDate) {
+    return myDate.constructor.toString().indexOf("Date") > -1;
+}
+```
+
+&emsp;将字符串转换为数字：
+
+&emsp;全局方法 `Number()` 可以将字符串转换为数字。字符串包含数字（如："3.14"）转换为数字（如：3.14）。
+
+&emsp;空字符串转换为 0。
+
+&emsp;其他的字符串会转换为 `NaN`（不是个数字）。
+
+&emsp;Operator + 可用于将变量转换为数字：
+
+```c++
+var y = "5"; // y 是一个字符串
+var x = + y; // x 是一个数字
+```
+
+&emsp;如果变量不能转换，它仍然会是一个数字，但值为 `NaN`（不是一个数字）；
+
+&emsp;`instanceof` 可通过 `instanceof` 操作符来判断对象的具体类型，语法格式：
+
+```c++
+var result = objectName instanceof objectType
+```
+
+&emsp;返回布尔值，如果是指定类型则返回 `true`，否则返回 `false`。
+
+```c++
+arr = [1,2,3];
+
+if (arr instanceof Array) {
+    document.write("arr 是一个数组");
+} else {
+    document.write("arr 不是一个数组");
+}
+```
+
+&emsp;`NaN` 是一个特殊的数值，`NaN` 即非数值（Not a Number），这个数值用于本来要返回数值的操作数未返回数值的情况。`NaN` 与任何值都不相等，包括 `NaN` 本身。
+
+&emsp;可以通过 `isNaN()` 方法来判断某个数值是否是 `NaN` 这个特殊的数，使用 `isNaN()` 方法会将传入的数值如果是非数值的会将其自动转换成数值类型，若能转换成数值类型，那么这个函数返回 `false`，若不能转换成数值类型，则这个数就是 `NaN`，即返回 `true`。
+
+&emsp;通常来讲，使用 `instanceof` 就是判断一个实例是否属于某种类型，更重要的是 `instanceof` 可以在继承关系中用来判断一个实例是否属于它的父类型。用 `instanceof` 来判断类型只能用于 **对象层面**，不是一个对象则不行，如下：
+
+```c++
+str = "asd";
+if (str instanceof String) {
+    console.log("str YES"); // 不打印 str YES
+}
+
+str2 = new String();
+if (str2 instanceof String) {
+    console.log("str2 YES"); // 打印 str2 YES
+}
+```
+
+## JavaScript 正则表达式
+
+## JavaScript 错误 - throw、try 和 catch
+
+&emsp;`throw` 语句创建自定义错误。
+
+&emsp;JavaScript 抛出（throw）错误：当错误发生时，当事情出问题时，JavaScript 引擎通常会停止，并生成一个错误消息。
+
+## JavaScript 声明提升
+
+&emsp;理解 "hoisting(声明提升)"。声明提升，函数声明和变量声明总是会被解释器悄悄的 "提升" 到方法体的最顶部。
+
+&emsp;JavaScript 只有声明的变量会提升，初始化的不会。
+
+&emsp;JavaScript 严格模式（strict mode）不允许使用未声明的变量。
+
+&emsp;首先 JavaScript 在执行之前会有一个预编译过程，变量提升和函数提升就是发生在这里。在执行 JavaScript 时首先会创建一个 `AO` 对象（Activetion Object 执行期上下文）。然后会将形参和变量声明作为 `AO` 对象的属性名，属性的值为 `undefined`。 
+
+&emsp;变量的声明和函数的声明提升，提升的时机发生在预解析过程中。预解析过程也就是创建 AO（Activation Object） 的过程。创建AO过程：
+
++ 创建 `AO` 对象。
++ 将形参和函数内变量声明作为 `AO` 对象的属性名，属性值统一为 `undefined`。
++ 将实参赋值给形参。
++ 找函数内的函数声明作为 `AO` 对象的属性名，属性值为函数体。
+
+&emsp;什么叫变量提升？
+
+&emsp;原则上变量应该先声明后使用，但是开发者可能常常忘记声明就使用了变量，这样做 JavaScript 代码在执行的时候不报错，只是返回了一个 `undefined`，这种情况就是变量提升。计算机执行的时候会把未声明就使用的变量隐式的放到代码的最顶端。需要注意的是变量虽然发生了提升，但是给变量赋的值是不会随之提升的，所以就会得到结果 `undefined`。
+
+&emsp;什么是函数提升？
+
+&emsp;与变量提升的意思差不多，先使用函数，后再声明函数，这种违背逻辑的事情在 JavaScript 中是允许的，这门语言就是这么灵活。与变量提升不同的是，函数的返回值也会随之提升，所以你会发现在 `<script>` 标签中的任何地方都能调用函数并且使用函数的返回值。
+
+## JavaScript 严格模式（use strict）
+
+&emsp;"use strict" 指令在 JavaScript 1.8.5（ECMAScript5）中新增。它不是一条语句，但是是一个字面量表达式，在 JavaScript 旧版本中会被忽略。"use strict" 的目的是指定代码在严格条件下执行。严格模式下不能使用未声明的变量。
+
+&emsp;严格模式通过在脚本或函数的头部添加 `use strict;` 表达式来声明。
+
+&emsp;为什么使用严格模式:
+
+&emsp;消除 Javascript 语法的一些不合理、不严谨之处，减少一些怪异行为;
+
++ 消除代码运行的一些不安全之处，保证代码运行的安全。
++ 提高编译器效率，增加运行速度。
++ 为未来新版本的 Javascript 做好铺垫。
+
+&emsp;"严格模式" 体现了 Javascript 更合理、更安全、更严谨的发展方向，包括 IE 10 在内的主流浏览器，都已经支持它，许多大项目已经开始全面拥抱它。另一方面，同样的代码，在 "严格模式" 中，可能会有不一样的运行结果；一些在 "正常模式" 下可以运行的语句，在 "严格模式" 下将不能运行。掌握这些内容，有助于更细致深入地理解 JavaScript。
+
+&emsp;`use strict;` 指令只允许出现在脚本或函数的开头。
+
+## JavaScript 使用误区
+
+&emsp;赋值语句返回变量的值。
+
+### 程序块作用域
+
+&emsp;在每个代码块中 JavaScript 不会创建一个新的作用域，一般各个代码块的作用域都是全局的。
+
+&emsp;以下代码的变量 i 打印 10，而不是 `undefined`:
+
+```c++
+for (var i = 0; i < 10; i++) {
+    // some code
+}
+console.log(i);
+```
+
+&emsp;针对上面的代码，如何取 i 呢？
+
+&emsp;在 ES6 中提出了 `let` 的概念，使用 `let` 声明的变量将具有作用域的限制，如：
+
+```c++
+for (let i = 0; i < 10; i++) {
+    // some code
+}
+console.log(i);
+```
+
+&emsp;此时便打印：`Uncaught ReferenceError: i is not defined`
+
+&emsp;需要注意的是这是可以向下兼容的，比如：
+
+```c++
+var i = 1; 
+{
+    let i = 0;
+    {
+        alert(i); // 能获取 i 变量值是 0
+    }
+}
+console.log(i);
+```
+
+&emsp;此时最后获得的 i 变量是最前面声明的变量 i，打印 1。而二级作用域的 alert 可以获得上一级的值为 0 的变量 i，这就是所谓的 **上级作用域向下兼容**。
+
+## JavaScript 表单
+
+&emsp;HTML 表单验证可以通过 JavaScript 来完成。
+
+## JavaScript 表单验证
+
+&emsp;
