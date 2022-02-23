@@ -740,4 +740,13 @@ if (str2 instanceof String) {
 
 ## JavaScript 正则表达式
 
+## JavaScript 错误 - throw、try 和 catch
+
+&emsp;`throw` 语句创建自定义错误。
+
+&emsp;JavaScript 抛出（throw）错误：当错误发生时，当事情出问题时，JavaScript 引擎通常会停止，并生成一个错误消息。
+
+## JavaScript 声明提升
+
 &emsp;
+
