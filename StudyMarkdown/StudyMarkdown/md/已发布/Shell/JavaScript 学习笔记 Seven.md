@@ -848,10 +848,178 @@ console.log(i);
 
 &emsp;面向对象语言中 `this` 表示当前对象的一个引用，但在 JavaScript 中 `this` 不是固定不变的，它会随着执行环境的改变而改变。
 
-+ 在方法中，`this` 表示该方法所属的对象。(调用该方法的对象)
-+ 在函数中，`this` 表示全局对象。（这里上下两句的 "方法" 和 "函数" 分别指什么？）
++ 在对象方法中，`this` 指向调用它所在方法的对象。
 
-+ 如果单独使用，`this` 表示全局对象。
-+ 在函数中，在严格模式下，`this` 是未定义的(`undefined`)。
-+ 在事件中，`this` 表示接收事件的元素。
-+ 类似 `call()` 和 `apply()` 方法可以将 `this` 引用到任何对象。
++ 单独使用 `this`，它指向全局（Global）对象。
+
+```c++
+var x = this; // [object Window]
+```
+
++ 函数使用中，`this` 指向函数的所属者。
++ 严格模式下函数是没有绑定到 `this` 上，这时候 `this` 是 `undefined`。
+
+```c++
+"use strict";
+function myFunction() {
+  return this; // undefined
+}
+```
+
++ 在 HTML 事件句柄中，`this` 指向了接收事件的 HTML 元素。
++ `apply()` 和 `call()` 允许切换函数执行的上下文环境（context），即 `this` 绑定的对象，可以将 `this` 引用到任何对象。
+
+&emsp;单独使用 `this`，则它指向全局（Global）对象。在浏览器中，`window` 就是该全局对象为 `[object Window]`。
+
+&emsp;严格模式下，如果单独使用 `this` 也是指向全局（Global）对象。
+
+```c++
+"use strict";
+var x = this; // [object Window]
+```
+
+&emsp;函数中使用 `this`（默认），在函数中，函数的所属者默认绑定到 this 上。在浏览器中，`window` 就是该全局对象为 `[object Window]`。
+
+&emsp;严格模式下，函数是没有绑定到 `this` 上，这时候 `this` 是 `undefined`。
+
+&emsp;在 HTML 事件句柄中，`this` 指向了接收事件的 HTML 元素：
+
+```c++
+<button onclick="this.style.display='none'">点我后我就消失了</button>
+```
+
+&emsp;显示函数绑定：
+
+&emsp;在 JavaScript 中函数也是对象，对象则有方法，`apply` 和 `call` 就是函数对象的方法， 这两个方法异常强大，它们允许切换函数执行的上下文环境（context），即 `this` 绑定的对象。
+
+&emsp;在下面的实例中，当我们使用 `person2` 作为参数来调用 `person1.fullName` 方法时，`this` 将指向 `person2`，即便它是 `person1` 的方法：
+
+```c++
+var person1 = {
+    fullName: function() {
+        return this.firstName + " " + this.lastName;
+    }
+}
+var person2 = {
+    firstName: "John",
+    lastName: "Doe",
+}
+var x = person1.fullName.call(person2); // x 的值："John Doe"
+```
+
+&emsp;`this` 指向的是该 `this` 所在的最里层的 object 对象。
+
++ 函数不是 object 对象，所以没有写在 object 对象里的函数调用 `this` 会指向 `window`。
++ 构造函数是 object 对象，所以在构造函数中调用 `this` 会指向该构造函数。
++ HTML 元素是 object 元素，所以在 HTML 元素中调用 `this` 会指向该元素。
+
+&emsp;函数1 `return 函数2`，函数2 `return this`，该 `this` 会指向 `window`。
+
+```c++
+let obj = {
+    fun1: function() {
+        return function() {
+            return this;
+        }
+    },
+};
+
+console.log(obj.fun1()()); // window
+```
+
+&emsp;`this` 含义：解析器在调用函数时，每次都会向函数内部传递进隐藏的参数。根据函数的调用方式的不同，`this` 会指向不同的对象。
+
++ 以函数的形式调用时，`this` 永远都是 `window`。
++ 以方法的形式调用时，`this` 就是调用方法的那个对象。
+
+## JavaScript let 和 const
+
+&emsp;HTML 代码中使用全局变量：
+
++ 在 JavaScript 中，全局作用域是针对 JavaScript 环境。
++ 在 HTML 中，全局作用域是针对 window 对象。
+
+&emsp;使用 `var` 关键字声明的全局作用域变量属于 `window` 对象。
+
+```c++
+var carName = "Volvo"; // 可以使用 window.carName 访问变量
+``` 
+
+&emsp;使用 `let` 关键字声明的全局作用域变量不属于 `window` 对象。
+
+```c++
+let carName = "Volvo"; // 不能使用 window.carName 访问变量（undefined）
+```
+
+&emsp;在相同的作用域或块级作用域中，不能使用 `let` 关键字来重置 `var` 关键字声明的变量：
+
+```c++
+var x = 2;
+let x = 3; // Uncaught SyntaxError: Identifier 'x' has already been declared
+```
+
+```c++
+let x = 2;
+let x = 3; // Uncaught SyntaxError: Identifier 'x' has already been declared
+```
+
+```c++
+let x = 2;
+var x = 3; // Uncaught SyntaxError: Identifier 'x' has already been declared
+```
+
+&emsp;`let` 关键字定义的变量则不可以在使用后声明，也就是变量需要先声明再使用。
+
+&emsp;`const` 用于声明一个或多个常量，声明时必须进行初始化，且初始化后值不可再修改。
+
+&emsp;`const` 的本质: `const` 定义的变量并非常量，并非不可变，它定义了一个常量引用一个值。使用 `const` 定义的对象或者数组，其实是可变的。下面的代码并不会报错：
+
+```c++
+// 创建常量对象
+const car = {type:"Fiat", model:"500", color:"white"};
+ 
+// 修改属性:
+car.color = "red";
+ 
+// 添加属性
+car.owner = "Johnson";
+```
+
+&emsp;但是我们不能对常量对象重新赋值。
+
+&emsp;`const` 定义的变量并非不可改变，比如使用 `const` 声明对象，可以改变对象值。那么什么情况能彻底 "锁死" 变量呢？可以使用 `Object.freeze()` 方法来 **冻结变量**，如：
+
+```c++
+const obj = {
+  name:"1024kb"
+};
+
+Object.freeze(obj) // 此时对象 obj 被冻结，返回被冻结的对象
+```
+
+&emsp;需要注意的是，被冻结后的对象不仅仅是不能修改值，同时也：
+
++ 不能向这个对象添加新的属性
++ 不能修改其已有属性的值
++ 不能删除已有属性
++ 不能修改该对象已有属性的可枚举性、可配置性、可写性
+
+&emsp;建议判断清除情况再进行使用。
+
+## JavaScript JSON
+
+&emsp;JSON 是用于存储和传输数据的格式。JSON 通常用于服务端向网页传递数据。
+
+&emsp;什么是 JSON? JSON 英文全称 JavaScript Object Notation。
+
+&emsp;JSON 是一种轻量级的数据交换格式。
+
+&emsp;JSON 是独立的语言，JSON 易于理解。
+
+> &emsp;JSON 使用 JavaScript 语法，但是 JSON 格式仅仅是一个文本，文本可以被任何编程语言读取及作为数据格式传递。
+
+&emsp;JSON 格式在语法上与创建 JavaScript 对象代码是相同的。由于它们很相似，所以 JavaScript 程序可以很容易的将 JSON 数据转换为 JavaScript 对象。
+
+## JavaScript void
+
+&emsp;
