@@ -1022,4 +1022,47 @@ Object.freeze(obj) // 此时对象 obj 被冻结，返回被冻结的对象
 
 ## JavaScript void
 
+&emsp;`javascript:void(0)` 中最关键的是 `void` 关键字，`void` 是 JavaScript 中非常重要的关键字，该操作符指定要计算一个表达式但是不返回值。
+
+&emsp;
+
+```c++
+<a href="javascript:void(alert('Warning!!!'))">点我弹出警告框</a>
+<a href="javascript:void(0)">点我什么也不会发生</a>
+```
+
+```c++
+function getValue() {
+    var a, b, c;
+    a = void( b = 5, c = 7);
+    document.write('a = ' + a + ' b = ' + b + ' c = ' + c);
+}
+
+// a = undefined b = 5 c = 7
+```
+
+&emsp;href="#" 与 href="javascript:void(0)" 的区别：
+
+&emsp;# 包含了一个位置信息，默认的锚是 `#top` 也就是网页的上端，而 `javascript:void(0)`，仅仅表示一个死链接。
+
+&emsp;在页面很长的时候会使用 # 来定位页面的具体位置，格式为: # + id。
+
+```c++
+<a href="javascript:void(0);">点我没有反应的!</a>
+<a href="#pos">点我定位到指定位置!</a>
+<br>
+...
+// 可以在这里插入很多 <br> 让页面高度超出屏幕，方便跳转测试
+<br>
+<p id="pos">尾部定位点</p>
+```
+
+&emsp;`void()` 仅仅是代表不返回任何值，但是括号内的表达式还是要运行，如：
+
+```c++
+void(alert("Warnning!"))
+```
+
+## JavaScript 异步编程
+
 &emsp;
