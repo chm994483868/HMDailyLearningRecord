@@ -1063,6 +1063,117 @@ function getValue() {
 void(alert("Warnning!"))
 ```
 
+```c++
+    <!-- // 阻止链接跳转，URL 不会有任何变化 -->
+    <a href="javascript:void(0)" rel="nofollow ugc">点击此处</a>
+
+    <!-- 虽然阻止了链接跳转，但 URL 尾部会多个 #，改变了当前 URL。（# 主要用于配合 location.hash） -->
+    <a href="#" rel="nofollow ugc">点击此处</a>
+
+    <!-- 同理，# 可以的话，？也能达到阻止页面跳转的效果，但也相同的改变了 URL。（？主要用于配合 location.search） -->
+    <a href="?" rel="nofollow ugc">点击此处</a>
+
+    <!-- Chrome 中即使 javascript:0; 也没变化，firefox 中会变成一个字符串 0 -->
+    <a href="javascript:0" rel="nofollow ugc">点击此处</a>
+```
+
 ## JavaScript 异步编程
+
+&emsp;异步（Asynchronous，async）是与同步（Synchronous，sync）相对的概念。
+
+&emsp;JavaScript 中的异步操作函数往往通过回调函数来实现异步任务的结果处理。
+
+## JavaScript Promise
+
+&emsp;Promise 是一个 ECMAScript 6 提供的类，目的是更加优雅地书写复杂的异步任务。
+
+## JavaScript 代码规范
+
+&emsp;代码规范通常包括以下几个方面：
+
++ 变量和函数的命名规则
++ 空格、缩进、注释的使用规则
++ 其他常用规范...
+
+&emsp;通常使用 4 个空格符号来缩进代码块。
+
+>  &emsp;不推荐使用 TAB 键来缩进，因为不同编辑器 TAB 键的解析一样。
+
+&emsp;每行代码字符小于 80。为了便于阅读每行字符建议小于 80 个。如果一个 JavaScript 语句超过了 80 个字符，建议在运算符或者逗号后换行。
+
+## JavaScript 函数定义
+
+&emsp;JavaScript 使用关键字 function 定义函数。函数可以通过声明定义，也可以是一个表达式。
+
+&emsp;`Function()` 构造函数：函数除了通过关键字 function 定义，函数同样可以通过内置的 JavaScript 函数构造器（Function()）定义。
+
+```c++
+var myFunction = new Function("a", "b", "return a * b");
+document.getElementById("demo").innerHTML = myFunction(4, 3);
+```
+
+> &emsp;在 JavaScript 中，很多时候，你需要避免使用 `new` 关键字。
+
+### 函数提升（Hoisting）
+
+&emsp;提升（Hoisting）是 JavaScript 默认将当前作用域提升到前面去的行为。提升（Hoisting）应用在变量的声明与函数的声明。因此，函数可以在声明之前调用：
+
+```c++
+myFunction(5);
+
+function myFunction(y) {
+    return y * y;
+}
+```
+
+&emsp;使用表达式定义函数时无法提升。
+
+&emsp;函数是对象。在 JavaScript 中使用 `typeof` 操作符判断函数类型将返回 `function`，但是 JavaScript 函数描述为一个对象更加准确。JavaScript 函数有属性和方法。
+
+&emsp;`arguments.length` 属性返回函数调用过程接收到的参数个数。
+
+```c++
+function myFunction(a, b) {
+    return arguments.length;
+}
+```
+
+&emsp;`toString()` 方法将函数作为一个字符串返回。
+
+```c++
+function myFunction(a, b) {
+    return a * b;
+}
+document.getElementById("demo").innerHTML = myFunction.toString();
+// function myFunction(a, b) { return a * b; }
+```
+
+> &emsp;函数定义作为对象的属性，称之为对象方法。函数如果用于创建新的对象，称之为对象的构造函数。
+
+### 箭头函数
+
+&emsp;ES6 新增了箭头函数。箭头函数表达式的语法比普通函数表达式更简洁。箭头函数不需要使用 function、return 关键字及大括号 {}。
+
+```c++
+// ES5
+var x = function(x, y) {
+     return x * y;
+}
+ 
+// ES6
+const x = (x, y) => x * y;
+```
+
+&emsp;有的箭头函数都没有自己的 `this`，不适合定义一个对象的方法。
+
+&emsp;当我们使用箭头函数的时候，箭头函数会默认帮我们绑定外层 `this` 的值，所以在箭头函数中 `this` 的值和外层的 `this` 是一样的。箭头函数是不能提升的，所以需要在使用之前定义。
+
+&emsp;使用 `const` 比使用 `var` 更安全，因为函数表达式始终是一个常量。
+
+&emsp;如果函数部分只是一个语句，则可以省略 `return` 关键字和大括号 `{}`，这样做是一个比较好的习惯。
+
+## JavaScript 函数参数
+
+&emsp;JavaScript 函数对参数的值没有进行任何的检查。
 
 &emsp;

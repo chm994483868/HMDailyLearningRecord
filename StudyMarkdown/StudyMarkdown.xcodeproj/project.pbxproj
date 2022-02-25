@@ -176,6 +176,8 @@
 		8ECD64F727B8AB32002E63A7 /* Shell 笔记 Seven.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Shell 笔记 Seven.md"; sourceTree = "<group>"; };
 		8ECD64FE27C7B3E6002E63A7 /* JavaScript 学习笔记 Seven.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习笔记 Seven.md"; sourceTree = "<group>"; };
 		8ECD64FF27C7D959002E63A7 /* JSON 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JSON 学习笔记.md"; sourceTree = "<group>"; };
+		8ECD650027C8F6F5002E63A7 /* AJAX 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AJAX 学习笔记.md"; sourceTree = "<group>"; };
+		8ECD650127C904F9002E63A7 /* JavaScript Promise 对象.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Promise 对象.md"; sourceTree = "<group>"; };
 		8ECE502426DEF9F400681115 /* Swift 进阶笔记（一）：Swift 源码编译.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Swift 进阶笔记（一）：Swift 源码编译.md"; sourceTree = "<group>"; };
 		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
@@ -242,6 +244,8 @@
 				8ECD64F727B8AB32002E63A7 /* Shell 笔记 Seven.md */,
 				8ECD64FE27C7B3E6002E63A7 /* JavaScript 学习笔记 Seven.md */,
 				8ECD64FF27C7D959002E63A7 /* JSON 学习笔记.md */,
+				8ECD650027C8F6F5002E63A7 /* AJAX 学习笔记.md */,
+				8ECD650127C904F9002E63A7 /* JavaScript Promise 对象.md */,
 			);
 			path = Shell;
 			sourceTree = "<group>";
