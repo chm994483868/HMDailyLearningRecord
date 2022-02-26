@@ -1176,4 +1176,51 @@ const x = (x, y) => x * y;
 
 &emsp;JavaScript 函数对参数的值没有进行任何的检查。
 
+&emsp;函数显式参数（Parameters）和隐式参数（Arguments）。
+
+&emsp;函数显式参数在函数定义时列出，函数隐式参数在函数调用时传递给函数真正的值。
+
+&emsp;JavaScript 函数定义显式参数时没有指定数据类型。JavaScript 函数对隐式参数没有进行类型检测。JavaScript 函数对隐式参数的个数没有进行检测。
+
+### 默认参数
+
+&emsp;ES5 中如果函数在调用时未提供隐式参数，参数会默认设置为：`undefined`，有时这是可以接受的，但是建议最好为参数设置一个默认值：
+
+```c++
+function myFunction(x, y) {
+    if (y === undefined) {
+        y = 0;
+    }
+    return x * y;
+}
+
+// 或者使用 || 精简
+
+function myFunction(x, y) {
+    y = y || 0;
+    return x * y;
+}
+
+document.getElementById("demo").innerHTML = myFunction(4);
+```
+
+&emsp;如果函数调用时设置了过多的参数，参数将无法被引用，因为无法找到对应的参数名。只能使用 `arguments` 对象来调用。
+
+&emsp;ES6 支持函数带有默认参数，就判断 `undefined` 和 `||` 的操作。
+
+```c++
+function myFunction(x, y = 10) {
+    // 如果不传入参数 y，则其默认值为 10
+    return x + y;
+}
+// 输出 2
+document.getElementById("demo1").innerHTML = myFunction(0, 2);
+// 输出 15， y 参数使用默认值
+document.getElementById("demo2").innerHTML = myFunction(5);
+```
+
+&emsp;JavaScript 函数有个内置的对象 `arguments` 对象。`argument` 对象包含了函数调用的参数数组。
+
+## JavaScript 函数调用
+
 &emsp;
