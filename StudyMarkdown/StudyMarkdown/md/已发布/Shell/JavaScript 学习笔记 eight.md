@@ -1227,4 +1227,41 @@ document.getElementById("demo2").innerHTML = myFunction(5);
 
 ## JavaScript 函数调用
 
-&emsp;
+&emsp;JavaScript 函数有 4 种调用方式，每种方式的不同在于 `this` 的初始化。
+
+## JavaScript 闭包
+
+&emsp;变量声明时如果不使用 `var` 关键字，那么它就是一个全局变量，即便它是在函数内定义的。
+
+```c++
+var add = (function() {
+    var counter = 0;
+    return function() {
+        return counter += 1;
+    }
+})();
+
+function myFunction() {
+    document.getElementById("demo").innerHTML = add();
+}
+```
+
+&emsp;闭包是一种保护私有变量的机制，在函数执行时形成私有的作用域，保护里面的私有变量不受外界干扰。直观的说就是形成一个不销毁的栈环境。
+
+## JavaScript 类（class）
+
+&emsp;类是用来创建对象的模版。
+
+## JavaScript 类继承
+
+&emsp;`super()` 方法引用父类的构造方法。
+
+&emsp;通过在构造方法中调用 `super()` 方法，我们调用了父类的构造方法，这样就可以访问父类的属性和方法。继承对于代码可复用性很有用。
+
+&emsp;函数声明和类声明之间的一个重要区别在于，函数声明会提升，类声明不会。首先需要声明类，然后才能使用它。
+
+## JavaScript 静态方法
+
+&emsp;静态方法是使用 `static` 关键字修饰的方法，又叫类方法，属于类的，但不属于对象，在实例化对象之前可以通过 类名、方法名 调用静态方法。静态方法不能在对象上调用，只能在类中调用。
+
+
