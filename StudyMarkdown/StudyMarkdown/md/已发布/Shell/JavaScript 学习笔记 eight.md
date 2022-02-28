@@ -1265,3 +1265,52 @@ function myFunction() {
 &emsp;静态方法是使用 `static` 关键字修饰的方法，又叫类方法，属于类的，但不属于对象，在实例化对象之前可以通过 类名、方法名 调用静态方法。静态方法不能在对象上调用，只能在类中调用。
 
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+&emsp;对象只是带有属性和方法的特殊数据类型。对象只是一种特殊的数据，对象拥有属性和方法。
+
+&emsp;`new` 和不 `new` 的区别：如果 `new` 了函数内的 `this` 会指向当前这个 `person` 并且就算函数内部不 `return` 也会返回一个对象。如果不 `new` 的话函数内的 `this` 指向的是 `window`。
+
+&emsp;给已有的函数对象增加属性或者方法，格式：构造函数名.prototype.新属性或者新方法。
+
+&emsp;通常使用构造器（函数体）定义属性，使用原型对象（prototype）定义方法。如此，构造器只包含属性定义，而方法则分装在不同的代码块，使代码更具可读性：
+
+```c++
+// 构造器内定义属性
+function Fun(a, b) {
+  this.a = a;
+  this.b = b;
+}
+
+// 原型属性定义方法
+Fun.prototype.c = function() {
+  return this.a + this.b;
+}
+
+// etc...
+// 注意，千万不要使用字面量方式来定义属性和方法，否则原有属性和方法会被重写：
+
+function Fn() {};
+
+// 定义属性
+Fn.prototype.a = 1;
+Fn.prototype.b = 2;
+
+// 字面量定义方法，原型被重写，原有属性和方法被更新
+Fn.prototype = {
+  c : function() {
+    return this.a + this.b;
+  }
+}
+
+var foo = new Fn();
+foo.c(); // NaN
+foo.a; // undefined
+foo.b; // undefined
+```
+
+&emsp;所有 JavaScript 数字均为 64 位。JavaScript 不是类型语言。与许多其他编程语言不同，JavaScript 不定义不同类型的数字，比如整数、短、长、浮点等等。
+
+&emsp;在 JavaScript 中，数字不分为整数类型和浮点型类型，所有的数字都是由 浮点型类型。JavaScript 采用 IEEE754 标准定义的 64 位浮点格式表示数字，它能表示最大值（Number.MAX_VALUE）为 ±1.7976931348623157e+308，最小值（Number.MIN_VALUE）为 ±5e-324。
+
+&emsp;此格式用 64 位存储数值，其中 0 到 51 存储数字（片段），52 到 62 存储指数，63 位存储符号：
