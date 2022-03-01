@@ -2,12 +2,14 @@
 
 ## Shell 概述
 
-&emsp;操作系统的外壳：操作系统是由多个功能模块组成的功能庞大、复杂的软件系统。任何通用的操作系统，都要提供一个称为 shell（外壳）的程序（shell 这个单词的原意是 "外壳"，跟 kernel（内核）相对应，比喻内核外面的一层，即用户跟内核交互的对话界面），用户（操作人员）使用这个程序来操作计算机系统进行工作。DOS 中有一个程序 command.com，这个程序在 DOS 中称为命令解释器，也就是 DOS 系统的 shell。[汇编语言（第 3 版）](https://book.douban.com/subject/25726019/)
+> &emsp;操作系统的外壳：操作系统是由多个功能模块组成的功能庞大、复杂的软件系统。任何通用的操作系统，都要提供一个称为 shell（外壳）的程序（shell 这个单词的原意是 "外壳"，跟 kernel（内核）相对应，比喻内核外面的一层，即用户跟内核交互的对话界面），用户（操作人员）使用这个程序来操作计算机系统进行工作。DOS 中有一个程序 command.com，这个程序在 DOS 中称为命令解释器，也就是 DOS 系统的 shell。[汇编语言（第 3 版）](https://book.douban.com/subject/25726019/)
 
-&emsp;在 Linux 中，shell 是一个用 C 语言编写的程序。用户输入命令交给 shell 处理（例如：cd、dir、type 等），shell 是一个命令解释器，是一个工具箱，shell 将相应的操作传递给内核（Kernel），内核把处理的结果输出给用户。shell 也是操作系统中的一个软件，它包含在 Linux 内核的外面，为用户和内核之间的交互提供了一个接口，目前最流行的 shell 为 bash shell（GUN Bourne-Again Shell）。用户的命令用 shell 去解释，再发送给 Linxu 内核，shell 接收系统方回应的输出并显示其到屏幕中。
+&emsp;在 Linux 中，shell 是一个用 C 语言编写的程序。用户输入命令交给 shell 处理（例如：cd、dir、type 等命令），shell 是一个命令解释器，是一个工具箱，shell 将相应的操作传递给内核（kernel），内核把处理的结果输出给用户。
+
+&emsp;shell 也是操作系统中的一个软件，它包含在 Linux 内核的外面，为用户和内核之间的交互提供了一个接口，目前最流行的 shell 为 bash shell（GUN Bourne-Again Shell）。用户的命令用 shell 去解释，再发送给 Linxu 内核，shell 接收系统方回应的输出并显示其到屏幕中。
 
 > 具体来说，Shell 这个词有多种含义。
-  首先，Shell 是一个程序，提供一个与用户对话的环境。这个环境只有一个命令提示符，让用户从键盘输入命令，所以又称为命令行环境（command line interface，简写为 CLI）。Shell 接收到用户输入的命令，将命令送入操作系统执行，并将结果返回给用户。本书中，除非特别指明，Shell 指的就是命令行环境。
+  首先，Shell 是一个程序，提供一个与用户对话的环境。这个环境只有一个命令提示符，让用户从键盘输入命令，所以又称为命令行环境（command line interface，简写为 CLI）。Shell 接收到用户输入的命令，将命令送入操作系统执行，并将结果返回给用户。除非特别指明，Shell 指的就是命令行环境。
   
   其次，Shell 是一个命令解释器，解释用户输入的命令。它支持变量、条件判断、循环操作等语法，所以用户可以用 Shell 命令写出各种小程序，又称为脚本（script）。这些脚本都通过 Shell 的解释执行，而不通过编译。
   
@@ -67,10 +69,15 @@ hmc@localhost ~ % cat /etc/shells
 &emsp;下面是不同类型 shell 的一些简述，关于各 shell 的详细信息我们可以在终端中使用 `man bash`、`man csh`、`man dash`、`man ksh`、`man sh`、`man tcsh`、`man zsh` 命令查看。
 
 + sh（全称 Bourne Shell），是 UNIX 最初使用的 shell，而且在每种 UNIX 上都可以使用。Bourne Shell 在 shell 编程方便相当优秀，但在处理与用户的交互方面做得不如其他几种 shell。
+
 + bash（全称 Bourne Again Shell），是 Linux 和 Mac 的默认 shell（命令行环境）（bash 是 macOS Mojave 及更低版本中的默认 Shell，从 macOS Catalina 版开始，zsh (Z shell) 是所有新建用户帐户的默认 Shell），现在最流行，也是大多数 Linux 系统默认的 shell。它是 Bourne Shell 的扩展，与 Bourne Shell 完全兼容，并且在 Bourne Shell 的基础上增加了很多特性，可以提供命令补全，命令编辑和命令历史等功能。它还包含了很多 C Shell 和 Korn Shell 中的优点，有灵活和强大的编辑接口，同时又很友好的用户界面。[在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
+
 + csh（全称 C Shell），是一种比 Bourne Shell 更适合的变种 shell，它的语法与 C 语言很相似。
+
 + ksh（全称 Korn Shell），集合了 C Shell 和 Bourne Shell 的优点并且和 Bourne Shell 完全兼容。
+
 + Tcsh 是 Linux 提供的 C Shell 的一个扩展版本。Tcsh 包括命令行编辑，可编程单词补全，拼写校正，历史命令替换，作业控制和类似 C 语言的语法，它不仅和 Bash Shell 提示符兼容，而且还提供比 Bash Shell 更多的提示符参数。
+
 + pdksh，是 Linux 系统提供的 ksh 的扩展。pdksh 支持人物控制，可以在命令行上挂起，后台执行，唤醒或终止程序。
 
 &emsp;Linux 的 Shell 种类众多，常见的有：
@@ -206,19 +213,7 @@ bash-3.2$
 
 &emsp;上面的 `declare` 命令不仅会输出函数名，还会输出所有定义。输出顺序是按照函数名的字母表顺序。由于会输出很多内容，最好通过管道命令配合 more 或 less 使用。
 
-
-
-
-
-
-
-
-
-
-
-
 1⃣️
-
 + [在 Mac 上将 zsh 用作默认 Shell](https://support.apple.com/zh-cn/HT208050)
 + [macOS各个文件夹的作用](https://www.jianshu.com/p/0c08f2c7748d)
 + [MacOS 修改系统环境变量$Path](https://www.mzh.ren/macos-system-environment-variables.html)
@@ -226,14 +221,9 @@ bash-3.2$
 &emsp;今日学习安排：先把 [在 Mac 上将 zsh 用作默认 Shell]、[MacOS 修改系统环境变量$Path]、[macOS各个文件夹的作用] 文章看完，然后整理一下 shell 概述部分，然后开始专心学习 阮一峰老师 的 bash shell 教程。
 
 2⃣️
-
 &emsp;今日学习安排：Shell 的相关知识点已经铺垫完成，接下来阅读 阮一峰老师 的 bash 教程的正文部分。
 
-
-
-
-
-
+&emsp;后续我们可以直接学习 阮一峰老师 的 bash shell 教程：[Bash 脚本教程](https://wangdoc.com/bash/) 和 [快乐的 Linux 命令行](http://billie66.github.io/TLCL/index.html) 两份教程，几乎可以涵盖 Shell 脚本的所有知识点。
 
 
 ## 参考链接
