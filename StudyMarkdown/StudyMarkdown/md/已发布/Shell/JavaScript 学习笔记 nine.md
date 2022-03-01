@@ -1566,4 +1566,38 @@ Infinity // 直到输出 Infinity
 
 ## JavaScript 字符串（String）对象
 
-&emsp;
+&emsp;String 对象用于处理已有的字符块。
+
+&emsp;使用位置（索引）可以访问字符串中任何的字符，字符串的索引从零开始, 所以字符串第一个字符为 `[0]`，第二个字符为 `[1]`，等等。
+
+```c++
+var character=carname[7];
+```
+
+&emsp;可以在字符串中使用引号，或者可以在字符串中使用转义字符(\)使用引号：
+
+```c++
+var answer="He is called 'Johnny'";
+var answer='He is called "Johnny"';
+
+var answer='It\'s alright';
+var answer="He is called \"Johnny\"";
+```
+
+&emsp;字符串使用 `indexOf()` 来定位字符串中某一个指定的字符串首次出现的位置，如果没找到对应的字符函数返回 -1，`lastIndexOf()` 方法在字符串末尾开始查找指定字符串出现的位置。
+
+&emsp;`replace()` 方法在字符串中用某些字符替换另一些字符。
+
+&emsp;字符串大小写转换使用函数 `toUpperCase()/toLowerCase()`。
+
+&emsp;字符串使用 `split()` 函数转为数组:
+
+```c++
+var str="a,b,c,d,e,f";
+var n=str.split(",");
+document.getElementById("demo").innerHTML=n[0];
+```
+
+
+
+
