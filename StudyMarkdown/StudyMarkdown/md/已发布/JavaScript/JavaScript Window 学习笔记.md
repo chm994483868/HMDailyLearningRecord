@@ -135,3 +135,143 @@ console.log(location.href) // file:///Users/hmc/Documents/GitHub/Simple/Front-En
 &emsp;`window.location.assign(url)`：加载 url 指定的新的 HTML 文档。就相当于一个链接，跳转到指定的 url，当前页面会转为新页面内容，可以点击后退返回上一个页面。
 
 &emsp;`window.location.replace(url)`：通过加载 url 指定的文档来替换当前文档 ，这个方法是替换当前窗口页面，前后两个页面共用一个窗口，所以是没有后退返回上一页的。
+
+## JavaScript Window History
+
+&emsp;`window.history` 对象包含浏览器的历史。
+
++ `history.back()` - 与在浏览器点击后退按钮相同，加载历史列表中的前一个 URL
+
+```c++
+function goBack() {
+    window.history.back();
+}
+```
+
++ `history.forward()` - 与在浏览器中点击向前按钮相同，加载历史列表中的下一个 URL
+
+```c++
+function goForward() {
+    window.history.forward();
+}
+```
+
+&emsp;此外可以用 `history.go()` 这个方法来实现向前、后退、刷新的功能：
+
+```c++
+function a() {
+    history.go(1); // go() 里面的参数表示跳转页面的个数，例如 history.go(1) 表示前进一个页面
+}
+
+function b() {
+    history.go(-1); // go() 里面的参数表示跳转页面的个数，例如 history.go(-1) 表示后退一个页面
+}
+
+function refresh(){
+    history.go(0); // go() 里面的参数为 0，表示刷新页面
+}
+```
+
+## JavaScript Window Navigator
+
+&emsp;`window.navigator` 对象包含有关访问者浏览器的信息。
+
+&emsp;
+
+```c++
+<div id="example"></div>
+
+<script>
+    txt = "<p>浏览器代号: " + navigator.appCodeName + "</p>";
+    txt += "<p>浏览器名称: " + navigator.appName + "</p>";
+    txt += "<p>浏览器版本: " + navigator.appVersion + "</p>";
+    txt += "<p>启用Cookies: " + navigator.cookieEnabled + "</p>";
+    txt += "<p>硬件平台: " + navigator.platform + "</p>";
+    txt += "<p>用户代理: " + navigator.userAgent + "</p>";
+    txt += "<p>用户代理语言: " + navigator.language + "</p>";
+
+    document.getElementById("example").innerHTML = txt;
+</script>
+
+// 页面显示：
+
+浏览器代号: Mozilla
+
+浏览器名称: Netscape
+
+浏览器版本: 5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36
+
+启用Cookies: true
+
+硬件平台: MacIntel
+
+用户代理: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36
+
+用户代理语言: zh-CN
+```
+
+&emsp;来自 `navigator` 对象的信息具有误导性，不应该被用于检测浏览器版本，这是因为：
+
++ `navigator` 数据可被浏览器使用者更改
++ 一些浏览器对测试站点会识别错误
++ 浏览器无法报告晚于浏览器发布的新操作系统
+
+&emsp;浏览器检测：
+
++ 由于 `navigator` 可误导浏览器检测，使用对象检测可用来嗅探不同的浏览器。
++ 由于不同的浏览器支持不同的对象，可以使用对象来检测浏览器。例如，由于只有 Opera 支持属性 `window.opera`，可以据此识别出 Opera。
+
+```c++
+if (window.opera) {...some action...}
+```
+
+## JavaScript 弹窗
+
+&emsp;可以在 JavaScript 中创建三种消息框：警告框、确认框、提示框。
+
+&emsp;警告框：警告框经常用于确保用户可以得到某些信息。当警告框出现后，用户需要点击确定按钮才能继续进行操作。
+
+```c++
+alert("你好，我是一个警告框！");
+```
+
+&emsp;确认框：确认框通常用于验证是否接受用户操作。当确认卡弹出时，用户可以点击 "确认" 或者 "取消" 来确定用户操作。当点击 "确认"，确认框返回 `true`， 如果点击 "取消", 确认框返回 `false`。
+
+```c++
+function myFunction() {
+    var x;
+    var r = confirm("按下按钮!");
+    if (r == true) {
+        x = "按下了\"确定\"按钮!";
+    } else {
+        x = "按下了\"取消\"按钮!";
+    }
+    
+    document.getElementById("demo").innerHTML = x;
+}
+```
+
+&emsp;提示框：提示框经常用于提示用户在进入页面前输入某个值。当提示框出现后，用户需要输入某个值，然后点击确认或取消按钮才能继续操纵。如果用户点击确认，那么返回值为输入的值。如果用户点击取消，那么返回值为 `null`。
+
+```c++
+function myFunction() {
+    var x;
+    var person = prompt("请输入你的名字", "Harry Potter"); // Harry Potter 是占位文字
+    if (person != null && person != "") {
+        x = "你好 " + person + "! 今天感觉如何?";
+        document.getElementById("demo").innerHTML = x;
+    } else {
+        document.getElementById("demo").innerHTML = "你点击了取消!";
+    }
+}
+```
+
+&emsp;弹窗使用 反斜杠 + "n" (\n) 来设置换行。
+
+```c++
+alert("Hello\nHow are you?");
+```
+
+## JavaScript 计时事件
+
+&emsp;
