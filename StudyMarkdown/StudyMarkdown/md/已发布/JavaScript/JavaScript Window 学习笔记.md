@@ -77,4 +77,61 @@ console.log(newValue); // undefined
 
 ## JavaScript Window Screen
 
-&emsp;
+&emsp;`window.screen` 对象包含有关用户屏幕的信息。
+
+&emsp;`window.screen` 对象在编写时可以不使用 `window` 这个前缀，`screen.availWidth` 属性返回访问者屏幕的宽度，以像素计，减去界面特性，比如窗口任务栏，`screen.availHeight` 同理。
+
++ `screen.availWidth` - 可用的屏幕宽度
++ `screen.availHeight` - 可用的屏幕高度
+
+```c++
+console.log(screen.availWidth) // 1920
+console.log(window.innerWidth) // 988
+
+console.log(screen.availHeight) // 1055
+console.log(window.innerHeight) // 423
+```
+
+&emsp;`screen` 当前可能指屏幕硬件，`window` 指当前窗口，但是 `screen` 又是 `window` 的一个属性。
+
+## JavaScript Window Location
+
+&emsp;`window.location` 对象用于获得当前页面的地址 (URL)，并把浏览器重定向到新的页面。
+
+&emsp;同样 `window.location` 对象在编写时可不使用 `window` 这个前缀。
+
++ `location.hostname` - 返回 web 主机的域名
++ `location.pathname` - 返回当前页面的路径和文件名
++ `location.port` - 返回 web 主机的端口 （80 或 443）
++ `location.protocol` - 返回所使用的 web 协议（http: 或 https:）
++ `location.href` - 返回当前页面的 URL
+
+&emsp;测试本地 HTML 文件打印：
+
+```c++
+console.log(location.hostname) // 打印空
+console.log(location.pathname) // /Users/hmc/Documents/GitHub/Simple/Front-End/TestHTML.html
+console.log(location.port) // 打印空
+console.log(location.protocol) // file:
+console.log(location.href) // file:///Users/hmc/Documents/GitHub/Simple/Front-End/TestHTML.html
+```
+
+&emsp;`location.assign()` 方法加载新的文档（URL）。
+
+```c++
+<script>
+    function newDoc() {
+        window.location.assign("https://www.runoob.com")
+    }
+
+    function newDoc2() {
+        window.location.replace("https://www.baidu.com")
+    }
+</script>
+<input type="button" value="加载新文档(能返回)" onclick="newDoc()">
+<input type="button" value="加载新文档(不能返回)" onclick="newDoc2()">
+```
+
+&emsp;`window.location.assign(url)`：加载 url 指定的新的 HTML 文档。就相当于一个链接，跳转到指定的 url，当前页面会转为新页面内容，可以点击后退返回上一个页面。
+
+&emsp;`window.location.replace(url)`：通过加载 url 指定的文档来替换当前文档 ，这个方法是替换当前窗口页面，前后两个页面共用一个窗口，所以是没有后退返回上一页的。
