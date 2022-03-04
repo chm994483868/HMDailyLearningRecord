@@ -435,27 +435,24 @@ function getCookie(cname) {
 
 &emsp;循环 `ca` 数组 `for (var i = 0; i < ca.length; i++)`，然后读取数组中的每个值，并去除前后空格 (`var c = ca[i].trim();`)。
 
-&emsp;如果找到 cookie(`c.indexOf(name) == 0`)，返回 cookie 的值 (`return c.substring(name.length, c.length);`)。
+&emsp;如果找到 cookie（`c.indexOf(name) == 0`），返回 cookie 的值 (`return c.substring(name.length, c.length);`)。
 
 &emsp;如果没有找到 cookie, 返回 ""。
 
-检测 cookie 值的函数
-最后，我们可以创建一个检测 cookie 是否创建的函数。
-如果设置了 cookie，将显示一个问候信息。
-如果没有设置 cookie，将会显示一个弹窗用于询问访问者的名字，并调用 setCookie 函数将访问者的名字存储 365 天：
-function checkCookie()
-{
-  var username=getCookie("username");
-  if (username!="")
-  {
-    alert("Welcome again " + username);
-  }
-  else 
-  {
-    username = prompt("Please enter your name:","");
-    if (username!="" && username!=null)
-    {
-      setCookie("username",username,365);
+### 检测 cookie 值的函数
+
+&emsp;可以创建一个检测 cookie 是否创建的函数。如果设置了 cookie，将显示一个问候信息。如果没有设置 cookie，将会显示一个弹窗用于询问访问者的名字，并调用 setCookie 函数将访问者的名字存储 365 天：
+
+```c++
+function checkCookie() {
+    var username = getCookie("username");
+    if (username != "") {
+        alert("Welcome again " + username);
+    } else {
+        username = prompt("Please enter your name:", "");
+        if (username != "" && username != null) {
+            setCookie("username", username, 365);
+        }
     }
-  }
 }
+```
