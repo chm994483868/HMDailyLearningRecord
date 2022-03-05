@@ -27,3 +27,7 @@ iOS App Crash 分析：(五)：函数堆栈获取解析
 
 + [iOS内存映射mmap详解](https://www.jianshu.com/p/13f254cf58a7)
 + [Swift编译器中间码SIL类型系统](https://www.jianshu.com/p/fb6923e3a7be)
+
++ [Combine与SwiftUI](https://www.jianshu.com/p/9a8603ca77a1)
+
+&emsp;缺少系统层的声明式 UI 语言。
