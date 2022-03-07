@@ -12,7 +12,8 @@ struct Grass: Food { }
 
 protocol Animal {
 //    associatedtype F
-    // 这里给 F 赋值为 Food，在下面 Tiger 中可以直接使用 F，但是这样定死 F 为 Food，也失去了 associatedtype 的原有价值
+    // 这里给 F 赋值为 Food，在下面 Tiger 中可以直接使用 F，~~但是这样定死 F 为 Food，也失去了 associatedtype 的原有价值~~
+    // Food 其实只是默认值，并不是把 F 的实际类型定死了！
     associatedtype F = Food
     
     func eat(_ food: F)

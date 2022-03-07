@@ -169,6 +169,7 @@
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "cocoapods和Xcode工程.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
+		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
 		8EAFFB452795979800B70023 /* iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md"; sourceTree = "<group>"; };
 		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
@@ -297,6 +298,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8EACBADC27D62C5F001AB602 /* TypeScript */,
 				8E73B42B27D58632009254D9 /* jQuery */,
 				8ECD654D27CE4268002E63A7 /* AJAX */,
 				8ECD654C27CE425B002E63A7 /* JSON */,
@@ -603,6 +605,14 @@
 				8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */,
 			);
 			path = JavaScript;
+			sourceTree = "<group>";
+		};
+		8EACBADC27D62C5F001AB602 /* TypeScript */ = {
+			isa = PBXGroup;
+			children = (
+				8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */,
+			);
+			path = TypeScript;
 			sourceTree = "<group>";
 		};
 		8ECD64F127B2BC3D002E63A7 /* 汇编知识点 */ = {
