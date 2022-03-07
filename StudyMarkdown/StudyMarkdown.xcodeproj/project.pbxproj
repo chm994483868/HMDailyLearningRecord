@@ -161,6 +161,9 @@
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
+		8E73B42C27D58674009254D9 /* jQuery 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "jQuery 学习笔记.md"; sourceTree = "<group>"; };
+		8E73B44D27D5ACC4009254D9 /* associatedtype 笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "associatedtype 笔记.md"; sourceTree = "<group>"; };
+		8E73B44E27D5D44A009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
@@ -294,6 +297,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8E73B42B27D58632009254D9 /* jQuery */,
 				8ECD654D27CE4268002E63A7 /* AJAX */,
 				8ECD654C27CE425B002E63A7 /* JSON */,
 				8E8ACB5C27BC7A1B006D82FA /* JavaScript */,
@@ -506,6 +510,8 @@
 				8E5E58D32686A0010088C814 /* 野指针.md */,
 				8E5E58D42686A0010088C814 /* 面试准备.md */,
 				8E5E58D52686A0010088C814 /* =default 和 = delete使用.md */,
+				8E73B44D27D5ACC4009254D9 /* associatedtype 笔记.md */,
+				8E73B44E27D5D44A009254D9 /* Combine 学习笔记.md */,
 			);
 			path = "零碎文件";
 			sourceTree = "<group>";
@@ -562,6 +568,14 @@
 				8E5E58922686A0010088C814 /* iOS《Key-Value Observing Programming Guide》官方文档.md */,
 			);
 			path = KVCKVO;
+			sourceTree = "<group>";
+		};
+		8E73B42B27D58632009254D9 /* jQuery */ = {
+			isa = PBXGroup;
+			children = (
+				8E73B42C27D58674009254D9 /* jQuery 学习笔记.md */,
+			);
+			path = jQuery;
 			sourceTree = "<group>";
 		};
 		8E79139627A0D0CC00900CDA /* Python */ = {
