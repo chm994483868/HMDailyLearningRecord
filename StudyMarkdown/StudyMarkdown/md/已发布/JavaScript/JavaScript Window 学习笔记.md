@@ -456,3 +456,16 @@ function checkCookie() {
     }
 }
 ```
+
+
+
+## 参考链接
+**参考链接:🔗**
++ [Promise 对象](https://wohugb.gitbooks.io/ecmascript-6/content/docs/promise.html)
++ [Promise](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Promise)
++ [ECMAScript 6简介](https://wohugb.gitbooks.io/ecmascript-6/content/docs/intro.html)
++ [JavaScript 教程](https://wangdoc.com/javascript/)
++ [JavaScript 异步编程](https://www.runoob.com/js/js-async.html)
++ [JavaScript Promise 对象](https://www.runoob.com/w3cnote/javascript-promise-object.html)
++ [JSON 教程](https://www.runoob.com/json/json-tutorial.html)
++ [JavaScript JSON](https://www.runoob.com/js/js-json.html)

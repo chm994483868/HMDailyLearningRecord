@@ -234,12 +234,12 @@
 			path = crash;
 			sourceTree = "<group>";
 		};
-		8E50EFFF27919E5700A4DBE1 /* SwiftUI */ = {
+		8E50EFFF27919E5700A4DBE1 /* SwiftUI_Combine */ = {
 			isa = PBXGroup;
 			children = (
 				8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记.md */,
 			);
-			path = SwiftUI;
+			path = SwiftUI_Combine;
 			sourceTree = "<group>";
 		};
 		8E50F0012791A2EC00A4DBE1 /* Shell */ = {
@@ -304,7 +304,7 @@
 				8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */,
 				8E79139627A0D0CC00900CDA /* Python */,
 				8E50F0012791A2EC00A4DBE1 /* Shell */,
-				8E50EFFF27919E5700A4DBE1 /* SwiftUI */,
+				8E50EFFF27919E5700A4DBE1 /* SwiftUI_Combine */,
 				8E110CCF270F48A30016FF16 /* LLDB */,
 				8E3327F026F2C38000753049 /* crash */,
 				8E2137B326D2382E00CB9B03 /* Flutter */,
