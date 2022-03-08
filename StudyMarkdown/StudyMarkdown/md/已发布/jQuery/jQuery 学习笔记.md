@@ -211,20 +211,76 @@ $(document).ready(function(){
 </head>
 ```
 
-## jQuery 事件
+## jQuery 事件（DOM 事件）
+
+&emsp;jQuery 是为事件处理特别设计的。
+
+&emsp;事件处理程序指的是当 HTML 中发生某些事件时所调用的方法。事件示例：
+
++ 在元素上移动鼠标。
++ 选取单选按钮
++ 点击元素
++ ...
+
+### 鼠标事件
+
++ click 事件：当单击元素时，发生 click 事件。`click()` 方法触发 click 事件，或规定当发生 click 事件时运行的函数。
++ dblclick 事件：当双击元素时，触发 dblclick 事件。`dblclick()` 方法触发 dblclick 事件，或规定当发生 dblclick 事件时运行的函数。dblclick 事件也会产生 click 事件。如果这两个事件都被应用于同一个元素，则会产生问题。
++ mouseenter 事件：当鼠标指针穿过（进入）被选元素时，会发生 mouseenter 事件。`mouseenter()` 方法触发 mouseenter 事件，或添加当发生 mouseenter 事件时运行的函数。与 mouseover 事件不同，mouseenter 事件只有在鼠标指针进入被选元素时被触发，mouseover 事件在鼠标指针进入任意子元素时也会被触发。该事件通常与 mouseleave 事件一起使用。
++ mouseleave 事件：当鼠标指针离开被选元素时，会发生 mouseleave 事件。`mouseleave()` 方法触发 mouseleave 事件，或添加当发生 mouseleave 事件时运行的函数。与 mouseout 事件不同，mouseleave 事件只有在鼠标指针离开被选元素时被触发，mouseout 事件在鼠标指针离开任意子元素时也会被触发。该事件通常与 mouseenter 事件一起使用。
++ hover 事件：`hover(inFunction, outFunction)` 方法规定当鼠标指针悬停在被选元素上时要运行的两个函数。方法触发 mouseenter 和 mouseleave 事件。如果只指定一个函数，则 mouseenter 和 mouseleave 都执行它。`inFunction`：必需，规定 mouseenter 事件发生时运行的函数。`outFunction`：可选，规定 mouseleave 事件发生时运行的函数。
+
+### 键盘事件
+
++ keypress 事件：与 keypress 事件相关的事件顺序：1. keydown - 键按下的过程 2. keypress - 键被按下 3. keyup - 键被松开。`keypress()` 方法触发 keypress 事件，或规定当发生 keypress 事件时运行的函数。keypress 事件与 keydown 事件类似。当按钮被按下时发生该事件。然而，keypress 事件不会触发所有的键（比如 ALT、CTRL、SHIFT、ESC）。请使用 keydown() 方法来检查这些键。
++ keydown 事件：与 keydown 事件相关的事件顺序：1. keydown - 键按下的过程 2. keypress - 键被按下 3. keyup - 键被松开。当键盘键被按下时发生 keydown 事件。`keydown()` 方法触发 keydown 事件，或规定当发生 keydown 事件时运行的函数。请使用 `event.which` 属性来返回哪个键盘键被按下。
++ keyup 事件：与 keyup 事件相关的事件顺序：1. keydown - 键按下的过程 2. keypress - 键被按下 3. keyup - 键被松开。当键盘键被松开时发生 keyup 事件。`keyup()` 方法触发 keyup 事件，或规定当发生 keyup 事件时运行的函数。请使用 `event.which` 属性来返回哪个键被按下。
+
+### 表单事件
+
++ submit 事件：当提交表单时，会发生 submit 事件。该事件只适用于 `<form>` 元素。`submit()` 方法触发 submit 事件，或规定当发生 submit 事件时运行的函数。
++ change 事件：当元素的值改变时发生 change 事件（仅适用于表单字段）。`change()` 方法触发 change 事件，或规定当发生 change 事件时运行的函数。当用于 `select` 元素时，change 事件会在选择某个选项时发生。当用于 text field 或 text area 时，change 事件会在元素失去焦点时发生。
++ focus 事件：当元素获得焦点时（当通过鼠标点击选中元素或通过 tab 键定位到元素时），发生 focus 事件。`focus()` 方法触发 focus 事件，或规定当发生 focus 事件时运行的函数。该方法通常与 `blur()` 方法一起使用。
++ blur 事件：当元素失去焦点时发生 blur 事件。`blur()` 方法触发 blur 事件，或规定当发生 blur 事件时运行的函数。该方法常与 `focus()` 方法一起使用。
+
+### 文档/窗口事件
+
++ load 事件：`load()` 方法在 jQuery 版本 1.8 中已废弃。`load()` 方法添加事件处理程序到 load 事件。当指定的元素已加载时，会发生 load 事件。该事件适用于任何带有 URL 的元素（比如图像、脚本、框架、内联框架）以及 window 对象。根据不同的浏览器（Firefox 和 IE），如果图像已被缓存，则也许不会触发 load 事件。还存在一个名为 `load()` 的 jQuery AJAX 方法。根据不同的参数决定调用哪个方法。
++ resize 事件：当调整浏览器窗口大小时，发生 resize 事件。`resize()` 方法触发 resize 事件，或规定当发生 resize 事件时运行的函数。
++ scroll 事件：当用户滚动指定的元素时，会发生 scroll 事件。scroll 事件适用于所有可滚动的元素和 window 对象（浏览器窗口）。`scroll()` 方法触发 scroll 事件，或规定当发生 scroll 事件时运行的函数。
++ unload 事件：`unload()` 方法在 jQuery 版本 1.8 中被废弃，在 3.0 版本被移除。Firefox 与 Chrome 会阻止弹窗，所以没办法看到效果。当用户离开页面时，会发生 unload 事件。当发生以下情况下，会触发 unload 事件：
+  1. 点击某个离开页面的链接
+  2. 在地址栏中键入了新的 URL
+  3. 使用前进或后退按钮
+  4. 关闭浏览器窗口
+  5. 重新加载页面
+  `unload()` 方法规定当 unload 事件发生时会发生什么。`unload()` 方法只应用于 window 对象。unload 事件在不同浏览器中效果不一样，请确保使用前在所有浏览器测试该方法。
+
+### jQuery 事件方法语法
+
+&emsp;在 jQuery 中，大多数 DOM 事件都有一个等效的 jQuery 方法。页面中指定一个点击事件：
+
+```c++
+$("p").click();
+```
+
+&emsp;定义了点击后触发事件。可以通过一个事件函数实现：
+
+```c++
+$("p").click(function(){
+    // 动作触发后执行的代码
+});
+```
+
+### 常用的 jQuery 事件方法
+
+#### $(document).ready()
+
+&emsp;`$(document).ready()` 方法允许我们在文档完全加载完后执行函数。
+
+#### click()
 
 &emsp;
-
-
-
-
-
-
-
-
-
-
-
 
 
 
