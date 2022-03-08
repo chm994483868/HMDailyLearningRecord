@@ -137,9 +137,91 @@ window.onload = function () {
 $("p")
 ```
 
+```c++
+$(document).ready(function(){
+  $("button").click(function(){
+    $("p").hide();
+  });
+});
+```
+
 ### #id 选择器
 
+&emsp;jQuery `#id` 选择器通过 HTML 元素的 `id` 属性选取指定的元素。页面中元素的 `id` 应该是唯一的，所以要在页面中选取唯一的元素需要通过 `#id` 选择器。
+
+&emsp;通过 `id` 选取元素语法如下：(和上面的元素名字符串比，前面多了一个 `#` 号)
+
+```c++
+$("#test")
+```
+
+```c++
+$(document).ready(function(){
+  $("button").click(function(){
+    $("#test").hide();
+  });
+});
+```
+
+### .class 选择器
+
+&emsp;jQuery 类选择器可以通过指定的 `class` 查找元素。
+
+&emsp;语法如下：(和上面的元素名字符串比，前面多了一个 `.`)
+
+```c++
+$(".test")
+```
+
+&emsp;用户点击按钮后所有带有 `class="test"` 属性的元素都隐藏：
+
+```c++
+$(document).ready(function(){
+  $("button").click(function(){
+    $(".test").hide();
+  });
+});
+```
+
+&emsp;更多选择器的实例：
+
++ `$("*")` 选取所有元素
++ `$(this)` 选取当前的 HTML 元素
++ `$("p.intro")` 选取 `class` 为 `intro` 的 `<p>` 元素
++ `$("p:first")` 选取第一个 `<p>` 元素
++ `$("ul li:first")` 选取第一个 `<ul>` 元素的第一个 `<li>` 元素
++ `$("ul li:first-child")` 选取每个 `<ul>` 元素的第一个 `<li>` 元素
++ `$("[href]")` 选取带有 `href` 属性的元素
++ `$("a[target='_blank']")` 选取所有 `target` 属性值等于 `_blank` 的 `<a>` 元素
++ `$("a[target!='_blank']")` 选取所有 `target` 属性值不等于 `_blank` 的 `<a>` 元素
++ `$(":button")` 选取所有 `type="button"` 的 `<input>` 元素 和 `<button>` 元素
++ `$("tr:even")` 选取偶数位置的 `<tr>` 元素
++ `$("tr:odd")` 选取奇数位置的 `<tr>` 元素
+
+### 独立文件中使用 jQuery 函数
+
+&emsp;如果网站包含许多页面，并且希望 jQuery 函数易于维护，那么把 jQuery 函数放到独立的 .js 文件中。把它们放到一个单独的文件中会更好，就像这样（通过 `src` 属性来引用文件）：
+
+```c++
+<head>
+
+<script src="http://cdn.static.runoob.com/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="my_jquery_functions.js"></script>
+
+</head>
+```
+
+## jQuery 事件
+
 &emsp;
+
+
+
+
+
+
+
+
 
 
 
