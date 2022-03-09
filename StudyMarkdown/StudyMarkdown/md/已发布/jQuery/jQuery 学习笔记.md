@@ -280,9 +280,189 @@ $("p").click(function(){
 
 #### click()
 
+&emsp;`click()` 方法是当按钮点击事件被触发时会调用一个函数。该函数在用户点击 HTML 元素时执行。
+
+```c++
+$("p").click(function(){
+  $(this).hide();
+});
+```
+
+#### dblclick()
+
+&emsp;当双击元素时，会发生 dblclick 事件。`dblclick()` 方法触发 dblclick 事件，或规定当发生 dblclick 事件时运行的函数：
+
+```c++
+$("p").dblclick(function(){
+  $(this).hide();
+});
+```
+
+#### mouseenter()
+
+&emsp;当鼠标指针穿过元素时，会发生 mouseenter 事件。`mouseenter()` 方法触发 mouseenter 事件，或规定当发生 mouseenter 事件时运行的函数：
+
+```c++
+$("#p1").mouseenter(function(){
+    alert('鼠标移到了 id="p1" 的元素上!');
+});
+```
+
+#### mouseleave()
+
+&emsp;当鼠标指针离开元素时，会发生 mouseleave 事件。`mouseleave()` 方法触发 mouseleave 事件，或规定当发生 mouseleave 事件时运行的函数：
+
+```c++
+$("#p1").mouseleave(function(){
+    alert("鼠标离开了该段落");
+});
+```
+
+#### mousedown()
+
+&emsp;当鼠标指针移动到元素上方，并按下鼠标按键时，会发生 mousedown 事件。`mousedown()` 方法触发 mousedown 事件，或规定当发生 mousedown 事件时运行的函数：
+
+```c++
+$("#p1").mousedown(function(){
+    alert("鼠标在该段落上按下！");
+});
+```
+
+#### mouseup()
+
+&emsp;当在元素上松开鼠标按钮时，会发生 mouseup 事件。`mouseup()` 方法触发 mouseup 事件，或规定当发生 mouseup 事件时运行的函数：
+
+```c++
+$("#p1").mouseup(function(){
+    alert("鼠标在段落上松开。");
+});
+```
+
+#### hover()
+
+&emsp;`hover()` 方法用于模拟光标悬停事件。当鼠标移动到元素上时，会触发指定的第一个函数(mouseenter);当鼠标移出这个元素时，会触发指定的第二个函数(mouseleave)。
+
+```c++
+$("#p1").hover(
+    function(){
+        alert("进入了 p1!");
+    },
+    function(){
+        alert("离开了 p1!");
+    }
+);
+```
+
+#### focus()
+
+&emsp;当元素获得焦点时，发生 focus 事件。当通过鼠标点击选中元素或通过 tab 键定位到元素时，该元素就会获得焦点。`focus()` 方法触发 focus 事件，或规定当发生 focus 事件时运行的函数：
+
+```c++
+$("input").focus(function(){
+  $(this).css("background-color","#cccccc");
+});
+```
+
+#### blur()
+
+&emsp;当元素失去焦点时，发生 blur 事件。`blur()` 方法触发 blur 事件，或规定当发生 blur 事件时运行的函数：
+
+```c++
+$("input").blur(function(){
+  $(this).css("background-color","#ffffff");
+});
+```
+
+###  keypress、keydown、keyup 的区别
+
+1. keydown：在键盘上按下某键时发生，一直按着则会不断触发（opera浏览器除外），它返回的是键盘代码
+2. keypress：在键盘上按下一个按键，并产生一个字符时发生，返回 ASCII 码。注意: shift、alt、ctrl 等键按下并不会产生字符，所以监听无效，换句话说只有按下能在屏幕上输出字符的按键时 keypress 事件才会触发，若一直按着某按键则会不断触发
+3. keyup：用户松开某一个按键时触发，与 keydown 相对，返回键盘代码
+
+## jQuery 效果 - 隐藏和显示
+
+### jQuery hide() 和 show()
+
+&emsp;通过 jQuery，可以使用 `hide()` 和 `show()` 方法来隐藏和显示 HTML 元素：
+
+```c++
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#hide").click(function() {
+                $("p").hide();
+            });
+            $("#show").click(function() {
+                $("p").show();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <p>1</p>
+    <p>2</p>
+    <p>3</p>
+    <button id="hide">点击隐藏 p 标签</button>
+    <button id="show">点击显示 p 标签</button>
+</body>
+```
+
+```c++
+$(selector).hide(speed,callback);
+$(selector).show(speed,callback);
+```
+
+&emsp;可选的 `speed` 参数规定隐藏/显示的速度，可以取以下值："slow"、"fast" 或毫秒。可选的 `callback` 参数是隐藏或显示完成后所执行的函数名称。
+
+```c++
+<script>
+    $(document).ready(function() {
+        $("#hide").click(function() {
+            $("p").hide(500, "linear", function() {
+                alert("Hide() 方法执行完成!");
+            });
+        });
+        $("#show").click(function() {
+            $("p").show(1000, "swing", function() {
+                alert("Show() 方法执行完成!");
+            });
+        });
+    });
+</script>
+```
+&emsp;第二个参数是一个字符串，表示过渡使用哪种缓动函数。（jQuery 自身提供 "linear" 和 "swing"，其他可以使用相关的插件）。
+
+### jQuery toggle()
+
+&emsp;通过 jQuery，可以使用 `toggle()` 方法来切换 `hide()` 和 `show()` 方法。显示被隐藏的元素，并隐藏已显示的元素：
+
+```c++
+$("#hide").click(function() {
+    $("p").toggle();
+});
+```
+
+```c++
+$(selector).toggle(speed,callback);
+```
+
+&emsp;可选的 `speed` 参数规定隐藏/显示的速度，可以取以下值："slow"、"fast" 或毫秒。可选的 callback 参数是隐藏或显示完成后所执行的函数名称。
+
+&emsp;对于可选的 `callback` 参数，有以下说明：
+
+1. `$(selector)` 选中的元素的个数为 n 个，则 `callback` 函数会执行 n 次（对于这里，当 `callback` 函数加上括号时，函数立即执行，只会调用一次，如果不加括号，元素显示或隐藏后调用函数，才会调用 n 次）
+2. `callback` 函数名后加括号，会立刻执行函数体，而不是等到 显示/隐藏 完成后才执行
+3. `callback` 既可以是函数名，也可以是匿名函数
+
+## jQuery 效果 - 淡入淡出
+
 &emsp;
-
-
 
 
 
