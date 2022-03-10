@@ -166,6 +166,7 @@
 		8E73B44E27D5D44A009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B46927D6E3E1009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B46B27D708C7009254D9 /* Dart 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Dart 学习笔记.md"; sourceTree = "<group>"; };
+		8E73B4A727D9DBEC009254D9 /* temp_document.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = temp_document.md; sourceTree = "<group>"; };
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
@@ -301,6 +302,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8E73B4A627D9DB6B009254D9 /* To_be_read_list  */,
 				8E73B46A27D708AE009254D9 /* Dart */,
 				8EACBADC27D62C5F001AB602 /* TypeScript */,
 				8E73B42B27D58632009254D9 /* jQuery */,
@@ -590,6 +592,14 @@
 				8E73B46B27D708C7009254D9 /* Dart 学习笔记.md */,
 			);
 			path = Dart;
+			sourceTree = "<group>";
+		};
+		8E73B4A627D9DB6B009254D9 /* To_be_read_list  */ = {
+			isa = PBXGroup;
+			children = (
+				8E73B4A727D9DBEC009254D9 /* temp_document.md */,
+			);
+			path = "To_be_read_list ";
 			sourceTree = "<group>";
 		};
 		8E79139627A0D0CC00900CDA /* Python */ = {

@@ -462,7 +462,99 @@ $(selector).toggle(speed,callback);
 
 ## jQuery 效果 - 淡入淡出
 
-&emsp;
+&emsp;jQuery 可以实现元素的淡入淡出效果。
+
++ `fadeIn()` 淡入
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("#div1").fadeIn();
+            $("#div2").fadeIn("slow");
+            $("#div3").fadeIn(3000);
+        });
+    });
+</script>
+<button>点击淡入 div 元素。</button>
+<div id="div1" style="width: 80px;height: 80px;display: none;background-color: red;"></div><br>
+<div id="div2" style="width: 80px;height: 80px;display: none;background-color: green;"></div><br>
+<div id="div3" style="width: 80px;height: 80px;display: none;background-color: blue;"></div>
+```
+
++ `fadeOut()` 淡出
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("#div1").fadeOut();
+            $("#div2").fadeOut("slow");
+            $("#div3").fadeOut(3000);
+        });
+    });
+</script>
+<button>点击淡入 div 元素。</button>
+<div id="div1" style="width: 80px;height: 80px;background-color: red;"></div><br>
+<div id="div2" style="width: 80px;height: 80px;background-color: green;"></div><br>
+<div id="div3" style="width: 80px;height: 80px;background-color: blue;"></div>
+```
+
++ `fadeToggle()` 不同速度的淡出
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    $("button").click(function(){
+        $("#div1").fadeToggle();
+        $("#div2").fadeToggle("slow");
+        $("#div3").fadeToggle(3000);
+    });
+});
+</script>
+
+<div id="div1" style="width:80px;height:80px;background-color:red;"></div><br>
+<div id="div2" style="width:80px;height:80px;background-color:green;"></div><br>
+<div id="div3" style="width:80px;height:80px;background-color:blue;"></div>
+```
+
++ `fadeTo()` 淡出到指定透明度，淡出了但是又没有完全淡出
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+  $("button").click(function(){
+    $("#div1").fadeTo("slow",0.15);
+    $("#div2").fadeTo("slow",0.4);
+    $("#div3").fadeTo("slow",0.7);
+  });
+});
+</script>
+
+<div id="div1" style="width:80px;height:80px;background-color:red;"></div><br>
+<div id="div2" style="width:80px;height:80px;background-color:green;"></div><br>
+<div id="div3" style="width:80px;height:80px;background-color:blue;"></div>
+```
+
+### jQuery Fading 方法
+
+&emsp;jQuery 拥有下面四种 fade 方法：
+
++ `fadeIn()`
++ `fadeOut()`
++ `fadeToggle()`
++ `fadeTo()`
+
+
+
+
+
+
+
 
 
 

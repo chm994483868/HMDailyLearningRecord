@@ -57,6 +57,30 @@ func isSheep(animal: Animal) -> Bool {
 }
 ```
 
+&emsp;associatedtype、some、protocol 之间的一些联系：
+
+&emsp;如果 protocol 中有 associatedtype 时，那么此 protocol 不能作为函数的返回类型，Xcode 会提示如下错误：`Protocol 'Animal' can only be used as a generic constraint because it has Self or associated type requirements`。此时我们可以使用 some 关键字，让编译器自己去推断。
+
+&emsp;如果没有 some 的情况下，直接 return self 也会报上面同样的错。
+
+```swift
+protocol Animal {
+    associatedtype Element
+    func testPro(_ par: Element) -> Element
+}
+
+class ViewController: UIViewController, Animal {
+
+    func testReturnAnimal() -> some Animal {
+        // 如果没有 some 的情况下，直接 return self 也会报上面同样的错：
+        // because it has Self or associated type requirements.
+        
+        // return self
+        
+        return ViewController()
+    }
+}
+```
 
 ## 参考链接
 **参考链接:🔗**
