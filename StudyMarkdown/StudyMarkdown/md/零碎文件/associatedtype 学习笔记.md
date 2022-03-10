@@ -1,4 +1,4 @@
-# Associatedtype
+# Associatedtype 学习笔记
 
 &emsp;在协议中除了定义属性和方法外，我们还能 **定义类型的占位符，让实现协议的类型来指定具体的类型**。
 
@@ -85,3 +85,4 @@ class ViewController: UIViewController, Animal {
 ## 参考链接
 **参考链接:🔗**
 + [Swift associatedtype](https://www.jianshu.com/p/6bfaa5a80dcf)
++ [Opaque Types](https://docs.swift.org/swift-book/LanguageGuide/OpaqueTypes.html)

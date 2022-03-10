@@ -162,7 +162,7 @@
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
 		8E73B42C27D58674009254D9 /* jQuery 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "jQuery 学习笔记.md"; sourceTree = "<group>"; };
-		8E73B44D27D5ACC4009254D9 /* associatedtype 笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "associatedtype 笔记.md"; sourceTree = "<group>"; };
+		8E73B44D27D5ACC4009254D9 /* associatedtype 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "associatedtype 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B44E27D5D44A009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B46927D6E3E1009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B46B27D708C7009254D9 /* Dart 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Dart 学习笔记.md"; sourceTree = "<group>"; };
@@ -173,6 +173,7 @@
 		8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "cocoapods和Xcode工程.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
+		8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Optional 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
 		8EAFFB452795979800B70023 /* iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md"; sourceTree = "<group>"; };
 		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
@@ -518,8 +519,9 @@
 				8E5E58D32686A0010088C814 /* 野指针.md */,
 				8E5E58D42686A0010088C814 /* 面试准备.md */,
 				8E5E58D52686A0010088C814 /* =default 和 = delete使用.md */,
-				8E73B44D27D5ACC4009254D9 /* associatedtype 笔记.md */,
+				8E73B44D27D5ACC4009254D9 /* associatedtype 学习笔记.md */,
 				8E73B44E27D5D44A009254D9 /* Combine 学习笔记.md */,
+				8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */,
 			);
 			path = "零碎文件";
 			sourceTree = "<group>";
