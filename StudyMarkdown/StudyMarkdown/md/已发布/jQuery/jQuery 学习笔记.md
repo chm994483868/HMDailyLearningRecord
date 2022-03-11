@@ -549,15 +549,49 @@ $(document).ready(function(){
 + `fadeToggle()`
 + `fadeTo()`
 
+#### jQuery fadeIn() 方法
 
+&emsp;`fadeIn()` 用于淡入已隐藏的元素。
 
+```javascript
+$(selector).fadeIn(speed,callback);
+```
 
+&emsp;可选的 `speed` 参数规定效果的时长。它可以取以下值："slow"、"fast" 或毫秒数。可选的 `callback` 参数是 `fading` 完成后所执行的函数名称。
 
+#### jQuery fadeOut() 方法
 
+&emsp;`fadeOut()` 方法用于淡出可见元素。
 
+```javascript
+$(selector).fadeOut(speed,callback);
+```
 
+&emsp;可选的 `speed` 参数规定效果的时长。它可以取以下值："slow"、"fast" 或毫秒数。可选的 `callback` 参数是 fading 完成后所执行的函数名称。
 
+#### jQuery fadeToggle() 方法
 
+&emsp;`fadeToggle()` 方法可以在 `fadeIn()` 与 `fadeOut()` 方法之间进行切换。如果元素已淡出，则 `fadeToggle()` 会向元素添加淡入效果。如果元素已淡入，则 `fadeToggle()` 会向元素添加淡出效果。
+
+```javascript
+$(selector).fadeToggle(speed,callback);
+```
+
+&emsp;可选的 `speed` 参数规定效果的时长。它可以取以下值："slow"、"fast" 或毫秒数。可选的 `callback` 参数是 fadeIn/fadeOut 完成后所执行的函数名称。
+
+#### jQuery fadeTo() 方法
+
+&emsp;`fadeTo()` 方法允许渐变为给定的不透明度（值介于 0 与 1 之间）。
+
+```javascript
+$(selector).fadeTo(speed,opacity,callback);
+```
+
+&emsp;必需的 `speed` 参数规定效果的时长，`fadeTo()` 没有默认参数，所以必须加上："slow"、"fast" 或毫秒数。`fadeTo()` 方法中必需的 `opacity` 参数将淡入淡出效果设置为给定的不透明度（值介于 0 与 1 之间）。可选的 `callback` 参数是该函数完成后所执行的函数名称。
+
+## jQuery 效果 - 滑动
+
+&emsp;jQuery 滑动方法可使元素上下滑动。
 
 
 
