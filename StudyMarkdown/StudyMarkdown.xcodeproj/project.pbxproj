@@ -33,7 +33,7 @@
 		8E3327D926F0227600753049 /* iOS App 启动优化(十四)：clang.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十四)：clang.md"; sourceTree = "<group>"; };
 		8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(六)：dsym文件讲解.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
-		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记.md"; sourceTree = "<group>"; };
+		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（一）：Creating and Combining Views.md"; sourceTree = "<group>"; };
 		8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Window 学习笔记.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
@@ -170,6 +170,7 @@
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
+		8E80F65E27DC888B00942D35 /* SwiftUI 学习笔记（二）：Building Lists and Navigation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（二）：Building Lists and Navigation.md"; sourceTree = "<group>"; };
 		8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "cocoapods和Xcode工程.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
@@ -239,13 +240,13 @@
 			path = crash;
 			sourceTree = "<group>";
 		};
-		8E50EFFF27919E5700A4DBE1 /* SwiftUI_Combine */ = {
+		8E50EFFF27919E5700A4DBE1 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
-				8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记.md */,
-				8E73B46927D6E3E1009254D9 /* Combine 学习笔记.md */,
+				8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */,
+				8E80F65E27DC888B00942D35 /* SwiftUI 学习笔记（二）：Building Lists and Navigation.md */,
 			);
-			path = SwiftUI_Combine;
+			path = SwiftUI;
 			sourceTree = "<group>";
 		};
 		8E50F0012791A2EC00A4DBE1 /* Shell */ = {
@@ -313,7 +314,8 @@
 				8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */,
 				8E79139627A0D0CC00900CDA /* Python */,
 				8E50F0012791A2EC00A4DBE1 /* Shell */,
-				8E50EFFF27919E5700A4DBE1 /* SwiftUI_Combine */,
+				8E50EFFF27919E5700A4DBE1 /* SwiftUI */,
+				8E80F65F27DC89A700942D35 /* Combine */,
 				8E110CCF270F48A30016FF16 /* LLDB */,
 				8E3327F026F2C38000753049 /* crash */,
 				8E2137B326D2382E00CB9B03 /* Flutter */,
@@ -610,6 +612,14 @@
 				8E79139727A0D10600900CDA /* Python笔记.md */,
 			);
 			path = Python;
+			sourceTree = "<group>";
+		};
+		8E80F65F27DC89A700942D35 /* Combine */ = {
+			isa = PBXGroup;
+			children = (
+				8E73B46927D6E3E1009254D9 /* Combine 学习笔记.md */,
+			);
+			path = Combine;
 			sourceTree = "<group>";
 		};
 		8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */ = {
