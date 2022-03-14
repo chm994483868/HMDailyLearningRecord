@@ -47,6 +47,62 @@ void main() {
   print(image);
 ```
 
+&emsp;后面我们会学习更多 Dart 中变量相关的知识点，包括变量的默认值，final 和 const 关键字以及静态类型等。
+
+## 流程控制语句
+
+&emsp;和其它语言的流程控制语句基本一样。
+
+```dart
+  if (year >= 2001) {
+    print('21st century');
+  } else if (year >= 1901) {
+    print('20th century');
+  }
+
+  for (final object in flybyObjects) {
+    print(object);
+  }
+
+  for (int month = 1; month <= 12; month++) {
+    print(month);
+  }
+
+  while (year < 2016) {
+    year += 1;
+  }
+```
+
+## 函数
+
+&emsp;建议为每个函数的参数以及返回值都指定类型：
+
+```dart
+int fibonacci(int n) {
+  if (n == 0 || n == 1) {
+    return n;
+  }
+
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+```
+
+&emsp;=> (胖箭头) 简写语法用于仅包含一条语句的函数。该语法在将匿名函数作为参数传递时非常有用：
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 &emsp;可以使用 `+` 运算符或 **并列放置多个字符串来连接字符串**：这里和我们学的其他语言的字符串拼接不同，Dart 只要把字符串并列放置也能进行字符串拼接。
 

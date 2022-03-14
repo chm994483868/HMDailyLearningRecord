@@ -591,14 +591,125 @@ $(selector).fadeTo(speed,opacity,callback);
 
 ## jQuery 效果 - 滑动
 
-&emsp;jQuery 滑动方法可使元素上下滑动。
+&emsp;jQuery 滑动方法可使元素上下滑动。jQuery 拥有以下滑动方法：
 
++ `slideDown()`
++ `slideUp()`
++ `slideToggle()`
 
+### jQuery slideDown() 方法
 
+&emsp;jQuery `slideDown()` 方法用于向下滑动元素。
 
+```javascript
+$(selector).slideDown(speed, callback);
+```
 
+&emsp;可选的 `speed` 参数规定效果的时长。它可以取以下值："slow"、"fast" 或毫秒。可选的 `callback` 参数是滑动完成后所执行的函数名称。
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#flip').click(function() {
+            $("#panel").slideDown("slow");
+        });
+    });
+</script>
+<style type="text/css">
+    #panel,
+    #flip {
+        padding: 5px;
+        text-align: center;
+        background-color: #e5eecc;
+        border: solid 1px #c3c3c3;
+    }
+    
+    #panel {
+        padding: 50px;
+        display: none;
+    }
+</style>
+<div id="flip">点我滑下面板</div>
+<div id="panel">Hello jQuery!</div>
+```
 
+### jQuery slideUp() 方法
+
+&emsp;jQuery slideUp() 方法用于向上滑动元素。
+
+```javascript
+$(selector).slideUp(speed, callback);
+```
+
+&emsp;可选的 `speed` 参数规定效果的时长。它可以取以下值："slow"、"fast" 或毫秒。可选的 `callback` 参数是滑动完成后所执行的函数名称。
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#flip').click(function() {
+            $("#panel").slideUp("slow");
+        });
+    });
+</script>
+<style type="text/css">
+    #panel,
+    #flip {
+        padding: 5px;
+        text-align: center;
+        background-color: #e5eecc;
+        border: solid 1px #c3c3c3;
+    }
+    
+    #panel {
+        padding: 50px;
+    }
+</style>
+<div id="flip">点我拉起面板</div>
+<div id="panel">Hello jQuery!</div>
+```
+
+### jQuery slideToggle() 方法
+
+&emsp;jQuery slideToggle() 方法可以在 slideDown() 与 slideUp() 方法之间进行切换。如果元素向下滑动，则 slideToggle() 可向上滑动它们。如果元素向上滑动，则 slideToggle() 可向下滑动它们。
+
+```javascript
+$(selector).slideToggle(speed,callback);
+```
+
+&emsp;可选的 `speed` 参数规定效果的时长。它可以取以下值："slow"、"fast" 或毫秒。可选的 `callback` 参数是滑动完成后所执行的函数名称。
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#flip').click(function() {
+            $("#panel").slideToggle("slow");
+        });
+    });
+</script>
+<style type="text/css">
+    #panel,
+    #flip {
+        padding: 5px;
+        text-align: center;
+        background-color: #e5eecc;
+        border: solid 1px #c3c3c3;
+    }
+    
+    #panel {
+        padding: 50px;
+        display: none;
+    }
+</style>
+<div id="flip">点我，显示/隐藏 面板</div>
+<div id="panel">Hello jQuery!</div>
+```
+
+## jQuery 效果- 动画
+
+&emsp;jQuery animate() 方法允许创建自定义的动画。
 
 
 
