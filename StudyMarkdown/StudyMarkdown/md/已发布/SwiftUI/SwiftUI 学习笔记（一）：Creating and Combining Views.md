@@ -6,6 +6,8 @@
 
 &emsp;[SwiftUI Essentials - Creating and Combining Views](https://developer.apple.com/tutorials/swiftui/creating-and-combining-views) 创建和组合 Views。
 
+&emsp;本教程将指导我们构建 Landmarks（地标）- 一个用于发现和共享你喜欢的地方的应用程序。首先构建显示地标详细信息的视图。为了对视图进行布局，Landmarks 使用堆栈（stacks）来组合和分层图像和文本视图组件。要将地图添加到视图中，需要包括一个标准的 MapKit 组件。当优化视图的设计时，Xcode 会提供实时反馈，以便可以看到这些更改如何转化为代码。
+
 ### some View 
 
 &emsp;首先 `LandmarksApp.swift` 和 `ContentView.swift` 两个初始文件，看到一个尤其明显的关键字：`some`，它是在 Swift 5.1 中引入的 `Opaque Types` 强大特性中使用到的一个关键字。

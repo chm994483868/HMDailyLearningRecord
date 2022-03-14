@@ -420,6 +420,250 @@ var str2: number = <number> <any> str   // str、str2 是 string 类型
 console.log(str2)
 ```
 
+#### TypeScript 是怎么确定单个断言是否足够
+
+&emsp;当 S 类型是 T 类型的子集，或者 T 类型是 S 类型的子集时，S 能被成功断言成 T。这是为了在进行类型断言时提供额外的安全性，完全毫无根据的断言是危险的，如果你想这么做，你可以使用 `any`。它之所以不被称为类型转换，是因为转换通常意味着某种运行时的支持。但是，**类型断言纯粹是一个编译时语法**，同时，它也是一种为编译器提供关于如何分析代码的方法。编译后，以上代码会生成如下 JavaScript 代码：
+
+```javascript
+var str = '1';
+var str2 = str; // str、str2 是 string 类型
+console.log(str2);
+```
+
+&emsp;执行打印 1。
+
+### 类型推断
+
+&emsp;当类型没有给出时，TypeScript 编译器利用类型推断来推断类型。如果由于缺乏声明而不能推断出类型，那么它的类型被视作默认的动态 `any` 类型。
+
+```typescript
+var num = 2; // 类型推断为 number
+console.log("num 变量的值为：" + num); 
+num = "12"; // 编译错误：Type 'string' is not assignable to type 'number'.
+console.log(num);
+```
+
+&emsp;第一行代码声明了变量 `num` 并 = 设置初始值为 2。注意变量声明没有指定类型。因此，程序使用 **类型推断** 来确定变量的数据类型，第一次赋值为 2，`num` 设置为 `number` 类型。
+
+&emsp;第三行代码，当我们再次为变量设置字符串类型的值时，这时编译会错误。因为变量已经设置为了 `number` 类型。
+
+### 变量作用域
+
+&emsp;变量作用域指定了变量定义的位置。程序中变量的可用性由变量作用域决定。TypeScript 有以下几种作用域：
+
++ 全局作用域 − 全局变量定义在程序结构的外部，它可以在你代码的任何位置使用。
++ 类作用域 − 这个变量也可以称为字段。类变量声明在一个类里头，但在类的方法外面。 该变量可以通过类的对象来访问。类变量也可以是静态的，静态的变量可以通过类名直接访问。
++ 局部作用域 − 局部变量，局部变量只能在声明它的一个代码块（如：方法）中使用。
+
+&emsp;以下实例说明了三种作用域的使用：
+
+```typescript
+var global_num = 12; // 全局变量
+class Numbers {
+  num_val = 13; // 实例变量
+  static sval = 10; // 静态变量
+
+  storeNum(): void {
+    var local_num = 14; // 局部变量
+  }
+}
+console.log("全局变量为：" + global_num);
+console.log("静态变量为：" + Numbers.sval);
+
+var obj = new Numbers();
+console.log("实例变量：" + obj.num_val);
+```
+
+&emsp;以上代码使用 tsc 命令编译为 JavaScript 代码为：
+
+```javascript
+var global_num = 12; // 全局变量
+var Numbers = /** @class */ (function () {
+    function Numbers() {
+        this.num_val = 13; // 实例变量
+    }
+    Numbers.prototype.storeNum = function () {
+        var local_num = 14; // 局部变量
+    };
+    Numbers.sval = 10; // 静态变量
+    return Numbers;
+}());
+console.log("全局变量为：" + global_num);
+console.log("静态变量为：" + Numbers.sval);
+var obj = new Numbers();
+console.log("实例变量：" + obj.num_val);
+```
+
+&emsp;执行以上代码结果：
+
+```javascript
+全局变量为：12
+静态变量为：10
+实例变量：13
+```
+
+&emsp;如果我们在方法外部调用局部变量 `local_num` 会报错：Could not find symbol 'local_num'.
+
+## TypeScript 运算符
+
+&emsp;运算符用于执行程序代码运算，会针对一个以上操作数项目来进行运算。考虑以下计算：
+
+```c++
+7 + 5 = 12
+```
+
+&emsp;以上实例中 7、5 和 12 是操作数。运算符 + 用于加值。运算符 = 用于赋值。
+
+&emsp;TypeScript 主要包含以下几种运算：
+
++ 算术运算符
++ 逻辑运算符
++ 关系运算符
++ 按位运算符
++ 赋值运算符
++ 三元/条件运算符
++ 字符串运算符
++ 类型运算符
+
+### 算术运算符
+
+&emsp;`+`、`-`、`*`、`/`、`%`、`++`、`--`。
+
+### 关系运算符
+
+&emsp;关系运算符用于计算结果是否为 true 或者 false。`==`、`!=`、`>`、`<`、`>=`、`<=`。
+
+### 逻辑运算符
+
+&emsp;逻辑运算符用于测定变量或值之间的逻辑。`&&`、`||`、`!`。
+
+#### 短路运算符(&& 与 ||)
+
+&emsp;`&&` 与 `||` 运算符可用于组合表达式。`&&` 运算符只有在左右两个表达式都为 `true` 时才返回 `true`。考虑以下实例：
+
+```typescript
+var a = 10;
+var result = a < 10 && a > 5;
+```
+
+&emsp;以上实例中 `a < 10` 与 `a > 5` 是使用了 `&&` 运算符的组合表达式，第一个表达式返回了 `false`，由于 `&&` 运算需要两个表达式都为 `true`，所以如果第一个为 `false`，就不再执行后面的判断（`a > 5` 跳过计算），直接返回 `false`。`||` 运算符只要其中一个表达式为 `true`，则该组合表达式就会返回 `true`。考虑以下实例：
+
+```typescript
+var a = 10;
+var result = a > 5 || a < 10;
+```
+
+&emsp;以上实例中 `a > 5` 与 `a < 10` 是使用了 `||` 运算符的组合表达式，第一个表达式返回了 `true`，由于 `||` 组合运算只需要一个表达式为 `true`，所以如果第一个为 `true`，就不再执行后面的判断（`a < 10` 跳过计算），直接返回 `true`。
+
+### 位运算符
+
+&emsp;位操作是程序设计中对位模式按位或二进制数的一元和二元操作。`&`、`|`、`~`、`^`、`<<`、`>>`、`>>>`（无符号右移，与有符号右移位类似，除了左边一律使用 0 补位）。 
+
+### 赋值运算符
+
+&emsp;赋值运算符用于给变量赋值。`=`、`+=`、`-=`、`*=`、`/=`。
+
+### 三元运算符 (?)
+
+&emsp;三元运算有 3 个操作数，并且需要判断布尔表达式的值。该运算符的主要是决定哪个值应该赋值给变量。
+
+```typescript
+Test ? expr1 : expr2
+```
+
+&emsp;Test − 指定的条件语句，expr1 − 如果条件语句 Test 返回 true 则返回该值，expr2 − 如果条件语句 Test 返回 false 则返回该值。
+
+### 类型运算符
+
+&emsp;`typeof` 运算符：`typeof` 是一元运算符，返回操作数的数据类型。
+
+&emsp;`instanceof` 运算符：`instanceof` 运算符用于判断对象是否为指定的类型。
+
+### 其他运算符
+
+&emsp;负号运算符(`-`)：更改操作数的符号。
+
+&emsp;字符串运算符: 连接运算符 (`+`) 可以拼接两个字符串。
+
+## TypeScript 条件语句
+
+&emsp;条件语句用于基于不同的条件来执行不同的动作。TypeScript 条件语句是通过一条或多条语句的执行结果（True 或 False）来决定执行的代码块。
+
+&emsp;switch 语句必须遵循下面的规则：
+
++ switch 语句中的 expression 是一个常量表达式，必须是一个整型或枚举类型。
++ 在一个 switch 中可以有任意数量的 case 语句。每个 case 后跟一个要比较的值和一个冒号。
++ case 的 constant-expression 必须与 switch 中的变量具有相同的数据类型，且必须是一个常量或字面量。
++ 当被测试的变量等于 case 中的常量时，case 后跟的语句将被执行，直到遇到 break 语句为止。
++ 当遇到 break 语句时，switch 终止，控制流将跳转到 switch 语句后的下一行。
++ 不是每一个 case 都需要包含 break。如果 case 语句不包含 break，控制流将会 继续 后续的 case，直到遇到 break 为止。
++ 一个 switch 语句可以有一个可选的 default case，出现在 switch 的结尾。default case 可用于在上面所有 case 都不为真时执行一个任务。default case 中的 break 语句不是必需的。
+
+## TypeScript 循环
+
+&emsp;有的时候，我们可能需要多次执行同一块代码。一般情况下，语句是按顺序执行的：函数中的第一个语句先执行，接着是第二个语句，依此类推。编程语言提供了更为复杂执行路径的多种控制结构。循环语句允许我们多次执行一个语句或语句组。
+
+### for…of 、forEach、every 和 some 循环
+
+&emsp;TypeScript 还支持 for…of 、forEach、every 和 some 循环。
+
+&emsp;for...of 语句创建一个循环来迭代可迭代的对象。在 ES6 中引入的 for...of 循环，以替代 for...in 和 forEach()，并支持新的迭代协议。for...of 允许你遍历 Arrays（数组）， Strings（字符串），Maps（映射），Sets（集合）等可迭代的数据结构等。
+
+&emsp;TypeScript for...of 循环
+
+```typescript
+let someArray = [1, "string", false];
+
+for (let entry of someArray) {
+  console.log(entry); // 1, "string", false
+}
+```
+
+&emsp;forEach、every 和 some 是 JavaScript 的循环语法，TypeScript 作为 JavaScript 的语法超集，当然默认也是支持的。因为 forEach 在 iteration 中是无法返回的，所以可以使用 every 和 some 来取代 forEach。
+
+&emsp;TypeScript forEach 循环
+
+```typescript
+let list = [4, 5, 6];
+list.forEach((val, idx, array) => {
+  // val: 当前值
+  // idx：当前 index
+  // array: Array
+});
+```
+
+&emsp;TypeScript every 循环
+
+```typescript
+let list = [4, 5, 6];
+list.every((val, idx, array) => {
+  // val: 当前值
+  // idx：当前 index
+  // array: Array
+  return true; // Continues
+  // Return false will quit the iteration
+});
+```
+
+&emsp;`break` 语句有以下两种用法：
+
++ 当 break 语句出现在一个循环内时，循环会立即终止，且程序流将继续执行紧接着循环的下一条语句。
++ 它可用于终止 switch 语句中的一个 case。
+
+&emsp;如果使用的是嵌套循环（即一个循环内嵌套另一个循环），break 语句会停止执行最内层的循环，然后开始执行该块之后的下一行代码。
+
+&emsp;continue 语句有点像 break 语句。但它不是强制终止，continue 会跳过当前循环中的代码，强迫开始下一次循环。对于 for 循环，continue 语句执行后自增语句仍然会执行。对于 while 和 do...while 循环，continue 语句重新执行条件判断语句。
+
+## TypeScript 函数
+
+&emsp;
+
+
+
+
+
+
+
 
 
 
