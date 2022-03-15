@@ -711,6 +711,168 @@ $(selector).slideToggle(speed,callback);
 
 &emsp;jQuery animate() 方法允许创建自定义的动画。
 
+### jQuery 动画 - animate() 方法
+
+&emsp;jQuery animate() 方法用于创建自定义动画。
+
+```javascript
+$(selector).animate({params},speed,callback);
+```
+
+&emsp;必需的 `params` 参数定义形成动画的 CSS 属性。可选的 `speed` 参数规定效果的时长。可取："slow"、"fast" 或毫秒。可选的 `callback` 参数是动画完成后所执行的函数名称。下面的例子演示 animate() 方法的简单应用。它把 `<div>` 元素往右边移动了 250 像素：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("div").animate({
+                left: '250px'
+            });
+        });
+    });
+</script>
+
+<button>开始动画</button>
+<p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
+<div style="background: #98bf21;height: 100px;width: 100px;position: absolute;"></div>
+```
+
+&emsp;默认情况下，所有 HTML 元素都有一个静态位置，且无法移动。如需对位置进行操作，要记得首先把元素的 CSS position 属性设置为 relative、fixed 或 absolute！
+
+### jQuery animate() - 操作多个属性
+
+&emsp;生成动画的过程中可同时使用多个属性：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("div").animate({
+                left: '250px',
+                opacity: '0.5',
+                height: '150px',
+                width: '150px'
+            });
+        });
+    });
+</script>
+
+<button>开始动画</button>
+<p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
+<div style="background: #98bf21;height: 100px;width: 100px;position: absolute;"></div>
+```
+
+&emsp;可以用 animate() 方法来操作所有 CSS 属性吗？可以，但是需要记住一件重要的事情：当使用 animate() 时，必须使用 Camel 标记法书写所有的属性名，比如，必须使用 `paddingLeft` 而不是 `padding-left`，使用 `marginRight` 而不是 `margin-right`，等等。同时，色彩动画并不包含在核心 jQuery 库中。
+
+### jQuery animate() - 使用相对值
+
+&emsp;也可以定义相对值（该值相对于元素的当前值）。需要在值的前面加上 `+=` 或 `-=`：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("div").animate({
+                left: '250px',
+                height: '+=150px',
+                width: '+=150px'
+            });
+        });
+    });
+</script>
+
+<button>开始动画</button>
+<p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
+<div style="background: #98bf21;height: 100px;width: 100px;position: absolute;"></div>
+```
+
+### jQuery animate() - 使用预定义的值
+
+&emsp;甚至可以把属性的动画值设置为 "show"、"hide" 或 "toggle"：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("div").animate({
+                height: 'toggle',
+            });
+        });
+    });
+</script>
+
+<button>开始动画</button>
+<p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
+<div style="background: #98bf21;height: 100px;width: 100px;position: absolute;"></div>
+```
+
+### jQuery animate() - 使用队列功能
+
+&emsp;默认地，jQuery 提供针对动画的队列功能。这意味着如果在彼此之后编写多个 animate() 调用，jQuery 会创建包含这些方法调用的 "内部" 队列。然后逐一运行这些 animate 调用。
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            var div = $("div");
+            div.animate({
+                height: '300px',
+                opacity: '0.4'
+            }, "slow");
+            div.animate({
+                width: '300px',
+                opacity: '0.8'
+            }, "slow");
+            div.animate({
+                height: '100px',
+                opacity: '0.4'
+            }, "slow");
+            div.animate({
+                width: '100px',
+                opacity: '0.8'
+            }, "slow");
+        });
+    });
+</script>
+【测试服】
+1. 合并 RN 的内容。
+2. 修改直播结束时没有作业就不显示作业页面。
+3. 修改直播回放结束时没有作业时只显示重播按钮。 
+4. 修改录播课问答重复回复相同内容时的提示文案。
+（感觉作业页面不管有没有作业都应该显示出来，提高此功能的曝光率。上午的处理方式是没有作业时：显示：班级作业 0/0 立即开始按钮灰色不能交互，这样遇到没有作业的情况也能暗示用户有作业这个功能，不然如果用户一直没见过作业页面，他估计很久一段时间都不知道有这个功能。）    
+
+<button>开始动画</button>
+<p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
+<div style="background: #98bf21;height: 100px;width: 100px;position: absolute;"></div>
+```
+
+&emsp;下面的例子把 `<div>` 元素往右边移动了 100 像素，然后增加文本的字号：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            var div = $("div");
+            div.animate({
+                left: '100px'
+            }, "slow");
+            div.animate({
+                fontSize: '3em'
+            }, "slow");
+        });
+    });
+</script>
+
+<button>开始动画</button>
+<p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
+<div style="background: #98bf21;height: 100px;width: 200px;position: absolute;">HELLO</div>
+```
+
+
+
+
+
+
 
 
 
