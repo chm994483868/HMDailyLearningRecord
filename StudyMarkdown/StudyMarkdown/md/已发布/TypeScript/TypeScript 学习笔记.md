@@ -737,7 +737,141 @@ calculate_discount(1000, 0.3);
 
 &emsp;有一种情况，我们不知道要向函数传入多少个参数，这时候我们就可以使用剩余参数来定义。剩余参数语法允许我们将一个不确定数量的参数作为一个数组传入。
 
+```typescript
+function buildName(firstName: string, ...restOfName: string[]) {
+  return firstName + " " + restOfName.join(" ");
+}
 
+let employeeName = buildName("Joseph", "Samuel", "Lucas", "MacKinzie");
+```
+
+&emsp;对应的 JavaScript 代码：
+
+```javascript
+function buildName(firstName) {
+    var restOfName = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        restOfName[_i - 1] = arguments[_i];
+    }
+    return firstName + " " + restOfName.join(" ");
+}
+var employeeName = buildName("Joseph", "Samuel", "Lucas", "MacKinzie");
+```
+
+&emsp;函数的最后一个命名参数 `restOfName` 以 `...` 为前缀，它将成为一个由剩余参数组成的数组，索引值从 0（包括）到 `restOfName.length`（不包括）。
+
+```typescript
+function addNumbers(...nums: number[]) {
+  var i: number;
+  var sum: number = 0;
+  for (i = 0; i < nums.length; i++) {
+    sum = sum + nums[i];
+  }
+  console.log("和为：", sum);
+}
+
+addNumbers(1, 2, 3);
+addNumbers(10, 10, 10, 10, 10);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+function addNumbers() {
+    var nums = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        nums[_i] = arguments[_i];
+    }
+    var i;
+    var sum = 0;
+    for (i = 0; i < nums.length; i++) {
+        sum = sum + nums[i];
+    }
+    console.log("和为：", sum);
+}
+addNumbers(1, 2, 3);
+addNumbers(10, 10, 10, 10, 10);
+```
+
+### 匿名函数
+
+&emsp;匿名函数是一个没有函数名的函数。匿名函数在程序运行时动态声明，除了没有函数名外，其他的与标准函数一样。我们可以将匿名函数赋值给一个变量，这种表达式就成为函数表达式。
+
+&emsp;语法格式如下：
+
+```typescript
+var res = function( [arguments] ) { ... }
+```
+
+#### 实例
+
+&emsp;不带参数匿名函数：
+
+```typescript
+var msg = function () {
+  return "Hello, TypeScript";
+}
+console.log(msg());
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var msg = function () {
+    return "Hello, TypeScript";
+};
+console.log(msg());
+```
+
+&emsp;看到 TypeScript 和 JavaScript 二者一模一样。
+
+&emsp;带参数匿名函数：
+
+```typescript
+var res = function (a: number, b: number) {
+  return a * b;
+};
+console.log(res(12, 2));
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var res = function (a, b) {
+    return a * b;
+};
+console.log(res(12, 2));
+```
+
+#### 匿名函数自调用
+
+&emsp;匿名函数自调用在函数后使用 `()` 即可：
+
+```typescript
+(function () {
+  var x = "Hello, TypeScript";
+  console.log(x);
+})()
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+(function () {
+    var x = "Hello, TypeScript";
+    console.log(x);
+})();
+```
+
+### 构造函数
+
+&emsp;TypeScript 也支持使用 JavaScript 内置的构造函数 `Function()` 来定义函数：语法格式如下：
+
+```typescript
+var res = new Function ([arg1[, arg2[, ...argN]],] functionBody)
+```
+
+&emsp;
 
 
 
