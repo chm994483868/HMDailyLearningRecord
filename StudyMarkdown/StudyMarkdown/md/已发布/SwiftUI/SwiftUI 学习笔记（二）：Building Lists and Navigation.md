@@ -8,11 +8,19 @@
 
 &emsp;设置基本地标详细信息视图后，需要为用户提供一种查看地标完整列表以及查看每个位置的详细信息的方法。创建可显示有关任何地标的信息的视图，并动态生成滚动列表，用户可以点击该滚动列表以查看地标的详细信息视图。要微调 UI，将使用 Xcode 的 canvas（画布）以不同的设备大小呈现多个预览。
 
-### 
+### Hashable
 
 &emsp;
 
+### Codable
 
+```swift
+public typealias Codable = Decodable & Encodable
+```
+
+### Identifiable
+
+&emsp;
 
 
 

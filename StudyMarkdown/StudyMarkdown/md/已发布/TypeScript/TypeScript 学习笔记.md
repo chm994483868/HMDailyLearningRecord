@@ -656,7 +656,88 @@ list.every((val, idx, array) => {
 
 ## TypeScript 函数
 
-&emsp;
+&emsp;函数是一组一起执行一个任务的语句。可以把代码划分到不同的函数中。如何划分代码到不同的函数中是由你来决定的，但在逻辑上，划分通常是根据每个函数执行一个特定的任务来进行的。函数声明告诉编译器函数的名称、返回类型和参数。函数定义提供了函数的实际主体。
+
+### 可选参数
+
+&emsp;在 TypeScript 函数里，如果我们定义了参数，则我们必须传入这些参数，除非将这些参数设置为可选，可选参数使用问号标识 `?`。
+
+```typescript
+function buildName(firstName: string, lastName: string) {
+  return firstName + " " + lastName;
+}
+
+let result1 = buildName("Bob"); // 错误，缺少参数：Expected 2 arguments, but got 1.
+let result2 = buildName("Bob", "Adams", "Sr."); // 错误，参数太多了：Expected 2 arguments, but got 3.
+let result3 = buildName("Bob", "Adams"); // 正确
+```
+
+&emsp;以下实例，我们将 `lastName` 设置为可选参数：
+
+```typescript
+function buildName(firstName: string, lastName?: string) {
+  if (lastName) {
+    return firstName + " " + lastName;
+  } else {
+    return firstName;
+  }
+}
+
+let result1 = buildName("Bob"); // 正确
+let result2 = buildName("Bob", "Adams", "Sr."); // 错误，参数太多了：Expected 1-2 arguments, but got 3.
+let result3 = buildName("Bob", "Adams"); // 正确
+```
+
+&emsp;可选参数必须跟在必需参数后面。如果上例我们想让 `firstName` 是可选的，`lastName` 必选，那么就要调整它们的位置，把 `firstName` 放在后面。如果都是可选参数就没关系。
+
+### 默认参数
+
+&emsp;我们也可以设置参数的默认值，这样在调用函数的时候，如果不传入该参数的值，则使用默认参数，语法格式为：
+
+```typescript
+function function_name(param1[:type], param2[:type] = default_value) {
+    // ...
+}
+```
+
+&emsp;参数不能同时设置为可选和默认。
+
+&emsp;以下实例函数的参数 `rate` 设置了默认值为 `0.50`，调用该函数时如果未传入参数则使用该默认值：
+
+```typescript
+function calculate_discount(price: number, rate: number = 0.5) {
+  var discount = price * rate;
+  console.log("计算结果：", discount);
+}
+
+calculate_discount(1000);
+calculate_discount(1000, 0.3);
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+function calculate_discount(price, rate) {
+    if (rate === void 0) { rate = 0.5; }
+    var discount = price * rate;
+    console.log("计算结果：", discount);
+}
+calculate_discount(1000);
+calculate_discount(1000, 0.3);
+```
+
+&emsp;输出结果：
+
+```c++
+// 计算结果： 500
+// 计算结果： 300
+```
+
+### 剩余参数
+
+&emsp;有一种情况，我们不知道要向函数传入多少个参数，这时候我们就可以使用剩余参数来定义。剩余参数语法允许我们将一个不确定数量的参数作为一个数组传入。
+
+
 
 
 
