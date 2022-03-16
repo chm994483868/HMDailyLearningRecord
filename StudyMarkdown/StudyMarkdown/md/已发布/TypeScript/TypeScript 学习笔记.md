@@ -871,7 +871,239 @@ console.log(res(12, 2));
 var res = new Function ([arg1[, arg2[, ...argN]],] functionBody)
 ```
 
+&emsp;参数说明：
+
++ arg1, arg2, ... argN：参数列表。
++ functionBody：一个含有包括函数定义的 JavaScript 语句的字符串。
+
+```typescript
+var myFunction = new Function("a", "b", "return a * b");
+var x = myFunction(4, 3);
+console.log(x);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var myFunction = new Function("a", "b", "return a * b");
+var x = myFunction(4, 3);
+console.log(x);
+```
+
+### 递归函数
+
+&emsp;递归函数即在函数内调用函数本身。
+
+```typescript
+function factorial(number: number) {
+  if (number <= 0) {
+    return 1;
+  } else {
+    return (number * factorial(number - 1));
+  }
+}
+console.log(factorial(6));
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+function factorial(number) {
+    if (number <= 0) {
+        return 1;
+    }
+    else {
+        return (number * factorial(number - 1));
+    }
+}
+console.log(factorial(6));
+```
+
+&emsp;除了参数类型，二者一模一样。
+
+### Lambda 函数 
+
+&emsp;Lambda 函数也称之为箭头函数。箭头函数表达式的语法比函数表达式更短。函数只有一行语句：
+
+```javascript
+( [param1, parma2,…param n] )=>statement;
+```
+
+&emsp;以下实例声明了 lambda 表达式函数，函数返回两个数的和：
+
+```typescript
+var foo = (x: number) => 10 + x;
+console.log(foo(100));
+```
+
+&emsp;编译后得到如下 JavaScript 代码：
+
+```javascript
+var foo = function (x) { return 10 + x; };
+console.log(foo(100));
+```
+
+&emsp;函数是一个语句块：
+
+```typescript
+( [param1, parma2,…param n] )=> {
+ 
+    // 代码块
+}
+```
+
+&emsp;以下实例声明了 lambda 表达式函数，函数返回两个数的和：
+
+```typescript
+var foo = (x: number) => {
+  x = 10 + x;
+  console.log(x);
+}
+foo(100);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var foo = function (x) {
+    x = 10 + x;
+    console.log(x);
+};
+foo(100);
+```
+
+&emsp;我们可以不指定函数的参数类型，通过函数内来推断参数类型：
+
+```typescript
+var func = (x: string | number) => {
+  if (typeof x == "number") {
+    console.log(x + " 是一个数字");
+  } else if (typeof x == "string") {
+    console.log(x + " 是一个字符串");
+  }
+};
+
+func(12);
+func("tom");
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var func = function (x) {
+    if (typeof x == "number") {
+        console.log(x + " 是一个数字");
+    }
+    else if (typeof x == "string") {
+        console.log(x + " 是一个字符串");
+    }
+};
+func(12);
+func("tom");
+```
+
+&emsp;单个参数时 `()` 是可选的：
+
+```typescript
+var display = x => {
+  console.log("输出为 " + x);
+}
+display(12);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var display = function (x) {
+    console.log("输出为 " + x);
+};
+display(12);
+```
+
+&emsp;无参数时可以设置空括号：
+
+```typescript
+var disp = () => {
+  console.log("Function invoked");
+}
+disp();
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var disp = function () {
+    console.log("Function invoked");
+};
+disp();
+```
+
+### 函数重载
+
+&emsp;重载是方法名字相同，而参数不同，返回类型可以相同也可以不同。每个重载的方法（或者构造函数）都必须有一个独一无二的参数类型列表。
+
+&emsp;参数类型不同：
+
+```typescript
+function disp(string): void;
+function disp(number): void;
+```
+
+&emsp;参数数量不同：
+
+```typescript
+function disp(n1: number): void;
+function disp(x: number, y: number): void;
+```
+&emsp;参数类型顺序不同：
+
+```typescript
+function disp(n1: number, s1: string): void;
+function disp(s: string, n: number): void;
+```
+
+&emsp;如果参数类型不同，则参数类型应设置为 any。参数数量不同你可以将不同的参数设置为可选。
+
+&emsp;以下实例定义了参数类型与参数数量不同：
+
+```typescript
+function disp(s1: string): void;
+function disp(n1: number, s1: string): void;
+
+function disp(x: any, y?: any): void {
+  console.log(x);
+  console.log(y);
+}
+disp("abc");
+disp(1, "xyz");
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+function disp(x, y) {
+    console.log(x);
+    console.log(y);
+}
+disp("abc");
+disp(1, "xyz");
+```
+
+&emsp;打印结果：
+
+```javascript
+abc
+undefined
+1
+xyz
+```
+
+## TypeScript Number
+
 &emsp;
+
+
+
 
 
 
