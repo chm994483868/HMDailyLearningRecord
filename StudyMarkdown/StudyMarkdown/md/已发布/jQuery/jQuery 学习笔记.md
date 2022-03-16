@@ -833,14 +833,7 @@ $(selector).animate({params},speed,callback);
             }, "slow");
         });
     });
-</script>
-【测试服】
-1. 合并 RN 的内容。
-2. 修改直播结束时没有作业就不显示作业页面。
-3. 修改直播回放结束时没有作业时只显示重播按钮。 
-4. 修改录播课问答重复回复相同内容时的提示文案。
-（感觉作业页面不管有没有作业都应该显示出来，提高此功能的曝光率。上午的处理方式是没有作业时：显示：班级作业 0/0 立即开始按钮灰色不能交互，这样遇到没有作业的情况也能暗示用户有作业这个功能，不然如果用户一直没见过作业页面，他估计很久一段时间都不知道有这个功能。）    
-
+</script>   
 <button>开始动画</button>
 <p>默认情况下，所有的 HTML 元素有一个静态的位置，且是不可移动的。 如果需要改变为，我们需要将元素的 position 属性设置为 relative, fixed, 或 absolute!</p>
 <div style="background: #98bf21;height: 100px;width: 100px;position: absolute;"></div>
@@ -868,8 +861,51 @@ $(selector).animate({params},speed,callback);
 <div style="background: #98bf21;height: 100px;width: 200px;position: absolute;">HELLO</div>
 ```
 
+## jQuery 停止动画
 
+&emsp;jQuery stop() 方法用于在动画或效果完成前对它们进行停止。stop() 方法适用于所有 jQuery 效果函数，包括滑动、淡入淡出和自定义动画。
 
+```typescript
+$(selector).stop(stopAll, goToEnd);
+```
+
+&emsp;可选的 `stopAll` 参数规定是否应该清除动画队列。默认是 `false`，即仅停止活动的动画，允许任何排入队列的动画向后执行。
+
+&emsp;可选的 `goToEnd` 参数规定是否立即完成当前动画。默认是 `false`。因此，默认地，stop() 会清除在被选元素上指定的当前动画。
+
+```typescript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#flip").click(function() {
+            $("#panel").slideDown(5000);
+        });
+        $("#stop").click(function() {
+            $("#panel").stop();
+        });
+    });
+</script>
+```
+
+&emsp;动画队列停止动画测试，只停止当前正在进行的动画，停止当前动画后，队列中的下一个动画开始进行：
+
+```typescript
+<script>
+    $(document).ready(function() {
+        $("#flip").click(function() {
+            $("#panel").slideDown(5000);
+            $("#panel").slideUp(5000);
+        });
+        $("#stop").click(function() {
+            $("#panel").stop();
+        });
+    });
+</script>
+```
+
+## jQuery Callback 方法
+
+&emsp;
 
 
 
