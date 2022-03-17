@@ -737,6 +737,372 @@ calculate_discount(1000, 0.3);
 
 &emsp;有一种情况，我们不知道要向函数传入多少个参数，这时候我们就可以使用剩余参数来定义。剩余参数语法允许我们将一个不确定数量的参数作为一个数组传入。
 
+```typescript
+function buildName(firstName: string, ...restOfName: string[]) {
+  return firstName + " " + restOfName.join(" ");
+}
+
+let employeeName = buildName("Joseph", "Samuel", "Lucas", "MacKinzie");
+```
+
+&emsp;对应的 JavaScript 代码：
+
+```javascript
+function buildName(firstName) {
+    var restOfName = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        restOfName[_i - 1] = arguments[_i];
+    }
+    return firstName + " " + restOfName.join(" ");
+}
+var employeeName = buildName("Joseph", "Samuel", "Lucas", "MacKinzie");
+```
+
+&emsp;函数的最后一个命名参数 `restOfName` 以 `...` 为前缀，它将成为一个由剩余参数组成的数组，索引值从 0（包括）到 `restOfName.length`（不包括）。
+
+```typescript
+function addNumbers(...nums: number[]) {
+  var i: number;
+  var sum: number = 0;
+  for (i = 0; i < nums.length; i++) {
+    sum = sum + nums[i];
+  }
+  console.log("和为：", sum);
+}
+
+addNumbers(1, 2, 3);
+addNumbers(10, 10, 10, 10, 10);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+function addNumbers() {
+    var nums = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        nums[_i] = arguments[_i];
+    }
+    var i;
+    var sum = 0;
+    for (i = 0; i < nums.length; i++) {
+        sum = sum + nums[i];
+    }
+    console.log("和为：", sum);
+}
+addNumbers(1, 2, 3);
+addNumbers(10, 10, 10, 10, 10);
+```
+
+### 匿名函数
+
+&emsp;匿名函数是一个没有函数名的函数。匿名函数在程序运行时动态声明，除了没有函数名外，其他的与标准函数一样。我们可以将匿名函数赋值给一个变量，这种表达式就成为函数表达式。
+
+&emsp;语法格式如下：
+
+```typescript
+var res = function( [arguments] ) { ... }
+```
+
+#### 实例
+
+&emsp;不带参数匿名函数：
+
+```typescript
+var msg = function () {
+  return "Hello, TypeScript";
+}
+console.log(msg());
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var msg = function () {
+    return "Hello, TypeScript";
+};
+console.log(msg());
+```
+
+&emsp;看到 TypeScript 和 JavaScript 二者一模一样。
+
+&emsp;带参数匿名函数：
+
+```typescript
+var res = function (a: number, b: number) {
+  return a * b;
+};
+console.log(res(12, 2));
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var res = function (a, b) {
+    return a * b;
+};
+console.log(res(12, 2));
+```
+
+#### 匿名函数自调用
+
+&emsp;匿名函数自调用在函数后使用 `()` 即可：
+
+```typescript
+(function () {
+  var x = "Hello, TypeScript";
+  console.log(x);
+})()
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+(function () {
+    var x = "Hello, TypeScript";
+    console.log(x);
+})();
+```
+
+### 构造函数
+
+&emsp;TypeScript 也支持使用 JavaScript 内置的构造函数 `Function()` 来定义函数：语法格式如下：
+
+```typescript
+var res = new Function ([arg1[, arg2[, ...argN]],] functionBody)
+```
+
+&emsp;参数说明：
+
++ arg1, arg2, ... argN：参数列表。
++ functionBody：一个含有包括函数定义的 JavaScript 语句的字符串。
+
+```typescript
+var myFunction = new Function("a", "b", "return a * b");
+var x = myFunction(4, 3);
+console.log(x);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var myFunction = new Function("a", "b", "return a * b");
+var x = myFunction(4, 3);
+console.log(x);
+```
+
+### 递归函数
+
+&emsp;递归函数即在函数内调用函数本身。
+
+```typescript
+function factorial(number: number) {
+  if (number <= 0) {
+    return 1;
+  } else {
+    return (number * factorial(number - 1));
+  }
+}
+console.log(factorial(6));
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+function factorial(number) {
+    if (number <= 0) {
+        return 1;
+    }
+    else {
+        return (number * factorial(number - 1));
+    }
+}
+console.log(factorial(6));
+```
+
+&emsp;除了参数类型，二者一模一样。
+
+### Lambda 函数 
+
+&emsp;Lambda 函数也称之为箭头函数。箭头函数表达式的语法比函数表达式更短。函数只有一行语句：
+
+```javascript
+( [param1, parma2,…param n] )=>statement;
+```
+
+&emsp;以下实例声明了 lambda 表达式函数，函数返回两个数的和：
+
+```typescript
+var foo = (x: number) => 10 + x;
+console.log(foo(100));
+```
+
+&emsp;编译后得到如下 JavaScript 代码：
+
+```javascript
+var foo = function (x) { return 10 + x; };
+console.log(foo(100));
+```
+
+&emsp;函数是一个语句块：
+
+```typescript
+( [param1, parma2,…param n] )=> {
+ 
+    // 代码块
+}
+```
+
+&emsp;以下实例声明了 lambda 表达式函数，函数返回两个数的和：
+
+```typescript
+var foo = (x: number) => {
+  x = 10 + x;
+  console.log(x);
+}
+foo(100);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var foo = function (x) {
+    x = 10 + x;
+    console.log(x);
+};
+foo(100);
+```
+
+&emsp;我们可以不指定函数的参数类型，通过函数内来推断参数类型：
+
+```typescript
+var func = (x: string | number) => {
+  if (typeof x == "number") {
+    console.log(x + " 是一个数字");
+  } else if (typeof x == "string") {
+    console.log(x + " 是一个字符串");
+  }
+};
+
+func(12);
+func("tom");
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var func = function (x) {
+    if (typeof x == "number") {
+        console.log(x + " 是一个数字");
+    }
+    else if (typeof x == "string") {
+        console.log(x + " 是一个字符串");
+    }
+};
+func(12);
+func("tom");
+```
+
+&emsp;单个参数时 `()` 是可选的：
+
+```typescript
+var display = x => {
+  console.log("输出为 " + x);
+}
+display(12);
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var display = function (x) {
+    console.log("输出为 " + x);
+};
+display(12);
+```
+
+&emsp;无参数时可以设置空括号：
+
+```typescript
+var disp = () => {
+  console.log("Function invoked");
+}
+disp();
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var disp = function () {
+    console.log("Function invoked");
+};
+disp();
+```
+
+### 函数重载
+
+&emsp;重载是方法名字相同，而参数不同，返回类型可以相同也可以不同。每个重载的方法（或者构造函数）都必须有一个独一无二的参数类型列表。
+
+&emsp;参数类型不同：
+
+```typescript
+function disp(string): void;
+function disp(number): void;
+```
+
+&emsp;参数数量不同：
+
+```typescript
+function disp(n1: number): void;
+function disp(x: number, y: number): void;
+```
+&emsp;参数类型顺序不同：
+
+```typescript
+function disp(n1: number, s1: string): void;
+function disp(s: string, n: number): void;
+```
+
+&emsp;如果参数类型不同，则参数类型应设置为 any。参数数量不同你可以将不同的参数设置为可选。
+
+&emsp;以下实例定义了参数类型与参数数量不同：
+
+```typescript
+function disp(s1: string): void;
+function disp(n1: number, s1: string): void;
+
+function disp(x: any, y?: any): void {
+  console.log(x);
+  console.log(y);
+}
+disp("abc");
+disp(1, "xyz");
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+function disp(x, y) {
+    console.log(x);
+    console.log(y);
+}
+disp("abc");
+disp(1, "xyz");
+```
+
+&emsp;打印结果：
+
+```javascript
+abc
+undefined
+1
+xyz
+```
+
+## TypeScript Number
+
+&emsp;
+
+
 
 
 
