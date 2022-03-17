@@ -905,7 +905,84 @@ $(selector).stop(stopAll, goToEnd);
 
 ## jQuery Callback 方法
 
+&emsp;Callback 函数在当前动画 100% 完成之后执行。
+
+&emsp;许多 jQuery 函数涉及动画。这些函数也许会将 `speed` 或 `duration` 作为可选参数。例子：`$("p").hide("slow")`。`speed` 或 `duration` 参数可以设置许多不同的值，比如 `slow`, `fast`, `normal` 或毫秒。
+
+```javascript
+$(document).ready(function(){
+  $("button").click(function(){
+    $("p").hide("slow",function(){
+      alert("段落现在被隐藏了");
+    });
+  });
+});
+```
+
+&emsp;以下实例没有回调函数，警告框会在隐藏效果完成前弹出：(立即弹出 alert，并且点击了确定按钮后，p 才会直接隐藏，并没有动画效果)
+
+```javascript
+$(document).ready(function(){
+  $("button").click(function(){
+    $("p").hide(1000);
+    alert("现在段落被隐藏了");
+  });
+});
+```
+
+&emsp;被立即停止的动画不会触发回调，被立即完成的动画会触发回调。
+
+## jQuery - 链(Chaining)
+
+&emsp;通过 jQuery，可以把动作/方法链接在一起。Chaining 允许在一条语句中运行多个 jQuery 方法（在相同的元素上）。
+
+### jQuery 方法链接
+
+&emsp;直到现在，我们都是一次写一条 jQuery 语句（一条接着另一条）。不过，有一种名为链接（chaining）的技术，允许我们在相同的元素上运行多条 jQuery 命令，一条接着另一条。这样的话，浏览器就不必多次查找相同的元素。如需链接一个动作，只需简单地把该动作追加到之前的动作上。
+
+&emsp;下面的例子把 `css()`、`slideUp()` 和 `slideDown()` 链接在一起。"p1" 元素首先会变为红色，然后向上滑动，再然后向下滑动：
+
+```javascript
+$(document).ready(function() {
+    $("button").click(function() {
+        $("#p1").css("color", "red").slideUp(2000).slideDown(2000);
+    });
+});
+```
+
+&emsp;如果需要，我们也可以添加多个方法调用。当进行链接时，代码行会变得很长。不过，jQuery 语法不是很严格，可以按照希望的格式来写，包含换行和缩进。
+
+&emsp;如下书写也可以很好地运行：
+
+```javascript
+$(document).ready(function() {
+    $("button").click(function() {
+        $("#p1").css("color", "red")
+            .slideUp(2000)
+            .slideDown(2000);
+    });
+});
+```
+
+&emsp;jQuery 会抛掉多余的空格，并当成一行长代码来执行上面的代码行。
+
+## jQuery - 获取内容和属性
+
 &emsp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

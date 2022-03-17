@@ -41,7 +41,7 @@ struct Landmark: Hashable, Codable, Identifiable {
             longitude: coordinates.longitude)
     }
     
-    // 嵌套定义一个记录经纬度的结构体 Coordinates
+    // 嵌套定义一个记录经纬度的结构体 Coordinates，并且遵循 Codable
     struct Coordinates: Hashable, Codable {
         var latitude: Double
         var longitude: Double
@@ -53,9 +53,129 @@ struct Landmark: Hashable, Codable, Identifiable {
 
 ### Codable
 
+&emsp;在 Swift 4.0 的标准库中，引入了 Codable，它实际上是：`public typealias Codable = Decodable & Encodable`。
+
+&emsp;看一个简单的示例，以上面的 Landmark 结构体（这里为了测试数组类型的解码，给 Landmark 添加了一个数组类型的成员变量：`var coordinatesArray: [Coordinates]`）、landmarkData.json 中一个景点的 json 数据模型为例：
+
 ```swift
-public typealias Codable = Decodable & Encodable
+let turtle_rockString = """
+    {
+        "id": 1001,
+        "name": "Turtle Rock",
+        "park": "Joshua Tree National Park",
+        "state": "California",
+        "description": "Suscipit ...",
+        "imageName": "turtlerock",
+        "coordinates": {
+            "longitude": -116.166868,
+            "latitude": 34.011286
+        },
+        "coordinatesArray": [
+            {
+                "longitude": -1,
+                "latitude": 3
+            },
+            {
+                "longitude": -11,
+                "latitude": 34
+            }
+        ]
+    }
+"""
+
+let turtle_rock: Landmark = decode(turtle_rockString)
+
+func decode<T: Decodable>(_ jsonString: String) -> T {
+    guard let data = jsonString.data(using: .utf8) else {
+        fatalError("\(jsonString) cannot be converted to Data")
+    }
+    
+    do {
+        let decoder = JSONDecoder()
+        return try decoder.decode(T.self, from: data)
+    } catch {
+        fatalError("Couldn't parse \(jsonString) as \(T.self):\n\(error)")
+    }
+}
 ```
+
+&emsp;然后我们直接打印 `turtle_rock`，便可看到 `turtle_rockString` 中 json 串中的数据已经全部转换到 Landmark 结构体实例中。
+
+```swift
+// print(turtle_rock)
+// Landmark(id: 1001,
+            name: "Turtle Rock",
+            park: "Joshua Tree National Park", 
+            state: "California", 
+            description: "Suscipit ...", 
+            imageName: "turtlerock", 
+            coordinates: Landmarks.Landmark.Coordinates(latitude: 34.011286, 
+                                                        longitude: -116.166868),
+            coordinatesArray: [Landmarks.Landmark.Coordinates(latitude: 3.0, longitude: -1.0),
+                               Landmarks.Landmark.Coordinates(latitude: 34.0, longitude: -11.0)]
+            )
+```
+
+&emsp;除了上面 Json 字符串中都是基础类型的键值对外，还有其他一些特殊情况： 
+
+1. Json（JavaScript Object Notation）字符串中存在嵌套
+
+&emsp;上面的示例中 Landmark 结构体还嵌套了一个 Coordinates 结构体，只要 Coordinates 同样也遵循 Codable，那么就能从 `turtle_rockString` json 串中直接解析出经纬度的值赋值到 Landmark 结构体的 `var coordinates: Coordinates` 成员变量中。
+
+2. Json 字符串中包含数组（数组中的模型要遵循 Codable）
+
+&emsp;上面的示例中 Landmark 结构体中的 `var coordinatesArray: [Coordinates]` 成员变量，数据也得到了正确的解析。
+
+3. Json 字符串是一个模型数组时，如下形式时，此时在 `return try decoder.decode(T.self, from: data)` 中传入类型时需要传输数组类型，例如: `[Landmark]`
+
+```swift
+[
+    {
+        "id": 1001,
+        "name": "Turtle Rock",
+        ...
+    },
+    {
+        "id": 1002,
+        "name": "Silver Salmon Creek",
+        ...
+    },
+]
+```
+
+&emsp;在下面的 ModelData.swift 文件中：`var landmarks: [Landmark] = load("landmarkData.json")` 正是，从 landmarkData.json 文件中读出一个模型数组的 Json 字符串，然后解码为一个 Landmark 数组。
+
+4. Json 字符串中有 Optional values 时，此时在模型定义时也指定对应的成员变量为可选类型即可。
+
+```swift
+let turtle_rockString = """
+    {
+        "id": 1001,
+        "name": null,
+        "park": "Joshua Tree National Park",
+        ...
+    }
+"""
+```
+
+```swift
+struct Landmark: Hashable, Codable, Identifiable {
+    var id: Int
+    var name: String?
+    var park: String
+    ...
+}
+```
+
+&emsp;Json 字符串中 name 为可选，那么在 Landmark 中把 name 成员变量定义为一个可选类型。
+
+
+
+
+
+
+
+
 
 ### Hashable
 
@@ -120,3 +240,5 @@ public protocol Hashable : Equatable {
 + [Swift 4.1 新特性 (3) 合成 Equatable 和 Hashable](https://www.jianshu.com/p/2aa31c90abbd)
 + [SwiftUI 基础之06 Identifiable 有什么用](https://www.jianshu.com/p/69a9f2f88782)
 + [iOS开发 - Swift中的Codable, Hashable, CaseIterable, Identifiable.....](https://www.jianshu.com/p/06c993c5ad89)
++ [Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
++ []()
