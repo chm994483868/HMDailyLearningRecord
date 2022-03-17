@@ -97,6 +97,24 @@ func decode<T: Decodable>(_ jsonString: String) -> T {
         fatalError("Couldn't parse \(jsonString) as \(T.self):\n\(error)")
     }
 }
+
+func encode<T: Encodable>(_ model: T) -> String {
+    let data: Data
+    
+    do {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        data = try encoder.encode(model)
+    } catch {
+        fatalError("\(model) cannot be converted to Data")
+    }
+    
+    guard let string = String(data: data, encoding: .utf8) else {
+        fatalError("\(data) cannot be converted to string")
+    }
+    
+    return string
+}
 ```
 
 &emsp;然后我们直接打印 `turtle_rock`，便可看到 `turtle_rockString` 中 json 串中的数据已经全部转换到 Landmark 结构体实例中。
@@ -169,7 +187,11 @@ struct Landmark: Hashable, Codable, Identifiable {
 
 &emsp;Json 字符串中 name 为可选，那么在 Landmark 中把 name 成员变量定义为一个可选类型。
 
+#### Codable 进阶
 
+&emsp;上面的嵌套、数组类型的成员变量、可选的成员变量、Json 字符串本身是模型数组，这四种情况中都是采用了 Codable 的默认实现，我们不需要添加任何自定义操作，Codable 自动帮我们完成了数据到模型的转换。那有哪些需要我们自定义的操作才能完成数据到模型的转换呢？下面一起来梳理一下。
+
+&emsp;虽然 Codable 的默认实现足够应付大多数情形了，但是有时候我们还是存在一些自定义需求。为了处理这类自定义问题，我们就必须自己覆盖默认的 Codable 实现。
 
 
 
