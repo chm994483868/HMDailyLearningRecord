@@ -1035,6 +1035,14 @@ $(document).ready(function() {
 <button>显示值 href 属性的值</button>
 ```
 
+### attr 和 prop 的区别介绍：
+
+&emsp;对于 HTML 元素本身就带有的固有属性，在处理时，使用 prop 方法。对于 HTML 元素我们自己自定义的 DOM 属性，在处理时，使用 attr 方法。
+
+
+
+
+
 
 
 

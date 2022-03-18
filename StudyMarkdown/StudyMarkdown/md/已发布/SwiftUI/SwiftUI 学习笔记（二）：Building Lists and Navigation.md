@@ -53,12 +53,47 @@ struct Landmark: Hashable, Codable, Identifiable {
 
 ### Codable
 
-&emsp;在 Swift 4.0 的标准库中，引入了 Codable，它实际上是：`public typealias Codable = Decodable & Encodable`。
+&emsp;Apple 官方在 Swift 4.0 的标准库中，引入了 Codable，它实际上是：`public typealias Codable = Decodable & Encodable`，即把编码和解码的功能综合在一起，它能够将程序内部的数据结构（结构体、枚举、类）序列化成可交换数据（Json 字符串），也能够将通用数据格式（Json 字符串）反序列化为内部使用的数据结构（结构体、枚举、类），即在 Json 这种弱类型数据和代码中使用的强类型数据之间相互转换，大大提升对象和其表示之间互相转换的体验。
 
-&emsp;看一个简单的示例，以上面的 Landmark 结构体（这里为了测试数组类型的解码，给 Landmark 添加了一个数组类型的成员变量：`var coordinatesArray: [Coordinates]`）、landmarkData.json 中一个景点的 json 数据模型为例：
+&emsp;或者更直白的理解为官方下场来和 YYModel、MJExtension、SwiftyJSON... 等这些第三方的 Json 数据转换库卷。
+
+&emsp;下面从 Codable 协议为我们带来的默认功能开始学习。
+
+&emsp;Decodable 协议定义了一个初始化函数，遵从 Decodable 协议的类型可以使用任何 Decoder（let decoder = JSONDecoder()）对象进行初始化，完成一个解码过程。
 
 ```swift
-let turtle_rockString = """
+// A type that can decode itself from an external representation.
+public protocol Decodable {
+    // Creates a new instance by decoding from the given decoder.
+    // This initializer throws an error if reading from the decoder fails, or if the data read is corrupted or otherwise invalid.
+    init(from decoder: Decoder) throws
+}
+```
+
+&emsp;Encodable 协议定义了一个编码方法，遵从 Encodable 协议的类型的实例可以使用任何 Encoder（let encoder = JSONEncoder()）对象创建表示（Data），完成一个编码过程。
+
+```swift
+// A type that can encode itself to an external representation.
+public protocol Encodable {
+    // Encodes this value into the given encoder.
+    // If the value fails to encode anything, `encoder` will encode an empty keyed container in its place.
+    // This function throws an error if any values are invalid for the given encoder's format.
+    func encode(to encoder: Encoder) throws
+}
+```
+
+&emsp;只要类型遵循 Codable 协议，那么就会默认支持 Codable 协议的 init(from:) 和 encode(to:) 方法。由于 Swift 标准库中的类型，比如 String、Int、Double 和 Foundation 框架中 Data、Date、URL 都是默认支持 Codable 协议的，所以我们自定义的结构体模型只需声明遵循 Codable 协议即可，便可获得编码和解码能力。
+
+&emsp;[JSONDecoder的使用](https://www.jianshu.com/p/4e7f0feeeb94)
+
+&emsp;由于 Codable 协议被设计出来用于替代 NSCoding 协议，所以遵从 Codable 协议的对象就可以无缝的支持 NSKeyedArchiver 和 NSKeyedUnarchiver 对象进行 Archive&UnArchive 操作，把结构化的数据通过简单的方式持久化和反持久化。原有的解码过程和持久化过程需要单独处理，现在通过新的 Codable 协议一起搞定，大大提高了效率。
+
+#### Codable 默认实现 
+
+&emsp;以上面的 Landmark 结构体（这里为了测试数组类型的解码，给 Landmark 添加了一个数组类型的成员变量：`var coordinatesArray: [Coordinates]`）和 landmarkData.json 中一个景点的原始 Json 数据为例：
+
+```swift
+let turtleRockString = """
     {
         "id": 1001,
         "name": "Turtle Rock",
@@ -82,8 +117,6 @@ let turtle_rockString = """
         ]
     }
 """
-
-let turtle_rock: Landmark = decode(turtle_rockString)
 
 func decode<T: Decodable>(_ jsonString: String) -> T {
     guard let data = jsonString.data(using: .utf8) else {
@@ -115,34 +148,85 @@ func encode<T: Encodable>(_ model: T) -> String {
     
     return string
 }
+
+let turtleRock: Landmark = decode(turtleRockString)
+let encodeTurtleRockString: String = encode(turtleRock)
 ```
 
-&emsp;然后我们直接打印 `turtle_rock`，便可看到 `turtle_rockString` 中 json 串中的数据已经全部转换到 Landmark 结构体实例中。
+&emsp;decode 函数中整个解码的过程非常简单，创建一个解码器（JSONDecoder()），这个解码器的 decode 方法需要传入两个参数，第一个参数指定 data 转成的数据结构的类型，这个类型是将弱类型（Json 数据）转换成强类型的关键，第二个参数传入原始的 data 数据。
+
+&emsp;编码过程与解码过程基本对应，系统提供了一个 JSONEncoder 对象用于编码。创建编码器，然后传入值给它进行编码，编码器通过 Data 实例的方式返回一个字节的集合，这里为了方便显示，我们将它转为了字符串返回。
+
+&emsp;然后我们直接打印 `turtleRock` 实例，便可看到 `turtleRockString` Json 串中的数据已经全部转换到 Landmark 结构体实例中。然后我们直接打印 `encodeTurtleRockString` 字符串，便可看到 turtleRock 实例的成员变量可被编码为一个结构化的 Json 字符串。
 
 ```swift
-// print(turtle_rock)
-// Landmark(id: 1001,
-            name: "Turtle Rock",
-            park: "Joshua Tree National Park", 
-            state: "California", 
-            description: "Suscipit ...", 
-            imageName: "turtlerock", 
-            coordinates: Landmarks.Landmark.Coordinates(latitude: 34.011286, 
-                                                        longitude: -116.166868),
-            coordinatesArray: [Landmarks.Landmark.Coordinates(latitude: 3.0, longitude: -1.0),
-                               Landmarks.Landmark.Coordinates(latitude: 34.0, longitude: -11.0)]
-            )
+// print(turtleRock)
+Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state: "California", description: "Suscipit ...", imageName: "turtlerock", coordinates: Landmarks.Landmark.Coordinates(latitude: 34.011286, longitude: -116.166868), coordinatesArray: [Landmarks.Landmark.Coordinates(latitude: 3.0, longitude: -1.0), Landmarks.Landmark.Coordinates(latitude: 34.0, longitude: -11.0)])
+
+// print(encodeTurtleRockString)
+{
+  "coordinates" : {
+    "longitude" : -116.16686799999999,
+    "latitude" : 34.011285999999998
+  },
+  "coordinatesArray" : [
+    {
+      "longitude" : -1,
+      "latitude" : 3
+    },
+    {
+      "longitude" : -11,
+      "latitude" : 34
+    }
+  ],
+  "id" : 1001,
+  "park" : "Joshua Tree National Park",
+  "description" : "Suscipit ...",
+  "imageName" : "turtlerock",
+  "state" : "California",
+  "name" : "Turtle Rock"
+}
 ```
+
+&emsp;这里看到了一个细节点，原始 Json 字符串中 "coordinates": { "longitude": -116.166868, "latitude": 34.011286 } 的经纬度值是 -116.166868/34.011286 当转换为 Landmark 实例时还是同样的值同样的精确度，但是当我们把 Landmark 实例编码为 Json 字符串时，发现精度值发生了变化：-116.16686799999999/34.011285999999998。（暂时不知道如何处理这种精确度丢失问题） 
 
 &emsp;除了上面 Json 字符串中都是基础类型的键值对外，还有其他一些特殊情况： 
 
-1. Json（JavaScript Object Notation）字符串中存在嵌套
+1. Json（JavaScript Object Notation）字符串中存在嵌套（对象、字典）
 
 &emsp;上面的示例中 Landmark 结构体还嵌套了一个 Coordinates 结构体，只要 Coordinates 同样也遵循 Codable，那么就能从 `turtle_rockString` json 串中直接解析出经纬度的值赋值到 Landmark 结构体的 `var coordinates: Coordinates` 成员变量中。
 
 2. Json 字符串中包含数组（数组中的模型要遵循 Codable）
 
 &emsp;上面的示例中 Landmark 结构体中的 `var coordinatesArray: [Coordinates]` 成员变量，数据也得到了正确的解析。
+
+&emsp;针对上面的 1 和 2 条，由于 Swift 4.0 支持条件一致性，所有当数组（Array）中每个元素遵从 Codable 协议、字典（Dictionary）中对应的 key 和 value 遵从 Codable 协议，整体对象就遵从 Codable 协议。
+
+&emsp;在 Swift/Collection/Array 中可看到 Array 遵循 Codable 协议：
+
+```swift
+extension Array : Encodable where Element : Encodable {
+    public func encode(to encoder: Encoder) throws
+}
+
+extension Array : Decodable where Element : Decodable {
+    public init(from decoder: Decoder) throws
+}
+```
+
+&emsp;在 Swift/Collection/HashedCollections/Dictionary 中看到 Dictionary 遵循 Codable 协议：
+
+```swift
+extension Dictionary : Encodable where Key : Encodable, Value : Encodable {
+    // 这句注释超重要，下面我们会学习到 keyed container 和 unkeyed container
+    // If the dictionary uses `String` or `Int` keys, the contents are encoded in a keyed container. Otherwise, the contents are encoded as alternating key-value pairs in an unkeyed container.
+    public func encode(to encoder: Encoder) throws
+}
+
+extension Dictionary : Decodable where Key : Decodable, Value : Decodable {
+    public init(from decoder: Decoder) throws
+}
+```
 
 3. Json 字符串是一个模型数组时，如下形式时，此时在 `return try decoder.decode(T.self, from: data)` 中传入类型时需要传输数组类型，例如: `[Landmark]`
 
@@ -186,6 +270,30 @@ struct Landmark: Hashable, Codable, Identifiable {
 ```
 
 &emsp;Json 字符串中 name 为可选，那么在 Landmark 中把 name 成员变量定义为一个可选类型。
+
+5. Json 字符串中存在嵌套对象，且此对象有可能是个 空对象 时，如下把上面的 turtleRockString 字符串中的 coordinates 置为一个空对象：
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        "coordinates": {},
+        ...
+    }
+"""
+```
+
+&emsp;此时我们如果直接运行的话就会报一个错误：
+
+```swift
+keyNotFound(CodingKeys(stringValue: "latitude", intValue: nil), Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "coordinates", intValue: nil)], debugDescription: "No value associated with key CodingKeys(stringValue: \"latitude\", intValue: nil) (\"latitude\").", underlyingError: nil))
+```
+
+```swift
+keyNotFound(CodingKeys(stringValue: "latitude", intValue: nil), Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "coordinates", intValue: nil)], debugDescription: "No value associated with key CodingKeys(stringValue: \"latitude\", intValue: nil) (\"latitude\").", underlyingError: nil))
+```
+
+&emsp;那么我们会联想到上面的 Optional values 会想到把 结构体中 `private var coordinates: Coordinates` 成员变量设置为可选类型，再次运行会发现依然报错。
 
 #### Codable 进阶
 
