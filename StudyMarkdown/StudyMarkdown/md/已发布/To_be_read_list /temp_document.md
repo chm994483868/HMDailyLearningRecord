@@ -20,3 +20,11 @@
 9. jQuary 学习
 10. Dart 学习
  
+
+
+
+#### 2022 3.19 号 周六
+1. 阅读 《Swift 进阶》的 写时复制 部分。
+2. 阅读 [Swift5.0 的 Runtime 机制浅析](https://juejin.cn/post/6844903889523884039) 和 [Swift 协议(protocol)详解](https://www.jianshu.com/p/d939c3443686) 两篇文章。
+3. SwiftUI 学习笔记（二）：Building Lists and Navigation Codable 部分学习和总结。
+4. 
