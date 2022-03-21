@@ -756,6 +756,13 @@ public protocol Hashable : Equatable {
 + [Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
 + [Swift 4 JSON 解析进阶](https://blog.csdn.net/weixin_33962923/article/details/88986627)
 
-## 看着看着发现 LG 都开始卷 Swift 源码了...
-
+## 看着看着发现 LG 都开始卷 Swift 源码了...（必学）
 + [Swift底层进阶--015：Codable源码解析](https://www.jianshu.com/p/9302f7bac319)
++ [Swift底层探索:Codable](https://www.jianshu.com/p/d591bd7f53ac)
+
+## 针对当返回的 Json 字符串中字段的类型 和 模型定义中属性（成员变量）类型不匹配时的解析：只要有一个字段类型不匹配，整个 json 的转 model 都会失败，这是不友好的。
++ [针对 swift4 的JSONDecoder的特殊情况处理](https://www.jianshu.com/p/51c219092290)
+
+## 学习一些 Codable 的嵌套用法、学习 Codable 中的三种容器类型（必学），还有 CodingKey（必学）。
+
++ [Swift5 Codable源码剖析](https://www.jianshu.com/nb/3595319)
