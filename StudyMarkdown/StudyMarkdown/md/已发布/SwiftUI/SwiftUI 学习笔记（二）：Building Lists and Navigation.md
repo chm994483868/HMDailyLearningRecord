@@ -35,6 +35,7 @@ struct Landmark: Hashable, Codable, Identifiable {
     
     // 同上，私有的 coordinates 属性，记录从本地 json 文件中读取的经纬度信息，locationCoordinate 计算属性，根据 coordinates 中的经纬度信息，构建 CLLocationCoordinate2D 实例
     private var coordinates: Coordinates
+    // var coordinatesArray: [Coordinates] // 测试 Codable，测试 Json 字符串中存在数组类型
     var locationCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
             latitude: coordinates.latitude,
@@ -59,7 +60,7 @@ struct Landmark: Hashable, Codable, Identifiable {
 
 &emsp;下面从 Codable 协议为我们带来的默认功能开始学习。
 
-&emsp;Decodable 协议定义了一个初始化函数，遵从 Decodable 协议的类型可以使用任何 Decoder（let decoder = JSONDecoder()）对象进行初始化，完成一个解码过程。
+&emsp;Decodable 协议提供了一个初始化函数，遵从 Decodable 协议的类型可以使用任何 Decoder（let decoder = JSONDecoder()）对象进行初始化，完成一个解码过程。
 
 ```swift
 // A type that can decode itself from an external representation.
@@ -70,7 +71,24 @@ public protocol Decodable {
 }
 ```
 
-&emsp;Encodable 协议定义了一个编码方法，遵从 Encodable 协议的类型的实例可以使用任何 Encoder（let encoder = JSONEncoder()）对象创建表示（Data），完成一个编码过程。
+&emsp;这里有点绕，我们来分析一下，首先 `struct Landmark` 结构体遵循了 `Decodable` 协议，那么它就有了 `init(from decoder: Decoder) throws` 的能力，然后在我们的解码过程中，我们使用 `let decoder = JSONDecoder()` 构建了一个默认的 JSONDecoder 对象，接着调用它的 `open func decode<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable` 函数，第一个参数 type 限制为遵循 Decodable 协议，第二个参数 data 则是 Json 字符串转换而来，针对当前的示例，最后返回一个 struct Landmark 结构体实例，如果我们想自定义解码过程的话，则可以重写 struct Landmark 结构体的 init(from decoder: Decoder) throws 函数。
+
+&emsp;开始以为 init(from decoder: Decoder) throws 函数的 decoder 参数就是我们自己构建的 let decoder = JSONDecoder() 对象，发现并不是这样，通过打断点发现是这样的，一个是 open 的系统类 JSONDecoder，一个则是系统内部的私有类 `_JSONDecoder`：
+
+```swift
+(lldb) p decoder
+(JSONDecoder) $R0 = 0x000060000224c0a0 {
+    ...
+}
+(lldb) p decoder
+(Foundation.__JSONDecoder) $R1 = 0x00006000021506c0 {
+    ...
+}
+```   
+
+&emsp;然后又顺着搜了一下发现要卷 Swift 源码才能理清 Codable 的功能，暂且不在本篇捋了，当前的核心是学习 SwiftUI，本篇只学一些 Codable 的常规使用。
+
+&emsp;Encodable 协议提供了一个编码方法，遵从 Encodable 协议的类型的实例可以使用任何 Encoder（let encoder = JSONEncoder()）对象创建表示（Data），完成一个编码过程。
 
 ```swift
 // A type that can encode itself to an external representation.
@@ -82,9 +100,9 @@ public protocol Encodable {
 }
 ```
 
-&emsp;只要类型遵循 Codable 协议，那么就会默认支持 Codable 协议的 init(from:) 和 encode(to:) 方法。由于 Swift 标准库中的类型，比如 String、Int、Double 和 Foundation 框架中 Data、Date、URL 都是默认支持 Codable 协议的，所以我们自定义的结构体模型只需声明遵循 Codable 协议即可，便可获得编码和解码能力。
+&emsp;只要类型遵循 Codable 协议，那么就会默认支持 Codable 协议的 init(from:) 和 encode(to:) 方法。由于 Swift 标准库中的类型，比如 String、Int、Double 和 Foundation 框架中 Data、Date、URL 都是默认支持 Codable 协议的，所以我们自定义的结构体模型基本只需声明遵循 Codable 协议即可，便可获得编码和解码能力。
 
-&emsp;[JSONDecoder的使用](https://www.jianshu.com/p/4e7f0feeeb94)
+&emsp;遵循 Codable 协议的类型，只针对类型的存储属性进行解码和编码，计算属性是不包括在内的（计算属性可以理解为是一个类型的函数，不参与类型的内存布局）。 
 
 &emsp;由于 Codable 协议被设计出来用于替代 NSCoding 协议，所以遵从 Codable 协议的对象就可以无缝的支持 NSKeyedArchiver 和 NSKeyedUnarchiver 对象进行 Archive&UnArchive 操作，把结构化的数据通过简单的方式持久化和反持久化。原有的解码过程和持久化过程需要单独处理，现在通过新的 Codable 协议一起搞定，大大提高了效率。
 
@@ -247,7 +265,7 @@ extension Dictionary : Decodable where Key : Decodable, Value : Decodable {
 
 &emsp;在下面的 ModelData.swift 文件中：`var landmarks: [Landmark] = load("landmarkData.json")` 正是，从 landmarkData.json 文件中读出一个模型数组的 Json 字符串，然后解码为一个 Landmark 数组。
 
-4. Json 字符串中有 Optional values 时，此时在模型定义时也指定对应的成员变量为可选类型即可。
+4. Json 字符串中有 Optional values 时（空值 null），此时在模型定义时也指定对应的成员变量为可选类型即可。
 
 ```swift
 let turtle_rockString = """
@@ -269,9 +287,13 @@ struct Landmark: Hashable, Codable, Identifiable {
 }
 ```
 
-&emsp;Json 字符串中 name 为可选，那么在 Landmark 中把 name 成员变量定义为一个可选类型。
+&emsp;Json 字符串中 name 为可选，那么在 Landmark 中把 name 成员变量定义为一个可选类型，否则当 Json 字符串中的 name 返回 null 时会打印如下错误信息（valueNotFound，Expected String value but found null instead. 预期为 String 的值却发现了 null）：
 
-5. Json 字符串中存在嵌套对象，且此对象有可能是个 空对象 时，如下把上面的 turtleRockString 字符串中的 coordinates 置为一个空对象：
+```swift
+valueNotFound(Swift.String, Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "name", intValue: nil)], debugDescription: "Expected String value but found null instead.", underlyingError: nil))
+```
+
+5. Json 字符串中存在嵌套对象，且此对象有可能是个 空对象（{}，注意这里和上面的 null 是不同的处理情况）时，如下把上面的 turtleRockString 字符串中的 coordinates 置为一个空对象：
 
 ```swift
 let turtleRockString = """
@@ -283,23 +305,384 @@ let turtleRockString = """
 """
 ```
 
-&emsp;此时我们如果直接运行的话就会报一个错误：
+&emsp;此时我们如果直接运行的话就会打印如下错误信息（keyNotFound，No value associated with key CodingKeys(stringValue: \"latitude\", intValue: nil) (\"latitude\"). 没有找到 CodingKeys 中与 latitude 关联的值）：
 
 ```swift
 keyNotFound(CodingKeys(stringValue: "latitude", intValue: nil), Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "coordinates", intValue: nil)], debugDescription: "No value associated with key CodingKeys(stringValue: \"latitude\", intValue: nil) (\"latitude\").", underlyingError: nil))
 ```
 
+&emsp;那么我们会联想到上面的 Optional values（空值 null）的情况，会想到把 Landmark 结构体中的 `private var coordinates: Coordinates` 成员变量也设置为可选类型：`Coordinates?`，再次运行会发现依然打印上面同样的错误信息。此时我们定睛一看，错误信息中提到没有找到与 `latitude` 关联的值，那么我们直接把 Coordinates 结构体的 `latitude` 和 `longitude` 两个成员变量设置为可选类型。此时便可正常解码和编码。
+
 ```swift
-keyNotFound(CodingKeys(stringValue: "latitude", intValue: nil), Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "coordinates", intValue: nil)], debugDescription: "No value associated with key CodingKeys(stringValue: \"latitude\", intValue: nil) (\"latitude\").", underlyingError: nil))
+struct Coordinates: Hashable, Codable {
+    var latitude: Double?
+    var longitude: Double?
+}
 ```
 
-&emsp;那么我们会联想到上面的 Optional values 会想到把 结构体中 `private var coordinates: Coordinates` 成员变量设置为可选类型，再次运行会发现依然报错。
+&emsp;把 Coordinates 的每个成员变量设置为可选类型，这样当 coordinates 返回为 {} 时，latitude 和 longitude 自动解析为 nil。（`print(turtleRock.coordinates)`: Coordinates(latitude: nil, longitude: nil)）   
+
+```swift
+// print(turtleRock)
+Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state: "California", description: "Suscipit ...", imageName: "turtlerock", coordinates: Optional(Landmarks.Landmark.Coordinates(latitude: nil, longitude: nil)), coordinatesArray: [Landmarks.Landmark.Coordinates(latitude: Optional(3.0), longitude: Optional(-1.0)), Landmarks.Landmark.Coordinates(latitude: Optional(34.0), longitude: Optional(-11.0))])
+
+// coordinatesArray: [Landmarks.Landmark.Coordinates(latitude: 3.0, longitude: -1.0), Landmarks.Landmark.Coordinates(latitude: 34.0, longitude: -11.0)]
+// 和上面的对比，coordinatesArray 成员变量中的 Coordinates 的 latitude 和 longitude 都变成了可选，当我们使用时需要解包。    
+
+// print(encodeTurtleRockString)
+{
+  "coordinates" : {
+
+  },
+  "coordinatesArray" : [
+    {
+      "longitude" : -1,
+      "latitude" : 3
+    },
+    {
+      "longitude" : -11,
+      "latitude" : 34
+    }
+  ],
+  "id" : 1001,
+  "park" : "Joshua Tree National Park",
+  "description" : "Suscipit ...",
+  "imageName" : "turtlerock",
+  "state" : "California",
+  "name" : "Turtle Rock"
+}
+```
+
+&emsp;所以为了保证当服务器给我们返回 `{}` 或者 `null` 时程序都能正常解码，我们需要把 coordinates 属性，以及 Coordinates 结构的各个成员变量都定义为可选类型。
+
+&emsp;所以到了这里我们可能会发现一个问题，就是我们不知道 Json 字符串中哪些字段会返回空值，我们又不能完全相信服务器返回给我们的字段必定是有值的，哪天疏忽了返回了空值可咋整，此时我们在定义类型时就会不得不把所有的成员变量都定为可选值了。
+
+6. 遵循 Codable 协议的类型中定义了一个非可选的属性值，例如在上面的 struct Landmark 结构体中添加一个 var xxx: String 成员变量，然后在解码时 Json 字符串中又不包含此属性的话会打印如下错误信息（keyNotFound，No value associated with key CodingKeys(stringValue: \"xxx\", intValue: nil) (\"xxx\"). 没有找到 CodingKeys 中与 xxx 关联的值）：
+
+```swift
+keyNotFound(CodingKeys(stringValue: "xxx", intValue: nil), Swift.DecodingError.Context(codingPath: [], debugDescription: "No value associated with key CodingKeys(stringValue: \"xxx\", intValue: nil) (\"xxx\").", underlyingError: nil))
+```
+
+&emsp;此时我们需要把 xxx 定义为可选类型才能正常解码。（例如某天 Web 没有返回之前预定的必定返回的字段时，而此字段又指定的是非可选的话，那么 Codable 解码时会发生 crash，所以这里又增加了一条原因，此时我们在定义类型时就会不得不把所有的成员变量都定为可选值了。）
 
 #### Codable 进阶
 
-&emsp;上面的嵌套、数组类型的成员变量、可选的成员变量、Json 字符串本身是模型数组，这四种情况中都是采用了 Codable 的默认实现，我们不需要添加任何自定义操作，Codable 自动帮我们完成了数据到模型的转换。那有哪些需要我们自定义的操作才能完成数据到模型的转换呢？下面一起来梳理一下。
+&emsp;上面的嵌套、数组类型的成员变量、可选的成员变量、Json 字符串本身是模型数组、空对象、空值等等，这些情况中都是采用了 Codable 的默认实现，我们不需要添加什么自定义操作，Codable 自动帮我们完成了数据到模型的转换。那有哪些需要我们自定义的操作才能完成数据到模型的转换呢？下面一起来梳理一下。
 
-&emsp;虽然 Codable 的默认实现足够应付大多数情形了，但是有时候我们还是存在一些自定义需求。为了处理这类自定义问题，我们就必须自己覆盖默认的 Codable 实现。
+&emsp;虽然 Codable 的默认实现足够应付大多数情形了，但是有时候我们还是存在一些自定义需求。为了处理这类自定义问题，我们就必须自己覆盖 Codable 的一些默认实现。
+
+1. protocol Decoder 协议中 unkeyedContainer 的使用
+
+```swift
+/// A type that can decode values from a native format into in-memory representations.
+public protocol Decoder {
+    /// Returns the data stored in this decoder as represented in a container appropriate for holding values with no keys.
+    ///
+    /// - returns: An unkeyed container view into this decoder.
+    /// - throws: `DecodingError.typeMismatch` if the encountered stored value is not an unkeyed container.
+    func unkeyedContainer() throws -> UnkeyedDecodingContainer
+}
+```
+
+&emsp;那么什么情况下我们会遇到，不带键的数据呢？没错，大概就是基本类型构成的数组，例如上面示例中的经纬度坐标，直接把经纬度坐标放在一个数组中时：
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        "coordinates": [-116.166868, 34.011286],
+        ...
+    }
+"""
+```
+
+&emsp;那么此时我们可以把 struct Landmark 结构体的 coordinates 成员变量的类型由 struct Coordinates 类型修改为 `[Double]` 数组，没错，这样确实也能正常解码，但是如果我们就是想要使用 struct Coordinates 类型的 coordinates 呢，并且当数据返回的是经纬度的 Double 数组时，也能把经纬度正常解码到 struct Coordinates 结构体的 latitude 和 longitude 两个成员变量上，那么我们可以如下修改 struct Coordinates 结构体：
+
+```swift
+    struct Coordinates: Hashable, Codable {
+        var latitude: Double
+        var longitude: Double
+        
+        init(from decoder: Decoder) throws {
+            var contaioner = try decoder.unkeyedContainer()
+            
+            latitude = try contaioner.decode(Double.self)
+            longitude = try contaioner.decode(Double.self)
+        }
+    }
+```
+
+&emsp;然后可看到 turtleRock 和 encodeTurtleRockString 都正常打印了，且 encodeTurtleRockString 编码的字符串中，coordinates 是根据 struct Coordinates 结构体来编码的，如果我们想 latitude 和 longitude 的值转回 Double 数组的话我们需要自己重写 struct Coordinates 结构体的 `func encode(to encoder: Encoder) throws` 函数。
+
+```swift
+// print(turtleRock)
+Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state: "California", description: "Suscipit ...", imageName: "turtlerock", coordinates: Landmarks.Landmark.Coordinates(latitude: -116.166868, longitude: 34.011286))
+// print(encodeTurtleRockString)
+{
+  "coordinates" : {
+    "longitude" : 34.011285999999998,
+    "latitude" : -116.16686799999999
+  },
+  "id" : 1001,
+  "park" : "Joshua Tree National Park",
+  "description" : "Suscipit ...",
+  "imageName" : "turtlerock",
+  "state" : "California",
+  "name" : "Turtle Rock"
+}
+```
+
+2. open class JSONDecoder 类的 `open var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy` 属性的使用。（日期的转换策略）
+
+&emsp;我们经常需要需要跟日期打交道，日期数据可能以不同形式展现下发，最常见的日期标准是 [ISO8601](https://zh.wikipedia.org/wiki/ISO_8601) 和 [RFC3339](https://tools.ietf.org/html/rfc3339)，举例来说：
+
+```swift
+1985-04-12T23:20:50.52Z          // 1
+
+1996-12-19T16:39:57-08:00        // 2
+1996-12-20T00:39:57Z             // 3
+
+1990-12-31T23:59:60Z             // 4
+1990-12-31T15:59:60-08:00        // 5
+1937-01-01T12:00:27.87+00:20     // 6
+```
+
+&emsp;上面这些都是日期表示格式，但是只有第二个和第三个示例是 Swift 中 Codable 可以解码的，我们首先来看如何解码：
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        "updated":"2018-04-20T14:15:00-0700"
+    }
+"""
+
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    var updated: Date?
+    
+    ...
+}
+
+func decode<T: Decodable>(_ jsonString: String) -> T {
+        ...
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        ...
+}
+
+// print(turtleRock) 打印中 updated 值如下：
+updated: Optional(2018-04-20 21:15:00 +0000)
+```
+
+&emsp;JSONDecoder 提供了一个方便的机制可以解析日期类型，根据你的需求设置一下 dateDecodingStrategy 属性为 DateDecodingStrategy.iso8601 就可以解码符合标准（ISO8601 DateFormatter）的日期格式了。
+
+&emsp;另一种常用的日期格式是时间戳（timestamp），时间戳是指格林威治时间 1970 年 01 月 01 日 00 时 00 分 00 秒起至现在的总秒数。
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        "updated":1540650536
+    }
+"""
+
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    var updated: Date?
+    
+    ...
+}
+
+func decode<T: Decodable>(_ jsonString: String) -> T {
+        ...
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        
+        ...
+}
+
+// print(turtleRock) 打印中 updated 值如下：
+ updated: Optional(2018-10-27 14:28:56 +0000)
+```
+
+&emsp;解码时间戳格式日期需要将 JSONDecoder 的 dateDecodingStrategy 设置为 DateDecodingStrategy.secondsSince1970（秒为单位）或 DateDecodingStrategy.millisecondsSince1970（毫秒为单位）。
+
+&emsp;那么如果不是刚才提到的可以默认支持的解码格式怎么办？JSONDecoder 对象也提供了定制化方式：我们以前面提到的第一种格式为例，1985-04-12T23:20:50.52Z，通过扩展 DateFormatter 定义一个新的 iso8601Full，把这个作为参数传入 dateDecodingStrategy。
+
+```swift
+extension DateFormatter {
+    static let iso8601Full: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+}
+```
+
+```swift
+...
+
+let decoder = JSONDecoder()
+decoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601Full)
+
+...
+```
+
+&emsp;decoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601Full) 提供一个定制化的日期格式工具，我们可以根据需求定制日期的解码格式。[Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
+
+&emsp;dateDecodingStrategy 属性在 JSONDecoder 类中的相关信息如下：
+
+```swift
+open class JSONDecoder {
+
+    /// The strategy to use for decoding `Date` values.
+    public enum DateDecodingStrategy {
+
+        /// Defer to `Date` for decoding. This is the default strategy.
+        case deferredToDate
+
+        /// Decode the `Date` as a UNIX timestamp from a JSON number.
+        case secondsSince1970
+
+        /// Decode the `Date` as UNIX millisecond timestamp from a JSON number.
+        case millisecondsSince1970
+
+        /// Decode the `Date` as an ISO-8601-formatted string (in RFC 3339 format).
+        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        case iso8601
+
+        /// Decode the `Date` as a string parsed by the given formatter.
+        case formatted(DateFormatter)
+
+        /// Decode the `Date` as a custom value decoded by the given closure.
+        case custom((_ decoder: Decoder) throws -> Date)
+    }
+    
+    ...
+
+    /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
+    open var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
+    
+    ...
+}    
+```
+
+3. open class JSONDecoder 类的 `open var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy` 属性的使用。（系统提供的变量名从蛇形命令法到小驼峰命名法的自动转换）
+
+&emsp;Web 服务中使用 Json 时一般使用蛇形命名法（snake_case_keys），把名称转换为小写字符串，并用下划线（`_`）代替空格来连接这些字符，与此不同的是 Swift API 设计指南中预先把对类型的转换定义为 UpperCamelCase（大驼峰命名），其他所有东西都定义为 lowerCamelCase（小驼峰命名）。由于这种需求十分普遍，在 Swift 4.1 时 JSONDecoder 添加了 keyDecodingStrategy 属性，可以在不同的书写惯例之间方便地转换。如果有这样的键值 `image_Name`，就会转换成 `imageName`。[Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
+
+&emsp;如上实例代码中，构建 JSONDecoder 对象后直接指定其 keyDecodingStrategy 属性。（键解码策略）
+
+```swift
+let decoder = JSONDecoder()
+decoder.keyDecodingStrategy = .convertFromSnakeCase
+```
+
+&emsp;keyDecodingStrategy 属性在 JSONDecoder 类中的相关信息如下： 
+
+```swift
+open class JSONDecoder {
+    ...
+    
+    /// The strategy to use for automatically changing the value of keys before decoding.
+    public enum KeyDecodingStrategy {
+
+        /// Use the keys specified by each type. This is the default strategy.
+        case useDefaultKeys
+
+        /// Convert from "snake_case_keys" to "camelCaseKeys" before attempting to match a key with the one specified by each type.
+        /// 
+        /// The conversion to upper case uses `Locale.system`, also known as the ICU "root" locale. This means the result is consistent regardless of the current user's locale and language preferences.
+        ///
+        /// Converting from snake case to camel case:
+        /// 1. Capitalizes the word starting after each `_`
+        /// 2. Removes all `_`
+        /// 3. Preserves starting and ending `_` (as these are often used to indicate private variables or other metadata).
+        /// For example, `one_two_three` becomes `oneTwoThree`. `_one_two_three_` becomes `_oneTwoThree_`.
+        ///
+        /// - Note: Using a key decoding strategy has a nominal performance cost, as each string key has to be inspected for the `_` character.
+        case convertFromSnakeCase
+
+        /// Provide a custom conversion from the key in the encoded JSON to the keys specified by the decoded types.
+        /// The full path to the current decoding position is provided for context (in case you need to locate this key within the payload). The returned key is used in place of the last component in the coding path before decoding.
+        /// If the result of the conversion is a duplicate key, then only one value will be present in the container for the type to decode from.
+        case custom((_ codingPath: [CodingKey]) -> CodingKey)
+    }
+    
+    ...
+    
+    /// The strategy to use for decoding keys. Defaults to `.useDefaultKeys`.
+    open var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy
+    
+    ...
+}
+```
+
+&emsp;但是还可能有特殊情况，Web 服务的开发者可能某些时候大意了，也没有遵守蛇形命名法，而是很随意的处理了，那么如果我们想对键值进行校正，该如何处理？这就引出了下个点。
+
+4. 当遵循 Codable 协议的类型属性（成员变量）名和 Json 字符串中的字段名不同时，如何进行自定义匹配映射。
+
+&emsp;解决办法是：使用 CodingKeys 枚举指定一个明确的映射。
+
+&emsp;Swift 会寻找符合 CodingKey 协议的名为 CodingKeys 的子类型（枚举类型）。这是一个标记为 private 的枚举类型，对于名称不匹配的键对应的枚举值指定一个明确的 String 类型的原始值，如下：
+
+```swift
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case park
+        case state
+        case description
+        case imageName = "imageNameXXX"
+        case coordinates
+    }
+}
+```
+
+&emsp;如上默认会把 Json 字符串中 imageNameXXX 字段的值指定给 struct Landmark 实例的 imageName 成员变量，其它成员变量值的话还使用 Json 字符串中一一对应的字段值。 
+
+
+
+
+
+
+&emsp;如果给一个遵循 Codable 协议的类型定义 CodingKeys 枚举的话，至少需要给其中一个枚举值指定一个 rawValue，否则我们需要重写该类型的 init(from decoder: Decoder) throws 函数，为类型的每个属性（成员变量）调用 container.decode 指定该属性（成员变量）所属的类型和 key 值，如下：
+
+```swift
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(Int.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        ...
+    }
+```
+
+&emsp;
+
+
+
+
+
+
++ 字段匹配
++ 处理键名和属性名不匹配
++ 两端键值不匹配
++ 定制日期格式处理
++ 枚举值 从字符串解析枚举类型 从整型解析枚举类型
++ 动态键值结构
++ 特殊类型
 
 
 
@@ -372,3 +755,7 @@ public protocol Hashable : Equatable {
 + [iOS开发 - Swift中的Codable, Hashable, CaseIterable, Identifiable.....](https://www.jianshu.com/p/06c993c5ad89)
 + [Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
 + [Swift 4 JSON 解析进阶](https://blog.csdn.net/weixin_33962923/article/details/88986627)
+
+## 看着看着发现 LG 都开始卷 Swift 源码了...
+
++ [Swift底层进阶--015：Codable源码解析](https://www.jianshu.com/p/9302f7bac319)
