@@ -1039,12 +1039,80 @@ $(document).ready(function() {
 
 &emsp;对于 HTML 元素本身就带有的固有属性，在处理时，使用 prop 方法。对于 HTML 元素我们自己自定义的 DOM 属性，在处理时，使用 attr 方法。
 
+```javascript
+<a href="#" target="_self" class="btn">Touch me!</a>
+```
 
+&emsp;这个例子里 `<a>` 元素的 DOM 属性有: `href`、`target` 和 `class`，这些属性就是 `<a>` 元素本身就带有的属性，也是 W3C 标准里就包含有这几个属性，或者说在 IDE 里能够智能提示出的属性，这些就叫做固有属性。处理这些属性时，建议使用 `prop` 方法。
 
+```javascript
+<a href="#" id="link1" action="delete" rel="nofollow">Delete</a>
+```
 
+&emsp;这个例子里 `<a>` 元素的 DOM 属性有: `href`、`id` 和 `action`，很明显，前两个是固有属性，而后面一个 `action` 属性是我们自己自定义上去的，`<a>` 元素本身是没有这个属性的。这种就是自定义的 DOM 属性。处理这些属性时，建议使用 `attr` 方法。
 
+## jQuery - 设置内容和属性
 
+&emsp;设置内容 - `text()`、`html()` 以及 `val()`，使用前一章中的三个相同的方法来设置内容：
 
++ `text()` - 设置或返回所选元素的文本内容
++ `html()` - 设置或返回所选元素的内容（包括 HTML 标记）
++ `val()` - 设置或返回表单字段的值
+
+&emsp;下面的例子演示如何通过 `text()`、`html()` 以及 `val()` 方法来设置内容：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#btn1").click(function() {
+            $("#test1").text("Hello world!");
+        });
+        $("#btn2").click(function() {
+            $("#test2").html("<b>Hello world!</b>");
+        });
+        $("#btn3").click(function() {
+            $("#test3").val("Enter...");
+        });
+    })
+</script>
+
+<p id="test1">这是一个段落</p>
+<p id="test2">这是另外一个段落</p>
+<p>输入框：<input type="text" id="test3" value="菜鸟教程"></p>
+<button id="btn1">设置文本</button>
+<button id="btn2">设置 HTML</button>
+<button id="btn3">设置值</button>
+```
+
+### text()、html() 以及 val() 的回调函数
+
+&emsp;上面的三个 jQuery 方法：`text()`、`html()` 以及 `val()`，同样拥有回调函数。回调函数有两个参数：被选元素列表中当前元素的下标，以及原始（旧的）值。然后以函数新值返回你希望使用的字符串。
+
+&emsp;下面的例子演示带有回调函数的 `text()` 和 `html()`：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#btn1").click(function() {
+            $("#test1").text(function(i, origText) {
+                return "旧文本: " + origText + " 新文本: Hello jQuery! (index: " + i + ")";
+            });
+        });
+        $("#btn2").click(function() {
+            $("#test2").html(function(i, origText) {
+                return "旧 html: " + origText + " 新 html: Hello <b>jQuery!</b> (index: " + i + ")";
+            });
+        });
+    });
+</script>
+
+<p id="test1">这是一个有 <b>粗体</b> 字的段落。</p>
+<p id="test2">这是另外一个有 <b>粗体</b> 字的段落。</p>
+<button id="btn1">显示 新/旧 文本</button>
+<button id="btn2">显示 新/旧 HTML</button>
+```
 
 
 
