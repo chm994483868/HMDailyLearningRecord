@@ -180,6 +180,7 @@
 		8EAFFB452795979800B70023 /* iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(五)：汇编知识点学习-寄存器篇.md"; sourceTree = "<group>"; };
 		8EB2848E26873FE800CCD5FB /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		8EB2848F2687EFD000CCD5FB /* iOS App 启动优化(七)：NSProcessInfo 解析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(七)：NSProcessInfo 解析.md"; sourceTree = "<group>"; };
+		8EB3AD7D27E8BF76006336C1 /* MySQL 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "MySQL 学习笔记.md"; sourceTree = "<group>"; };
 		8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md"; sourceTree = "<group>"; };
 		8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md"; sourceTree = "<group>"; };
 		8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md"; sourceTree = "<group>"; };
@@ -311,6 +312,7 @@
 				8EACBADC27D62C5F001AB602 /* TypeScript */,
 				8E73B42B27D58632009254D9 /* jQuery */,
 				8E64803627E852A5007ADB46 /* React */,
+				8EB3AD7C27E8BF4F006336C1 /* MySQL */,
 				8ECD654D27CE4268002E63A7 /* AJAX */,
 				8ECD654C27CE425B002E63A7 /* JSON */,
 				8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */,
@@ -657,6 +659,14 @@
 				8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */,
 			);
 			path = TypeScript;
+			sourceTree = "<group>";
+		};
+		8EB3AD7C27E8BF4F006336C1 /* MySQL */ = {
+			isa = PBXGroup;
+			children = (
+				8EB3AD7D27E8BF76006336C1 /* MySQL 学习笔记.md */,
+			);
+			path = MySQL;
 			sourceTree = "<group>";
 		};
 		8ECD64F127B2BC3D002E63A7 /* 汇编知识点 */ = {

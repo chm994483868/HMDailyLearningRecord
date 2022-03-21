@@ -106,7 +106,7 @@ public protocol Encodable {
 
 &emsp;由于 Codable 协议被设计出来用于替代 NSCoding 协议，所以遵从 Codable 协议的对象就可以无缝的支持 NSKeyedArchiver 和 NSKeyedUnarchiver 对象进行 Archive&UnArchive 操作，把结构化的数据通过简单的方式持久化和反持久化。原有的解码过程和持久化过程需要单独处理，现在通过新的 Codable 协议一起搞定，大大提高了效率。
 
-#### Codable 默认实现 
+#### Codable 的默认实现 
 
 &emsp;以上面的 Landmark 结构体（这里为了测试数组类型的解码，给 Landmark 添加了一个数组类型的成员变量：`var coordinatesArray: [Coordinates]`）和 landmarkData.json 中一个景点的原始 Json 数据为例：
 
@@ -365,7 +365,7 @@ keyNotFound(CodingKeys(stringValue: "xxx", intValue: nil), Swift.DecodingError.C
 
 &emsp;此时我们需要把 xxx 定义为可选类型才能正常解码。（例如某天 Web 没有返回之前预定的必定返回的字段时，而此字段又指定的是非可选的话，那么 Codable 解码时会发生 crash，所以这里又增加了一条原因，此时我们在定义类型时就会不得不把所有的成员变量都定为可选值了。）
 
-#### Codable 进阶
+#### Codable 的进阶使用
 
 &emsp;上面的嵌套、数组类型的成员变量、可选的成员变量、Json 字符串本身是模型数组、空对象、空值等等，这些情况中都是采用了 Codable 的默认实现，我们不需要添加什么自定义操作，Codable 自动帮我们完成了数据到模型的转换。那有哪些需要我们自定义的操作才能完成数据到模型的转换呢？下面一起来梳理一下。
 
@@ -412,7 +412,7 @@ let turtleRockString = """
     }
 ```
 
-&emsp;然后可看到 turtleRock 和 encodeTurtleRockString 都正常打印了，且 encodeTurtleRockString 编码的字符串中，coordinates 是根据 struct Coordinates 结构体来编码的，如果我们想 latitude 和 longitude 的值转回 Double 数组的话我们需要自己重写 struct Coordinates 结构体的 `func encode(to encoder: Encoder) throws` 函数。
+&emsp;打印编码解码结果，可看到 turtleRock 和 encodeTurtleRockString 都正常打印了，且 encodeTurtleRockString 编码的字符串中，coordinates 是根据 struct Coordinates 结构体来编码的，如果我们想 latitude 和 longitude 的值转回 Double 数组的话我们需要自己重写 struct Coordinates 结构体的 `func encode(to encoder: Encoder) throws` 函数。
 
 ```swift
 // print(turtleRock)
@@ -453,6 +453,7 @@ Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state
 let turtleRockString = """
     {
         ...
+        
         "updated":"2018-04-20T14:15:00-0700"
     }
 """
@@ -486,6 +487,7 @@ updated: Optional(2018-04-20 21:15:00 +0000)
 let turtleRockString = """
     {
         ...
+        
         "updated":1540650536
     }
 """
@@ -633,7 +635,7 @@ open class JSONDecoder {
 
 &emsp;解决办法是：使用 CodingKeys 枚举指定一个明确的映射。
 
-&emsp;Swift 会寻找符合 CodingKey 协议的名为 CodingKeys 的子类型（枚举类型）。这是一个标记为 private 的枚举类型，对于名称不匹配的键对应的枚举值指定一个明确的 String 类型的原始值，如下：
+&emsp;Swift 会寻找符合 CodingKey 协议的名为 CodingKeys 的子类型（如下枚举类型）。这是一个标记为 private 的枚举类型，对于名称不匹配的键对应的枚举值指定一个明确的 String 类型的原始值，如下：
 
 ```swift
 struct Landmark: Hashable, Codable, Identifiable {
@@ -651,7 +653,124 @@ struct Landmark: Hashable, Codable, Identifiable {
 }
 ```
 
-&emsp;如上默认会把 Json 字符串中 imageNameXXX 字段的值指定给 struct Landmark 实例的 imageName 成员变量，其它成员变量值的话还使用 Json 字符串中一一对应的字段值。 
+&emsp;如上默认会把 Json 字符串中 imageNameXXX 字段的值指定给 struct Landmark 实例的 imageName 成员变量，其它成员变量值的话还使用 Json 字符串中一一对应的字段值。
+
+&emsp;上面示例代码中，我们修改 turtleRockString 字符串中的 imageName 字段值为 imageNameXXX，然后进行解码编码：
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        
+        "imageNameXXX": "turtlerock",
+        
+        ...
+    }
+"""
+```
+
+&emsp;打印编码解码结果，看到 "imageNameXXX": "turtlerock" 的值解码到 Landmark 结构体实例的 imageName 成员变量中，然后在 encodeTurtleRockString 字符串中，看到编码的默认实现亦是把 Landmark 结构体实例的 imageName 成员变量编码为："imageNameXXX" : "turtlerock"。
+
+```swift
+// print(turtleRock)
+Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state: "California", description: "Suscipit ...", imageName: "turtlerock", coordinates: Landmarks.Landmark.Coordinates(latitude: 34.011286, longitude: -116.166868))
+
+// print(encodeTurtleRockString)
+{
+  "name" : "Turtle Rock",
+  "id" : 1001,
+  "park" : "Joshua Tree National Park",
+  "description" : "Suscipit ...",
+  "coordinates" : {
+    "longitude" : -116.16686799999999,
+    "latitude" : 34.011285999999998
+  },
+  "state" : "California",
+  "imageNameXXX" : "turtlerock"
+}
+```
+
+5. 由 字符串/整型 转换为枚举类型。
+
+&emsp;在 TableView 的列表中我们经常会遇到不同类型的 cell，例如：图片、视频、超链接等等类型，然后针对不同的类型，服务端一般会给我们返回一个类型的字符串，如：pic、video、link，甚至直接返回数字：1、2、3 这样，而在代码中使用时，我们一般更希望将这种类型字符串（整型数字）转换成枚举值，方便使用。下面举两个简单的例子来说明如何从字符串或者整型数据转换成枚举类型。
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        
+        "template": "video", // 也可能是：pic、link
+        
+        ...
+    }
+"""
+```
+
+&emsp;template 代表当前 Json 字符串模型的类型，其值是一个字符串类型：
+
+```swift
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    var template: Template
+    
+    ...
+    
+    enum Template: String, Codable {
+        case VIDEO = "video"
+        case PIC = "pic"
+        case LINK = "link"
+    }
+}
+```
+
+&emsp;我们在 struct Landmark 结构体内部嵌套定义一个 enum Template 枚举，它的原始值是 String 类型，并且遵循 Codable 协议，列举出所有可能的类型和对应的字符串值，然后在 struct Landmark 结构体中定义 template 成员变量的类型为 Template 枚举，Codable 就可以自动完成从字符串到枚举类型的转换。
+
+&emsp;打印编码解码结果，看到 template 的值是：Template.VIDEO，编码结果中 "template" : "video" 也正常编码。
+
+```swift
+// print(turtleRock)
+Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state: "California", description: "Suscipit ...", imageName: "turtlerock", template: Landmarks.Landmark.Template.VIDEO, coordinates: Landmarks.Landmark.Coordinates(latitude: 34.011286, longitude: -116.166868))
+
+// print(encodeTurtleRockString) 
+{
+  "template" : "video",
+  "coordinates" : {
+    "longitude" : -116.16686799999999,
+    "latitude" : 34.011285999999998
+  },
+  "id" : 1001,
+  "park" : "Joshua Tree National Park",
+  "description" : "Suscipit ...",
+  "imageName" : "turtlerock",
+  "state" : "California",
+  "name" : "Turtle Rock"
+}
+```
+
+&emsp;同样，如果 template 的值是整型数字的话，我们只需要把 enum Template 枚举值指定为对应的原始值即可，如下修改：
+
+```swift
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    var template: Template
+    
+    ...
+    
+    enum Template: Int, Codable {
+        case VIDEO = 1
+        case PIC = 2
+        case LINK = 3
+    }
+}
+```
+
+6. 
+
+
+
+
 
 
 
@@ -675,6 +794,7 @@ struct Landmark: Hashable, Codable, Identifiable {
 
 
 
++ 还有一种情况，当服务器返回的字段类型和我们预定义的模型的类型不匹配时，也会解码失败！需要处理
 
 + 字段匹配
 + 处理键名和属性名不匹配
