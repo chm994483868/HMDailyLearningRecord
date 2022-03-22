@@ -1114,6 +1114,136 @@ $(document).ready(function() {
 <button id="btn2">显示 新/旧 HTML</button>
 ```
 
+### 设置属性 - attr()
+
+&emsp;jQuery attr() 方法也用于设置/改变属性值。下面的例子演示如何改变（设置）链接中 href 属性的值：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("#test").attr("href", "http://www.baidu.com");
+        });
+    });
+</script>
+<p><a href="https://www.google.com" id="test">Google</a></p>
+<button>修改 href 的值</button>
+```
+
+&emsp;attr() 方法也允许同时设置多个属性。下面的例子演示如何同时设置 href 和 title 属性：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("#test").attr({
+                "href": "http://www.baidu.com",
+                "title": "Baidu"
+            });
+            // 通过修改的 title 值来修改链接名称
+            title = $("#test").attr('title');
+            $("#test").html(title);
+        });
+    });
+</script>
+<p><a href="https://www.google.com" id="test">Google</a></p>
+<button>修改 href/title 的值</button>
+```
+
+### attr() 的回调函数
+
+&emsp;jQuery 方法 attr()，也提供回调函数。回调函数有两个参数：被选元素列表中当前元素的下标，以及原始（旧的）值。然后以函数新值返回希望使用的字符串。下面的例子演示带有回调函数的 attr() 方法：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("#test").attr("href", function(i, origValue) {
+                return origValue + "/map";
+            });
+        });
+    });
+</script>
+<p><a href="https://www.baidu.com" id="test">Baidu</a></p>
+<button>修改 href 的值</button>
+```
+
+## jQuery - 添加元素
+
+&emsp;通过 jQuery，可以很容易地添加新元素/内容。
+
+### 添加新的 HTML 内容
+
+&emsp;我们将学习用于添加新内容的四个 jQuery 方法：
+
++ append() - 在被选元素的结尾插入内容
++ prepend() - 在被选元素的开头插入内容
++ after() - 在被选元素之后插入内容
++ before() - 在被选元素之前插入内容
+
+### jQuery append() 方法
+
+&emsp;jQuery append() 方法在被选元素的结尾插入内容（仍然在该元素的内部）。
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#btn1").click(function() {
+            $("p").append(" <b>追加文本</b>。");
+        });
+
+        $("#btn2").click(function() {
+            $("ol").append("<li>追加列表项</li>");
+        });
+    });
+</script>
+
+<p>这是一个段落。</p>
+<p>这是一个另一个段落。</p>
+
+<ol>
+    <li>List item 1</li>
+    <li>List item 2</li>
+    <li>List item 3</li>
+</ol>
+
+<button id="btn1">添加文本</button>
+<button id="btn2">添加列表项</button>
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
