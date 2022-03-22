@@ -371,16 +371,20 @@ keyNotFound(CodingKeys(stringValue: "xxx", intValue: nil), Swift.DecodingError.C
 
 &emsp;虽然 Codable 的默认实现足够应付大多数情形了，但是有时候我们还是存在一些自定义需求。为了处理这类自定义问题，我们就必须自己覆盖 Codable 的一些默认实现。
 
-1. protocol Decoder 协议中 unkeyedContainer 的使用
+1. protocol Decoder 协议中 unkeyedContainer 的使用。
 
 ```swift
 /// A type that can decode values from a native format into in-memory representations.
 public protocol Decoder {
+    ...
+    
     /// Returns the data stored in this decoder as represented in a container appropriate for holding values with no keys.
     ///
     /// - returns: An unkeyed container view into this decoder.
     /// - throws: `DecodingError.typeMismatch` if the encountered stored value is not an unkeyed container.
     func unkeyedContainer() throws -> UnkeyedDecodingContainer
+    
+    ...
 }
 ```
 
@@ -432,7 +436,74 @@ Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state
 }
 ```
 
-2. open class JSONDecoder 类的 `open var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy` 属性的使用。（日期的转换策略）
+2. protocol Decoder 协议中 container 的使用。
+
+```swift
+/// A type that can decode values from a native format into in-memory representations.
+public protocol Decoder {
+    ...
+
+    /// Returns the data stored in this decoder as represented in a container keyed by the given key type.
+    ///
+    /// - parameter type: The key type to use for the container.
+    /// - returns: A keyed decoding container view into this decoder.
+    /// - throws: `DecodingError.typeMismatch` if the encountered stored value is not a keyed container.
+    func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey
+
+    ...
+}
+```
+
+&emsp;针对上述的 4 5 6 的情况，我们可以通过把类型的成员变量定为可选类型即可以应对服务器返回 空对象/空值/字段缺失的情况，那么如果我们就是不想使用可选类型，然后后续使用时的层层解包怎么处理呢？我们可以如下重写 init(from decoder: Decoder) 函数，用 decoder.container(keyedBy: CodingKeys.self) 为指定的成员变量赋值：
+
+```swift
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case park
+        case state
+        case description
+        case imageName
+        case coordinates
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(Int.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        park = try container.decode(String.self, forKey: .park)
+        state = try container.decode(String.self, forKey: .state)
+        description = try container.decode(String.self, forKey: .description)
+        imageName = try container.decode(String.self, forKey: .imageName)
+        
+        do {
+            coordinates = try container.decode(Coordinates.self, forKey: .coordinates)
+//            coordinates = try container.decodeIfPresent(Coordinates.self, forKey: .coordinates)
+        } catch {
+            coordinates = Coordinates(latitude: 0, longitude: 0)
+        }
+    }
+}
+```
+
+&emsp;这样当 coordinates 不管是返回 {}、null、直接不返回，都能正常解析（给一个默认值，这不是一个好方法，还是使用可选，当没有返回是指定为 nil 比较好）。
+
+```swift
+let turtleRockString = """
+    {
+        ...
+        
+        "coordinates": null,
+        // "coordinates": {},
+    }
+"""
+```
+
+3. open class JSONDecoder 类的 `open var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy` 属性的使用。（日期的转换策略）
 
 &emsp;我们经常需要需要跟日期打交道，日期数据可能以不同形式展现下发，最常见的日期标准是 [ISO8601](https://zh.wikipedia.org/wiki/ISO_8601) 和 [RFC3339](https://tools.ietf.org/html/rfc3339)，举例来说：
 
@@ -578,7 +649,7 @@ open class JSONDecoder {
 }    
 ```
 
-3. open class JSONDecoder 类的 `open var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy` 属性的使用。（系统提供的变量名从蛇形命令法到小驼峰命名法的自动转换）
+4. open class JSONDecoder 类的 `open var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy` 属性的使用。（系统提供的变量名从蛇形命令法到小驼峰命名法的自动转换）
 
 &emsp;Web 服务中使用 Json 时一般使用蛇形命名法（snake_case_keys），把名称转换为小写字符串，并用下划线（`_`）代替空格来连接这些字符，与此不同的是 Swift API 设计指南中预先把对类型的转换定义为 UpperCamelCase（大驼峰命名），其他所有东西都定义为 lowerCamelCase（小驼峰命名）。由于这种需求十分普遍，在 Swift 4.1 时 JSONDecoder 添加了 keyDecodingStrategy 属性，可以在不同的书写惯例之间方便地转换。如果有这样的键值 `image_Name`，就会转换成 `imageName`。[Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
 
@@ -631,7 +702,9 @@ open class JSONDecoder {
 
 &emsp;但是还可能有特殊情况，Web 服务的开发者可能某些时候大意了，也没有遵守蛇形命名法，而是很随意的处理了，那么如果我们想对键值进行校正，该如何处理？这就引出了下个点。
 
-4. 当遵循 Codable 协议的类型属性（成员变量）名和 Json 字符串中的字段名不同时，如何进行自定义匹配映射。
+&emsp;关于 `case custom((_ codingPath: [CodingKey]) -> CodingKey)` 的使用，我们可以参考：[Swift 4.1 新特性 (4) Codable的改进](https://www.jianshu.com/p/8292ab49d492)。 
+
+5. 当遵循 Codable 协议的类型属性（成员变量）名和 Json 字符串中的字段名不同时，如何进行自定义匹配映射。
 
 &emsp;解决办法是：使用 CodingKeys 枚举指定一个明确的映射。
 
@@ -690,7 +763,7 @@ Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state
 }
 ```
 
-5. 由 字符串/整型 转换为枚举类型。
+6. 由 字符串/整型 转换为枚举类型。
 
 &emsp;在 TableView 的列表中我们经常会遇到不同类型的 cell，例如：图片、视频、超链接等等类型，然后针对不同的类型，服务端一般会给我们返回一个类型的字符串，如：pic、video、link，甚至直接返回数字：1、2、3 这样，而在代码中使用时，我们一般更希望将这种类型字符串（整型数字）转换成枚举值，方便使用。下面举两个简单的例子来说明如何从字符串或者整型数据转换成枚举类型。
 
@@ -766,49 +839,11 @@ struct Landmark: Hashable, Codable, Identifiable {
 }
 ```
 
-6. 
+7. 另外还有一些 扁平化对象、对象继承 等的特殊处理，可以参考：[Swift 4 JSON 解析进阶](https://blog.csdn.net/weixin_33962923/article/details/88986627)。
 
+8. 还有一种情况，当服务器返回的字段类型和我们预定义的模型的类型不匹配时，也会解码失败！需要处理可参考：[针对 swift4 的JSONDecoder的特殊情况处理](https://www.jianshu.com/p/51c219092290)。
 
-
-
-
-
-
-
-
-
-&emsp;如果给一个遵循 Codable 协议的类型定义 CodingKeys 枚举的话，至少需要给其中一个枚举值指定一个 rawValue，否则我们需要重写该类型的 init(from decoder: Decoder) throws 函数，为类型的每个属性（成员变量）调用 container.decode 指定该属性（成员变量）所属的类型和 key 值，如下：
-
-```swift
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(Int.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        ...
-    }
-```
-
-&emsp;
-
-
-
-
-
-+ 还有一种情况，当服务器返回的字段类型和我们预定义的模型的类型不匹配时，也会解码失败！需要处理
-
-+ 字段匹配
-+ 处理键名和属性名不匹配
-+ 两端键值不匹配
-+ 定制日期格式处理
-+ 枚举值 从字符串解析枚举类型 从整型解析枚举类型
-+ 动态键值结构
-+ 特殊类型
-
-
-
-
-
-
+&emsp;本来学习 SwiftUI 的跑题跑到 Codable 跑太远了，那索性就跑远吧。这时我们在看一下 `struct Landmark: Hashable, Codable, Identifiable { ... }` 可看到，Landmark 还遵循 Hashable 协议。
 
 ### Hashable
 
@@ -819,36 +854,94 @@ public protocol Hashable : Equatable {
 
     /// The hash value.
     ///
-    /// Hash values are not guaranteed to be equal across different executions of
-    /// your program. Do not save hash values to use during a future execution.
+    /// Hash values are not guaranteed to be equal across different executions of your program. Do not save hash values to use during a future execution.
     ///
-    /// - Important: `hashValue` is deprecated as a `Hashable` requirement. To
-    ///   conform to `Hashable`, implement the `hash(into:)` requirement instead.
+    /// - Important: `hashValue` is deprecated as a `Hashable` requirement. To conform to `Hashable`, implement the `hash(into:)` requirement instead.
     var hashValue: Int { get }
 
-    /// Hashes the essential components of this value by feeding them into the
-    /// given hasher.
+    /// Hashes the essential components of this value by feeding them into the given hasher.
     ///
-    /// Implement this method to conform to the `Hashable` protocol. The
-    /// components used for hashing must be the same as the components compared
-    /// in your type's `==` operator implementation. Call `hasher.combine(_:)`
-    /// with each of these components.
+    /// Implement this method to conform to the `Hashable` protocol.
+    /// The components used for hashing must be the same as the components compared in your type's `==` operator implementation.
+    /// Call `hasher.combine(_:)` with each of these components.
     ///
-    /// - Important: Never call `finalize()` on `hasher`. Doing so may become a
-    ///   compile-time error in the future.
+    /// - Important: Never call `finalize()` on `hasher`. Doing so may become a compile-time error in the future.
     ///
-    /// - Parameter hasher: The hasher to use when combining the components
-    ///   of this instance.
+    /// - Parameter hasher: The hasher to use when combining the components of this instance.
     func hash(into hasher: inout Hasher)
 }
 ```
 
+&emsp;例如我们想使用我们的自定义 Class 作为 Dictionary 的 key 的话，我们就需要自己实现 Hashable 协议。
 
 ### Identifiable
 
 &emsp;
 
+```swift
+/// A class of types whose instances hold the value of an entity with stable identity.
+///
+/// Use the `Identifiable` protocol to provide a stable notion of identity to a class or value type. 
+/// For example, you could define a `User` type with an `id` property that is stable across your app and your app's database storage. 
+/// You could use the `id` property to identify a particular user even if other data fields change, such as the user's name.
+///
+/// `Identifiable` leaves the duration and scope of the identity unspecified.
+/// Identities could be any of the following:
+///
+/// - Guaranteed always unique (e.g. UUIDs).
+/// - Persistently unique per environment (e.g. database record keys).
+/// - Unique for the lifetime of a process (e.g. global incrementing integers).
+/// - Unique for the lifetime of an object (e.g. object identifiers).
+/// - Unique within the current collection (e.g. collection index).
+///
+/// It is up to both the conformer and the receiver of the protocol to document the nature of the identity.
+///
+/// Conforming to the Identifiable Protocol
+/// =======================================
+///
+/// `Identifiable` provides a default implementation for class types (using
+/// `ObjectIdentifier`), which is only guaranteed to remain unique for the lifetime of an object.
+/// If an object has a stronger notion of identity, it may be appropriate to provide a custom implementation.
+@available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
+public protocol Identifiable {
 
+    /// A type representing the stable identity of the entity associated with an instance.
+    associatedtype ID : Hashable
+
+    /// The stable identity of the entity associated with this instance.
+    var id: Self.ID { get }
+}
+```
+
+### ModelData.swift
+
+&emsp;上面 struct Landmark 结构体的内容看完了，接下来就是 ModelData 中读取 landmarkData.json 文件中的 Json 字符串，然后转换为 Landmark 强类型数据。
+
+```swift
+var landmarks: [Landmark] = load("landmarkData.json")
+
+func load<T: Decodable>(_ filename: String) -> T {
+    let data: Data
+    
+    guard let file = Bundle.main.url(forResource: filename, withExtension: nil)
+    else {
+        fatalError("Couldn't find \(filename) in main bundle.")
+    }
+    
+    do {
+        data = try Data(contentsOf: file)
+    } catch {
+        fatalError("Couldn't load \(filename) from main bundle:\n\(error)")
+    }
+    
+    do {
+        let decoder = JSONDecoder()
+        return try decoder.decode(T.self, from: data)
+    } catch {
+        fatalError("Couldn't parse \(filename) as \(T.self):\n\(error)")
+    }
+}
+```
 
 
 
