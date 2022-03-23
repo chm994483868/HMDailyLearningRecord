@@ -1215,14 +1215,77 @@ $(document).ready(function() {
 <button id="btn2">添加列表项</button>
 ```
 
+### jQuery prepend() 方法 
 
+&emsp;jQuery prepend() 方法在被选元素的开头插入内容。
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#btn1").click(function() {
+            $("p").prepend("<b>在开头追加文本</b>。");
+        });
+        $("#btn2").click(function() {
+            $("ol").prepend("<li>在开头添加列表项</li>");
+        });
+    });
+</script>
 
+<p>这是一个段落。</p>
+<p>这是另外一个段落。</p>
+<ol>
+    <li>列表 1</li>
+    <li>列表 2</li>
+    <li>列表 3</li>
+</ol>
+<button id="btn1">添加文本</button>
+<button id="btn2">添加列表项</button>
+```
 
+### 通过 append() 和 prepend() 方法添加若干新元素
 
+&emsp;在上面的例子中，我们只在被选元素的 开头/结尾 插入 文本/HTML。不过，append() 和 prepend() 方法能够通过参数接收无限数量的新元素。可以通过 jQuery 来生成 文本/HTML（就像上面的例子那样），或者通过 JavaScript 代码和 DOM 元素。
 
+&emsp;在下面的例子中，我们创建若干个新元素。这些元素可以通过 text/HTML、jQuery 或者 JavaScript/DOM 来创建。然后我们通过 append() 方法把这些新元素追加到文本中（对 prepend() 同样有效）：
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    function appendText() {
+        var txt1 = "<p>文本-1。</p>"; // 使用 HTML 标签创建文本
+        var txt2 = $("<p></p>").text("文本-2。"); // 使用 jQuery 创建文本
+        var txt3 = document.createElement("p");
+        txt3.innerHTML = "文本-3"; // 使用 DOM 创建文本 text with DOM
+        $("body").append(txt1, txt2, txt3); // 追加新元素
+    }
+</script>
 
+<p>这是一个段落。</p>
+<button onclick="appendText()">追加文本</button>
+```
+
+### jQuery after() 和 before() 方法
+
+&emsp;jQuery after() 方法在被选元素之后插入内容。jQuery before() 方法在被选元素之前插入内容。
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#btn1").click(function() {
+            $("img").before("<b>之前</b>");
+        });
+        $("#btn2").click(function() {
+            $("img").after("<i>之后</i>");
+        });
+    });
+</script>
+<img src="/image/logo.png">
+<br><br>
+<button id="btn1">之前插入</button>
+<button id="btn2">之后插入</button>
+```
 
 
 
