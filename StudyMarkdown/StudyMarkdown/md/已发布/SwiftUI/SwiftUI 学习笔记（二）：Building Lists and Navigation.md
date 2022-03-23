@@ -246,7 +246,7 @@ extension Dictionary : Decodable where Key : Decodable, Value : Decodable {
 }
 ```
 
-3. Json 字符串是一个模型数组时，如下形式时，此时在 `return try decoder.decode(T.self, from: data)` 中传入类型时需要传输数组类型，例如: `[Landmark]`
+3. Json 字符串是一个模型数组时，如下形式时，此时在 `return try decoder.decode(T.self, from: data)` 中传入类型时需要传输数组类型，例如: `[Landmark]`。
 
 ```swift
 [
@@ -321,7 +321,6 @@ struct Coordinates: Hashable, Codable {
 ```
 
 &emsp;把 Coordinates 的每个成员变量设置为可选类型，这样当 coordinates 返回为 {} 时，latitude 和 longitude 自动解析为 nil。（`print(turtleRock.coordinates)`: Coordinates(latitude: nil, longitude: nil)）   
-
 ```swift
 // print(turtleRock)
 Landmark(id: 1001, name: "Turtle Rock", park: "Joshua Tree National Park", state: "California", description: "Suscipit ...", imageName: "turtlerock", coordinates: Optional(Landmarks.Landmark.Coordinates(latitude: nil, longitude: nil)), coordinatesArray: [Landmarks.Landmark.Coordinates(latitude: Optional(3.0), longitude: Optional(-1.0)), Landmarks.Landmark.Coordinates(latitude: Optional(34.0), longitude: Optional(-11.0))])
@@ -876,7 +875,7 @@ public protocol Hashable : Equatable {
 
 ### Identifiable
 
-&emsp;
+&emsp;只需要有一个 id 属性即可，在这里用于指示 landmarks 数组中的 Landmarks 实例与 List 的每个 LandmarkRow 绑在一起。
 
 ```swift
 /// A class of types whose instances hold the value of an entity with stable identity.
@@ -915,7 +914,7 @@ public protocol Identifiable {
 
 ### ModelData.swift
 
-&emsp;上面 struct Landmark 结构体的内容看完了，接下来就是 ModelData 中读取 landmarkData.json 文件中的 Json 字符串，然后转换为 Landmark 强类型数据。
+&emsp;上面 struct Landmark 结构体的内容看完了，接下来就是 ModelData 中读取 landmarkData.json 文件中的 Json 字符串，然后转换为 Landmark（数组）强类型数据。`load` 函数是 Codable 的一个最基础的使用。
 
 ```swift
 var landmarks: [Landmark] = load("landmarkData.json")
@@ -943,13 +942,149 @@ func load<T: Decodable>(_ filename: String) -> T {
 }
 ```
 
+&emsp;这里调用 load 函数的范型 T 是 `[Landmark]` Landmark 结构体数组，即执行 `return try decoder.decode(T.self, from: data)` 时其实执行的是 `return try decoder.decode([Landmark].self, from: data)`，与我们上面学习 Codable 时的 3. Json 字符串是一个模型数组时 情况相同。   
 
+&emsp;如果我们把 `var landmarks: [Landmark] = load("landmarkData.json")` 修改为 `var landmarks = load("landmarkData.json")` 则会报：Generic parameter 'T' could not be inferred。
 
+&emsp;这里数据部分就准备好了，下面我们接着看视图部分。
 
+### LandmarkRow.swift
 
+&emsp;LandmarkRow 姑且可以理解为我们在 UIKit 中使用的 UITableViewCell，用于展示列表中的一行数据。
 
+&emsp;首先为 LandmarkRow 视图添加一个 Landmark 类型的存储属性，记录用于展示的数据。
 
+```swift
+import SwiftUI
 
+struct LandmarkRow: View {
+    // Add landmark as a stored property of LandmarkRow.
+    var landmark: Landmark
+
+    var body: some View {
+        // Embed the existing text view in an HStack，Modify the text view to use the landmark property’s name.
+        HStack {
+            // Complete the row by adding an image before the text view, and a spacer after it.
+            landmark.image
+                .resizable()
+                .frame(width: 50, height: 50)
+            Text(landmark.name)
+
+            Spacer()
+        }
+    }
+}
+```
+
+### LandmarkList.swift
+
+&emsp;Instead of specifying a list’s elements individually, you can generate rows directly from a collection. 可以直接从集合生成行，而不是单独指定列表的元素。
+
+&emsp;通过传递数据集合（landmarks 数组）和为集合中的每个元素提供视图的闭包，可以创建一个显示集合元素的列表（List）。该列表通过使用提供的闭包将集合中的每个元素转换为子视图。
+
+&emsp;这里为列表中的每个 LandmarkRow 提到了 `\.id`，它有点类似与我们在 UIKit 中使用 UITableView 时为 cell 指定标识，但是又不同，一类 cell 指定的是同一个标识，而这里的另外一种简洁方法是从数据源出发的，需要 Landmark 结构体遵循 Identifiable 协议，而遵循 Identifiable 协议的类型需要有一个名为 id 的属性，而我们的 Landmark 结构体正符合此要求。   
+
+```swift
+import SwiftUI
+
+struct LandmarkList: View {
+    var body: some View {
+        // 在 NavigationView 中嵌入动态生成的地标列表。
+        NavigationView {
+            List(landmarks) { landmark in
+                // Inside the list’s closure, wrap the returned row in a NavigationLink, specifying the LandmarkDetail view as the destination.
+                NavigationLink {
+                    LandmarkDetail(landmark: landmark)
+                } label: {
+                    LandmarkRow(landmark: landmark)
+                }
+            }
+            // 调用 navigationTitle(_:) 修饰符方法，用于在显示列表时设置导航栏的标题
+            .navigationTitle("Landmarks")
+        }
+    }
+}
+```
+
+### LandmarkDetail.swift
+
+&emsp;分别修改 MapView 和 CircleImage 中上一节为它们硬编码的坐标和图片，这里分别传递给它们 landmark 的 locationCoordinate 和 image。
+
+```swift
+import SwiftUI
+
+struct LandmarkDetail: View {
+    var landmark: Landmark
+
+    var body: some View {
+        // 将容器从 VStack 更改为 ScrollView，以便用户可以滚动浏览描述性内容，并删除不再需要的间隔符。
+        ScrollView {
+            MapView(coordinate: landmark.locationCoordinate)
+                .ignoresSafeArea(edges: .top)
+                .frame(height: 300)
+
+            CircleImage(image: landmark.image)
+                .offset(y: -130)
+                .padding(.bottom, -130)
+
+            VStack(alignment: .leading) {
+                Text(landmark.name)
+                    .font(.title)
+
+                HStack {
+                    Text(landmark.park)
+                    Spacer()
+                    Text(landmark.state)
+                }
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+                Divider()
+
+                Text("About \(landmark.name)")
+                    .font(.title2)
+                Text(landmark.description)
+            }
+            .padding()
+        }
+        // 最后，调用  navigationTitle(_:) 修饰符，用于在显示详细信息视图时为导航栏指定标题，以及 navigationBarTitleDisplayMode(_:) 修饰符，使标题以内联方式显示。仅当视图是导航堆栈的一部分时，导航更改才会生效。
+        .navigationTitle(landmark.name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+```
+
+### MapView.swift
+
+&emsp;添加一个基于坐标值更新 region 的方法：setRegion，将 onAppear 视图修饰符添加到 Map 中，以触发基于当前 coordinate 的区域计算。
+
+```swift
+import SwiftUI
+import MapKit
+
+struct MapView: View {
+    var coordinate: CLLocationCoordinate2D
+    @State private var region = MKCoordinateRegion()
+
+    var body: some View {
+        Map(coordinateRegion: $region)
+            // Add an onAppear view modifier to the map that triggers a calculation of the region based on the current coordinate.
+            .onAppear {
+                setRegion(coordinate)
+            }
+    }
+
+    // Add a method that updates the region based on a coordinate value.
+    private func setRegion(_ coordinate: CLLocationCoordinate2D) {
+        region = MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2)
+        )
+    }
+}
+```
+
+&emsp;至此 BuildingListsAndNavigation 中的内容就全部看完了，虽然重心都放在了 Codable 上，但是它确实至关重要，下节我们继续把目光主要集中到 SwiftUI 的代码中去。
 
 ## 参考链接
 **参考链接:🔗**
@@ -959,8 +1094,6 @@ func load<T: Decodable>(_ filename: String) -> T {
 + [SwiftUI状态绑定：@State](https://www.jianshu.com/p/46cbe061c8f5)
 + [[译]理解 SwiftUI 里的属性装饰器@State, @Binding, @ObservedObject, @EnvironmentObje](https://www.cnblogs.com/xiaoniuzai/p/11417123.html)
 + [SwiftUI为啥可以这样写代码？](https://blog.csdn.net/studying_ios/article/details/104833278)
-
-
 + [swift--Codable](https://www.jianshu.com/p/3aab46dcd339)
 + [Swift 4.1 新特性 (4) Codable的改进](https://www.jianshu.com/p/8292ab49d492)
 + [Swift 4.1 新特性 (3) 合成 Equatable 和 Hashable](https://www.jianshu.com/p/2aa31c90abbd)
@@ -968,14 +1101,3 @@ func load<T: Decodable>(_ filename: String) -> T {
 + [iOS开发 - Swift中的Codable, Hashable, CaseIterable, Identifiable.....](https://www.jianshu.com/p/06c993c5ad89)
 + [Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
 + [Swift 4 JSON 解析进阶](https://blog.csdn.net/weixin_33962923/article/details/88986627)
-
-## 看着看着发现 LG 都开始卷 Swift 源码了...（必学）
-+ [Swift底层进阶--015：Codable源码解析](https://www.jianshu.com/p/9302f7bac319)
-+ [Swift底层探索:Codable](https://www.jianshu.com/p/d591bd7f53ac)
-
-## 针对当返回的 Json 字符串中字段的类型 和 模型定义中属性（成员变量）类型不匹配时的解析：只要有一个字段类型不匹配，整个 json 的转 model 都会失败，这是不友好的。
-+ [针对 swift4 的JSONDecoder的特殊情况处理](https://www.jianshu.com/p/51c219092290)
-
-## 学习一些 Codable 的嵌套用法、学习 Codable 中的三种容器类型（必学），还有 CodingKey（必学）。
-
-+ [Swift5 Codable源码剖析](https://www.jianshu.com/nb/3595319)
