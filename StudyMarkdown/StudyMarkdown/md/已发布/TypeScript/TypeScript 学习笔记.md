@@ -1281,6 +1281,49 @@ var txt = new String("string");
 var txt = "string";
 ```
 
+### String 对象属性
+
+&emsp;String 对象支持的属性如下：
+
+1. constructor 对创建该对象的函数的引用。
+
+```typescript
+var str = new String("This is string");
+console.log("str.constructor:" + str.constructor);
+
+// 输出：
+str.constructor:function String() { [native code] }
+```
+
+2. length 返回字符串的长度。
+
+```typescript
+var uname = new String("Hello World!");
+console.log("Length " + uname.length);
+
+// 输出
+Length 12
+```
+
+3. prototype 允许向对象添加属性和方法。
+
+```typescript
+function employee(id: number, name: String) {
+  this.id = id;
+  this.name = name;
+}
+
+var emp = new employee(123, "admin");
+employee.prototype.email = "admin@apple.com";
+console.log(emp.id);
+console.log(emp.name);
+console.log(emp.email);
+
+// 输出
+123
+admin
+admin@apple.com
+```
 
 
 
