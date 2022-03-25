@@ -90,7 +90,7 @@ struct MapView: View {
   + 与 Vue 对比：SwiftUI 的 @State 与 Vue 中 data 很相似，SwiftUI 中 @State 修饰的属性值发生变化后，会更新视图，Vue 中，data 中的属性值发生变化后，引用该属性的元素，也会发生变化。
   [SwiftUI属性装饰器（@State）](https://www.jianshu.com/p/693f65ce6d63)
 
-&emsp;`@State` 关键字是做什么的呢？当 @State 修饰的属性更新的时候，view 将重新校验 UI，并且更新自身。从原理上说，我们只要改变了 view 里面被关键词 `@State` 修饰的属性，整个 view 的 `body` 就会被重新渲染。
+&emsp;那么总结下来：`@State` 关键字是做什么的呢？当 @State 修饰的属性更新的时候，view 将重新校验 UI，并且更新自身。从原理上说，我们只要改变了 view 里面被关键词 `@State` 修饰的属性，整个 view 的 `body` 就会被重新渲染。
 
 &emsp;在上面的示例代码中 `MapView` 的 `body` 中的 `Map` 使用 `$` 和 `@State` 修饰的 `region` 属性双向绑定在一起，当 `region` 的值发生变化的时候，`Map` 就会更新，同时 `Map` 发生更新时，`region` 的值也会跟着更新。
 

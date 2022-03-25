@@ -6,9 +6,94 @@
 
 &emsp;[SwiftUI Essentials - Handling User Input](https://developer.apple.com/tutorials/swiftui/handling-user-input) 处理用户输入。
 
-&emsp;在 Landmarks 应用中，用户可以标记其收藏的地点，并筛选列表以仅显示其收藏夹。若要创建此功能，首先要向列表中添加一个开关，以便用户可以只关注其收藏夹，然后添加一个星形按钮，用户点击该按钮可将地标标记为收藏。
+&emsp;在 Landmarks 应用中，用户可以标记其收藏的地点，并筛选列表以仅显示其收藏夹（列表）。若要创建此功能，首先要向列表中添加一个开关，以便用户可以只关注其收藏夹，然后添加一个星形按钮，用户点击该按钮可将地标标记为收藏。（在导航条右上角加一个开关，来回切换显示全部景点和已收藏的景点）
 
-### Landmark.swift
+### Mark the User’s Favorite Landmarks
+
+&emsp;标记用户收藏的地标（Landmarks），首先增强列表（已收藏的在 LandmarkRow 上添加黄色的星标记），以便一目了然地向用户显示他们的收藏。向 Landmark 结构添加一个属性，以将地标的初始状态作为收藏进行读取，然后向每个显示收藏地标的 LandmarkRow 添加一颗星号。
+
+&emsp;首先修改数据源模型，为 Landmark 结构体添加一个 `var isFavorite: Bool` 成员变量，记录对应的景点是否收藏了。
+
+```swift
+struct Landmark: Hashable, Codable, Identifiable {
+    ...
+    
+    var isFavorite: Bool
+
+    ...
+}
+```
+
+&emsp;然后选中 LandmarkRow.swift 我们为收藏的景点所在的行右边添加一颗星。
+
+```swift
+struct LandmarkRow: View {
+    var landmark: Landmark
+
+    var body: some View {
+        HStack {
+            landmark.image
+                .resizable()
+                .frame(width: 50, height: 50)
+            Text(landmark.name)
+
+            Spacer()
+            
+            // 这里根据数据源判断是否添加一个 Image 视图
+            if landmark.isFavorite {
+                Image(systemName: "star.fill")
+                    // Because system images are vector based, you can change their color with the foregroundColor(_:) modifier.
+                    .foregroundColor(.yellow)
+            }
+        }
+    }
+}
+```
+
+&emsp;仅当当前 LandmarkRow 的 landmark 成员变量的 isFavorite 为真时才添加一个 Image 视图，且这里使用了系统提供的图片（图标），`Image(systemName: "star.fill")` 它默认是黑色的，且是基于矢量的，所以我们可以通过 `foregroundColor(_:)` 来设置它的颜色，例如这里我们把它修改为黄色。
+
+### Filter the List View
+
+&emsp;可以自定义列表视图（LandmarkList），使其显示所有地标，或仅显示用户的收藏列表。为此，我们需要向 LandmarkList 添加一些状态。
+
+&emsp;状态（State）是一个值或一组值，可以随时间而变化，并且会影响视图的行为、内容或布局。使用具有 @State 修饰的属性向视图添加状态。
+
+&emsp;@State 关键字还记得吗？使用 @State 修饰某个属性后，SwiftUI 将会把该属性存储到一个特殊的内存区域内，并且这个区域和 View struct 是隔离的。当 @State 修饰的属性的值发生变化后，SwiftUI 会根据该属性重新绘制视图。
+
+&emsp;为 struct LandmarkList 添加一个名为 `showFavoritesOnly` 的 @State 属性，其初始值设置为 false。由于使用 State 属性来保存特定于视图及其子视图的信息，因此始终将 State 创建为 private。
+
+&emsp;为 struct LandmarkList 添加一个名为 `filteredLandmarks` 的计算属性，通过检查 `showFavoritesOnly` 属性和 `landmarks` 全局数组中每个 `landmark` 的 `isFavorite` 属性来筛选出收藏的景点列表。
+
+```swift
+struct LandmarkList: View {
+    @State private var showFavoritesOnly = false
+    
+    struct LandmarkList: View {
+    @State private var showFavoritesOnly = true
+    
+    var filteredLandmarks: [Landmark] {
+        landmarks.filter { landmark in
+            (!showFavoritesOnly || landmark.isFavorite)
+        }
+    }
+    
+    ...
+}
+```
+
+### Add a Control to Toggle the State
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
