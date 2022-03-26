@@ -6,13 +6,13 @@
 
 &emsp;[SwiftUI Essentials - Handling User Input](https://developer.apple.com/tutorials/swiftui/handling-user-input) 处理用户输入。
 
-&emsp;在 Landmarks 应用中，用户可以标记其收藏的地点，并筛选列表以仅显示其收藏夹（列表）。若要创建此功能，首先要向列表中添加一个开关，以便用户可以只关注其收藏夹，然后添加一个星形按钮，用户点击该按钮可将地标标记为收藏。（在列表第一行右边加一个开关，点击来回切换显示全部景点或者已收藏的景点）
+&emsp;在 Landmarks 应用中，用户可以标记其收藏的地点，并筛选列表以仅显示其收藏的地标。若要创建此功能，首先要向列表中添加一个开关，以便用户可以只关注其收藏列表，然后在地标详情页面添加一个星形按钮，用户点击该按钮可将地标标记为收藏。（在列表第一行右边加一个开关，点击来回切换显示全部地标或者已收藏的地标）
 
 ### Mark the User’s Favorite Landmarks
 
 &emsp;标记用户收藏的地标（Landmarks），首先增强列表（已收藏的在 LandmarkRow 上添加黄色的星标记），以便一目了然地向用户显示他们的收藏。向 Landmark 结构添加一个属性，以将地标的初始状态作为收藏进行读取，然后向每个显示收藏地标的 LandmarkRow 添加一颗星号。
 
-&emsp;首先修改数据源模型，为 Landmark 结构体添加一个 `var isFavorite: Bool` 成员变量，记录对应的景点是否收藏了。
+&emsp;首先修改数据源模型，为 Landmark 结构体添加一个 `var isFavorite: Bool` 成员变量，记录对应的地标是否收藏了。
 
 ```swift
 struct Landmark: Hashable, Codable, Identifiable {
@@ -24,7 +24,7 @@ struct Landmark: Hashable, Codable, Identifiable {
 }
 ```
 
-&emsp;然后选中 LandmarkRow.swift 我们为收藏的景点所在的行右边添加一颗星。
+&emsp;然后选中 LandmarkRow.swift 我们为收藏的地标所在的行右边添加一颗星。
 
 ```swift
 struct LandmarkRow: View {
@@ -50,27 +50,25 @@ struct LandmarkRow: View {
 }
 ```
 
-&emsp;仅当当前 LandmarkRow 的 landmark 成员变量的 isFavorite 为真时才添加一个 Image 视图，且这里使用了系统提供的图片（图标），`Image(systemName: "star.fill")` 它默认是黑色的，且是基于矢量的，所以我们可以通过 `foregroundColor(_:)` 来设置它的颜色，例如这里我们把它修改为黄色。
+&emsp;仅当当前 LandmarkRow 的 landmark 成员变量的 isFavorite 为 true 时才添加一个 Image 视图，且这里使用了系统提供的图片（star 图标）：`Image(systemName: "star.fill")`， 它默认是黑色的，且是基于矢量的，所以我们可以通过 `foregroundColor(_:)` 来设置它的颜色，例如这里我们把它修改为黄色。
 
 ### Filter the List View
 
-&emsp;可以自定义列表视图（LandmarkList），使其显示所有地标，或仅显示用户的收藏列表。为此，我们需要向 LandmarkList 添加一些状态。
-
-&emsp;状态（State）是一个值或一组值，可以随时间而变化，并且会影响视图的行为、内容或布局。使用具有 @State 修饰的属性向视图添加状态。
+&emsp;可以自定义列表视图（LandmarkList），使其显示所有地标，或仅显示用户的收藏列表。为此，我们需要向 LandmarkList 添加一些状态。状态（State）是一个值或一组值，可以随时间而变化，并且会影响视图的行为、内容或布局，使用具有 @State 修饰的属性向视图添加状态。
 
 &emsp;@State 关键字还记得吗？使用 @State 修饰某个属性后，SwiftUI 将会把该属性存储到一个特殊的内存区域内，并且这个区域和 View struct 是隔离的。当 @State 修饰的属性的值发生变化后，SwiftUI 会根据该属性重新绘制视图。
 
-&emsp;为 struct LandmarkList 添加一个名为 `showFavoritesOnly` 的 @State 属性，其初始值设置为 false，那么后续当 `showFavoritesOnly` 的值发生变化时，LandmarkList 就会进行 "刷新"。由于使用 State 属性来保存特定于视图及其子视图的信息，因此始终将 State 创建为 private。
+&emsp;为 struct LandmarkList 添加一个名为 `showFavoritesOnly` 的 @State 属性，其初始值设置为 false，那么后续当 `showFavoritesOnly` 值发生变化时，LandmarkList 就会进行 "刷新"。由于使用 State 属性来保存特定于视图及其子视图的信息，因此始终将 State 创建为 private。
 
-&emsp;为 struct LandmarkList 添加一个名为 `filteredLandmarks` 的计算属性，通过检查 `showFavoritesOnly` 属性和 `landmarks` 全局数组中每个 `landmark` 的 `isFavorite` 属性来筛选出收藏的景点列表。
+&emsp;为 struct LandmarkList 添加一个名为 `filteredLandmarks` 的计算属性，通过检查 `showFavoritesOnly` 属性和 `landmarks` 全局数组中每个 `landmark` 的 `isFavorite` 属性来筛选出收藏的地标列表。
 
-&emsp;当 showFavoritesOnly 为 false（表达的含义是不要仅显示收藏的景点）时 (!showFavoritesOnly || landmark.isFavorite) 必为真，此时过滤出来的 filteredLandmarks 数组即包含 landmarks 数组中所有元素，所以即使置换 LandmarkList 的数据源，此时显示的仍是所有的景点元素，当把 showFavoritesOnly 置为 true 时，表示仅显示收藏的景点，此时从 landmarks 数组中过滤出 isFavorite 值为 true 的 landmark（景点），此时置换数据源后 LandmarkList 仅显示收藏的景点。
+&emsp;当 showFavoritesOnly 为 false（表达的含义是不要仅显示收藏的地标）时 (!showFavoritesOnly || landmark.isFavorite) 必为真，此时过滤出来的 filteredLandmarks 数组即包含 landmarks 数组中所有元素，所以即使置换 LandmarkList 的数据源，此时显示的仍是所有的地标元素，当把 showFavoritesOnly 置为 true 时，表示仅显示收藏的地标，此时从 landmarks 数组中过滤出 isFavorite 值为 true 的 landmark（地标），此时置换数据源后 LandmarkList 仅显示收藏的地标。
 
 ```swift
 struct LandmarkList: View {
     @State private var showFavoritesOnly = false
     
-    // 通过检查 showFavoritesOnly 属性和每个 landmark.isFavorite 值来计算 LandmarkList 列表的筛选版本（仅显示收藏的景点）
+    // 通过检查 showFavoritesOnly 属性和每个 landmark.isFavorite 值来计算 LandmarkList 列表的筛选版本（仅显示收藏的地标）
     var filteredLandmarks: [Landmark] {
         landmarks.filter { landmark in
             (!showFavoritesOnly || landmark.isFavorite)
@@ -103,7 +101,7 @@ struct LandmarkList: View {
 }
 ```
 
-&emsp;然后把 showFavoritesOnly 修改为 true，表示列表仅显示收藏的景点，运行项目，发现列表仅显示 3 个右边有一个黄色星号的收藏的景点。（这里我们多看一眼 List(filteredLandmarks) { ... } 的构建方式，它是直接把数据传递给 List，后续会转变为另一种方式。）
+&emsp;然后把 showFavoritesOnly 修改为 true，表示列表仅显示收藏的地标，运行项目，发现列表仅显示 3 个右边有一个黄色星号的收藏的地标。（这里我们多看一眼 List(filteredLandmarks) { ... } 的构建方式，它是直接把数据传递给 List，后续会转变为另一种方式）
 
 ### Add a Control to Toggle the State（添加控件以切换状态）
 
@@ -177,14 +175,236 @@ struct LandmarkList: View {
 }
 ```
 
-&emsp;然后运行项目，点击 Toggle 切换显示全部景点/收藏的景点。 
+&emsp;然后运行项目，点击 Toggle 切换显示全部地标/收藏的地标。 
 
-### Use an Observable Object for Storage
+### Use an Observable Object for Storage（使用可观察对象进行存储）
 
-&emsp;要准备让用户控制哪些特定地标是收藏夹，您首先将地标数据存储在可观察对象中。可观察对象是数据的自定义对象，可以从 SwiftUI 环境中的存储绑定到视图。SwiftUI 监视对可观察对象的任何可能影响视图的更改，并在更改后显示视图的正确版本。
+&emsp;要准备让用户控制哪些特定地标（Landmark）是被收藏的，首先将地标数据存储在可观察对象（observable object）中。
+
+&emsp;可观察对象（observable object）是数据的自定义对象，可以从 SwiftUI 环境（SwiftUI’s environment）存储中绑定到视图。SwiftUI 监视对可观察对象（observable objects）的任何可能影响视图的更改，并在更改后显示视图的正确版本（刷新页面）。
+
+&emsp;从 Combine 框架声明符合 ObservableObject 协议的新的模型类型（`class ModelData: ObservableObject { ... }`）。SwiftUI 订阅可观察对象（observable object），并在数据更改时更新需要刷新的任何视图。
+
+```swift
+import Combine
+
+final class ModelData: ObservableObject {
+    
+}
+```
+
+&emsp;然后把 landmarks 全局数组移动到 ModelData 中：
+
+```swift
+import Combine
+
+final class ModelData: ObservableObject {
+    var landmarks: [Landmark] = load("landmarkData.json")
+}
+```
+
+&emsp;可观察对象需要发布对其数据的任何更改，以便其订阅者可以获取更改。将 @Published 属性添加到地标数组。
+
+```swift
+    @Published var landmarks: [Landmark] = load("landmarkData.json")
+```
+
+### Adopt the Model Object in Your Views（在视图中采用 ModelData 对象）
+
+&emsp;创建 ModelData 对象后，需要更新视图以将其用作应用的数据存储。
+
+&emsp;在 LandmarkList.swift 中，向视图添加 `@EnvironmentObject` 属性声明和 `environmentObject(_:)`修改符到 LandmarkList_Previews 中。
+
+```swift
+struct LandmarkList: View {
+    @EnvironmentObject var modelData: ModelData
+    @State private var showFavoritesOnly = false
+    ...
+}
+
+struct LandmarkList_Previews: PreviewProvider {
+    static var previews: some View {
+        LandmarkList()
+            .environmentObject(ModelData())
+    }
+}
+```
+
+&emsp;在筛选地标时，使用 modelData.landmark 作为数据。
+
+```swift
+...
+    var filteredLandmarks: [Landmark] {
+        modelData.landmarks.filter { landmark in
+            (!showFavoritesOnly || landmark.isFavorite)
+        }
+    }
+...
+```
+
+&emsp;更新 LandmarkDetail 的预览视图以使用环境中的 ModelData 对象。
+
+```swift
+struct LandmarkDetail_Previews: PreviewProvider {
+    static var previews: some View {
+        LandmarkDetail(landmark: ModelData().landmarks[0])
+    }
+}
+```
+
+&emsp;更新 LandmarkRow 的预览视图以使用 ModelData 对象。
+
+```swift
+struct LandmarkRow_Previews: PreviewProvider {
+    // 静态变量 landmarks
+    static var landmarks = ModelData().landmarks
+    
+    static var previews: some View {
+        Group {
+            LandmarkRow(landmark: landmarks[0])
+            LandmarkRow(landmark: landmarks[1])
+        }
+        .previewLayout(.fixed(width: 300, height: 70))
+    }
+}
+```
+
+&emsp;更新 ContentView 的预览视图以将模型对象添加到环境中，从而使该对象可用于任何子视图。如果任何子视图需要环境中的模型对象，但正在预览的视图没有 `environmentObject(_:)`， 则预览将失败修饰语。
+
+```swift
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(ModelData())
+    }
+}
+```
+
+&emsp;接下来，当你在模拟器或设备中运行应用时，将更新应用实例，以将模型对象放在环境中。更新 LandmarksApp 以创建一个模型实例，并使用 `environmentObject(_:)` 修饰符将其提供给 ContentView。
+
+&emsp;使用 @StateObject 特性在应用的生命周期内仅初始化给定属性的模型对象一次。当在应用程序实例中使用该属性时（如下所示）以及在视图中使用它时，情况确实如此。
+
+```swift
+@main
+struct LandmarksApp: App {
+    @StateObject private var modelData = ModelData()
+    
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environmentObject(modelData)
+        }
+    }
+}
+```
+
+### Create a Favorite Button for Each Landmark
+
+&emsp;Landmarks 应用现在可以在地标的筛选视图和未过滤视图之间切换，但收藏地标列表仍然是硬编码的。若要允许用户添加和删除收藏地标，需要将收藏按钮添加到地标详细信息视图（LandmarkDetail）中。
+
+&emsp;首先创建一个可重用的收藏按钮（FavoriteButton）。
+
+```swift
+import SwiftUI
+
+struct FavoriteButton: View {
+    var body: some View {
+        Text("Hello, SwiftUI!")
+    }
+}
+
+struct FavoriteButton_Previews: PreviewProvider {
+    static var previews: some View {
+        FavoriteButton()
+    }
+}
+```
+
+&emsp;添加指示按钮当前状态的 `isSet` 绑定，并为预览提供常量值。由于使用绑定，因此在此视图中所做的更改将传播回数据源。
+
+```swift
+import SwiftUI
+
+struct FavoriteButton: View {
+    @Binding var isSet: Bool
+    
+    var body: some View {
+        Text("Hello, SwiftUI!")
+    }
+}
+
+struct FavoriteButton_Previews: PreviewProvider {
+    static var previews: some View {
+        FavoriteButton(isSet: .constant(true))
+    }
+}
+```
+
+&emsp;创建一个按钮，其中包含切换 `isSet` 状态的操作，并根据状态更改其外观。
+
+```swift
+struct FavoriteButton: View {
+    @Binding var isSet: Bool
+    
+    var body: some View {
+        Button {
+            isSet.toggle()
+        } label: {
+            Image(systemName: isSet ? "star.fill" : "start")
+                .foregroundColor(isSet ? Color.yellow : Color.gray)
+        }
+    }
+}
+```
+
+&emsp;接下来，将把 FavoriteButton 添加到详细信息视图（Land markDetail）中，将按钮的 `isSet` 属性绑定到给定地标的 `isFavorite` 属性。
+
+&emsp;切换到 LandmarkDetail.swift，并通过将输入地标与模型数据进行比较来计算输入地标的索引。若要支持此功能，还需要访问环境的模型数据（`@EnvironmentObject var modelData: ModelData`）。
+
+```swift
+struct LandmarkDetail: View {
+    @EnvironmentObject var modelData: ModelData
+    var landmark: Landmark
+    
+    var landmarkIndex: Int {
+        modelData.landmarks.firstIndex(where: {$0.id == landmark.id })!
+    }
+    
+    ...
+}
+```
+
+&emsp;将地标的名称（Text）和新收藏按钮（FavoriteButton）嵌入到 HStack 中，FavoriteButton 提供与美元符号（$）的 isFavorite 属性的绑定。将 landmarkIndex 与 modelData 对象结合使用，以确保该按钮更新存储在模型对象中的地标的 isFavorite 属性。（就是保证 FavoriteButton 开关更新的是当前这个地标的 modelData.landmarks 中的 Landmark 数据源）
+
+```swift
+...
+
+HStack {
+    Text(landmark.name)
+        .font(.title)
+    FavoriteButton(isSet: $modelData.landmarks[landmarkIndex].isFavorite)
+}
+
+...
+```
+&emsp;至此，就完成了此节的所有代码。当从列表导航到某个地标的详细信息并点击收藏按钮时，当返回列表时，这些更改将持续存在。由于两个视图访问环境中的同一模型对象，因此这两个视图保持一致性。（以前我们可能会使用 block 或者 delegate 做回调更新数据，现在 Combine + SwiftUI 简直优雅的一批）
+
+&emsp;下面我们看一下示例代码中，比较陌生的关键字、修饰符的用法以及含义。
+
+### @EnvironmentObject
+
+&emsp;
+
+### @Binding
+
+&emsp;
+
+### @ObservedObject
+
+&emsp;
 
 
-
+&emsp;`@StateObject`、`.environmentObject`、`@EnvironmentObject`、`@State`、`@Binding`、`ObservableObject`、`@Published`、``
 
 
 
@@ -197,21 +417,11 @@ struct LandmarkList: View {
 
 ## 参考链接
 **参考链接:🔗**
-+ [[SwiftUI 知识碎片] 为什么 SwiftUI 用 "some View" 作为视图类型?](https://zhuanlan.zhihu.com/p/105213050)
-+ [SwiftUI 中的 some 关键字](https://www.jianshu.com/p/6eef60ab14bc)
-+ [Opaque Types](https://docs.swift.org/swift-book/LanguageGuide/OpaqueTypes.html)
 + [SwiftUI状态绑定：@State](https://www.jianshu.com/p/46cbe061c8f5)
 + [[译]理解 SwiftUI 里的属性装饰器@State, @Binding, @ObservedObject, @EnvironmentObje](https://www.cnblogs.com/xiaoniuzai/p/11417123.html)
-+ [SwiftUI为啥可以这样写代码？](https://blog.csdn.net/studying_ios/article/details/104833278)
++ [[SwiftUI 100 天] 用 @EnvironmentObject 从环境中读取值](https://zhuanlan.zhihu.com/p/146608338)
 
 
-+ [swift--Codable](https://www.jianshu.com/p/3aab46dcd339)
-+ [Swift 4.1 新特性 (4) Codable的改进](https://www.jianshu.com/p/8292ab49d492)
-+ [Swift 4.1 新特性 (3) 合成 Equatable 和 Hashable](https://www.jianshu.com/p/2aa31c90abbd)
-+ [SwiftUI 基础之06 Identifiable 有什么用](https://www.jianshu.com/p/69a9f2f88782)
-+ [iOS开发 - Swift中的Codable, Hashable, CaseIterable, Identifiable.....](https://www.jianshu.com/p/06c993c5ad89)
-+ [Swift之Codable实战技巧](https://zhuanlan.zhihu.com/p/50043306)
-+ [Swift 4 JSON 解析进阶](https://blog.csdn.net/weixin_33962923/article/details/88986627)
 
 ## 看着看着发现 LG 都开始卷 Swift 源码了...（必学）
 + [Swift底层进阶--015：Codable源码解析](https://www.jianshu.com/p/9302f7bac319)

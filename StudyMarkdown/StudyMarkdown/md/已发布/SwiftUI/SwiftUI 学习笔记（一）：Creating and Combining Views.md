@@ -64,7 +64,7 @@ var body: VStack<TupleView<(Text, Image, Button<Text>)>> {
 
 ### MapView.swift  
 
-&emsp;`struct MapView: View` 用于展示景点的地图位置，内容比较简单，首先引入了 MapKit 框架，然后定义了一个用于表示经纬度坐标位置及范围的变量：`region`。(struct MKCoordinateRegion 用于描述以特定纬度和经度为中心的矩形地理区域。)
+&emsp;`struct MapView: View` 用于展示地标的地图位置，内容比较简单，首先引入了 MapKit 框架，然后定义了一个用于表示经纬度坐标位置及范围的变量：`region`。(struct MKCoordinateRegion 用于描述以特定纬度和经度为中心的矩形地理区域。)
 
 ```swift
 import SwiftUI
@@ -164,7 +164,7 @@ struct MapView: View {
 
 ### CircleImage.swift
 
-&emsp;CircleImage 内容比较简单，内部是一个裁切为圆形、加了边框、加了阴影的 Image，用来展示景点的图片。
+&emsp;CircleImage 内容比较简单，内部是一个裁切为圆形、加了边框、加了阴影的 Image，用来展示地标的图片。
 
 ```swift
 struct CircleImage: View {
@@ -197,7 +197,7 @@ struct ContentView: View {
                 // 高度 300
                 .frame(height: 300)
             
-            // 景点的图片，沿 y 轴向上偏移 130，同时底部 padding 也向上延伸 130，保证下面视图的顶部对齐
+            // 地标的图片，沿 y 轴向上偏移 130，同时底部 padding 也向上延伸 130，保证下面视图的顶部对齐
             CircleImage()
                 .offset(y: -130)
                 .padding(.bottom, -130)

@@ -108,7 +108,7 @@ public protocol Encodable {
 
 #### Codable 的默认实现 
 
-&emsp;以上面的 Landmark 结构体（这里为了测试数组类型的解码，给 Landmark 添加了一个数组类型的成员变量：`var coordinatesArray: [Coordinates]`）和 landmarkData.json 中一个景点的原始 Json 数据为例：
+&emsp;以上面的 Landmark 结构体（这里为了测试数组类型的解码，给 Landmark 添加了一个数组类型的成员变量：`var coordinatesArray: [Coordinates]`）和 landmarkData.json 中一个地标的原始 Json 数据为例：
 
 ```swift
 let turtleRockString = """
