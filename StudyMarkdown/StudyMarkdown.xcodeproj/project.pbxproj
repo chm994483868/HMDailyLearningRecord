@@ -32,6 +32,7 @@
 		8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记（一）：第一个 Flutter 应用.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（一）：第一个 Flutter 应用.md"; sourceTree = "<group>"; };
 		8E3327D926F0227600753049 /* iOS App 启动优化(十四)：clang.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十四)：clang.md"; sourceTree = "<group>"; };
 		8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(六)：dsym文件讲解.md"; sourceTree = "<group>"; };
+		8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
 		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（一）：Creating and Combining Views.md"; sourceTree = "<group>"; };
 		8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Window 学习笔记.md"; sourceTree = "<group>"; };
@@ -249,6 +250,7 @@
 				8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */,
 				8E80F65E27DC888B00942D35 /* SwiftUI 学习笔记（二）：Building Lists and Navigation.md */,
 				8EB3AD7E27EB703A006336C1 /* SwiftUI 学习笔记（三）：Handling User Input.md */,
+				8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */,
 			);
 			path = SwiftUI;
 			sourceTree = "<group>";

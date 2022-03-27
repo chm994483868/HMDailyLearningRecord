@@ -320,7 +320,7 @@ struct FavoriteButton_Previews: PreviewProvider {
 }
 ```
 
-&emsp;添加指示按钮当前状态的 `isSet` 绑定，并为预览提供常量值。由于使用绑定，因此在此视图中所做的更改将传播回数据源。
+&emsp;添加指示按钮当前状态的 `isSet`（@Binding），并为预览提供常量值。由于使用 @Binding 属性包装器，因此在此视图中所做的更改将传播回数据源。
 
 ```swift
 import SwiftUI
@@ -389,22 +389,217 @@ HStack {
 ```
 &emsp;至此，就完成了此节的所有代码。当从列表导航到某个地标的详细信息并点击收藏按钮时，当返回列表时，这些更改将持续存在。由于两个视图访问环境中的同一模型对象，因此这两个视图保持一致性。（以前我们可能会使用 block 或者 delegate 做回调更新数据，现在 Combine + SwiftUI 简直优雅的一批）
 
-&emsp;下面我们看一下示例代码中，比较陌生的关键字、修饰符的用法以及含义。
+&emsp;虽然示例代码很少，但是内部隐藏的信息以及 SwiftUI + Combine 不同于我们以前使用 UIKit + block + delegate 等方式下的数据在页面之间的流动，SwiftUI + Combine 的组合更灵动更优雅，以及更有前端那味了。
+
+&emsp;下面我们就沿着数据流动方向看一下示例代码中，比较陌生的关键字、和属性包装器（Property Wrappers）的用法以及含义等内容（这些才是本篇文章的核心点）。（&emsp;`@StateObject`、`.environmentObject`、`@EnvironmentObject`、`@State`、`@Binding`、`ObservableObject`、`@Published`）
+
+### @State
+
+&emsp;**@State 主要用于单一视图的本地状态。** 在示例代码中有两处用到了 @State，分别是：
+
+1. struct LandmarkList 结构体中的 `@State private var showFavoritesOnly = false` 属性，showFavoritesOnly 和列表第一行的 `Toggle(isOn:$showFavoritesOnly) { Text("Favorites only") }` 绑定在一起，记录当前在列表是否显示全部地标还是仅显示收藏的地标。
+
+2. struct MapView 结构体中的 `@State private var region = MKCoordinateRegion()` 属性，region 和 `Map(coordinateRegion: $region).onAppear { setRegion(coordinate) }` 地图坐标范围绑定在一起，记录当前地图的坐标变化，且 struct MapView 结构体中还定义了一个 `private func setRegion(_ coordinate: CLLocationCoordinate2D) { region = MKCoordinateRegion( center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2)) }` 函数，可以看到函数里面修改了 struct MapView 结构体的 `region` 属性，但是前面并不需要用 `mutating` 修饰。
+
+&emsp;@State 属性允许你修改 Struct 的属性，这些属性在普通的 Struct 里面是不允许修改的。当把 @State 放置到属性前，该属性实际上会被放到 Struct 的外部存储起来，这意味着 SwiftUI 能够随时销毁和重建 Struct 而不会丢失属性的值。
+
+&emsp;@State 包装的属性通常是设置成私有的，不让外部使用。如果想让外部使用，则应该使用 @ObservedObject 和 @EnvironmentObject，他们能够使外部修改属性后，状态能够得到改变。建议把 @State 包装的属性都设置成私有。
+
+### @Binding
+
+&emsp;@Binding 用的比较少，但是也是非常重要的一个属性包装器，声明一个属性是从外部获取的，并且与外部是共享的。相当于外部传过来的时候，不是传递的值。
+
+&emsp;在 struct FavoriteButton 结构体中定义了一个使用 @Binding 属性包装器的属性：isSet。
+
+```swift
+struct FavoriteButton: View {
+    @Binding var isSet: Bool
+
+    var body: some View {
+        Button {
+            isSet.toggle()
+        } label: {
+            Label("Toggle Favorite", systemImage: isSet ? "star.fill" : "star")
+                .labelStyle(.iconOnly)
+                .foregroundColor(isSet ? .yellow : .gray)
+        }
+    }
+}
+```
+
+&emsp;在 Button 按钮的点击事件中来回切换 isSet 的值。
+
+```swift
+@frozen public struct Bool : Sendable {
+    ...
+
+    /// Toggles the Boolean variable's value. 切换布尔变量的值。
+    ///
+    /// Use this method to toggle a Boolean value from `true` to `false` or from `false` to `true`. 使用此方法将布尔值从 "true" 切换为 "false" 或从 "false" 切换为 "true"。
+    ///
+    ///     var bools = [true, false]
+    ///
+    ///     bools[0].toggle()
+    ///     // bools == [false, false]
+    @inlinable public mutating func toggle()
+    
+    ...
+}
+```
+
+&emsp;同 @State 一样，@Binding 修饰的结构体的属性允许被修改，如果我们把 isSet 前面的 @Binding 删除，则会报错：`Cannot use mutating member on immutable value: 'self' is immutable`。
+
+&emsp;在 struct FavoriteButton_Previews 中使用到了： `Binding.constant(true)` 下面简单看一下它的介绍：
+
+```swift
+/// A property wrapper type that can read and write a value owned by a source of truth. 一种属性包装器类型，可以读取和写入实际来源拥有的值。
+///
+/// Use a binding to create a two-way connection between a property that stores data, and a view that displays and changes the data. 使用绑定可以在存储数据的属性与显示和更改数据的视图之间创建双向连接。 
+/// A binding connects a property to a source of truth stored elsewhere, instead of storing data directly. 绑定将属性连接到存储在其他位置的事实源，而不是直接存储数据。
+/// For example, a button that toggles between play and pause can create a binding to a property of its parent view using the `Binding` property wrapper. 例如，在播放和暂停之间切换的按钮可以使用 "Binding" 属性包装器创建与其父视图属性的绑定。
+///
+///     struct PlayButton: View {
+///         @Binding var isPlaying: Bool
+///
+///         var body: some View {
+///             Button(action: {
+///                 self.isPlaying.toggle()
+///             }) {
+///                 Image(systemName: isPlaying ? "pause.circle" : "play.circle")
+///             }
+///         }
+///     }
+///
+/// The parent view declares a property to hold the playing state, using the ``State`` property wrapper to indicate that this property is the value's source of truth. 父视图声明一个属性来保存播放状态，使用 "State" 属性包装器来指示此属性是值的真实来源。
+///
+///     struct PlayerView: View {
+///         var episode: Episode
+///         @State private var isPlaying: Bool = false
+///
+///         var body: some View {
+///             VStack {
+///                 Text(episode.title)
+///                 Text(episode.showTitle)
+///                 PlayButton(isPlaying: $isPlaying)
+///             }
+///         }
+///     }
+///
+/// When `PlayerView` initializes `PlayButton`, it passes a binding of its state property into the button's binding property. 当 "PlayerView" 初始化 "PlayButton" 时，它会将其状态属性的绑定传递到按钮的绑定属性中。 
+/// Applying the `$` prefix to a property wrapped value returns its ``State/projectedValue``, which for a state property wrapper returns a binding to the value. 将 "$" 前缀应用于属性包装值将返回其 "State/projectedValue"，对于状态属性包装器，该值返回与该值的绑定。
+///
+/// Whenever the user taps the `PlayButton`, the `PlayerView` updates its `isPlaying` state. 每当用户点击 "PlayButton" 时，"PlayerView" 都会更新其 "isPlaying" 状态。
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+@frozen @propertyWrapper @dynamicMemberLookup public struct Binding<Value> {
+    ...
+    
+    /// Creates a binding with an immutable value. 创建具有不可变值的绑定。
+    ///
+    /// Use this method to create a binding to a value that cannot change. 使用此方法可以创建与无法更改的值的绑定。
+    /// This can be useful when using a ``PreviewProvider`` to see how a view represents different values. 当使用 "PreviewProvider" 查看视图如何表示不同值时，这可能很有用。
+    ///
+    ///     // Example of binding to an immutable value.
+    ///     PlayButton(isPlaying: Binding.constant(true))
+    ///
+    /// - Parameter value: An immutable value.
+    public static func constant(_ value: Value) -> Binding<Value>
+    
+    ...
+}
+```
+
+&emsp;在 struct LandmarkDetail 结构体中使用 FavoriteButton 时，其初始化传递了 struct Landmark 结构体的 `var isFavorite: Bool` 属性：`FavoriteButton(isSet: $modelData.landmarks[landmarkIndex].isFavorite)` 即把 struct FavoriteButton 的 isSet 的值和环境变量 modelData.landmarks 数据源中的指定的 struct Landmark 结构体实例的 isFavorite 值绑定在一起，当 isSet 发生变化时 LandmarkList 的地标列表进行刷新。
+
+### @Published
+
+&emsp;@Published 是 SwiftUI 很有用的属性包装器，允许我们创建出能够被 **自动观察的对象属性**，SwiftUI 会自动监视这个属性，一旦发生了改变，会自动刷新与该属性绑定的界面。配合 Combine 的 ObservableObject 使用。
+
+### @ObservedObject
+
+&emsp;@ObservedObject 告诉 SwiftUI，这个对象是可以被观察的，里面含有被 @Published 包装了的属性。@ObservedObject 包装的对象，必须遵循 ObservableObject 协议。也就是说必须是 class 对象，不能是 struct。@ObservedObject 允许外部进行访问和修改。 
+
+```swift
+import Combine
+
+final class ModelData: ObservableObject {
+    @Published var landmarks: [Landmark] = load("landmarkData.json")
+}
+```
+
+&emsp;
+
+
+```swift
+/// A type of object with a publisher that emits before the object has changed. 一种对象类型，其 publisher 在对象更改之前发出。
+///
+/// By default an ``ObservableObject`` synthesizes an ``ObservableObject/objectWillChange-2oa5v`` publisher that emits the changed value before any of its `@Published` properties changes. 默认情况下，"ObservableObject" 合成一个 "ObservableObject/objectWillChange-2oa5v" 发布者，该发布者在其任何 "@Published" 属性更改之前发出更改的值。
+///
+///     class Contact: ObservableObject {
+///         @Published var name: String
+///         @Published var age: Int
+///
+///         init(name: String, age: Int) {
+///             self.name = name
+///             self.age = age
+///         }
+///
+///         func haveBirthday() -> Int {
+///             age += 1
+///             return age
+///         }
+///     }
+///
+///     let john = Contact(name: "John Appleseed", age: 24)
+///     cancellable = john.objectWillChange
+///         .sink { _ in
+///             print("\(john.age) will change")
+///     }
+///     print(john.haveBirthday())
+///     // Prints "24 will change"
+///     // Prints "25"
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+public protocol ObservableObject : AnyObject {
+
+    /// The type of publisher that emits before the object has changed. 在对象更改之前发出的 publisher 类型。
+    associatedtype ObjectWillChangePublisher : Publisher = ObservableObjectPublisher where Self.ObjectWillChangePublisher.Failure == Never
+
+    /// A publisher that emits before the object has changed. 在对象更改之前发出的 publisher。
+    var objectWillChange: Self.ObjectWillChangePublisher { get }
+}
+```
+
+### @StateObject
+
+&emsp;
+
+
+
+
 
 ### @EnvironmentObject
 
 &emsp;
 
-### @Binding
 
-&emsp;
+```swift
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+extension View {
 
-### @ObservedObject
+    /// Supplies an `ObservableObject` to a view subhierarchy.
+    ///
+    /// The object can be read by any child by using `EnvironmentObject`.
+    ///
+    /// - Parameter object: the object to store and make available to
+    ///     the view's subhierarchy.
+    @inlinable public func environmentObject<T>(_ object: T) -> some View where T : ObservableObject
 
-&emsp;
+}
+```
 
 
-&emsp;`@StateObject`、`.environmentObject`、`@EnvironmentObject`、`@State`、`@Binding`、`ObservableObject`、`@Published`、``
+
+
+
 
 
 
@@ -420,6 +615,9 @@ HStack {
 + [SwiftUI状态绑定：@State](https://www.jianshu.com/p/46cbe061c8f5)
 + [[译]理解 SwiftUI 里的属性装饰器@State, @Binding, @ObservedObject, @EnvironmentObje](https://www.cnblogs.com/xiaoniuzai/p/11417123.html)
 + [[SwiftUI 100 天] 用 @EnvironmentObject 从环境中读取值](https://zhuanlan.zhihu.com/p/146608338)
++ [Swift 5.5 新特性](https://zhuanlan.zhihu.com/p/395147531)
++ [SwiftUI之属性包装](https://www.jianshu.com/p/28623e017445)
++ [Swift 中的属性包装器 - Property Wrappers](https://www.jianshu.com/p/8a019631b4db)
 
 
 
