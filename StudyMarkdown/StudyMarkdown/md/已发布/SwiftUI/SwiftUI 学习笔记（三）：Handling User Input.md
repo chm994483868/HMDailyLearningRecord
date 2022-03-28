@@ -512,11 +512,13 @@ struct FavoriteButton: View {
 
 ### @Published
 
-&emsp;@Published 是 SwiftUI 很有用的属性包装器，允许我们创建出能够被 **自动观察的对象属性**，SwiftUI 会自动监视这个属性，一旦发生了改变，会自动刷新与该属性绑定的界面。配合 Combine 的 ObservableObject 使用。
+&emsp;@Published 是 SwiftUI 很有用的属性包装器，允许我们创建出能够被 **自动观察的对象属性**，SwiftUI 会自动监视这个属性，一旦发生了改变，会自动刷新与该属性绑定的界面。@Published 包装会自动添加 willSet 方法监视属性的改变。配合 Combine 的 ObservableObject 使用。
 
 ### @ObservedObject
 
 &emsp;@ObservedObject 告诉 SwiftUI，这个对象是可以被观察的，里面含有被 @Published 包装了的属性。@ObservedObject 包装的对象，必须遵循 ObservableObject 协议。也就是说必须是 class 对象，不能是 struct。@ObservedObject 允许外部进行访问和修改。 
+
+&emsp;在 ModelData.swift 中定义了遵循 ObservableObject 协议的 class ModelData 类，ModelData 类内部 landmarks 属性用 @Published 包装。
 
 ```swift
 import Combine
@@ -526,8 +528,7 @@ final class ModelData: ObservableObject {
 }
 ```
 
-&emsp;
-
+&emsp;ObservableObject 协议继承自 AnyObject 协议。所有类都隐式遵循 AnyObject 协议。
 
 ```swift
 /// A type of object with a publisher that emits before the object has changed. 一种对象类型，其 publisher 在对象更改之前发出。
@@ -568,34 +569,29 @@ public protocol ObservableObject : AnyObject {
 }
 ```
 
-### @StateObject
-
-&emsp;
-
-
-
-
-
 ### @EnvironmentObject
 
-&emsp;
+&emsp;从名字上可以看出，这个属性包装器是针对全局环境的。通过它，我们可以避免在初始 View 时创建 ObservableObject, 而是从环境中获取 ObservableObject。通过这种方式，我们能在复杂应用之中轻易地共享数据。
 
+&emsp;在示例代码中，struct LandmarksApp 中定义一个 `@StateObject private var modelData = ModelData()` 属性，然后 body 中通过 `ContentView().environmentObject(modelData)` 把 modelData 实例作为 ContentView 视图的环境变量，那么在 ContentView 视图的所有子视图中，都可以读取 modelData 实例，且当 modelData 发生变化时，读取使用 modelData 的 ContentView 子视图都会被刷新。看到 struct LandmarkList 和 struct LandmarkDetail 分别通过：`@EnvironmentObject var modelData: ModelData` 从环境中获取 modelData。
 
 ```swift
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 extension View {
 
-    /// Supplies an `ObservableObject` to a view subhierarchy.
+    /// Supplies an `ObservableObject` to a view subhierarchy. 向视图子层次结构提供 "ObservableObject"。
     ///
-    /// The object can be read by any child by using `EnvironmentObject`.
+    /// The object can be read by any child by using `EnvironmentObject`. 任何子对象都可以通过使用 "EnvironmentObject" 来读取。
     ///
-    /// - Parameter object: the object to store and make available to
-    ///     the view's subhierarchy.
+    /// - Parameter object: the object to store and make available to the view's subhierarchy. 要存储并提供给视图的子层次结构的对象。
     @inlinable public func environmentObject<T>(_ object: T) -> some View where T : ObservableObject
 
 }
 ```
 
+### @StateObject
+
+&emsp;
 
 
 
