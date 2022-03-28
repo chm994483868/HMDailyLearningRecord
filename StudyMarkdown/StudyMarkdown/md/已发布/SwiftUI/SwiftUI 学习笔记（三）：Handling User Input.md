@@ -534,30 +534,31 @@ final class ModelData: ObservableObject {
 /// A type of object with a publisher that emits before the object has changed. 一种对象类型，其 publisher 在对象更改之前发出。
 ///
 /// By default an ``ObservableObject`` synthesizes an ``ObservableObject/objectWillChange-2oa5v`` publisher that emits the changed value before any of its `@Published` properties changes. 默认情况下，"ObservableObject" 合成一个 "ObservableObject/objectWillChange-2oa5v" 发布者，该发布者在其任何 "@Published" 属性更改之前发出更改的值。
-///
-///     class Contact: ObservableObject {
-///         @Published var name: String
-///         @Published var age: Int
-///
-///         init(name: String, age: Int) {
-///             self.name = name
-///             self.age = age
-///         }
-///
-///         func haveBirthday() -> Int {
-///             age += 1
-///             return age
-///         }
-///     }
-///
-///     let john = Contact(name: "John Appleseed", age: 24)
-///     cancellable = john.objectWillChange
-///         .sink { _ in
-///             print("\(john.age) will change")
-///     }
-///     print(john.haveBirthday())
-///     // Prints "24 will change"
-///     // Prints "25"
+
+     class Contact: ObservableObject {
+         @Published var name: String
+         @Published var age: Int
+
+         init(name: String, age: Int) {
+             self.name = name
+             self.age = age
+         }
+
+         func haveBirthday() -> Int {
+             age += 1
+             return age
+         }
+     }
+
+     let john = Contact(name: "John Appleseed", age: 24)
+     cancellable = john.objectWillChange
+         .sink { _ in
+             print("\(john.age) will change")
+     }
+     print(john.haveBirthday())
+     // Prints "24 will change"
+     // Prints "25"
+     
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 public protocol ObservableObject : AnyObject {
 
@@ -569,11 +570,129 @@ public protocol ObservableObject : AnyObject {
 }
 ```
 
+#### AnyObject
+
+```swift
+/// The protocol to which all classes implicitly conform. AnyObject 是所有类隐式都遵守的协议。
+
+/// You use `AnyObject` when you need the flexibility of an untyped object or when you use bridged Objective-C methods and properties that return an untyped result. 当你需要非类型化对象的灵活性时，或者当你使用桥接的 Objective-C 方法和返回非类型化结果的属性时，可以使用 "AnyObject"。 
+/// `AnyObject` can be used as the concrete type for an instance of any class, class type, or class-only protocol. For example: "AnyObject" 可以用作任何类、类类型或仅类协议的实例的具体类型。例如：
+
+     class FloatRef {
+         let value: Float
+         init(_ value: Float) {
+             self.value = value
+         }
+     }
+
+     let x = FloatRef(2.3)
+     let y: AnyObject = x
+     let z: AnyObject = FloatRef.self
+
+/// `AnyObject` can also be used as the concrete type for an instance of a type that bridges to an Objective-C class. Many value types in Swift bridge to Objective-C counterparts, like `String` and `Int`. "AnyObject" 也可以用作桥接到 Objective-C 类的类型实例的具体类型。Swift 中的许多值类型都与 Objective-C 的对应项（如 "String" 和 "Int"）相连接。
+
+     let s: AnyObject = "This is a bridged string." as NSString
+     print(s is NSString)
+     // Prints "true"
+
+     let v: AnyObject = 100 as NSNumber
+     print(type(of: v))
+     // Prints "__NSCFNumber"
+
+/// The flexible behavior of the `AnyObject` protocol is similar to Objective-C's `id` type. For this reason, imported Objective-C types frequently use `AnyObject` as the type for properties, method parameters, and return values. "AnyObject" 协议的灵活行为类似于 Objective-C 的 "id" 类型。因此，导入的 Objective-C 类型经常使用 "AnyObject" 作为属性、方法参数和返回值的类型。
+
+/// Casting AnyObject Instances to a Known Type 将 AnyObject 实例转换为已知类型
+/// ===========================================
+
+/// Objects with a concrete type of `AnyObject` maintain a specific dynamic type and can be cast to that type using one of the type-cast operators (`as`, `as?`, or `as!`). 具体类型为 "AnyObject" 的对象保持特定的动态类型，并且可以使用类型转换运算符之一（"as"、"as?"或"as!"）强制转换为该类型。
+
+/// This example uses the conditional downcast operator (`as?`) to conditionally cast the `s` constant declared above to an instance of Swift's `String` type. 此示例使用条件向下转换运算符 （'as?'） 有条件地将上面声明的 's' 常量转换为 Swift 的 'String' 类型的实例。
+
+     if let message = s as? String {
+         print("Successful cast to String: \(message)")
+     }
+     // Prints "Successful cast to String: This is a bridged string."
+
+/// If you have prior knowledge that an `AnyObject` instance has a particular type, you can use the unconditional downcast operator (`as!`). Performing an invalid cast triggers a runtime error. 如果你事先知道 "AnyObject" 实例具有特定类型，则可以使用无条件下转换运算符（"as!"）。执行无效强制转换会触发运行时错误。
+
+     let message = s as! String
+     print("Successful cast to String: \(message)")
+     // Prints "Successful cast to String: This is a bridged string."
+
+     let badCase = v as! String
+     // Runtime error
+
+/// Casting is always safe in the context of a `switch` statement. 在 "switch" 语句的上下文中，强制转换始终是安全的。
+
+     let mixedArray: [AnyObject] = [s, v]
+     for object in mixedArray {
+         switch object {
+         case let x as String:
+             print("'\(x)' is a String")
+         default:
+             print("'\(object)' is not a String")
+         }
+     }
+     // Prints "'This is a bridged string.' is a String"
+     // Prints "'100' is not a String"
+
+/// Accessing Objective-C Methods and Properties 访问 Objective-C 方法和属性
+/// ============================================
+
+/// When you use `AnyObject` as a concrete type, you have at your disposal every `@objc` method and property---that is, methods and properties imported from Objective-C or marked with the `@objc` attribute. Because Swift can't guarantee at compile time that these methods and properties are actually available on an `AnyObject` instance's underlying type, these `@objc` symbols are available as implicitly unwrapped optional methods and properties, respectively. 当你使用 "AnyObject" 作为具体类型时，你可以使用所有 "@objc"  方法和属性---即从 Objective-C 导入或标有 "@objc" 属性的方法和属性。由于 Swift 无法在编译时保证这些方法和属性在 "AnyObject" 实例的基础类型上实际可用，因此这些 "@objc" 符号分别可作为隐式解包的可选方法和属性使用。
+
+/// This example defines an `IntegerRef` type with an `@objc` method named `getIntegerValue()`. 此示例使用名为 'getIntegerValue()' 的 '@objc' 方法定义一个 'IntegerRef' 类型。
+
+     class IntegerRef {
+         let value: Int
+         init(_ value: Int) {
+             self.value = value
+         }
+
+         @objc func getIntegerValue() -> Int {
+             return value
+         }
+     }
+
+     func getObject() -> AnyObject {
+         return IntegerRef(100)
+     }
+
+     let obj: AnyObject = getObject()
+
+/// In the example, `obj` has a static type of `AnyObject` and a dynamic type of `IntegerRef`. You can use optional chaining to call the `@objc` method `getIntegerValue()` on `obj` safely. If you're sure of the dynamic type of `obj`, you can call `getIntegerValue()` directly. 在示例中，"obj" 具有静态类型的 "AnyObject" 和动态类型的 "IntegerRef"。你可以使用可选的链接安全地在 'obj' 上调用 '@objc' 方法 'getIntegerValue()'。如果你确定 "obj" 的动态类型，则可以直接调用 "getIntegerValue()"。
+
+     let possibleValue = obj.getIntegerValue?()
+     print(possibleValue)
+     // Prints "Optional(100)"
+
+     let certainValue = obj.getIntegerValue()
+     print(certainValue)
+     // Prints "100"
+
+/// If the dynamic type of `obj` doesn't implement a `getIntegerValue()` method, the system returns a runtime error when you initialize
+ `certainValue`. 如果动态类型的 "obj" 没有实现 "getIntegerValue()" 方法，则系统在初始化时会返回运行时错误
+ "certainValue"。
+
+/// Alternatively, if you need to test whether `obj.getIntegerValue()` exists, use optional binding before calling the method. 或者，如果需要测试是否存在 'obj.getIntegerValue()'，请在调用该方法之前使用可选绑定。
+
+     if let f = obj.getIntegerValue {
+         print("The value of 'obj' is \(f())")
+     } else {
+         print("'obj' does not have a 'getIntegerValue()' method")
+     }
+     // Prints "The value of 'obj' is 100"
+     
+public typealias AnyObject
+```
+
 ### @EnvironmentObject
 
 &emsp;从名字上可以看出，这个属性包装器是针对全局环境的。通过它，我们可以避免在初始 View 时创建 ObservableObject, 而是从环境中获取 ObservableObject。通过这种方式，我们能在复杂应用之中轻易地共享数据。
 
-&emsp;在示例代码中，struct LandmarksApp 中定义一个 `@StateObject private var modelData = ModelData()` 属性，然后 body 中通过 `ContentView().environmentObject(modelData)` 把 modelData 实例作为 ContentView 视图的环境变量，那么在 ContentView 视图的所有子视图中，都可以读取 modelData 实例，且当 modelData 发生变化时，读取使用 modelData 的 ContentView 子视图都会被刷新。看到 struct LandmarkList 和 struct LandmarkDetail 分别通过：`@EnvironmentObject var modelData: ModelData` 从环境中获取 modelData。
+&emsp;在示例代码中，struct LandmarksApp 中定义一个 `@StateObject private var modelData = ModelData()` 属性，然后 body 中通过 `ContentView().environmentObject(modelData)` 把 modelData 实例作为 ContentView 视图的环境变量，那么在 ContentView 视图的所有子视图中，都可以读取 modelData 实例，且当 modelData 发生变化时，读取使用 modelData 的 ContentView 子视图都会被刷新。看到 struct LandmarkList 和 struct LandmarkDetail 分别通过：`@EnvironmentObject var modelData: ModelData` 从环境中获取 modelData 使用，当 modelData 发生变化时 struct LandmarkList 和 struct LandmarkDetail 都会进行刷新。
+
+&emsp;View 协议扩展了一个 environmentObject 函数，限定 T 需要遵循 ObservableObject 协议，此函数向 View 的子视图 "提供" 环境变量。 
 
 ```swift
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
@@ -591,39 +710,32 @@ extension View {
 
 ### @StateObject
 
-&emsp;
+> &emsp;在 WWDC 的视频中，苹果明确的表明 @StateObject 是被创建他的 View 所持有的，也就是说，实例的生命周期是完全可控的，是同创建它的 View 的生命周期一样的。@StateObject 和 @ObservedObject 的区别就是实例是否被创建其的 View 所持有，其生命周期是否完全可控。[SwiftUI 2.0 —— @StateObject 研究](https://zhuanlan.zhihu.com/p/151286558)
 
+&emsp;struct LandmarksApp 中使用 @StateObject 包装的 modelData（ModelData 类实例）属性作为一个环境变量，传递到 ContentView 的子视图中使用。     
 
+```swift
+@main
+struct LandmarksApp: App {
+    @StateObject private var modelData = ModelData()
 
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environmentObject(modelData)
+        }
+    }
+}
+```
 
-
-
-
-
-
-
-
-
-
+&emsp;至此 Handling User Input 中的内容就全部看完了，其实重心都放在了属性包装器上，以及对 SwiftUI 中的数据流动进行一些了解，那么下节让我们继续加油吧！
 
 ## 参考链接
 **参考链接:🔗**
 + [SwiftUI状态绑定：@State](https://www.jianshu.com/p/46cbe061c8f5)
 + [[译]理解 SwiftUI 里的属性装饰器@State, @Binding, @ObservedObject, @EnvironmentObje](https://www.cnblogs.com/xiaoniuzai/p/11417123.html)
 + [[SwiftUI 100 天] 用 @EnvironmentObject 从环境中读取值](https://zhuanlan.zhihu.com/p/146608338)
++ [SwiftUI 2.0 —— @StateObject 研究](https://zhuanlan.zhihu.com/p/151286558)
 + [Swift 5.5 新特性](https://zhuanlan.zhihu.com/p/395147531)
 + [SwiftUI之属性包装](https://www.jianshu.com/p/28623e017445)
 + [Swift 中的属性包装器 - Property Wrappers](https://www.jianshu.com/p/8a019631b4db)
-
-
-
-## 看着看着发现 LG 都开始卷 Swift 源码了...（必学）
-+ [Swift底层进阶--015：Codable源码解析](https://www.jianshu.com/p/9302f7bac319)
-+ [Swift底层探索:Codable](https://www.jianshu.com/p/d591bd7f53ac)
-
-## 针对当返回的 Json 字符串中字段的类型 和 模型定义中属性（成员变量）类型不匹配时的解析：只要有一个字段类型不匹配，整个 json 的转 model 都会失败，这是不友好的。
-+ [针对 swift4 的JSONDecoder的特殊情况处理](https://www.jianshu.com/p/51c219092290)
-
-## 学习一些 Codable 的嵌套用法、学习 Codable 中的三种容器类型（必学），还有 CodingKey（必学）。
-
-+ [Swift5 Codable源码剖析](https://www.jianshu.com/nb/3595319)

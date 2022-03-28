@@ -29,6 +29,7 @@
 + [SwiftUI状态绑定：@State](https://www.jianshu.com/p/46cbe061c8f5)
 + [[译]理解 SwiftUI 里的属性装饰器@State, @Binding, @ObservedObject, @EnvironmentObje](https://www.cnblogs.com/xiaoniuzai/p/11417123.html)
 + [[SwiftUI 100 天] 用 @EnvironmentObject 从环境中读取值](https://zhuanlan.zhihu.com/p/146608338)
++ [SwiftUI 2.0 —— @StateObject 研究](https://zhuanlan.zhihu.com/p/151286558)
 + [Swift 5.5 新特性](https://zhuanlan.zhihu.com/p/395147531)
 + [SwiftUI之属性包装](https://www.jianshu.com/p/28623e017445)
 + [Swift 中的属性包装器 - Property Wrappers](https://www.jianshu.com/p/8a019631b4db)
