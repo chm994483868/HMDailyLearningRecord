@@ -1287,16 +1287,106 @@ $(document).ready(function() {
 <button id="btn2">之后插入</button>
 ```
 
+### 通过 after() 和 before() 方法添加若干新元素
 
+&emsp;after() 和 before() 方法能够通过参数接收无限数量的新元素。可以通过 text/HTML、jQuery 或者 JavaScript/DOM 来创建新元素。
 
+&emsp;在下面的例子中，我们创建若干新元素。这些元素可以通过 text/HTML、jQuery 或者 JavaScript/DOM 来创建。然后我们通过 after() 方法把这些新元素插到文本中（对 before() 同样有效）：
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    function afterText() {
+        var txt1 = "<b>I </b>"; // 使用 HTML 创建元素
+        var txt2 = $("<i></i>").text("love "); // 使用 jQuery 创建元素
+        var txt3 = document.createElement("big"); // 使用 DOM 创建元素
+        txt3.innerHTML = "jQuery!";
+        $("img").after(txt1, txt2, txt3); // 在图片后添加文本
+    }
+</script>
+<img src="xxx.png">
+<br><br>
+<button onclick="afterText()">之后插入</button>
+```
 
+&emsp;append/prepend 是在选择元素内部嵌入。after/before 是在元素外面追加。
 
+&emsp;after() 参数可以是个 list:
 
+```javascript
+function afterText(){
+    var txt1="<b>I </b>";                    // 使用 HTML 创建元素
+    var txt2=$("<i></i>").text("love ");     // 使用 jQuery 创建元素
+    var txt3=document.createElement("big");  // 使用 DOM 创建元素
+    txt3.innerHTML="jQuery!";
+    $("img").after([txt1,txt2,txt3]);          // 在图片后添加文本
+}
+```
 
+## jQuery - 删除元素
 
+&emsp;通过 jQuery，可以很容易地删除已有的 HTML 元素。
 
+&emsp;如需删除元素和内容，一般可使用以下两个 jQuery 方法：
 
++ remove() - 删除被选元素（及其子元素）
++ empty() - 从被选元素中删除子元素
+
+### jQuery remove() 方法
+
+&emsp;jQuery remove() 方法删除被选元素及其子元素。
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("#div1").remove();
+        });
+    });
+</script>
+<div id="div1" style="height: 100px;width: 300px;border: 1px solid black;background-color: yellow;">
+    这是 div 中的一些文本。
+    <p>这是 div 中的一个段落。</p>
+    <p>这是 div 中的另外一个段落。</p>
+</div>
+<br>
+<button>移除 div 元素</button>
+```
+
+### jQuery empty() 方法
+
+&emsp;jQuery empty() 方法删除被选元素的子元素。
+
+```javascript
+$(document).ready(function() {
+    $("button").click(function() {
+        $("#div1").empty();
+    });
+});
+```
+
+### 过滤被删除的元素
+
+&emsp;jQuery remove() 方法也可接受一个参数，允许你对被删元素进行过滤。该参数可以是任何 jQuery 选择器的语法。
+
+&emsp;下面的例子删除 class="italic" 的所有 `<p>` 元素：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("p").remove(".italic");
+        });
+    });
+</script>
+<p>这是一个段落。</p>
+<p class="italic"><i>这是另外一个段落。</i></p>
+<p class="italic"><i>这是另外一个段落。</i></p>
+
+<button>移除所有  class="italic" 的 p 元素。</button>
+```
 
 
 

@@ -28,3 +28,11 @@
 2. 阅读 [Swift5.0 的 Runtime 机制浅析](https://juejin.cn/post/6844903889523884039) 和 [Swift 协议(protocol)详解](https://www.jianshu.com/p/d939c3443686) 两篇文章。
 3. SwiftUI 学习笔记（二）：Building Lists and Navigation Codable 部分学习和总结。
 4. 
+
+
+#### 3.29
++ [iOS 微信编译速度优化分享](https://mp.weixin.qq.com/s/-wgBhE11xEXDS7Hqgq3FjA)
++ [有赞iOS-基于二进制的编译提效策略](https://tech.youzan.com/you-zan-ji-yu-er-jin-zhi-de-bian-yi-ti-xiao-ce-lue/)
++ [LLVM二三事](https://www.codenong.com/j5e8aefff51882573793/)
++ [让你的 XCode 编译链接耗时减半](https://juejin.cn/post/6844904164506484743)
++ [土土Edmond木 咬过的苹果，谁要？](https://www.zhihu.com/people/tu-tu-edmondmu/posts)
