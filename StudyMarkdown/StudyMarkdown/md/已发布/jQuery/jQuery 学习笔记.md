@@ -1388,10 +1388,84 @@ $(document).ready(function() {
 <button>移除所有  class="italic" 的 p 元素。</button>
 ```
 
+## jQuery - 获取并设置 CSS 类
 
+&emsp;通过 jQuery，可以很容易地对 CSS 元素进行操作。
 
+### jQuery 操作 CSS 
 
+&emsp;jQuery 拥有若干进行 CSS 操作的方法。我们将学习下面这些：
 
++ addClass() - 向被选元素添加一个或多个类
++ removeClass() - 从被选元素删除一个或多个类
++ toggleClass() - 对被选元素进行添加/删除类的切换操作
++ css() - 设置或返回样式属性
+
+### jQuery addClass() 方法
+
+&emsp;下面的例子展示如何向不同的元素添加 class 属性。当然，在添加类时，也可以选取多个元素：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("h1, h2, p").addClass("blue");
+            $("div").addClass("important");
+        });
+    });
+</script>
+<style type="text/css">
+    .important {
+        font-weight: bold;
+        font-size: xx-large;
+    }
+    
+    .blue {
+        color: blue;
+    }
+</style>
+
+<h1>标题 1</h1>
+<h2>标题 2</h2>
+<p>这是一个段落</p>
+<p>这是另外一个段落</p>
+<div>这是一些重要的文本!</div>
+<br>
+<button>为元素添加 class</button>
+```
+
+&emsp;也可以在 addClass() 方法中规定多个类：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("body div:first").addClass("important blue");
+        });
+    });
+</script>
+<style type="text/css">
+    .important {
+        font-weight: bold;
+        font-size: xx-large;
+    }
+    
+    .blue {
+        color: blue;
+    }
+</style>
+
+<div id="div1">这是一些文本。</div>
+<div id="div2">这是一些文本。</div>
+<br>
+<button>为第一个 div 元素添加类</button>
+```
+
+### jQuery removeClass() 方法
+
+&emsp;下面的例子演示如何在不同的元素中删除指定的 class 属性：
 
 
 
