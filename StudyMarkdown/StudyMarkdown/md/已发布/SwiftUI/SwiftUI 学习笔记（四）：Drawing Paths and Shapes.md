@@ -6,9 +6,84 @@
 
 &emsp;[Drawing and Animation - Drawing Paths and Shapes](https://developer.apple.com/tutorials/swiftui/drawing-paths-and-shapes) 处理用户输入。
 
-&emsp;在 Landmarks 应用中，用户可以标记其收藏的地点，并筛选列表以仅显示其收藏的地标。若要创建此功能，首先要向列表中添加一个开关，以便用户可以只关注其收藏列表，然后在地标详情页面添加一个星形按钮，用户点击该按钮可将地标标记为收藏。（在列表第一行右边加一个开关，点击来回切换显示全部地标或者已收藏的地标）
+&emsp;每当用户访问其列表中的地标时，都会收到 badge。当然，要让用户获得 badge，需要创建一个 badge。本教程将引导你完成通过组合路径（paths）和形状（shapes）来创建 badge 的过程，然后使用表示该位置的另一个形状叠加这些路径和形状。
 
-### Mark the User’s Favorite Landmarks
+&emsp;如果要为不同类型的地标创建多个 badge，请尝试尝试叠加符号、改变重复次数或更改各种角度和比例。
+
+### Create Drawing Data for a Badge View
+
+&emsp;要创建 badge，需要首先定义可用于为 badge 背景绘制六边形形状的数据。
+
+&emsp;创建 HexagonParameters.swift 文件，在其中创建一个名为 HexagonParameters 的结构体，我们将使用 struct HexagonParameters 结构体来定义六边形的形状。定义一个 struct Segment 结构体来容纳代表六边形一侧的三个点，导入 CoreGraphics，以便可以使用 CGPoint 类型。
+
+&emsp;每条边从前一条边结束的地方开始，沿着一条直线移动到第一个点，然后越过拐角处的贝塞尔曲线移动到第二个点。第三个点控制曲线的形状。
+
+&emsp;创建一个 segments 数组来保存 struct Segment 结构体。
+
+&emsp;为六边形的六个线段添加数据，六边形的每一边各一个。这些值存储为单位平方的一小部分，其原点位于左上角，正 x 位于右侧，正 y 位于下方。稍后，将使用这些分数（fractions）来查找具有给定大小的六边形的实际点。
+
+&emsp;添加一个调整值，用于调整六边形的形状。
+
+```swift
+import Foundation
+import CoreGraphics
+
+struct HexagonParameters {
+    struct Segment {
+        let line: CGPoint
+        let curve: CGPoint
+        let control: CGPoint
+    }
+    
+    static let adjustment: CGFloat = 0.085
+    
+    static let segments = [
+        Segment(
+            line:    CGPoint(x: 0.60, y: 0.05),
+            curve:   CGPoint(x: 0.40, y: 0.05),
+            control: CGPoint(x: 0.50, y: 0.00)
+        ),
+        Segment(
+            line:    CGPoint(x: 0.05, y: 0.20 + adjustment),
+            curve:   CGPoint(x: 0.00, y: 0.30 + adjustment),
+            control: CGPoint(x: 0.00, y: 0.25 + adjustment)
+        ),
+        Segment(
+            line:    CGPoint(x: 0.00, y: 0.70 - adjustment),
+            curve:   CGPoint(x: 0.05, y: 0.80 - adjustment),
+            control: CGPoint(x: 0.00, y: 0.75 - adjustment)
+        ),
+        Segment(
+            line:    CGPoint(x: 0.40, y: 0.95),
+            curve:   CGPoint(x: 0.60, y: 0.95),
+            control: CGPoint(x: 0.50, y: 1.00)
+        ),
+        Segment(
+            line:    CGPoint(x: 0.95, y: 0.80 - adjustment),
+            curve:   CGPoint(x: 1.00, y: 0.70 - adjustment),
+            control: CGPoint(x: 1.00, y: 0.75 - adjustment)
+        ),
+        Segment(
+            line:    CGPoint(x: 1.00, y: 0.30 + adjustment),
+            curve:   CGPoint(x: 0.95, y: 0.20 + adjustment),
+            control: CGPoint(x: 1.00, y: 0.25 + adjustment)
+        )
+    ]
+}
+
+```
+
+### Draw the Badge Background
+
+&emsp;使用 SwiftUI 中的图形 API 绘制自定义标志形状。
+
+&emsp;创建一个名字为 BadgeBackground.swift 的 SwiftUI View，
+
+&emsp;在 BadgeBackground.swift 中，向 badge 添加一个 Path 形状，然后应用 fill() 修饰符将该形状转换为视图。你可以使用 Paths
+来组合线条、曲线和其他绘图基元，以形成更复杂的形状，如 badge 的六边形背景。
+
+&emsp;向路径添加一个起点，假设容器大小为 100 x 100 px。
+
 
 
 

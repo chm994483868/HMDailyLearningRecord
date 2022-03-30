@@ -1467,6 +1467,170 @@ $(document).ready(function() {
 
 &emsp;下面的例子演示如何在不同的元素中删除指定的 class 属性：
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("h1, h2, p").removeClass("blue");
+        });
+    });
+</script>
+<style type="text/css">
+    .important {
+        font-weight: bold;
+        font-size: xx-large;
+    }
+    
+    .blue {
+        color: blue;
+    }
+</style>
+
+<h1 class="blue">标题 1</h1>
+<h2 class="blue">标题 2</h2>
+<p class="blue">这是一个段落。</p>
+<p class="important">这是另外一个段落。</p>
+<br>
+<button>从元素中移除 class</button>
+```
+
+### jQuery toggleClass() 方法
+
+&emsp;下面的例子将展示如何使用 jQuery toggleClass() 方法。该方法对被选元素进行添加/删除类的切换操作：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("h1, h2, p").toggleClass("blue");
+        });
+    });
+</script>
+<style type="text/css">
+    .blue {
+        color: blue;
+    }
+</style>
+
+<h1 class="blue">标题 1</h1>
+<h2 class="blue">标题 2</h2>
+<p class="blue">这是一个段落。</p>
+<p>这是另外一个段落。</p>
+<br>
+<button>切换 class</button>
+```
+
+## jQuery css() 方法
+
+&emsp;css() 方法设置或返回被选元素的一个或多个样式属性。
+
+### 返回 CSS 属性
+
+&emsp;如需返回指定的 CSS 属性的值，请使用如下语法：
+
+```javascript
+css("propertyname");
+```
+
+&emsp;下面的例子将返回首个匹配元素的 background-color 值：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            alert("背景颜色 = " + $("p").css("background-color"));
+        });
+    });
+</script>
+
+<h2>这是一个标题</h2>
+<p style="background-color: #ff0000;">这是一个段落。</p>
+<p style="background-color: #00ff00;">这是一个段落。</p>
+<p style="background-color: #0000ff;">这是一个段落。</p>
+
+<button>返回第一个 p 元素的 background-color </button>
+```
+
+### 设置 CSS 属性
+
+&emsp;如需设置指定的 CSS 属性，请使用如下语法：
+
+```javascript
+css("propertyname","value");
+```
+
+&emsp;下面的例子将为所有匹配元素设置 background-color 值：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("p").css("background-color", "yellow");
+        });
+    });
+</script>
+
+<h2>这是一个标题</h2>
+<p style="background-color: #ff0000;">这是一个段落。</p>
+<p style="background-color: #00ff00;">这是一个段落。</p>
+<p style="background-color: #0000ff;">这是一个段落。</p>
+<p>这是一个段落。</p>
+
+<button>设置 p 元素的 background-color </button>
+```
+
+### 设置多个 CSS 属性
+
+&emsp;如需设置多个 CSS 属性，请使用如下语法：
+
+```javascript
+css({"propertyname":"value","propertyname":"value",...});
+```
+
+&emsp;下面的例子将为所有匹配元素设置 background-color 和 font-size：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            $("p").css({
+                "background-color": "yellow",
+                "font-size": "200%"
+            });
+        });
+    });
+</script>
+
+<h2>这是一个标题</h2>
+<p style="background-color: #ff0000;">这是一个段落。</p>
+<p style="background-color: #00ff00;">这是一个段落。</p>
+<p style="background-color: #0000ff;">这是一个段落。</p>
+<p>这是一个段落。</p>
+
+<button>为 p 元素设置多个样式 </button>
+```
+
+## jQuery 尺寸
+
+&emsp;通过 jQuery，很容易处理元素和浏览器窗口的尺寸。
+
+### jQuery 尺寸方法
+
+&emsp;jQuery 提供多个处理尺寸的重要方法：
+
++ width()
++ height()
++ innerWidth()
++ innerHeight()
++ outerWidth()
++ outerHeight()
+
+
 
 
 
