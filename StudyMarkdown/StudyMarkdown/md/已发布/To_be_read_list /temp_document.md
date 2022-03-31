@@ -36,3 +36,4 @@
 + [LLVM二三事](https://www.codenong.com/j5e8aefff51882573793/)
 + [让你的 XCode 编译链接耗时减半](https://juejin.cn/post/6844904164506484743)
 + [土土Edmond木 咬过的苹果，谁要？](https://www.zhihu.com/people/tu-tu-edmondmu/posts)
++ [开启Link Time Optimization(LTO)后到底有什么优化？](https://www.jianshu.com/p/58fef052291a)

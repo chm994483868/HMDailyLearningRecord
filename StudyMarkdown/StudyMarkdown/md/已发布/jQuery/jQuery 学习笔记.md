@@ -1630,14 +1630,86 @@ css({"propertyname":"value","propertyname":"value",...});
 + outerWidth()
 + outerHeight()
 
+### jQuery 尺寸
 
 
+### jQuery width() 和 height() 方法
 
+&emsp;width() 方法设置或返回元素的宽度（不包括内边距、边框或外边距）。height() 方法设置或返回元素的高度（不包括内边距、边框或外边距）。下面的例子返回指定的 `<div>` 元素的宽度和高度：
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            var txt = "";
+            txt += "div 的宽度是：" + $("#div1").width() + "</br>";
+            txt += "div 的高度是：" + $("#div1").height();
+            $("#div1").html(txt);
+        });
+    });
+</script>
 
+<div id="div1" style="height: 100px;width: 300px;padding: 10px;margin: 3px;border: 2px solid blue;background-color: lightblue;"></div>
+<br>
+<button>显示 div 元素的尺寸</button>
+<p>width() - 返回元素的宽度</p>
+<p>height() - 返回元素的高度</p>
+```
 
+### jQuery innerWidth() 和 innerHeight() 方法
 
+&emsp;innerWidth() 方法返回元素的宽度（包括内边距）。innerHeight() 方法返回元素的高度（包括内边距）。下面的例子返回指定的 `<div>` 元素的 inner-width/height：
 
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            var txt = "";
+            txt += "div 的宽度是：" + $("#div1").width() + "</br>";
+            txt += "div 的高度是：" + $("#div1").height() + "</br>";
+            txt += "div 宽度，包含内边距：" + $("#div1").innerWidth() + "</br>";
+            txt += "div 高度，包含内边距：" + $("#div1").innerHeight() + "</br>";
+            $("#div1").html(txt);
+        });
+    });
+</script>
+
+<div id="div1" style="height: 100px;width: 300px;padding: 10px;margin: 3px;border: 1px solid blue;background-color: lightblue;"></div>
+<br>
+<button>显示 div 元素的尺寸</button>
+<p>innerWidth() - 返回元素的宽度 (包含内边距)。</p>
+<p>innerHeight() - 返回元素的高度 (包含内边距)。</p>
+```
+
+### jQuery outerWidth() 和 outerHeight() 方法
+
+&emsp;outerWidth() 方法返回元素的宽度（包括内边距和边框）。outerHeight() 方法返回元素的高度（包括内边距和边框）。下面的例子返回指定的 `<div>` 元素的 outer-width/height：
+
+```javascript
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("button").click(function() {
+            var txt = "";
+            txt += "div 的宽度是：" + $("#div1").width() + "</br>";
+            txt += "div 的高度是：" + $("#div1").height() + "</br>";
+            txt += "div 宽度，包含内边距和边框：" + $("#div1").outerWidth() + "</br>";
+            txt += "div 高度，包含内边距和边框：" + $("#div1").outerHeight() + "</br>";
+            $("#div1").html(txt);
+        });
+    });
+</script>
+
+<div id="div1" style="height: 100px;width: 300px;padding: 10px;margin: 3px;border: 1px solid blue;background-color: lightblue;"></div>
+<br>
+<button>显示 div 元素的尺寸</button>
+<p>outerWidth() - 返回元素的宽度 (包含内边距和边框)。</p>
+<p>outerHeight() - 返回元素的高度 (包含内边距和边框)。</p>
+```
+
+&emsp;唯一需要注意的地方，设置了 box-sizing 后，width() 获取的是 css 设置的 width 减去 padding 和 border 的值。
 
 
 
