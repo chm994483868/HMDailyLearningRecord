@@ -1711,6 +1711,163 @@ css({"propertyname":"value","propertyname":"value",...});
 
 &emsp;唯一需要注意的地方，设置了 box-sizing 后，width() 获取的是 css 设置的 width 减去 padding 和 border 的值。
 
+## jQuery 遍历
+
+&emsp;什么是遍历？
+
+&emsp;jQuery 遍历，意为 "移动"，用于根据其相对于其他元素的关系来 "查找"（或选取）HTML 元素。以某项选择开始，并沿着这个选择移动，直到抵达你期望的元素为止。下图展示了一个家族树。通过 jQuery 遍历，能够从被选（当前的）元素开始，轻松地在家族树中向上移动（祖先），向下移动（子孙），水平移动（同胞）。这种移动被称为对 DOM 进行遍历。
+
+
++ `<div>` 元素是 `<ul>` 的父元素，同时是其中所有内容的祖先。
++ `<ul>` 元素是 `<li>` 元素的父元素，同时是 `<div>` 的子元素。
++ 左边的 `<li>` 元素是 `<span>` 的父元素，`<ul>` 的子元素，同时是 `<div>` 的后代。
++ `<span>` 元素是 `<li>` 的子元素，同时是 `<ul>` 和 `<div>` 的后代。
++ 两个 `<li>` 元素是同胞（拥有相同的父元素）。
++ 右边的 `<li>` 元素是 `<b>` 的父元素，`<ul>` 的子元素，同时是 `<div>` 的后代。
++ `<b>` 元素是右边的 `<li>` 的子元素，同时是 `<ul>` 和 `<div>` 的后代。
+
+### 遍历 DOM
+
+&emsp;jQuery 提供了多种遍历 DOM 的方法。遍历方法中最大的种类是树遍历（tree-traversal）。
+
+## jQuery 遍历 - 祖先
+
+&emsp;祖先是父、祖父或曾祖父等等。通过 jQuery，你能够向上遍历 DOM 树，以查找元素的祖先。
+
+### 向上遍历 DOM 树
+
+&emsp;这些 jQuery 方法很有用，它们用于向上遍历 DOM 树：
+
++ parent()
++ parents()
++ parentsUntil()
+
+### jQuery parent() 方法
+
+&emsp;parent() 方法返回被选元素的直接父元素。该方法只会向上一级对 DOM 树进行遍历。下面的例子返回每个 `<span>` 元素的直接父元素：
+
+```javascript
+<style>
+    .ancestors * {
+        display: block;
+        border: 2px solid lightgrey;
+        color: lightgrey;
+        padding: 5px;
+        margin: 15px;
+    }
+</style>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("span").parent().css({
+            "color": "red",
+            "border": "2px solid red"
+        });
+    });
+</script>
+
+<div class="ancestors">
+    <div style="width: 500px;">div（曾祖父元素）
+        <ul>ul（祖父元素）
+            <li>li（父元素）
+                <span>span</span>
+            </li>
+        </ul>
+    </div>
+
+    <div style="width: 500px;">div（祖父元素）
+        <p>p（父元素）
+            <span>span</span>
+        </p>
+    </div>
+</div>
+```
+
+### jQuery parents() 方法
+
+&emsp;parents() 方法返回被选元素的所有祖先元素，它一路向上直到文档的根元素 (`<html>`)。下面的例子返回所有 `<span>` 元素的所有祖先：
+
+```javascript
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .ancestors * {
+            display: block;
+            border: 2px solid lightgrey;
+            color: lightgrey;
+            padding: 5px;
+            margin: 15px;
+        }
+    </style>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("span").parents().css({
+                "color": "red",
+                "border": "2px solid red"
+            });
+        });
+    </script>
+</head>
+
+<body class="ancestors">body（曾曾祖父元素）
+    <div style="width: 500px;">div（曾祖父元素）
+        <ul>ul（祖父元素）
+            <li>li（父元素）
+                <span>span</span>
+            </li>
+        </ul>
+    </div>
+</body>
+
+</html>
+```
+
+&emsp;你也可以使用可选参数来过滤对祖先元素的搜索。下面的例子返回所有 `<span>` 元素的所有祖先，并且它是 `<ul>` 元素：
+
+```javascript
+$(document).ready(function(){
+  $("span").parents("ul").css({"color":"red","border":"2px solid red"});
+});
+```
+
+### jQuery parentsUntil() 方法
+
+&emsp;parentsUntil() 方法返回介于两个给定元素之间的所有祖先元素。下面的例子返回介于 `<span>` 与 `<div>` 元素之间的所有祖先元素：
+
+```javascript
+$(document).ready(function(){
+  $("span").parentsUntil("div").css({"color":"red","border":"2px solid red"});
+});
+```
+
+## jQuery 遍历 - 后代
+
+&emsp;后代是子、孙、曾孙等等。通过 jQuery，你能够向下遍历 DOM 树，以查找元素的后代。
+
+### 向下遍历 DOM 树
+
+&emsp;下面是两个用于向下遍历 DOM 树的 jQuery 方法：
+
++ children()
++ find()
+
+### jQuery children() 方法
+
+&emsp;children() 方法返回被选元素的所有直接子元素。该方法只会向下一级对 DOM 树进行遍历。下面的例子返回每个 `<div>` 元素的所有直接子元素：
+
+```javascript
+
+```
+
+
+
 
 
 
