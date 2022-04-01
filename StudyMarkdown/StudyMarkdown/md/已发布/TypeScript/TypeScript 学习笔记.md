@@ -1283,9 +1283,9 @@ var txt = "string";
 
 ### String 对象属性
 
-&emsp;String 对象支持的属性如下：
+&emsp;String 对象支持的一些属性如下：
 
-1. constructor 对创建该对象的函数的引用。
+1. `constructor` 对创建该对象的函数的引用。
 
 ```typescript
 var str = new String("This is string");
@@ -1295,7 +1295,7 @@ console.log("str.constructor:" + str.constructor);
 str.constructor:function String() { [native code] }
 ```
 
-2. length 返回字符串的长度。
+2. `length` 返回字符串的长度。
 
 ```typescript
 var uname = new String("Hello World!");
@@ -1305,7 +1305,7 @@ console.log("Length " + uname.length);
 Length 12
 ```
 
-3. prototype 允许向对象添加属性和方法。
+3. `prototype` 允许向对象添加属性和方法。
 
 ```typescript
 function employee(id: number, name: String) {
@@ -1324,6 +1324,88 @@ console.log(emp.email);
 admin
 admin@apple.com
 ```
+
+### String 方法
+
+&emsp;String 对象支持的一些方法如下：
+
+1. `charAt()` 返回在指定位置的字符。
+
+```typescript
+var str = new String("Apple");
+console.log("str.charAt(0) 为：" + str.charAt(0));
+console.log("str.charAt(1) 为：" + str.charAt(1));
+console.log("str.charAt(2) 为：" + str.charAt(2));
+console.log("str.charAt(3) 为：" + str.charAt(3));
+console.log("str.charAt(4) 为：" + str.charAt(4));
+console.log("str.charAt(5) 为：" + str.charAt(5));
+
+// 输出
+str.charAt(0) 为：A
+str.charAt(1) 为：p
+str.charAt(2) 为：p
+str.charAt(3) 为：l
+str.charAt(4) 为：e
+str.charAt(5) 为：
+```
+
+2. charCodeAt() 返回在指定的位置的字符的 Unicode 编码。
+
+```typescript
+var str = new String("Apple");
+console.log("str.charAt(0) 为：" + str.charCodeAt(0));
+console.log("str.charAt(1) 为：" + str.charCodeAt(1));
+console.log("str.charAt(2) 为：" + str.charCodeAt(2));
+console.log("str.charAt(3) 为：" + str.charCodeAt(3));
+console.log("str.charAt(4) 为：" + str.charCodeAt(4));
+console.log("str.charAt(5) 为：" + str.charCodeAt(5));
+
+// 输出
+str.charAt(0) 为：65
+str.charAt(1) 为：112
+str.charAt(2) 为：112
+str.charAt(3) 为：108
+str.charAt(4) 为：101
+str.charAt(5) 为：NaN
+```
+
+3. concat() 连接两个或更多字符串，并返回新的字符串。
+
+```typescript
+var str1 = new String("Apple");
+var str2 = " Park!"; // var str2 = new String("Park!"); str2 不能使用 String，否则报如下错误：
+
+// error TS2345: Argument of type 'String' is not assignable to parameter of type 'string'.
+//   'string' is a primitive, but 'String' is a wrapper object. Prefer using 'string' when possible.
+// 3 var str3 = str1.concat(str2);
+//                          ~~~~
+
+var str3 = str1.concat(str2);
+console.log("str1 + str2：" + str3);
+
+// 输出
+str1 + str2：Apple Park!
+```
+
+4. indexOf() 返回某个指定的字符串值在字符串中首次出现的位置。 
+
+```typescript
+var str1 = new String("Apple");
+var index = str1.indexOf("l");
+console.log("查找的字符串位置：" + index);
+
+// 输出 
+3
+```
+
+5. lastIndexOf() 
+
+
+
+
+
+
+
 
 
 

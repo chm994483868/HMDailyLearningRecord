@@ -1860,15 +1860,64 @@ $(document).ready(function(){
 
 ### jQuery children() 方法
 
-&emsp;children() 方法返回被选元素的所有直接子元素。该方法只会向下一级对 DOM 树进行遍历。下面的例子返回每个 `<div>` 元素的所有直接子元素：
+&emsp;children() 方法返回被选元素的 **所有** 直接子元素。该方法只会向下一级对 DOM 树进行遍历。下面的例子返回每个 `<div>` 元素的所有直接子元素：
 
 ```javascript
-
+<style>
+    .descendants * {
+        display: block;
+        border: 2px solid lightgrey;
+        color: lightgrey;
+        padding: 5px;
+        margin: 15px;
+    }
+</style>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("div").children().css({
+            "color": "red",
+            "border": "2px solid red"
+        });
+    });
+</script>
+<div class="descendants" style="width: 500px;">div（当前元素）
+    <p>p（儿子元素）
+        <span>span（孙子元素）</span>
+    </p>
+    <p>p（儿子元素）
+        <span>span（孙子元素）</span>
+    </p>
+</div>
 ```
 
+&emsp;也可以使用可选参数来过滤对子元素的搜索。下面的例子返回类名为 "1" 的所有 `<p>` 元素，并且它们是 `<div>` 的直接子元素：
 
+```javascript
+$(document).ready(function(){
+  $("div").children("p.1");
+});
+```
 
+### jQuery find() 方法
 
+&emsp;find() 方法返回被选元素的后代元素，一路向下直到最后一个后代。下面的例子返回属于 `<div>` 后代的所有 `<span>` 元素：
+
+```javascript
+$(document).ready(function(){
+  $("div").find("span").css({"color":"red","border":"2px solid red"});
+});
+```
+
+&emsp;使用 `*` 则是返回 `<div>` 的所有后代：
+
+```javascript
+$(document).ready(function(){
+  $("div").find("*").css({"color":"red","border":"2px solid red"});
+});
+```
+
+&emsp;
 
 
 
