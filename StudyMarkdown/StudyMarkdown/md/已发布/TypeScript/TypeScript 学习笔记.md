@@ -1349,7 +1349,7 @@ str.charAt(4) 为：e
 str.charAt(5) 为：
 ```
 
-2. charCodeAt() 返回在指定的位置的字符的 Unicode 编码。
+2. `charCodeAt()` 返回在指定的位置的字符的 Unicode 编码。
 
 ```typescript
 var str = new String("Apple");
@@ -1369,7 +1369,7 @@ str.charAt(4) 为：101
 str.charAt(5) 为：NaN
 ```
 
-3. concat() 连接两个或更多字符串，并返回新的字符串。
+3. `concat()` 连接两个或更多字符串，并返回新的字符串。
 
 ```typescript
 var str1 = new String("Apple");
@@ -1387,7 +1387,7 @@ console.log("str1 + str2：" + str3);
 str1 + str2：Apple Park!
 ```
 
-4. indexOf() 返回某个指定的字符串值在字符串中首次出现的位置。 
+4. `indexOf()` 返回某个指定的字符串值在字符串中首次出现的位置。 
 
 ```typescript
 var str1 = new String("Apple");
@@ -1398,12 +1398,82 @@ console.log("查找的字符串位置：" + index);
 3
 ```
 
-5. lastIndexOf() 
+5. `lastIndexOf()` 从后向前搜索字符串，并从起始位置（0）开始计算返回字符串最后出现的位置。 
 
+```typescript
+var str1 = new String("This is string one and again string");
+var index = str1.lastIndexOf("string");
+console.log("lastIndexOf 查找到的最后字符串位置：" + index);
+index = str1.lastIndexOf("one");
+console.log("lastIndexOf 查找到的最后字符串位置：" + index);
 
+// 输出 
+lastIndexOf 查找到的最后字符串位置：29
+lastIndexOf 查找到的最后字符串位置：15
+```
 
+6. `localeCompare()` 用本地特定的顺序来比较两个字符串。
 
+```typescript
+var str1 = new String("This is beautiful string");
+var index = str1.localeCompare("This is beautiful string");
+console.log("localeCompare first：" + index);
 
+// 输出
+localeCompare first：0
+```
+
+7. `match()` 查找找到一个或多个正则表达式的匹配。
+
+```typescript
+var str = "The rain in SPAIN stays mainly in the plain";
+var n = str.match(/ain/g);
+console.log(n);
+
+// 输出
+[ 'ain', 'ain', 'ain' ]
+```
+
+8. `replace()` 替换与正则表达式匹配的子串。
+
+```typescript
+var re = /(\w+)\s(\w+)/;
+var str = "zara ali";
+var newstr = str.replace(re, "$2, $1");
+console.log(newstr);
+
+// 输出
+ali, zara
+```
+
+9. `search()` 检索与正则表达式相匹配的值。
+
+```typescript
+var re = /apples/gi;
+var str = "Apples are round, and apples are juicy.";
+if (str.search(re) == -1) {
+    console.log("Does not contain Apples");
+} else {
+    console.log("Contains Apples");
+} 
+
+// 输出
+
+Contains Apples
+```
+
+10. `slice()` 提取字符串的片断，并在新的字符串中返回被提取的部分。
+
+```typescript
+var str = "Apples are round, and apples are juicy.";
+var sliceResult = str.slice(3, 5);
+console.log(sliceResult);
+
+// 输出
+le
+```
+
+11. 
 
 
 
