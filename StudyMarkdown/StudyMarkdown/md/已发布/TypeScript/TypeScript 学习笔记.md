@@ -1473,7 +1473,418 @@ console.log(sliceResult);
 le
 ```
 
-11. 
+11. `split()` 把字符串分割为子字符串数组。
+
+```typescript
+var str = "Apples are round, and apples are juicy.";
+var splitted = str.split(" ", 3);
+console.log(splitted); // [ 'Apples', 'are', 'round,' ]
+
+// 输出
+[ 'Apples', 'are', 'round,' ]
+```
+
+12. `substr()` 从起始索引号提取字符串中指定数目的字符。
+
+```typescript
+var str = "Apples are round, and apples are juicy.";
+var splitted = str.substr(3);
+console.log(splitted); // [ 'Apples', 'are', 'round,' ]
+
+// 输出
+les are round, and apples are juicy.
+```
+
+13. `substring()` 提取字符串中两个指定的索引号之间的字符。
+
+```typescript
+var str = "Apples are round, and apples are juicy.";
+console.log("(1,2): " + str.substring(1, 2)); // (1,2): p
+console.log("(0,10): " + str.substring(0, 10)); // (0,10): Apples are
+console.log("(5): " + str.substring(5)); // (5): s are round, and apples are juicy.
+```
+
+14. `toLocaleLowerCase()` 根据主机的语言环境把字符串转换为小写，只有几种语言（如土耳其语）具有地方特有的大小写映射。
+
+```typescript
+var str = "Apple Google"; 
+console.log(str.toLocaleLowerCase( ));
+
+// 输出
+apple google
+```
+
+15. `toLocaleUpperCase()` 据主机的语言环境把字符串转换为大写，只有几种语言（如土耳其语）具有地方特有的大小写映射。
+
+```typescript
+var str = "Apple Google"; 
+console.log(str.toLocaleUpperCase( ));
+
+// 输出
+APPLE GOOGLE
+```
+
+16. `toLowerCase()` 把字符串转换为小写。
+
+```typescript
+var str = "Runoob Google"; 
+console.log(str.toLowerCase( ));
+
+// 输出
+APPLE GOOGLE
+```
+
+17. `toString()` 返回字符串。
+
+```typescript
+var str = "Apple"; 
+console.log(str.toString( ));
+
+// 输出
+Apple
+```
+
+18. `toUpperCase()` 把字符串转换为大写。
+
+```typescript
+var str = "Apple Google";
+console.log(str.toUpperCase());
+
+// 输出
+APPLE GOOGLE
+```
+
+19. `valueOf()` 返回指定字符串对象的原始值。
+
+```typescript
+var str = new String("Apple"); 
+console.log(str.valueOf( ));
+
+// 输出
+Apple
+```
+
+## TypeScript Array(数组)
+
+&emsp;数组对象是使用单独的变量名来存储一系列的值。
+
+&emsp;TypeScript 声明数组的语法格式如下所示：
+
+```typescript
+var array_name[:datatype]; // 声明 
+array_name = [val1,val2,valn..] // 初始化
+
+// 示例
+var sites: string[];
+sites = ["Google", "Apple", "Taobao"];
+```
+
+&emsp;或者直接在声明时初始化：
+
+```typescript
+var sites: string[] = ["Google", "Runoob", "Taobao"];
+```
+
+&emsp;如果数组声明时未设置类型，则会被认为是 `any` 类型，在初始化时根据第一个元素的类型来推断数组的类型。
+
+&emsp;创建一个 number 类型的数组：
+
+```typescript
+var numlist: number[] = [2, 4, 6, 8];
+```
+
+### Array 对象
+
+&emsp;我们也可以使用 Array 对象创建数组。Array 对象的构造函数接受以下两种值：
+
++ 表示数组大小的数值。
++ 初始化的数组列表，元素使用逗号分隔值。
+
+&emsp;指定数组初始化大小：
+
+```typescript
+var arr_names: number[] = new Array(4);
+
+for (var i = 0; i < arr_names.length; i++) {
+  arr_names[i] = i * 2;
+  console.log(arr_names[i]);
+}
+
+// 输出
+0
+2
+4
+6
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var arr_names = new Array(4);
+for (var i = 0; i < arr_names.length; i++) {
+    arr_names[i] = i * 2;
+    console.log(arr_names[i]);
+}
+```
+
+&emsp;直接初始化数组元素：
+
+```javascript
+var sites: string[] = new Array("Google", "Apple", "Taobao", "Facebook");
+for (var i = 0; i < sites.length; i++) {
+  console.log(sites[i]);
+}
+
+// 输出
+Google
+Apple
+Taobao
+Facebook
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var sites = new Array("Google", "Apple", "Taobao", "Facebook");
+for (var i = 0; i < sites.length; i++) {
+    console.log(sites[i]);
+}
+```
+
+### 数组解构
+
+&emsp;也可以把数组元素赋值给变量，如下所示：
+
+```typescript
+var arr: number[] = [12, 13];
+var [x, y] = arr; // 将数组的两个元素赋值给变量 x 和 y
+console.log(x);
+console.log(y);
+
+// 输出
+12
+13
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var arr = [12, 13];
+var x = arr[0], y = arr[1]; // 将数组的两个元素赋值给变量 x 和 y
+console.log(x);
+console.log(y);
+```
+
+### 数组迭代
+
+&emsp;可以使用 for 语句来循环输出数组的各个元素：
+
+```typescript
+var j: any;
+var nums: number[] = [1001, 1002, 1003, 1004];
+
+for (j in nums) {
+  console.log(nums[j]);
+}
+
+// 输出
+1001
+1002
+1003
+1004
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var j;
+var nums = [1001, 1002, 1003, 1004];
+for (j in nums) {
+    console.log(nums[j]);
+}
+```
+
+### 多维数组
+
+&emsp;一个数组的元素可以是另外一个数组，这样就构成了多维数组（Multi-dimensional Array）。最简单的多维数组是二维数组，定义方式如下：
+
+```typescript
+var arr_name: datatype[][] = [
+  [val1, val2, val3],
+  [v1, v2, v3],
+];
+```
+
+```typescript
+var multi: number[][] = [
+  [1, 2, 3],
+  [23, 24, 25],
+];
+console.log(multi[0][0]);
+console.log(multi[0][1]);
+console.log(multi[0][2]);
+console.log(multi[1][0]);
+console.log(multi[1][1]);
+console.log(multi[1][2]);
+
+// 输出
+1
+2
+3
+23
+24
+25
+```
+
+&emsp;编译以上代码，得到以下 JavaScript 代码：
+
+```javascript
+var multi = [
+    [1, 2, 3],
+    [23, 24, 25],
+];
+console.log(multi[0][0]);
+console.log(multi[0][1]);
+console.log(multi[0][2]);
+console.log(multi[1][0]);
+console.log(multi[1][1]);
+console.log(multi[1][2]);
+```
+
+### 数组在函数中的使用
+
+&emsp;作为参数传递给函数：
+
+```typescript
+var sites: string[] = new Array("Google", "Apple", "Taobao", "Facebook");
+
+function disp(arr_sites: string[]) {
+  for (var i = 0; i < arr_sites.length; i++) {
+    console.log(arr_sites[i]);
+  }
+}
+disp(sites);
+
+// 输出
+Google
+Apple
+Taobao
+Facebook
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+var sites = new Array("Google", "Apple", "Taobao", "Facebook");
+function disp(arr_sites) {
+    for (var i = 0; i < arr_sites.length; i++) {
+        console.log(arr_sites[i]);
+    }
+}
+disp(sites);
+```
+
+&emsp;作为函数的返回值：
+
+```typescript
+function disp(): string[] {
+  return new Array("Google", "Apple", "Taobao", "Facebook");
+}
+
+var sites: string[] = disp();
+for (var i in sites) {
+  console.log(sites[i]);
+}
+
+// 输出
+Google
+Apple
+Taobao
+Facebook
+```
+
+&emsp;编译以上代码，得到如下 JavaScript 代码：
+
+```javascript
+function disp() {
+    return new Array("Google", "Apple", "Taobao", "Facebook");
+}
+var sites = disp();
+for (var i in sites) {
+    console.log(sites[i]);
+}
+```
+
+### 数组方法
+
+&emsp;列出了一些常用的数组方法：
+
+1. `concat()` 连接两个或更多的数组，并返回结果。
+
+```typescript
+var alpha = ["a", "b", "c"];
+var numeric = ["1", "2", "3"];
+
+var alphaNumeric = alpha.concat(numeric); // 注意这里 不能是 number[]，alpha 和 numeric 是同样类型的数组
+console.log("alphaNumeric : " + alphaNumeric);
+
+// 输出
+alphaNumeric : a,b,c,1,2,3
+```
+
+2. `every()` 检测数值元素的每个元素是否都符合条件。
+
+```typescript
+function isBigEnough(element, index, array) {
+  return element >= 10;
+}
+
+var passed = [12, 5, 8, 130, 44].every(isBigEnough);
+console.log("Test Value : " + passed);
+
+// 输出
+Test Value : false
+```
+
+3. `filter()` 检测数值元素，并返回符合条件所有元素的数组。
+
+```typescript
+function isBigEnough(element, index, array) {
+  return element >= 10;
+}
+
+var passed = [12, 5, 8, 130, 44].filter(isBigEnough);
+console.log("Test Value : " + passed);
+
+// 输出
+Test Value : 12,130,44
+```
+
+4. `forEach()` 数组每个元素都执行一次回调函数。
+
+```typescript
+let num = [7, 8, 9];
+num.forEach(function (value) {
+  console.log(value);
+});
+
+// 输出
+7
+8
+9
+
+// 编译成 JavaScript 代码：
+var num = [7, 8, 9];
+num.forEach(function (value) {
+    console.log(value);
+});
+```
+
+5. `indexOf()` 搜索数组中的元素，并返回它所在的位置。如果搜索不到，返回值 -1，代表没有此项。
+
+
+
+
 
 
 

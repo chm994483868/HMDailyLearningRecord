@@ -1917,7 +1917,191 @@ $(document).ready(function(){
 });
 ```
 
+## jQuery 遍历 - 同胞(siblings)
+
+&emsp;同胞拥有相同的父元素。通过 jQuery，能够在 DOM 树中遍历元素的同胞元素。
+
+&emsp;在 DOM 树中水平遍历，有许多有用的方法让我们在 DOM 树进行水平遍历：
+
++ siblings()
++ next()
++ nextAll()
++ nextUntil()
++ prev()
++ prevAll()
++ prevUntil()
+
+### jQuery siblings() 方法
+
+&emsp;siblings() 方法返回被选元素的所有同胞元素。下面的例子返回 `<h2>` 的所有同胞元素：
+
+```javascript
+<style>
+    .siblings * {
+        display: block;
+        border: 2px solid lightgrey;
+        color: lightgrey;
+        padding: 5px;
+        margin: 15px;
+    }
+</style>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("h2").siblings().css({
+            "color": "red",
+            "border": "2px solid red"
+        });
+    });
+</script>
+
+<div>div（父元素）
+    <p>p</p>
+    <span>span</span>
+    <h2>h2</h2>
+    <h3>h3</h3>
+    <p>p</p>
+</div>
+```
+
+&emsp;也可以使用可选参数来过滤对同胞元素的搜索。下面的例子返回属于 `<h2>` 的同胞元素的所有 `<p>` 元素：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("h2").siblings("p").css({
+            "color": "red",
+            "border": "2px solid red"
+        });
+    });
+</script>
+```
+
+### jQuery next() 方法
+
+&emsp;next() 方法返回被选元素的下一个同胞元素。该方法只返回一个元素。下面的例子返回 `<h2>` 的下一个同胞元素：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("h2").next().css({
+            "color": "red",
+            "border": "2px solid red"
+        });
+    });
+</script>
+```
+
+### jQuery nextAll() 方法
+
+&emsp;nextAll() 方法返回被选元素的所有跟随的同胞元素。下面的例子返回 `<h2>` 的所有跟随的同胞元素：
+
+```javascript
+<script>
+    $(document).ready(function() {
+        $("h2").nextAll().css({
+            "color": "red",
+            "border": "2px solid red"
+        });
+    });
+</script>
+```
+
+### jQuery nextUntil() 方法
+
+&emsp;nextUntil() 方法返回介于两个给定参数之间的所有跟随的同胞元素。下面的例子返回介于 `<h2>` 与 `<h6>` 元素之间的所有同胞元素：
+
+```javascript
+$(document).ready(function() {
+    $("h2").nextUntil("h6").css({
+        "color": "red",
+        "border": "2px solid red"
+    });
+});
+```
+
+### jQuery prev(), prevAll() & prevUntil() 方法
+
+&emsp;prev(), prevAll() 以及 prevUntil() 方法的工作方式与上面的方法类似，只不过方向相反而已：它们返回的是前面的同胞元素（在 DOM 树中沿着同胞之前元素遍历，而不是之后元素遍历）。
+
+## jQuery 遍历- 过滤
+
+&emsp;缩小搜索元素的范围。
+
+&emsp;三个最基本的过滤方法是：first(), last() 和 eq()，它们允许基于其在一组元素中的位置来选择一个特定的元素。其他过滤方法，比如 filter() 和 not() 允许选取匹配或不匹配某项指定标准的元素。
+
+### jQuery first() 方法
+
+&emsp;first() 方法返回被选元素的首个元素。下面的例子选取首个 `<div>` 元素内部的第一个 `<p>` 元素：
+
+```javascript
+$(document).ready(function() {
+    $("div p").first().css("background-color", "yellow");
+});
+```
+
+### jQuery last() 方法
+
+&emsp;last() 方法返回被选元素的最后一个元素。下面的例子选择最后一个 `<div>` 元素中的最后一个 `<p>` 元素：
+
+```javascript
+$(document).ready(function() {
+    $("div p").last().css("background-color", "yellow");
+});
+```
+
+### jQuery eq() 方法
+
+&emsp;eq() 方法返回被选元素中带有指定索引号的元素。索引号从 0 开始，因此首个元素的索引号是 0 而不是 1。下面的例子选取第二个 `<p>` 元素（索引号 1）：
+
+```javascript
+$(document).ready(function() {
+    $("p").eq(1).css("background-color", "yellow");
+});
+```
+
+### jQuery filter() 方法
+
+&emsp;filter() 方法允许你规定一个标准。不匹配这个标准的元素会被从集合中删除，匹配的元素会被返回。下面的例子返回带有类名 "url" 的所有 `<p>` 元素：
+
+```javascript
+$(document).ready(function() {
+    $("p").filter(".url").css("background-color", "yellow");
+});
+```
+
+### jQuery not() 方法
+
+&emsp;not() 方法返回不匹配标准的所有元素。提示：not() 方法与 filter() 相反。下面的例子返回不带有类名 "url" 的所有 `<p>` 元素：
+
+```javascript
+$(document).ready(function() {
+    $("p").not(".url").css("background-color", "yellow");
+});
+```
+
+&emsp;`$("p").filter(".url").css("background-color","yellow");` 和 `$("p.url").css("background-color","yellow");` 效果一样。
+
+&emsp;not 和 eq 可以实现反选的效果。选取索引值不为 1 的 p 元素，并把背景颜色设置为黄色：
+
+```javascript
+$("p").not(":eq(1)").css("background-color","yellow");
+```
+
+&emsp;`$("p").last().css("background-color","yellow");` 和 `$("p:last").css("background-color","yellow");` 效果一样。
+
+&emsp;`$("p").first().css("background-color","yellow");` 和 `$("p:first").ss("background-color","yellow");` 效果一样。
+
+&emsp;`$("p").not(".url");` 和 `$("p:not(.url)");` 效果一样。
+
+## jQuery - AJAX 简介
+
 &emsp;
+
+
+
+
+
 
 
 
