@@ -1882,18 +1882,119 @@ num.forEach(function (value) {
 
 5. `indexOf()` 搜索数组中的元素，并返回它所在的位置。如果搜索不到，返回值 -1，代表没有此项。
 
+```typescript
+var index = [12, 5, 8, 130, 44].indexOf(8);
+console.log("index is : " + index);
 
+// 输出
+index is : 2
+```
 
+6. `join()` 把数组的所有元素放入一个字符串。
 
+```typescript
+var arr = new Array("Google", "Apple", "Taobao");
+var str = arr.join();
+console.log("str : " + str);
+// 输出
+str : Google,Apple,Taobao
 
+var str = arr.join(", ");
+console.log("str : " + str);
+// 输出
+str : Google, Apple, Taobao
 
+var str = arr.join(" + ");
+console.log("str : " + str);
+// 输出
+str : Google + Apple + Taobao
+```
 
+7. `lastIndexOf()` 返回一个指定的字符串值最后出现的位置，在一个字符串中的指定位置从后向前搜索。
 
+```typescript
+var index = [12, 5, 8, 130, 8, 44].lastIndexOf(8);
+console.log("index is : " + index);
 
+// 输出
+index is : 4
+```
 
+8. `map()` 通过指定函数处理数组的每个元素，并返回处理后的数组。
 
+```typescript
+var numbers = [1, 4, 9];
+var roots = numbers.map(Math.sqrt);
+console.log("roots is : " + roots);
 
+// 输出
+roots is : 1,2,3
+```
 
+9. `pop()` 删除数组的最后一个元素并返回删除的元素。
+
+```typescript
+var numbers = [1, 4, 9];
+
+var element = numbers.pop();
+console.log("element is : " + element);
+
+// 输出
+element is : 9
+
+var element = numbers.pop();
+console.log("element is : " + element);
+
+// 输出
+element is : 4
+```
+
+10. `push()` 向数组的末尾添加一个或更多元素，并返回新的长度。
+
+```typescript
+var numbers = new Array(1, 4, 9);
+var length = numbers.push(10);
+console.log("new numbers is : " + numbers);
+
+// 输出
+new numbers is : 1,4,9,10
+
+length = numbers.push(20);
+console.log("new numbers is : " + numbers);
+
+// 输出
+new numbers is : 1,4,9,10,20
+```
+
+11. `reduce()` 将数组元素计算为一个值（从左到右）。
+
+```typescript
+var total = [0, 1, 2, 3].reduce(function (a, b) { return a + b; });
+console.log("total is : " + total);
+
+// 输出
+total is : 6
+```
+
+12. `reduceRight()` 将数组元素计算为一个值（从右到左）。
+
+```typescript
+var total = [0, 1, 2, 3].reduceRight(function (a, b) { return a + b; });
+console.log("total is : " + total);
+
+// 输出
+total is : 6
+```
+
+13. `reverse()` 反转数组的元素顺序。
+
+```typescript
+var arr = [0, 1, 2, 3].reverse();
+console.log("Reversed array is : " + arr);
+
+// 输出
+Reversed array is : 3,2,1,0
+```
 
 
 
