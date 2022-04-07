@@ -1996,6 +1996,114 @@ console.log("Reversed array is : " + arr);
 Reversed array is : 3,2,1,0
 ```
 
+14. `shift()` 删除并返回数组的第一个元素。
+
+```typescript
+var arr = [10, 1, 2, 3].shift();
+console.log("Shifted value is : " + arr);
+
+// 输出
+Shifted value is : 10
+```
+
+15. `slice()` 选取数组的的一部分，并返回一个新数组。
+
+```typescript
+var arr = ["orange", "mango", "banana", "sugar", "tea"];
+console.log("arr.slice( 1, 2) : " + arr.slice(1, 2));  // mango
+console.log("arr.slice( 1, 3) : " + arr.slice(1, 3));  // mango,banana
+
+// 输出
+arr.slice( 1, 2) : mango
+arr.slice( 1, 3) : mango,banana
+```
+
+16. `some()` 检测数组元素中是否有元素符合指定条件。
+
+```typescript
+function isBigEnough(element, index, array) {
+    return (element >= 10);
+}
+
+var retval = [2, 5, 8, 1, 4].some(isBigEnough);
+console.log("Returned value is : " + retval);
+
+// 输出
+Returned value is : false
+
+var retval = [12, 5, 8, 1, 4].some(isBigEnough);
+console.log("Returned value is : " + retval);
+
+// 输出
+Returned value is : true
+```
+
+17. `sort()` 对数组的元素进行排序。
+
+```typescript
+var arr = new Array("orange", "mango", "banana", "sugar");
+var sorted = arr.sort();
+console.log("Returned string is : " + sorted);
+
+// 输出
+Returned string is : banana,mango,orange,sugar
+```
+
+18. `splice()` 从数组中添加或删除元素。
+
+```typescript
+var arr = ["orange", "mango", "banana", "sugar", "tea"];
+var removed = arr.splice(2, 0, "water");
+console.log("After adding 1: " + arr);
+
+// 输出
+After adding 1: orange,mango,water,banana,sugar,tea
+
+console.log("removed is: " + removed);
+
+// 输出
+removed is: 
+
+removed = arr.splice(3, 1);
+console.log("After removing 1: " + arr);
+
+// 输出
+After removing 1: orange,mango,water,sugar,tea
+
+console.log("removed is: " + removed);
+
+// 输出
+removed is: banana
+```
+
+19. `toString()` 把数组转换为字符串，并返回结果。
+
+```typescript
+var arr = new Array("orange", "mango", "banana", "sugar");
+var str = arr.toString();
+console.log("Returned string is : " + str);
+
+// 输出
+Returned string is : orange,mango,banana,sugar
+```
+
+20. `unshift()` 向数组的开头添加一个或更多元素，并返回新的长度。
+
+```typescript
+var arr = new Array("orange", "mango", "banana", "sugar"); 
+var length = arr.unshift("water"); 
+console.log("Returned array is : " + arr );
+console.log("Length of the array is : " + length );
+
+// 输出
+Returned array is : water,orange,mango,banana,sugar
+Length of the array is : 5
+```
+
+## TypeScript Map 对象
+
+&emsp;Map 对象保存键值对，并且能够记住键的原始插入顺序。任何值(对象或者原始值) 都可以作为一个键或一个值。Map 是 ES6 中引入的一种新的数据结构，可以参考 ES6 Map 与 Set。
+
 
 
 
