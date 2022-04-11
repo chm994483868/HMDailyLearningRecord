@@ -197,6 +197,7 @@
 		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
+		8EDEFC312803AD59003AD8EC /* ES6 Map 与 Set 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "ES6 Map 与 Set 学习笔记.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -652,6 +653,7 @@
 			isa = PBXGroup;
 			children = (
 				8ECD652627CCE7BE002E63A7 /* JavaScript 学习笔记 nine.md */,
+				8EDEFC312803AD59003AD8EC /* ES6 Map 与 Set 学习笔记.md */,
 				8ECD650127C904F9002E63A7 /* JavaScript Promise 对象.md */,
 				8ECD652527CB5D21002E63A7 /* JavaScript HTML DOM 学习笔记.md */,
 				8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */,
