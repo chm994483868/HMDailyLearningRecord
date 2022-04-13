@@ -1,5 +1,7 @@
 # ES6 Map 与 Set 
 
+&emsp;Map 是 ES6 中引入的一种新的数据结构。
+
 ## Map 对象
 
 &emsp;Map 对象保存键值对。任何值(对象或者原始值) 都可以作为一个键或一个值。
@@ -138,10 +140,173 @@ myMap.forEach(function (value, key) {
 
 ## Map 对象的操作
 
+### Map 与 Array 的转换。
 
+```typescript
+var map = new Map();
+map.set(1, "111");
+map.set(2, "222");
+map.set(3, "333");
 
+// map -> array
+// 使用 Array.from 函数可以将一个 Map 对象转换成一个二维键值对数组
+var arr = Array.from(map); // 二维数组
+console.log(arr);
 
+// array -> map
+// Map 构造函数可以将一个 二维 键值对数组转换为一个 Map 对象
+console.log(new Map(arr));
 
+// 使用 ...rest 运算符
+console.log([...map]); // 把 map 中的 entries 扩展为数组元素
+
+// 输出
+[ [ 1, '111' ], [ 2, '222' ], [ 3, '333' ] ]
+Map(3) { 1 => '111', 2 => '222', 3 => '333' }
+[ [ 1, '111' ], [ 2, '222' ], [ 3, '333' ] ]
+```
+
+### Map 的克隆
+
+```typescript
+var myMap1 = new Map([
+  ["key1", "value1"],
+  ["key2", "value2"],
+]);
+var myMap2 = new Map(myMap1); // 向构造方法传入 map 对象
+
+console.log(myMap1 === myMap2);
+
+// 输出
+false
+```
+
+### Map 的合并
+
+&emsp;
+
+```typescript
+var first = new Map([[1, 'one'], [2, 'two'], [3, 'three']]);
+var second = new Map([[1, 'uno'], [2, 'dos']]);
+
+// 合并两个 Map 对象时，如果有重复的键值，则后面的会覆盖前面的，对应值即 uno、dos、three
+console.log(new Map([...first, ...second]));
+
+// 输出
+Map(3) { 1 => 'uno', 2 => 'dos', 3 => 'three' }
+```
+
+## Set 对象
+
+&emsp;Set 对象允许你存储任何类型的唯一值，无论是原始值或是对象引用。
+
+### Set 中的特殊值
+
+&emsp;Set 对象存储的值总是唯一的，所以需要判断两个值是否恒等。有几个特殊值需要特殊对待：
+
++ `+0` 与 `-0` 在存储判断唯一性的时候是恒等的，所以不重复
++ `undefined` 与 `undefined` 是恒等的，所以不重复
++ `NaN` 与 `NaN` 是不恒等的，但是在 Set 中只能存一个，不重复
+
+```typescript
+let mySet = new Set();
+
+mySet.add(1); // Set(1) {1}
+console.log(mySet);
+
+mySet.add(5); // Set(2) {1, 5}
+console.log(mySet);
+
+mySet.add(5); // Set(2) {1, 5} 这里体现了值的唯一性
+console.log(mySet);
+
+mySet.add("some text"); // Set(3) {1, 5, "some text"} 这里体现了类型的多样性
+console.log(mySet);
+
+var o = {a: 1, b: 2};
+mySet.add(o);
+console.log(mySet);
+
+mySet.add({a: 1, b: 2}); // 这里体现了对象之间引用不同不恒等，即使值相同，Set 也能存储
+console.log(mySet);
+
+// 输出
+Set(1) { 1 }
+Set(2) { 1, 5 }
+Set(2) { 1, 5 }
+Set(3) { 1, 5, 'some text' }
+Set(4) { 1, 5, 'some text', { a: 1, b: 2 } }
+Set(5) { 1, 5, 'some text', { a: 1, b: 2 }, { a: 1, b: 2 } }
+```
+
+### 类型转换
+
+&emsp;Array：
+
+```typescript
+// Array 转 Set
+var mySet = new Set(["value1", "value2", "value3"]);
+// 用 ... 操作符，将 Set 转 Array
+var myArray = [...mySet];
+console.log(myArray);
+
+// String 转 Set
+var mySet = new Set('hello');
+console.log(mySet);
+
+// 输出
+[ 'value1', 'value2', 'value3' ]
+Set(4) { 'h', 'e', 'l', 'o' }
+```
+
+### Set 对象作用
+
+&emsp;数组去重：
+
+```typescript
+var mySet = new Set([1, 2, 3, 4, 4, 5]);
+console.log([...mySet]);
+
+// 输出
+[ 1, 2, 3, 4, 5 ]
+```
+
+&emsp;并集：
+
+```typescript
+var a = new Set([1, 2, 3]);
+var b = new Set([4, 3, 2]);
+
+var union = new Set([...a, ...b]);
+console.log(union);
+
+// 输出
+Set(4) { 1, 2, 3, 4 }
+```
+
+&emsp;交集：
+
+```typescript
+var a = new Set([1, 2, 3]);
+var b = new Set([4, 3, 2]);
+var intersect = new Set([...a].filter(x => b.has(x)));
+console.log(intersect);
+
+// 输出
+Set(2) { 2, 3 }
+```
+
+&emsp;差集：
+
+```typescript
+var a = new Set([1, 2, 3]);
+var b = new Set([4, 3, 2]);
+var intersect = new Set([...[...a].filter(x => !b.has(x)), ...[...b].filter(x => !a.has(x))]);
+console.log(intersect);
+
+// 输出
+Set(2) { 1, 4 }
+```
 
 ## 参考链接
 **参考链接:🔗**
