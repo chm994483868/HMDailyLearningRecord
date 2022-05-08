@@ -162,6 +162,7 @@
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
 		8E64803727E85310007ADB46 /* React 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "React 学习笔记.md"; sourceTree = "<group>"; };
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
+		8E71016C2823F6A600BEB9A3 /* Xcode 相关的一些 Concepts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Xcode 相关的一些 Concepts.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
 		8E73B42C27D58674009254D9 /* jQuery 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "jQuery 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B44D27D5ACC4009254D9 /* associatedtype 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "associatedtype 学习笔记.md"; sourceTree = "<group>"; };
@@ -313,6 +314,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8E71016B2823F67200BEB9A3 /* xcodebuild */,
 				8E73B4A627D9DB6B009254D9 /* To_be_read_list  */,
 				8E73B46A27D708AE009254D9 /* Dart */,
 				8E8ACB5C27BC7A1B006D82FA /* JavaScript */,
@@ -599,6 +601,14 @@
 				8E64803727E85310007ADB46 /* React 学习笔记.md */,
 			);
 			path = React;
+			sourceTree = "<group>";
+		};
+		8E71016B2823F67200BEB9A3 /* xcodebuild */ = {
+			isa = PBXGroup;
+			children = (
+				8E71016C2823F6A600BEB9A3 /* Xcode 相关的一些 Concepts.md */,
+			);
+			path = xcodebuild;
 			sourceTree = "<group>";
 		};
 		8E73B42B27D58632009254D9 /* jQuery */ = {
