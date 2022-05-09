@@ -1,5 +1,18 @@
 # Xcode 相关的一些 Concepts
 
+## Command Line Tools for Xcode 13.3.1（目前最新版本）
+
+This package enables UNIX-style development via Terminal by installing command line developer tools, as well as macOS SDK frameworks and headers. Many useful tools are included, such as the Apple LLVM compiler, linker, and Make. If you use Xcode, these tools are also embedded within the Xcode IDE.
+
+&emsp;Command Line Tools 简称：CLI，此软件包通过安装 command line developer tools 以及 macOS SDK frameworks and headers，通过终端实现 UNIX 样式的开发。包括许多有用的工具，例如 Apple LLVM compiler、linker and Make。如果使用 Xcode，这些工具也会嵌入到 Xcode IDE 中。
+
+&emsp:https://developer.apple.com/download/all/?q=command
+&emsp;一直往下翻可以看到最早在 2013 年 1 月 25 日 发布的 Command Line Tools (OS X Lion) for Xcode - January 2013 版本。
+
+This package enables UNIX-style development via Terminal by installing command line developer tools, as well as Mac OS X SDK frameworks and headers. Many useful tools are included, such as the Apple LLVM compiler, linker, and Make. If you use Xcode, these tools are also embedded within the Xcode IDE, and can be installed on your system using the Downloads preferences pane within Xcode 4.6 and later. This package requires Mac OS X 10.7.4 or later.
+
+&emsp;此软件包通过安装命令行开发者工具（command line developer tools）以及 Mac OS X SDK 框架和标头，通过终端实现 UNIX 风格的开发。包括许多有用的工具，例如 Apple LLVM 编译器，链接器和 Make。如果你使用 Xcode，这些工具也会嵌入在 Xcode IDE 中，并且可以使用 Xcode 4.6 及更高版本中的“下载”偏好设置面板安装在你的系统上。此软件包需要 Mac OS X 10.7.4 或更高版本。
+
 ## xcodebuild 命令
 
 &emsp;xcodebuild 命令的位置：
@@ -197,4 +210,5 @@ Available keys for -exportOptionsPlist:
 ## 参考链接
 **参考链接:🔗**
 + [探究 Xcode 命令行用法一：Xcode 构建必备认知](https://juejin.cn/post/7024326946406268959)
++ [深入浅出 Xcode Command Lines Tool - 初探](https://juejin.cn/post/6844904052271087624)
 
