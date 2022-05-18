@@ -4,7 +4,7 @@
 
 > &emsp;clang - the Clang C, C++, Objective-C, and Objective-C++ compiler
 
-&emsp;Clang 是一个 C/C++/Objective-C/Objective-C++ 的编译器前端（主要处理一些和具体机器无关的针对语言的分析操作），我们可以通过 `which clang` 命令看到 Clang 位于：/usr/bin/clang，大概是直接集成在 macOS 中的，接下来我们使用 `man clang` 命令来查看 Clang 的详细信息。
+&emsp;Clang 是一个 C/C++/Objective-C/Objective-C++ 的编译器前端（主要处理一些和具体机器无关的针对语言的分析操作），我们可以通过 `which clang` 命令看到 Clang 位于：/usr/bin/clang 大概是有直接集成在 macOS 中的，然后通过 `clang -v` 命令看到 Xcode 中也集成了 clang：InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang，接下来我们使用 `man clang` 命令来查看 Clang 的详细信息。
 
 &emsp;(这里是我自己的一些想法，可能是错的：我们要对 "Clang 是一个编译器前端" 和 "clang 命令" 做出理解上的区别，说 Clang 是编译器前端直觉上好像给人说 Clang 只是编译器的一个组成部分，那么作为一个组成部分是不是就不能直接提供完整的编译/链接功能（这里是指把我们的程序从源码文件 "转换" 为可执行程序）？clang 命令则不是，它是集成了完整的编译、链接过程的，例如: 通过 `clang main.m` 命令我们可以直接得到一个可执行的 `a.out` 文件（a 是默认名，我们也可以通过 `-o` 选项指定输出文件的名字），通过 `./a.out` 便可直接执行这个可执行文件，通过 `file a.out` 我们可得出类似信息：`a.out: Mach-O 64-bit executable x86_64`，所以 Clang 是一个名词，clang 命令则是一个动作。)
 
@@ -19,6 +19,16 @@
 
 + Stage Selection Options（最重要的选项）
 
+```c++
+hmc@HMdeMac-mini compile_test % clang -ccc-print-phases main.m
+               +- 0: input, "main.m", objective-c
+            +- 1: preprocessor, {0}, objective-c-cpp-output
+         +- 2: compiler, {1}, ir
+      +- 3: backend, {2}, assembler
+   +- 4: assembler, {3}, object
++- 5: linker, {4}, image
+6: bind-arch, "x86_64", {5}, image
+```
 
 &emsp;虽然 Clang 是高度集成的，但重要的是要了解编译的各个阶段，了解如何调用它。 这些阶段是：
 
@@ -39,4 +49,4 @@
 **参考链接:🔗**
 + [Clang与LLVM的关系](https://blog.csdn.net/u010164190/article/details/104901279)
 + [iOS程序员的自我修养-编译、链接过程（一）](https://juejin.cn/post/6844903912147795982)
-
++ [clang常用语法介绍](https://www.jianshu.com/p/96058bf1ecc2)
