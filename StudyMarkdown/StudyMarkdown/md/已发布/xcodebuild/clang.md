@@ -4,11 +4,28 @@
 
 > &emsp;clang - the Clang C, C++, Objective-C, and Objective-C++ compiler
 
-&emsp;Clang 是一个 C/C++/Objective-C/Objective-C++ 的编译器前端（主要处理一些和具体机器无关的针对语言的分析操作），我们可以通过 `which clang` 命令看到 Clang 位于：/usr/bin/clang 大概是有直接集成在 macOS 中的，然后通过 `clang -v` 命令看到 Xcode 中也集成了 clang：InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang，接下来我们使用 `man clang` 命令来查看 Clang 的详细信息。
+&emsp;Clang 是一个 C/C++/Objective-C/Objective-C++ 的编译器（编译器前端，主要处理一些和具体机器无关的针对语言的分析操作，LLVM 作为编译器后端），我们可以通过 `which clang` 命令看到 Clang 位于：/usr/bin/clang 大概是有直接集成在 macOS 中的，然后通过 `clang -v` 命令又看到 Xcode 中也集成了 Clang，InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang。
 
-&emsp;(这里是我自己的一些想法，可能是错的：我们要对 "Clang 是一个编译器前端" 和 "clang 命令" 做出理解上的区别，说 Clang 是编译器前端直觉上好像给人说 Clang 只是编译器的一个组成部分，那么作为一个组成部分是不是就不能直接提供完整的编译/链接功能（这里是指把我们的程序从源码文件 "转换" 为可执行程序）？clang 命令则不是，它是集成了完整的编译、链接过程的，例如: 通过 `clang main.m` 命令我们可以直接得到一个可执行的 `a.out` 文件（a 是默认名，我们也可以通过 `-o` 选项指定输出文件的名字），通过 `./a.out` 便可直接执行这个可执行文件，通过 `file a.out` 我们可得出类似信息：`a.out: Mach-O 64-bit executable x86_64`，所以 Clang 是一个名词，clang 命令则是一个动作。)
+```c++
+hmc@localhost ~ % which clang
+/usr/bin/clang
+```
 
-&emsp;Clang 包括如下功能：
+```c++
+hmc@localhost ~ % clang -v
+Apple clang version 13.0.0 (clang-1300.0.29.3)
+Target: x86_64-apple-darwin21.1.0
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+```
+
+&emsp;(这里是我自己的一些想法，可能是错的：我们要对 "Clang 是一个编译器前端" 和 "clang 命令" 做出理解上的区别，说 Clang 是编译器前端直觉上好像给人说 Clang 只是编译器的一个组成部分，那么作为一个组成部分是不是就不能直接提供完整的编译、链接功能（这里是指把我们的程序从源码文件 "完全转换" 为可执行程序）？clang 命令则不是，它是集成了完整的编译、链接功能的，例如: 通过 `clang main.m` 命令我们可以直接得到一个名为 `a.out` 的可执行文件（a 是默认名，我们也可以通过 `-o` 选项指定自定义的可执行文件的名字），通过 `./a.out` 便可直接执行这个可执行文件，通过 `file a.out` 我们可得出类似信息：`a.out: Mach-O 64-bit executable x86_64`，即当前情况下 a.out 是一个 x86_64 架构下的 Mach-O 格式的可执行文件，然后我们也可以在 `clang` 命令后面指定不同的选项 `-E、-S、-c` 来分别查看完整编译、链接过程中的不同阶段的情况（以及指定阶段的输出文件）：预编译文件、汇编文件、目标文件，所以单指 Clang 可以说它是一个编译器或者编译器前端，clang 命令的话则是高度集成的，它可以分阶段或者完整的执行整个编译、链接过程。)
+
+&emsp;接下来我们使用 `man clang` 命令来查看 Clang 的详细信息。
+
+> &emsp;clang is a C, C++, and Objective-C compiler which encompasses preprocessing, parsing, optimization, code generation, assembly, and linking.  Depending on which high-level mode setting is passed, Clang will stop before doing a full link. While Clang is highly integrated, it is important to understand the stages of compilation, to understand how to invoke it.  These stages are:
+
+&emsp;Clang 包括如下功能：preprocessing（预处理）、parsing（语法分析）、optimization（优化）、code generation（代码生成，AST 到 LLVM IR）、assembly（汇编）、linking（链接）：
 
 + 预处理（.i .ii .mi .mii 文件）、
 + 语法分析和语义分析（AST 抽象语法树）、
