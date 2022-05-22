@@ -35,6 +35,7 @@
 		8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
 		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（一）：Creating and Combining Views.md"; sourceTree = "<group>"; };
+		8E51B8C52833201400B8D4C4 /* clang.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = clang.md; sourceTree = "<group>"; };
 		8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Window 学习笔记.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
@@ -609,6 +610,7 @@
 			isa = PBXGroup;
 			children = (
 				8E71016C2823F6A600BEB9A3 /* Xcode 相关的一些 Concepts.md */,
+				8E51B8C52833201400B8D4C4 /* clang.md */,
 			);
 			path = xcodebuild;
 			sourceTree = "<group>";
