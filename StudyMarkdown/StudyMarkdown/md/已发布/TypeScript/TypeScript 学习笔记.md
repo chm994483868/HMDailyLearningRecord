@@ -175,7 +175,7 @@ let decLiteral: number = 6; // 十进制
 let hexLiteral: number = 0xf00d; // 0x 十六进制
 ```
 
-+ 字符串类型 string 一个字符系列，使用单引号（'）或双引号（"）来表示字符串类型，反引号（`）来定义多行文本和内嵌表达式
++ 字符串类型 string 一个字符系列，使用单引号（'）或双引号（"）来表示字符串类型，反引号来定义多行文本和内嵌表达式
 
 ```typescript
 let name: string = "Runoob";
@@ -2261,5 +2261,7 @@ Taobao 3
 
 ## 参考链接
 **参考链接:🔗**
++ [The TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+
 + [TypeScript 教程](https://www.runoob.com/typescript/ts-tutorial.html)
 + [一起来学习吧](https://segmentfault.com/u/wuweisen/articles)

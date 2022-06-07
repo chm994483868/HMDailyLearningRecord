@@ -1219,7 +1219,7 @@ document.getElementById("demo1").innerHTML = myFunction(0, 2);
 document.getElementById("demo2").innerHTML = myFunction(5);
 ```
 
-&emsp;JavaScript 函数有个内置的对象 `arguments` 对象。`argument` 对象包含了函数调用的参数数组。
+&emsp;JavaScript 函数有个内置的对象 `arguments` 对象。`arguments` 对象包含了函数调用的参数数组。
 
 &emsp;通过值传递参数：在函数中调用的参数是函数的隐式参数，JavaScript 隐式参数通过值来传递：函数仅仅只是获取值。如果函数修改参数的值，不会修改显式参数的初始值（在函数外定义）。隐式参数的改变在函数外是不可见的。
 
@@ -1601,3 +1601,6 @@ document.getElementById("demo").innerHTML=n[0];
 
 
 
++ [基于原型编程](https://zh.wikipedia.org/zh-cn/基于原型编程)
++ [JavaScript-维基百科](https://zh.wikipedia.org/zh-cn/JavaScript)
++ [JavaScript-MDN](https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript)

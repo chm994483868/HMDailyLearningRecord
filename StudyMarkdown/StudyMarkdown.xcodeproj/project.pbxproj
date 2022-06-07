@@ -34,8 +34,11 @@
 		8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(六)：dsym文件讲解.md"; sourceTree = "<group>"; };
 		8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
+		8E509EAD2847C2B300DBFC98 /* JavaScript 学习记录（五）：asynchronous JavaScript.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（五）：asynchronous JavaScript.md"; sourceTree = "<group>"; };
+		8E509EB0284CA22600DBFC98 /* JavaScript 学习记录（六）：Memory Management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（六）：Memory Management.md"; sourceTree = "<group>"; };
+		8E509EB1284CAB8100DBFC98 /* JavaScript 学习记录（七）：并发模型与事件循环.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（七）：并发模型与事件循环.md"; sourceTree = "<group>"; };
 		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（一）：Creating and Combining Views.md"; sourceTree = "<group>"; };
-		8E51B8C52833201400B8D4C4 /* clang.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = clang.md; sourceTree = "<group>"; };
+		8E51B8C52833201400B8D4C4 /* 浅学 Clang（一）：clang 指令介绍.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "浅学 Clang（一）：clang 指令介绍.md"; sourceTree = "<group>"; };
 		8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Window 学习笔记.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
@@ -160,6 +163,8 @@
 		8E5E58D42686A0010088C814 /* 面试准备.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "面试准备.md"; sourceTree = "<group>"; };
 		8E5E58D52686A0010088C814 /* =default 和 = delete使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "=default 和 = delete使用.md"; sourceTree = "<group>"; };
 		8E5E58D92686A0010088C814 /* memmove函数使用.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "memmove函数使用.md"; sourceTree = "<group>"; };
+		8E5E5B1F2842694C00E3E038 /* 浅学 Clang（二）：clang 源码.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "浅学 Clang（二）：clang 源码.md"; sourceTree = "<group>"; };
+		8E5E5B202843295600E3E038 /* JavaScript 学习记录（四）：prototype、prototype chain.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（四）：prototype、prototype chain.md"; sourceTree = "<group>"; };
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
 		8E64803727E85310007ADB46 /* React 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "React 学习笔记.md"; sourceTree = "<group>"; };
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
@@ -191,16 +196,16 @@
 		8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md"; sourceTree = "<group>"; };
 		8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md"; sourceTree = "<group>"; };
 		8ECD64F727B8AB32002E63A7 /* Shell 笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Shell 笔记.md"; sourceTree = "<group>"; };
-		8ECD64FF27C7D959002E63A7 /* JSON 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JSON 学习笔记.md"; sourceTree = "<group>"; };
+		8ECD64FF27C7D959002E63A7 /* JavaScript 学习记录（一）：JSON.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（一）：JSON.md"; sourceTree = "<group>"; };
 		8ECD650027C8F6F5002E63A7 /* AJAX 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AJAX 学习笔记.md"; sourceTree = "<group>"; };
-		8ECD650127C904F9002E63A7 /* JavaScript Promise 对象.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Promise 对象.md"; sourceTree = "<group>"; };
+		8ECD650127C904F9002E63A7 /* JavaScript 学习记录（二）：Promise.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（二）：Promise.md"; sourceTree = "<group>"; };
 		8ECD652527CB5D21002E63A7 /* JavaScript HTML DOM 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript HTML DOM 学习笔记.md"; sourceTree = "<group>"; };
 		8ECD652627CCE7BE002E63A7 /* JavaScript 学习笔记 nine.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习笔记 nine.md"; sourceTree = "<group>"; };
 		8ECE502426DEF9F400681115 /* Swift 进阶笔记（一）：Swift 源码编译.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Swift 进阶笔记（一）：Swift 源码编译.md"; sourceTree = "<group>"; };
 		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
-		8EDEFC312803AD59003AD8EC /* ES6 Map 与 Set 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "ES6 Map 与 Set 学习笔记.md"; sourceTree = "<group>"; };
+		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -247,6 +252,30 @@
 				8ECD64F127B2BC3D002E63A7 /* 汇编知识点 */,
 			);
 			path = crash;
+			sourceTree = "<group>";
+		};
+		8E509EAE2847C61500DBFC98 /* 杂记 */ = {
+			isa = PBXGroup;
+			children = (
+				8ECD652527CB5D21002E63A7 /* JavaScript HTML DOM 学习笔记.md */,
+				8ECD652627CCE7BE002E63A7 /* JavaScript 学习笔记 nine.md */,
+				8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */,
+			);
+			path = "杂记";
+			sourceTree = "<group>";
+		};
+		8E509EAF2847C62700DBFC98 /* 已发布 */ = {
+			isa = PBXGroup;
+			children = (
+				8ECD64FF27C7D959002E63A7 /* JavaScript 学习记录（一）：JSON.md */,
+				8ECD650127C904F9002E63A7 /* JavaScript 学习记录（二）：Promise.md */,
+				8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */,
+				8E5E5B202843295600E3E038 /* JavaScript 学习记录（四）：prototype、prototype chain.md */,
+				8E509EAD2847C2B300DBFC98 /* JavaScript 学习记录（五）：asynchronous JavaScript.md */,
+				8E509EB0284CA22600DBFC98 /* JavaScript 学习记录（六）：Memory Management.md */,
+				8E509EB1284CAB8100DBFC98 /* JavaScript 学习记录（七）：并发模型与事件循环.md */,
+			);
+			path = "已发布";
 			sourceTree = "<group>";
 		};
 		8E50EFFF27919E5700A4DBE1 /* SwiftUI */ = {
@@ -326,7 +355,6 @@
 				8E64803627E852A5007ADB46 /* React */,
 				8EB3AD7C27E8BF4F006336C1 /* MySQL */,
 				8ECD654D27CE4268002E63A7 /* AJAX */,
-				8ECD654C27CE425B002E63A7 /* JSON */,
 				8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */,
 				8E79139627A0D0CC00900CDA /* Python */,
 				8E50F0012791A2EC00A4DBE1 /* Shell */,
@@ -610,7 +638,8 @@
 			isa = PBXGroup;
 			children = (
 				8E71016C2823F6A600BEB9A3 /* Xcode 相关的一些 Concepts.md */,
-				8E51B8C52833201400B8D4C4 /* clang.md */,
+				8E51B8C52833201400B8D4C4 /* 浅学 Clang（一）：clang 指令介绍.md */,
+				8E5E5B1F2842694C00E3E038 /* 浅学 Clang（二）：clang 源码.md */,
 			);
 			path = xcodebuild;
 			sourceTree = "<group>";
@@ -674,11 +703,8 @@
 		8E8ACB5C27BC7A1B006D82FA /* JavaScript */ = {
 			isa = PBXGroup;
 			children = (
-				8ECD652627CCE7BE002E63A7 /* JavaScript 学习笔记 nine.md */,
-				8EDEFC312803AD59003AD8EC /* ES6 Map 与 Set 学习笔记.md */,
-				8ECD650127C904F9002E63A7 /* JavaScript Promise 对象.md */,
-				8ECD652527CB5D21002E63A7 /* JavaScript HTML DOM 学习笔记.md */,
-				8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */,
+				8E509EAE2847C61500DBFC98 /* 杂记 */,
+				8E509EAF2847C62700DBFC98 /* 已发布 */,
 			);
 			path = JavaScript;
 			sourceTree = "<group>";
@@ -716,14 +742,6 @@
 				8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */,
 			);
 			path = dsym;
-			sourceTree = "<group>";
-		};
-		8ECD654C27CE425B002E63A7 /* JSON */ = {
-			isa = PBXGroup;
-			children = (
-				8ECD64FF27C7D959002E63A7 /* JSON 学习笔记.md */,
-			);
-			path = JSON;
 			sourceTree = "<group>";
 		};
 		8ECD654D27CE4268002E63A7 /* AJAX */ = {
