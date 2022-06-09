@@ -46,7 +46,7 @@ myIterable[Symbol.iterator] = function* () {
 [...myIterable] // [1, 2, 3]
 ```
 
-&emsp;不符合标准的迭代器，如果一个迭代器 @@iterator 没有返回一个迭代器对象，那么它就是一个不符合标准的迭代器，这样的迭代器将会在运行期抛出异常，甚至非常诡异的 Bug。
+&emsp;不符合标准的迭代器，如果一个迭代器 @@iterator 没有返回一个迭代器对象，那么它就是一个不符合标准的迭代器，这样的迭代器将会在运行期抛出异常，甚至非常诡异的 Bug，如下示例代码：
 
 ```javascript
 var nonWellFormedIterable = {}
@@ -237,28 +237,169 @@ console.log(sum.apply(null, numbers));
 
 &emsp;构造字面量对象时，进行克隆或者属性拷贝（ECMAScript 2018 规范新增特性）：`let objClone = { ...obj };`。
 
-&emsp;在函数调用时使用展开语法
+&emsp;在函数调用时使用展开语法，等价于 apply 的方式，如果想将数组元素迭代为函数参数，一般使用 Function.prototype.apply 的方式进行调用。
 
+```javascript
+function myFunction(x, y, z) { }
+var args = [0, 1, 2];
+myFunction.apply(null, args);
+```
 
+&emsp;有了展开语法，可以这样写：
 
+```javascript
+function myFunction(x, y, z) { }
+var args = [0, 1, 2];
+myFunction(...args);
+```
 
+&emsp;所有参数都可以通过展开语法来传值，也不限制多次使用展开语法。
 
+```javascript
+function myFunction(v, w, x, y, z) { }
+var args = [0, 1];
+myFunction(-1, ...args, 2, ...[3]);
+```
 
+&emsp;在 new 表达式中应用，使用 new 关键字来调用构造函数时，不能直接使用数组 + apply 的方式（apply 执行的是调用 `[[Call]]`，而不是构造 `[[Construct]]`）。当然，有了展开语法，将数组展开为构造函数的参数就很简单了：
 
+```javascript
+var dateFields = [1970, 0, 1]; // 1970 年 1 月 1 日
+var d = new Date(...dateFields);
+```
 
+&emsp;如果不使用展开语法，想将数组元素传给构造函数，实现方式可能是这样的：
 
+```javascript
+function applyAndNew(constructor, args) {
+   function partial () {
+      return constructor.apply(this, args);
+   };
+   if (typeof constructor.prototype === "object") {
+      partial.prototype = Object.create(constructor.prototype);
+   }
+   return partial;
+}
 
+function myConstructor () {
+   console.log("arguments.length: " + arguments.length);
+   console.log(arguments);
+   this.prop1="val1";
+   this.prop2="val2";
+};
 
+var myArguments = ["hi", "how", "are", "you", "mr", null];
+var myConstructorWithArguments = applyAndNew(myConstructor, myArguments);
 
+console.log(new myConstructorWithArguments);
+// (myConstructor 构造函数中):           arguments.length: 6
+// (myConstructor 构造函数中):           ["hi", "how", "are", "you", "mr", null]
+// ("new myConstructorWithArguments"中): {prop1: "val1", prop2: "val2"}
+```
 
+&emsp;构造字面量数组时使用展开语法。
 
+&emsp;没有展开语法的时候，只能组合使用 push, splice, concat 等方法，来将已有数组元素变成新数组的一部分。有了展开语法，通过字面量方式，构造新数组会变得更简单、更优雅：
 
+```javascript
+var parts = ['shoulders', 'knees'];
+var lyrics = ['head', ...parts, 'and', 'toes']; 
+// ["head", "shoulders", "knees", "and", "toes"]
+```
 
+&emsp;和参数列表的展开类似， ... 在构造字面量数组时，可以在任意位置多次使用。
 
+&emsp;数组拷贝 (copy):
 
-##### 解构赋值
+```javascript
+var arr = [1, 2, 3];
+var arr2 = [...arr]; // like arr.slice()
+arr2.push(4);
 
-&emsp;
+// arr2 此时变成 [1, 2, 3, 4]
+// arr 不受影响
+```
+
+> &emsp;note：实际上，展开语法和 Object.assign() 行为一致，执行的都是浅拷贝 (只遍历一层)。如果想对多维数组进行深拷贝，下面的示例就有些问题了。
+
+```javascript
+var a = [[1], [2], [3]];
+var b = [...a];
+b.shift().shift(); // 1
+// Now array a is affected as well: [[2], [3]]
+```
+
+&emsp;连接多个数组，Array.concat 函数常用于将一个数组连接到另一个数组的后面。如果不使用展开语法，代码可能是下面这样的：
+
+```javascript
+var arr1 = [0, 1, 2];
+var arr2 = [3, 4, 5];
+// 将 arr2 中所有元素附加到 arr1 后面并返回
+var arr3 = arr1.concat(arr2);
+```
+
+&emsp;使用展开语法：
+
+```javascript
+var arr1 = [0, 1, 2];
+var arr2 = [3, 4, 5];
+var arr3 = [...arr1, ...arr2];
+```
+
+&emsp;Array.unshift 方法常用于在数组的开头插入新元素/数组，不使用展开语法，示例如下：
+
+```javascript
+var arr1 = [0, 1, 2];
+var arr2 = [3, 4, 5];
+// 将 arr2 中的元素插入到 arr1 的开头
+Array.prototype.unshift.apply(arr1, arr2) // arr1 现在是 [3, 4, 5, 0, 1, 2]
+```
+
+&emsp;如果使用展开语法，代码如下，请注意，这里使用展开语法创建了一个新的 arr1 数组，Array.unshift 方法则是修改了原本存在的 arr1 数组。
+
+&emsp;构造字面量对象时使用展开语法，Rest/Spread Properties for ECMAScript 提议 (stage 4) 对 字面量对象 增加了展开特性。其行为是，将已有对象的所有可枚举 (enumerable) 属性拷贝到新构造的对象中。
+
+&emsp;浅拷贝（Shallow-cloning，不包含 prototype）和对象合并，可以使用更简短的展开语法。而不必再使用 Object.assign() 方式。
+
+```javascript
+var obj1 = { foo: 'bar', x: 42 };
+var obj2 = { foo: 'baz', y: 13 };
+
+var clonedObj = { ...obj1 };
+// 克隆后的对象: { foo: "bar", x: 42 }
+
+var mergedObj = { ...obj1, ...obj2 };
+// 合并后的对象: { foo: "baz", x: 42, y: 13 }
+```
+
+> &emsp;note：Object.assign() 函数会触发 setters，而展开语法则不会。
+
+> &emsp;note：不能替换或者模拟 Object.assign() 函数。
+
+```javascript
+var obj1 = { foo: 'bar', x: 42 };
+var obj2 = { foo: 'baz', y: 13 };
+const merge = ( ...objects ) => ( { ...objects } );
+
+var mergedObj = merge ( obj1, obj2);
+// Object { 0: { foo: 'bar', x: 42 }, 1: { foo: 'baz', y: 13 } }
+
+var mergedObj = merge ( {}, obj1, obj2);
+// Object { 0: {}, 1: { foo: 'bar', x: 42 }, 2: { foo: 'baz', y: 13 } }
+```
+
+&emsp;在这段代码中，展开操作符 (spread operator) 并没有按预期的方式执行: 而是先将多个解构变为剩余参数 (rest parameter)，然后再将剩余参数展开为字面量对象。
+
+&emsp;只能用于可迭代对象，在数组或函数参数中使用展开语法时，该语法只能用于 可迭代对象：
+
+```javascript
+var obj = {'key1': 'value1'};
+var array = [...obj]; // TypeError: obj is not iterable
+```
+
+&emsp;展开多个值，在函数调用时使用展开语法，请注意不能超过 JavaScript 引擎限制的最大参数个数。
+
+&emsp;剩余语法（剩余参数），剩余语法（Rest syntax）看起来和展开语法完全相同，不同点在于，剩余参数用于解构数组和对象。从某种意义上说，剩余语法与展开语法是相反的：展开语法将数组展开为其中的各个元素，而剩余语法则是将多个元素收集起来并 "凝聚" 为单个元素。
 
 #### 格式不佳的可迭代对象
 
@@ -338,8 +479,6 @@ console.log(gen.next().value); // '哟'
 console.log(gen.next().value); // '呀'
 console.log(gen.next().done);  // true
 
-
-
 function* idMaker() {
     let index = 0;
     while (true) {
@@ -399,10 +538,10 @@ let aGeneratorObject = function* (){
 }();
 
 typeof aGeneratorObject.next;
-// 返回"function", 因为有一个 next 方法，所以这是一个迭代器
+// 返回 "function", 因为有一个 next 方法，所以这是一个迭代器
 
 typeof aGeneratorObject[Symbol.iterator];
-// 返回"function", 因为有一个 @@iterator 方法，所以这是一个可迭代对象
+// 返回 "function", 因为有一个 @@iterator 方法，所以这是一个可迭代对象
 
 aGeneratorObject[Symbol.iterator]() === aGeneratorObject;
 // 返回 true，因为 @@iterator 方法返回自身（即迭代器），所以这是一个格式良好的可迭代对象
@@ -415,6 +554,142 @@ console.log(Symbol.iterator in aGeneratorObject)
 ```
 
 ## for...of
+
+&emsp;for...of 语句在可迭代对象（包括 Array，Map，Set，String，TypedArray，arguments 对象等等）上创建一个迭代循环，调用自定义迭代钩子，并为每个不同属性的值执行语句。
+
+```javascript
+const array1 = ['a', 'b', 'c'];
+
+for (const element of array1) {
+  console.log(element);
+}
+
+// expected output: "a"
+// expected output: "b"
+// expected output: "c"
+```
+
+&emsp;语法，of 后面是 iterable。variable：在每次迭代中，将不同属性的值分配给变量。iterable：被迭代枚举其属性的对象。
+
+```javascript
+for (variable of iterable) {
+    //statements
+}
+```
+
+&emsp;迭代 Array，如果你不想修改语句块中的变量 , 也可以使用 const 代替 let。
+
+&emsp;迭代 String：
+
+```javascript
+let iterable = "boo";
+
+for (let value of iterable) {
+  console.log(value);
+}
+// "b"
+// "o"
+// "o"
+```
+
+&emsp;迭代 TypedArray：
+
+```javascript
+let iterable = new Uint8Array([0x00, 0xff]);
+
+for (let value of iterable) {
+  console.log(value);
+}
+// 0
+// 255
+```
+
+&emsp;迭代 Map：
+
+```javascript
+let iterable = new Map([["a", 1], ["b", 2], ["c", 3]]);
+
+for (let entry of iterable) {
+  console.log(entry);
+}
+// ["a", 1]
+// ["b", 2]
+// ["c", 3]
+
+for (let [key, value] of iterable) {
+  console.log(value);
+}
+// 1
+// 2
+// 3
+```
+
+&emsp;迭代 Set，迭代 arguments 对象：
+
+```javascript
+(function() {
+  for (let argument of arguments) {
+    console.log(argument);
+  }
+})(1, 2, 3);
+
+// 1
+// 2
+// 3
+```
+
+&emsp;迭代 DOM 集合，迭代 DOM 元素集合，比如一个 NodeList 对象：下面的例子演示给每一个 article 标签内的 p 标签添加一个 "read" 类。
+
+```javascript
+// 注意：这只能在实现了 NodeList.prototype[Symbol.iterator] 的平台上运行
+let articleParagraphs = document.querySelectorAll("article > p");
+
+for (let paragraph of articleParagraphs) {
+  paragraph.classList.add("read");
+}
+```
+
+&emsp;关闭迭代器，对于 for...of 的循环，可以由 break, throw 或 return 终止。在这些情况下，迭代器关闭。
+
+```javascript
+function* foo(){
+  yield 1;
+  yield 2;
+  yield 3;
+};
+
+for (let o of foo()) {
+  console.log(o);
+  break; // closes iterator, triggers return
+}
+```
+
+&emsp;迭代生成器，你还可以迭代一个生成器：
+
+```javascript
+function* fibonacci() { // 一个生成器函数
+    let [prev, curr] = [0, 1];
+    for (;;) { // while (true) {
+        [prev, curr] = [curr, prev + curr];
+        yield curr;
+    }
+}
+
+for (let n of fibonacci()) {
+     console.log(n);
+    // 当 n 大于 1000 时跳出循环
+    if (n >= 1000)
+        break;
+}
+```
+
+
+
+
+
+
+
+
 
 ## `function*`
 
