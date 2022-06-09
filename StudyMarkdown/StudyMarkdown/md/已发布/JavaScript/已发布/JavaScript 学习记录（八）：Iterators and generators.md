@@ -683,7 +683,49 @@ for (let n of fibonacci()) {
 }
 ```
 
+&emsp;不要重用生成器，生成器不应该重用，即使 for...of 循环的提前终止，例如通过 break 关键字。在退出循环后，生成器关闭，并尝试再次迭代，不会产生任何进一步的结果。
 
+```javascript
+var gen = (function *(){
+    yield 1;
+    yield 2;
+    yield 3;
+})();
+for (let o of gen) {
+    console.log(o);
+    break;// 关闭生成器
+}
+
+// 生成器不应该重用，以下没有意义！
+for (let o of gen) {
+    console.log(o);
+}
+```
+
+&emsp;迭代其他可迭代对象，你还可以迭代显式实现可迭代协议的对象：
+
+```javascript
+var iterable = {
+  [Symbol.iterator]() {
+    return {
+      i: 0,
+      next() {
+        if (this.i < 3) {
+          return { value: this.i++, done: false };
+        }
+        return { value: undefined, done: true };
+      }
+    };
+  }
+};
+
+for (var value of iterable) {
+  console.log(value);
+}
+// 0
+// 1
+// 2
+```
 
 
 
