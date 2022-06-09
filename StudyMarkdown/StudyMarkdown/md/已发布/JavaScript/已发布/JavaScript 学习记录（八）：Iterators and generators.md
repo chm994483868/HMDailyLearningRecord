@@ -727,13 +727,108 @@ for (var value of iterable) {
 // 2
 ```
 
+&emsp;for...of 与 for...in 的区别，无论是 for...in 还是 for...of 语句都是迭代一些东西。它们之间的主要区别在于它们的迭代方式。
 
+&emsp;for...in 语句以任意顺序迭代对象的可枚举属性。
 
+&emsp;for...of 语句遍历可迭代对象定义要迭代的数据。
 
+&emsp;以下示例显示了与Array一起使用时，for...of循环和for...in循环之间的区别。
 
+&emsp;以下示例显示了与 Array 一起使用时，for...of 循环和 for...in 循环之间的区别。
 
+```javascript
+Object.prototype.objCustom = function() {};
+Array.prototype.arrCustom = function() {};
+
+let iterable = [3, 5, 7];
+iterable.foo = 'hello';
+
+for (let i in iterable) {
+  console.log(i); // logs 0, 1, 2, "foo", "arrCustom", "objCustom"
+}
+
+for (let i in iterable) {
+  if (iterable.hasOwnProperty(i)) {
+    console.log(i); // logs 0, 1, 2, "foo"
+  }
+}
+
+for (let i of iterable) {
+  console.log(i); // logs 3, 5, 7
+}
+```
+
+```javascript
+Object.prototype.objCustom = function() {};
+Array.prototype.arrCustom = function() {};
+
+let iterable = [3, 5, 7];
+iterable.foo = 'hello';
+```
+
+&emsp;每个对象将继承 objCustom 属性，并且作为 Array 的每个对象将继承 arrCustom 属性，因为将这些属性添加到 Object.prototype 和 Array.prototype。由于继承和原型链，对象 iterable 继承属性 objCustom 和 arrCustom。
+
+```javascript
+for (let i in iterable) {
+  console.log(i); // logs 0, 1, 2, "foo", "arrCustom", "objCustom"
+}
+```
+
+&emsp;此循环仅以原始插入顺序记录 iterable 对象的可枚举属性。它不记录数组元素 3, 5, 7 或 hello，因为这些不是枚举属性。但是它记录了数组索引以及 arrCustom 和 objCustom。
+
+```javascript
+for (let i in iterable) {
+  if (iterable.hasOwnProperty(i)) {
+    console.log(i); // logs 0, 1, 2, "foo"
+  }
+}
+```
+
+&emsp;这个循环类似于第一个，但是它使用 hasOwnProperty() 来检查，如果找到的枚举属性是对象自己的（不是继承的）。如果是，该属性被记录。记录的属性是 0, 1, 2 和 foo，因为它们是自身的属性（不是继承的）。属性 arrCustom 和 objCustom 不会被记录，因为它们是继承的。
+
+```javascript
+for (let i of iterable) {
+  console.log(i); // logs 3, 5, 7
+}
+```
+
+&emsp;该循环迭代并记录 iterable 作为可迭代对象定义的迭代值，这些是数组元素 3, 5, 7，而不是任何对象的属性。
 
 ## `function*`
+
+&emsp;`function*` 这种声明方式（function 关键字后跟一个星号）会定义一个生成器函数（generator function），它返回一个 Generator 对象。
+
+```javascript
+function* generator(i) {
+  yield i;
+  yield i + 10;
+}
+
+const gen = generator(10);
+
+console.log(gen.next().value);
+// expected output: 10
+
+console.log(gen.next().value);
+// expected output: 20
+```
+
+&emsp;你也可以使用构造函数 GeneratorFunction 或 `function* expression` 定义生成器函数 。
+
+```javascript
+function* name([param[, param[, ... param]]]) { statements }
+```
+
+&emsp;name：函数名，param：要传递给函数的一个参数的名称，一个函数最多可以有 255 个参数。statements：普通 JS 语句。
+
+
+
+
+
+
+
+
 
 ## Generator
 
