@@ -795,6 +795,135 @@ for (let i of iterable) {
 
 &emsp;该循环迭代并记录 iterable 作为可迭代对象定义的迭代值，这些是数组元素 3, 5, 7，而不是任何对象的属性。
 
+## Generator
+
+&emsp;生成器对象是由一个 generator function 返回的，并且它符合可迭代协议和迭代器协议。
+
+```javascript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+let g = gen();
+// "Generator { }"
+```
+
+### Generator.prototype.next()
+
+&emsp;返回一个由 yield 表达式生成的值。
+
+&emsp;next() 方法返回一个包含属性 done 和 value 的对象。该方法也可以通过接受一个参数用以向生成器传值。
+
+&emsp;`gen.next(value)`，value 向生成器传递的值，返回的对象包含两个属性：
+
++ done（boolean 类型）- 如果迭代器超过迭代序列的末尾，则值为 true。在这种情况下，value 可选地指定迭代器的返回值。如果迭代器能够生成序列中的下一个值，则值为 false。这相当于没有完全指定 done 属性。
++ value - 迭代器返回的任意的 JavaScript 值。当 done 的值为 true 时可以忽略该值。  
+  
+&emsp;使用 next() 方法，下面的例子展示了一个简单的生成器，以及调用 next 后方法的返回值：
+
+```javascript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+var g = gen(); // "Generator { }"
+g.next();      // "Object { value: 1, done: false }"
+g.next();      // "Object { value: 2, done: false }"
+g.next();      // "Object { value: 3, done: false }"
+g.next();      // "Object { value: undefined, done: true }"
+```
+
+&emsp;向生成器传值，在此示例中，使用值调用 next。请注意，第一次调用没有记录任何内容，因为生成器最初没有产生任何结果。
+
+```javascript
+function* gen() {
+  while(true) {
+    var value = yield null;
+    console.log(value);
+  }
+}
+
+var g = gen();
+g.next(1);
+// "{ value: null, done: false }"
+g.next(2);
+// 2
+// "{ value: null, done: false }"
+```
+
+### Generator.prototype.return()
+
+&emsp;返回给定的值并结束生成器。
+
+&emsp;`gen.return(value)`，value 需要返回的值，返回该函数参数中给定的值。
+
+&emsp;使用 return() 以下例子展示了一个简单的生成器和 return 方法的使用。
+
+```javascript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+var g = gen();
+
+g.next();        // { value: 1, done: false }
+g.return("foo"); // { value: "foo", done: true }
+g.next();        // { value: undefined, done: true }
+```
+
+&emsp;如果对已经处于 "完成" 状态的生成器调用 return(value)，则生成器将保持在 "完成" 状态。如果没有提供参数，则返回对象的 value 属性与示例最后的 .next() 方法相同。如果提供了参数，则参数将被设置为返回对象的 value 属性的值。
+
+```javascript
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+var g = gen();
+g.next(); // { value: 1, done: false }
+g.next(); // { value: 2, done: false }
+g.next(); // { value: 3, done: false }
+g.next(); // { value: undefined, done: true }
+g.return(); // { value: undefined, done: true }
+g.return(1); // { value: 1, done: true }
+```
+
+### Generator.prototype.throw()
+
+&emsp;throw() 方法用来向生成器抛出异常，并恢复生成器的执行，返回带有 done 及 value 两个属性的对象。
+
+&emsp;`gen.throw(exception)`，exception 用于抛出的异常。使用 Error 的实例对调试非常有帮助。
+
+&emsp;返回值，带有两个属性的对象：
+
++ done（boolean 类型）- 如果迭代器已经返回了迭代序列的末尾，则值为 true。在这种情况下，可以指定迭代器 value 的返回值。如果迭代能够继续生产在序列中的下一个值，则值为 false。这相当与不指定 done 属性的值。
++ value - 迭代器返回的任何 JavaScript 值。当 done 是 true 的时候可以省略。
+
+&emsp;使用 throw()，下面的例子展示了一个简单的生成器并使用 throw 方法向该生成器抛出一个异常，该异常通常可以通过 try...catch 块进行捕获。
+
+```javascript
+function* gen() {
+  while(true) {
+    try {
+       yield 42;
+    } catch(e) {
+      console.log("Error caught!");
+    }
+  }
+}
+
+var g = gen();
+g.next(); // { value: 42, done: false }
+g.throw(new Error("Something went wrong")); // "Error caught!"
+```
+
 ## `function*`
 
 &emsp;`function*` 这种声明方式（function 关键字后跟一个星号）会定义一个生成器函数（generator function），它返回一个 Generator 对象。
@@ -807,11 +936,8 @@ function* generator(i) {
 
 const gen = generator(10);
 
-console.log(gen.next().value);
-// expected output: 10
-
-console.log(gen.next().value);
-// expected output: 20
+console.log(gen.next().value); // expected output: 10
+console.log(gen.next().value); // expected output: 20
 ```
 
 &emsp;你也可以使用构造函数 GeneratorFunction 或 `function* expression` 定义生成器函数 。
@@ -822,29 +948,500 @@ function* name([param[, param[, ... param]]]) { statements }
 
 &emsp;name：函数名，param：要传递给函数的一个参数的名称，一个函数最多可以有 255 个参数。statements：普通 JS 语句。
 
+### `function* expression`
 
+&emsp;`function*` 关键字可以在表达式内部定义一个生成器函数。 
 
+```javascript
+const foo = function*() {
+  yield 'a';
+  yield 'b';
+  yield 'c';
+};
 
+let str = '';
+for (const val of foo()) {
+  str = str + val;
+}
 
+console.log(str); // expected output: "abc"
+```
 
+```javascript
+function* [name]([param1[, param2[, ..., paramN]]]) {
+   statements
+}
+```
 
+&emsp;name 函数名，在声明匿名函数时可以省略，函数名称只是函数体中的一个本地变量。paramN 传入函数的一个参数名，一个函数最多有 255 个参数。statements 函数体，普通 JS 语句。
 
+&emsp;`function*` 表达式和 `function*` 声明比较相似，并具有几乎相同的语法。`function*` 表达式和 `function*` 声明之间主要区别就是函数名，即在创建匿名函数时，`function*` 表达式可以省略函数名。
 
-## Generator
+### GeneratorFunction
+
+&emsp;GeneratorFunction 构造器生成新的生成器函数（`function*`）对象。在 JavaScript 中，生成器函数实际上都是 GeneratorFunction 的实例对象。注意，GeneratorFunction 并不是一个全局对象。它可以通过下面的代码获取。
+
+```javascript
+Object.getPrototypeOf(function*(){}).constructor
+```
+
+&emsp;语法：
+
+```javascript
+new GeneratorFunction ([arg1[, arg2[, ...argN]],] functionBody)
+```
+
+&emsp;arg1, arg2, ... argN 函数使用的名称作为形式参数名称。每个必须是一个字符串，对应于一个有效的 JavaScript 标识符或这样的字符串的列表，用逗号分隔；如 "x", "theValue" 或 "a,b"。
+
+&emsp;functionBody 一个包含多条表示 JavaScript 函数体语句的字符串。
+
+&emsp;当创建函数时，将使用 `GeneratorFunction` 构造函数创建的生成器函数对象进行解析。这比使用 `function*` 表达式 声明生成器函数效率更低，并且在代码中调用它，因为这些函数与其余的代码一起被解析。传递给函数的所有参数按照它们被传递的顺序被视为要创建的函数中参数的标识符的名称。
+
+> &emsp;note：使用 GeneratorFunction 构造函数创建的生成器函数不会为其创建上下文创建闭包；它们始终在全局范围内创建。当运行它们时，它们只能访问自己的本地变量和全局变量，而不是从 GeneratorFunction 构造函数调用的范围的变量。这与使用 eval 与生成函数表达式的代码不同。
+
+&emsp;将 GeneratorFunction 构造函数调用为函数（不使用 new 运算符）与将其作为构造函数调用的效果相同。
+
+&emsp;从 GeneratorFunction 构造函数创建一个生成器函数：
+
+```javascript
+var GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor
+var g = new GeneratorFunction("a", "yield a * 2");
+var iterator = g(10);
+console.log(iterator.next().value); // 20
+```
+
+### Generator 概述
+
+&emsp;生成器函数在执行时能暂停，后面又能从暂停处继续执行。
+
+&emsp;调用一个生成器函数并不会马上执行它里面的语句，而是返回一个这个生成器的 迭代器（iterator）对象。当这个迭代器的 next() 方法被首次（后续）调用时，其内的语句会执行到第一个（后续）出现 yield 的位置为止，yield 后紧跟迭代器要返回的值。或者如果用的是 `yield*`（多了个星号），则表示将执行权移交给另一个生成器函数（当前生成器暂停执行）。
+
+&emsp;next() 方法返回一个对象，这个对象包含两个属性：value 和 done，value 属性表示本次 yield 表达式的返回值，done 属性为布尔类型，表示生成器后续是否还有 yield 语句，即生成器函数是否已经执行完毕并返回。
+
+&emsp;调用 next() 方法时，如果传入了参数，那么这个参数会传给上一条执行的 yield 语句左边的变量，例如下面例子中的 x：
+
+```javascript
+function *gen(){
+    yield 10;
+    x=yield 'foo';
+    yield x;
+}
+
+var gen_obj=gen();
+console.log(gen_obj.next()); // 执行 yield 10，返回 10
+console.log(gen_obj.next()); // 执行 yield 'foo'，返回 'foo'
+console.log(gen_obj.next(100)); // 将 100 赋给上一条 yield 'foo' 的左值，即执行 x=100，返回 100
+console.log(gen_obj.next()); // 执行完毕，value 为 undefined，done 为 true
+```
+
+&emsp;当在生成器函数中显式 return 时，会导致生成器立即变为完成状态，即调用 next() 方法返回的对象的 done 为 true。如果 return 后面跟了一个值，那么这个值会作为当前调用 next() 方法返回的 value 值。
+
+```javascript
+function* idMaker(){
+  var index = 0;
+  while(index<3)
+    yield index++;
+}
+
+var gen = idMaker();
+console.log(gen.next().value); // 0
+console.log(gen.next().value); // 1
+console.log(gen.next().value); // 2
+console.log(gen.next().value); // undefined
+```
+
+&emsp;生成器也可以接受参数：
+
+```javascript
+function* idMaker(){
+    var index = arguments[0] || 0;
+    while(true)
+        yield index++;
+}
+
+var gen = idMaker(5);
+console.log(gen.next().value); // 5
+console.log(gen.next().value); // 6
+```
+
+&emsp;`yield*` 的示例：
+
+```javascript
+function* anotherGenerator(i) {
+  yield i + 1;
+  yield i + 2;
+  yield i + 3;
+}
+
+function* generator(i){
+  yield i;
+  yield* anotherGenerator(i); // 移交执行权
+  yield i + 10;
+}
+
+var gen = generator(10);
+
+console.log(gen.next().value); // 10
+console.log(gen.next().value); // 11
+console.log(gen.next().value); // 12
+console.log(gen.next().value); // 13
+console.log(gen.next().value); // 20
+```
+
+&emsp;传递参数：(这里一定要理清 let first = yield 1; 这种样式语句的含义，切记不要把其中的 = 理解为一个赋值操作，NO，这里完全没有赋值的含义，这里并不是说 yield 1 执行返回一个值赋值给 first，let first 和 yield 1 之间其实完全没有任何关系，生成器执行 next 到 yield 1 时，yield 1 只是负责为执行到此处的生成器完整的返回一个值，就是那个 value 和 done 属性的对象，而这里的 let first 只是用来记录 next 函数传的值的，用于下一个 yield 关键字后面的语句，甚至你可以把它理解为 next 函数的一个形参。)
+
+```javascript
+function *createIterator() {
+    let first = yield 1;
+    let second = yield first + 2; // 4 + 2
+                                  // first =4 是 next(4) 将参数赋给上一条的
+    yield second + 3;             // 5 + 3
+}
+
+let iterator = createIterator();
+
+console.log(iterator.next());    // "{ value: 1, done: false }"
+console.log(iterator.next(4));   // "{ value: 6, done: false }"
+console.log(iterator.next(5));   // "{ value: 8, done: false }"
+console.log(iterator.next());    // "{ value: undefined, done: true }"
+```
+
+&emsp;显式返回：
+
+```javascript
+function* yieldAndReturn() {
+  yield "Y";
+  return "R"; // 显式返回处，可以观察到 done 也立即变为了 true
+  yield "unreachable"; // 不会被执行了
+}
+
+var gen = yieldAndReturn()
+console.log(gen.next()); // { value: "Y", done: false }
+console.log(gen.next()); // { value: "R", done: true }
+console.log(gen.next()); // { value: undefined, done: true }
+```
+
+&emsp;生成器函数不能当构造器使用：
+
+```javascript
+function* f() {}
+var obj = new f; // throws "TypeError: f is not a constructor"
+```
+
+&emsp;使用迭代器遍历二维数组并转换成一维数组：
+
+```javascript
+function* iterArr(arr) {            // 迭代器返回一个迭代器对象
+  if (Array.isArray(arr)) {         // 内节点
+      for(let i=0; i < arr.length; i++) {
+          yield* iterArr(arr[i]);   // (*) 递归
+      }
+  } else {                          // 离开
+      yield arr;
+  }
+}
+// 使用 for-of 遍历：
+var arr = ['a', ['b', 'c'], ['d', 'e']];
+for(var x of iterArr(arr)) {
+        console.log(x);               // a  b  c  d  e
+ }
+
+// 或者直接将迭代器展开：
+var arr = [ 'a', ['b',[ 'c', ['d', 'e']]]];
+var gen = iterArr(arr);
+arr = [...gen];                        // ["a", "b", "c", "d", "e"]
+```
 
 ## yield
 
+&emsp;yield 关键字用来暂停和恢复一个生成器函数。
+
+```javascript
+[rv] = yield [expression];
+```
+
+&emsp;expression 定义通过迭代器协议从生成器函数返回的值。如果省略，则返回 undefined。rv 返回传递给生成器的 next() 方法的可选值，以恢复其执行。
+
+&emsp;yield 关键字使生成器函数执行暂停，yield 关键字后面的表达式的值返回给生成器的调用者。它可以被认为是一个基于生成器的版本的 return 关键字。
+
+&emsp;yield 关键字实际返回一个 IteratorResult 对象，它有两个属性，value 和 done。value 属性是对 yield 表达式求值的结果，而 done 是 false，表示生成器函数尚未完全完成。
+
+&emsp;一旦遇到 yield 表达式，生成器的代码将被暂停运行，直到生成器的 next() 方法被调用。每次调用生成器的 next() 方法时，生成器都会恢复执行，直到达到以下某个值：
+
++ yield 导致生成器再次暂停并返回生成器的新值。下一次调用 next() 时，在 yield 之后紧接着的语句继续执行。
++ throw 用于从生成器中抛出异常。这让生成器完全停止执行，并在调用者中继续执行，正如通常情况下抛出异常一样。
++ 到达生成器函数的结尾，在这种情况下，生成器的执行结束，并且 IteratorResult 给调用者返回 undefined 并且 done 为 true。
++ 到达 return 语句，在这种情况下，生成器的执行结束，并将 IteratorResult 返回给调用者，其值是由 return 语句指定的，并且 done 为 true。
+
+&emsp;如果将参数传递给生成器的 next() 方法，则该值将成为生成器当前 yield 操作返回的值。
+
+&emsp;在生成器的代码路径中的 yield 运算符，以及通过将其传递给 Generator.prototype.next() 指定新的起始值的能力之间，生成器提供了强大的控制力。
+
+&emsp;以下代码是一个生成器函数的声明：
+
+```javascript
+function* countAppleSales () {
+  var saleList = [3, 7, 5];
+  for (var i = 0; i < saleList.length; i++) {
+    yield saleList[i];
+  }
+}
+```
+
+&emsp;一旦生成器函数已定义，可以通过构造一个迭代器来使用它。
+
+```javascript
+var appleStore = countAppleSales(); // Generator { }
+console.log(appleStore.next()); // { value: 3, done: false }
+console.log(appleStore.next()); // { value: 7, done: false }
+console.log(appleStore.next()); // { value: 5, done: false }
+console.log(appleStore.next()); // { value: undefined, done: true }
+```
+
 ## `yield*`
 
+&emsp;`yield*` 表达式用于委托给另一个 generator 或可迭代对象。
 
+```javascript
+yield* [[expression]];
+```
 
+&emsp;expression 返回一个可迭代对象的表达式。
 
+&emsp;`yield*` 表达式迭代操作数，并产生它返回的每个值。`yield*` 表达式本身的值是当迭代器关闭时返回的值（即 done 为 true 时）。
 
+&emsp;委托给其他生成器，以下代码中，g1() yield 出去的每个值都会在 g2() 的 next() 方法中返回，就像那些 yield 语句是写在 g2() 里一样。
 
+```javascript
+function* g1() {
+  yield 2;
+  yield 3;
+  yield 4;
+}
 
+function* g2() {
+  yield 1;
+  yield* g1();
+  yield 5;
+}
 
+var iterator = g2();
 
+console.log(iterator.next()); // { value: 1, done: false }
+console.log(iterator.next()); // { value: 2, done: false }
+console.log(iterator.next()); // { value: 3, done: false }
+console.log(iterator.next()); // { value: 4, done: false }
+console.log(iterator.next()); // { value: 5, done: false }
+console.log(iterator.next()); // { value: undefined, done: true }
+```
 
+&emsp;看到这里我们大概明白了一些嵌套数组平铺展开的操作了。
+
+&emsp;委托给其他可迭代对象，除了生成器对象这一种可迭代对象，`yield*` 还可以 yield 其它任意的可迭代对象，比如说数组、字符串、arguments 对象等等。
+
+```javascript
+function* g3() {
+  yield* [1, 2];
+  yield* "34";
+  yield* arguments;
+}
+
+var iterator = g3(5, 6);
+
+console.log(iterator.next()); // { value: 1, done: false }
+console.log(iterator.next()); // { value: 2, done: false }
+console.log(iterator.next()); // { value: "3", done: false }
+console.log(iterator.next()); // { value: "4", done: false }
+console.log(iterator.next()); // { value: 5, done: false }
+console.log(iterator.next()); // { value: 6, done: false }
+console.log(iterator.next()); // { value: undefined, done: true }
+```
+
+&emsp;`yield*` 表达式的值，`yield*` 是一个表达式，不是语句，所以它会有自己的值。
+
+```javascript
+function* g4() {
+  yield* [1, 2, 3];
+  return "foo";
+}
+
+var result;
+
+function* g5() {
+  result = yield* g4();
+}
+
+var iterator = g5();
+
+console.log(iterator.next()); // { value: 1, done: false }
+console.log(iterator.next()); // { value: 2, done: false }
+console.log(iterator.next()); // { value: 3, done: false }
+console.log(iterator.next()); // { value: undefined, done: true },
+                              // 此时 g4() 返回了 { value: "foo", done: true }
+
+console.log(result);          // "foo"
+```
+
+&emsp;迭代器和生成器 的铺垫完成了，下面我们从整体角度来看这两个概念。
+
+&emsp;在 JavaScript 中，迭代器是一个对象，它定义一个序列，并在终止时可能返回一个返回值。更具体地说，迭代器是通过使用 next() 方法实现 Iterator protocol 的任何一个对象，该方法返回具有两个属性的对象： value，这是序列中的 next 值；和 done，如果已经迭代到序列中的最后一个值，则它为 true。如果 value 和 done 一起存在，则它是迭代器的返回值。
+
+&emsp;一旦创建，迭代器对象可以通过重复调用 next() 显式地迭代。迭代一个迭代器被称为消耗了这个迭代器，因为它通常只能执行一次。在产生终止值之后，对 next() 的额外调用应该继续返回 {done：true}。
+
+&emsp;Javascript 中最常见的迭代器是 Array 迭代器，它只是按顺序返回关联数组中的每个值。虽然很容易想象所有迭代器都可以表示为数组，但事实并非如此。数组必须完整分配，但迭代器仅在必要时使用，因此可以表示无限大小的序列，例如 0 和无穷大之间的整数范围。
+
+&emsp;这是一个可以做到这一点的例子。它允许创建一个简单的范围迭代器，它定义了从开始（包括）到结束（独占）间隔步长的整数序列。它的最终返回值是它创建的序列的大小，由变量 iterationCount 跟踪。
+
+```javascript
+function makeRangeIterator(start = 0, end = Infinity, step = 1) {
+    let nextIndex = start;
+    let iterationCount = 0;
+
+    const rangeIterator = {
+       next: function() {
+           let result;
+           if (nextIndex < end) {
+               result = { value: nextIndex, done: false }
+               nextIndex += step;
+               iterationCount++;
+               return result;
+           }
+           return { value: iterationCount, done: true }
+       }
+    };
+    return rangeIterator;
+}
+```
+
+&emsp;使用这个迭代器看起来像这样：
+
+```javascript
+let it = makeRangeIterator(1, 10, 2);
+
+let result = it.next();
+while (!result.done) {
+ console.log(result.value); // 1 3 5 7 9
+ result = it.next();
+}
+
+console.log("Iterated over sequence of size: ", result.value); // 5
+```
+
+&emsp;生成器函数：虽然自定义的迭代器是一个有用的工具，但由于需要显式地维护其内部状态，因此需要谨慎地创建。生成器函数提供了一个强大的选择：它允许你定义一个包含自有迭代算法的函数，同时它可以自动维护自己的状态。 
+
+&emsp;生成器函数使用 `function*` 语法编写。最初调用时，生成器函数不执行任何代码，而是返回一种称为 Generator 的迭代器。通过调用生成器的下一个方法消耗值时，Generator 函数将执行，直到遇到 yield 关键字。
+
+&emsp;可以根据需要多次调用该函数，并且每次都返回一个新的 Generator，但每个 Generator 只能迭代一次。
+
+&emsp;我们现在可以调整上面的例子了。 此代码的行为是相同的，但实现更容易编写和读取。
+
+```javascript
+function* makeRangeIterator(start = 0, end = Infinity, step = 1) {
+    for (let i = start; i < end; i += step) {
+        yield i;
+    }
+}
+
+var a = makeRangeIterator(1,10,2)
+a.next() // {value: 1, done: false}
+a.next() // {value: 3, done: false}
+a.next() // {value: 5, done: false}
+a.next() // {value: 7, done: false}
+a.next() // {value: 9, done: false}
+a.next() // {value: undefined, done: true}
+```
+
+&emsp;可迭代对象：若一个对象拥有迭代行为，比如在 for...of 中会循环哪些值，那么那个对象便是一个可迭代对象。一些内置类型，如 Array 或 Map 拥有默认的迭代行为，而其他类型（比如 Object）则没有。
+
+&emsp;为了实现可迭代，一个对象必须实现 @@iterator 方法，这意味着这个对象（或其原型链中的任意一个对象）必须具有一个带 Symbol.iterator 键（key）的属性。
+
+&emsp;可以多次迭代一个迭代器，或者只迭代一次。程序员应该知道是哪种情况。只能迭代一次的 Iterables（例如 Generators）通常从它们的 @@iterator 方法中返回它本身，其中那些可以多次迭代的方法必须在每次调用 @@iterator 时返回一个新的迭代器。
+
+&emsp;自定义的可迭代对象，我们可以像这样实现自己的可迭代对象：
+
+```javascript
+var myIterable = {
+  *[Symbol.iterator]() {
+    yield 1;
+    yield 2;
+    yield 3;
+  }
+}
+
+for (let value of myIterable) {
+    console.log(value);
+}
+
+// 1
+// 2
+// 3
+
+// 或者
+
+[...myIterable]; // [1, 2, 3]
+```
+
+&emsp;内置可迭代对象，String、Array、TypedArray、Map 和 Set 都是内置可迭代对象，因为它们的原型对象都拥有一个 Symbol.iterator 方法。
+
+&emsp;用于可迭代对象的语法，一些语句和表达式专用于可迭代对象，例如 for-of 循环、展开语法、`yield*` 和 解构赋值。
+
+```javascript
+for (let value of ['a', 'b', 'c']) {
+    console.log(value);
+}
+// "a"
+// "b"
+// "c"
+
+[...'abc']; // ["a", "b", "c"]
+
+function* gen() {
+  yield* ['a', 'b', 'c'];
+}
+
+gen().next(); // { value: "a", done: false }
+
+[a, b, c] = new Set(['a', 'b', 'c']);
+a; // "a"
+```
+
+&emsp;高级生成器，生成器会按需计算它们的产生值，这使得它们能够有效的表示一个计算成本很高的序列，甚至是如上所示的一个无限序列。
+
+&emsp;next() 方法也接受一个参数用于修改生成器内部状态。传递给 next() 的参数值会被 yield 接收。要注意的是，传给第一个 next() 的值会被忽略。
+
+&emsp;下面的是斐波那契数列生成器，它使用了 next(x) 来重新启动序列：
+
+```javascript
+function* fibonacci() {
+  var fn1 = 0;
+  var fn2 = 1;
+  while (true) {
+    var current = fn1;
+    fn1 = fn2;
+    fn2 = current + fn1;
+    var reset = yield current;
+    if (reset) {
+        fn1 = 0;
+        fn2 = 1;
+    }
+  }
+}
+
+var sequence = fibonacci();
+console.log(sequence.next().value);     // 0
+console.log(sequence.next().value);     // 1
+console.log(sequence.next().value);     // 1
+console.log(sequence.next().value);     // 2
+console.log(sequence.next().value);     // 3
+console.log(sequence.next().value);     // 5
+console.log(sequence.next().value);     // 8
+console.log(sequence.next(true).value); // 0
+console.log(sequence.next().value);     // 1
+console.log(sequence.next().value);     // 1
+console.log(sequence.next().value);     // 2
+```
+
+&emsp;你可以通过调用其 throw() 方法强制生成器抛出异常，并传递应该抛出的异常值。这个异常将从当前挂起的生成器的上下文中抛出，就好像当前挂起的 yield 是一个 throw value 语句。如果在抛出的异常处理期间没有遇到 yield，则异常将通过调用 throw() 向上传播，对 next() 的后续调用将导致 done 属性为 true。生成器具有 return(value) 方法，返回给定的值并完成生成器本身。
 
 ## 参考链接
 **参考链接:🔗**
