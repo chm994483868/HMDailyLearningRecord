@@ -175,7 +175,7 @@
 		8E73B44D27D5ACC4009254D9 /* associatedtype 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "associatedtype 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B44E27D5D44A009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B46927D6E3E1009254D9 /* Combine 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Combine 学习笔记.md"; sourceTree = "<group>"; };
-		8E73B46B27D708C7009254D9 /* Dart 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Dart 学习笔记.md"; sourceTree = "<group>"; };
+		8E73B46B27D708C7009254D9 /* Dart 学习记录（一）：.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Dart 学习记录（一）：.md"; sourceTree = "<group>"; };
 		8E73B4A727D9DBEC009254D9 /* temp_document.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = temp_document.md; sourceTree = "<group>"; };
 		8E7610A926EF8DAD00B3C4FC /* LLDB Debugger 学习(三)：chisel 命令列举.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(三)：chisel 命令列举.md"; sourceTree = "<group>"; };
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
@@ -669,7 +669,7 @@
 		8E73B46A27D708AE009254D9 /* Dart */ = {
 			isa = PBXGroup;
 			children = (
-				8E73B46B27D708C7009254D9 /* Dart 学习笔记.md */,
+				8E73B46B27D708C7009254D9 /* Dart 学习记录（一）：.md */,
 			);
 			path = Dart;
 			sourceTree = "<group>";

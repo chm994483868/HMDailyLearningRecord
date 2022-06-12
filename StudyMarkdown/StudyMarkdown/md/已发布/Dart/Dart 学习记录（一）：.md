@@ -1,6 +1,6 @@
 # Dart 学习笔记
 
-> &emsp;Dart 是谷歌开发的计算机编程语言，后来被 Ecma (ECMA-408)认定为标准。它被用于 web、服务器、移动应用（Flutter） 和物联网等领域的开发。它是宽松开源许可证（修改的 BSD 证书）下的开源软件。(Web 编程语言 Dart)
+> &emsp;Dart 是谷歌开发的计算机编程语言，后来被 Ecma (ECMA-408)认定为标准。它被用于 web、服务器、移动应用（Flutter）和物联网等领域的开发。它是宽松开源许可证（修改的 BSD 证书）下的开源软件。(Web 编程语言 Dart)
 >
 > &emsp;Dart 是面向对象的、类定义的、单继承的语言。它的语法类似 C 语言，可以转译为 JavaScript，支持接口（interfaces）、混入（mixins）、抽象类（abstract classes）、具体化泛型（reified generics）、可选类型（optional typing）和 sound type system（sound null safety：Dart 中所有变量引用的都是 对象，每个对象都是一个类的实例。数字、函数以及 null 都是对象。除去 null 以外（如果你开启了空安全），所有的类都继承于 Object 类）。
 > 
