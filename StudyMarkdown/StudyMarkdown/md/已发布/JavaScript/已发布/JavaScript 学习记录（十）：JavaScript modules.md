@@ -208,31 +208,109 @@ import { squareName, drawSquare, reportSquareArea, reportSquarePerimeter } from 
 
 ## 创建模块对象
 
-&emsp;
+&emsp;上面的方法工作的挺好，但是有一点点混乱、亢长。一个更好的解决方是，导入每一个模块功能到一个模块功能对象上。可以使用以下语法形式：
 
+```javascript
+import * as Module from '/modules/module.mjs';
+```
 
+&emsp;这将获取 module.mjs 中所有可用的导出，并使它们可以作为对象模块的成员使用，从而有效地为其提供自己的命名空间。例如：
 
+```javascript
+Module.function1()
+Module.function2()
+etc.
+```
 
+```javascript
+import * as Canvas from './modules/canvas.mjs';
 
+import * as Square from '/./modules/square.mjs';
+import * as Circle from './modules/circle.mjs';
+import * as Triangle from './modules/triangle.mjs';
+```
 
+&emsp;在每种情况下，你现在可以访问指定对象名称下面的模块导入。
 
+```javascript
+let square1 = Square.draw(myCanvas.ctx, 50, 50, 100, 'blue');
+Square.reportArea(square1.length, reportList);
+Square.reportPerimeter(square1.length, reportList);
+```
 
+&emsp;因此，你现在可以像以前一样编写代码（只要你在需要时包含对象名称），并且导入更加整洁。
 
+## 模块与类（class）
 
+&emsp;正如我们之前提到的那样，你还可以导出和导入类；这是避免代码冲突的另一种选择，如果你已经以面向对象的方式编写了模块代码，那么它尤其有用。
 
+```javascript
+class Square {
+  constructor(ctx, listId, length, x, y, color) {
+    ...
+  }
 
+  draw() {
+    ...
+  }
 
+  ...
+}
+```
 
+&emsp;然后我们导出：
 
+```javascript
+export { Square };
+```
 
+&emsp;在 main.mjs 中，我们像这样导入它：
 
+```javascript
+import { Square } from './modules/square.mjs';
+```
 
+&emsp;然后使用该类绘制我们的方块：
 
+```javascript
+let square1 = new Square(myCanvas.ctx, myCanvas.listId, 50, 50, 100, 'blue');
+square1.draw();
+square1.reportArea();
+square1.reportPerimeter();
+```
 
+## 合并模块
 
+&emsp;有时你会想要将模块聚合在一起。你可能有多个级别的依赖项，你希望简化事物，将多个子模块组合到一个父模块中。这可以使用父模块中以下表单的导出语法：
 
+```javascript
+export * from 'x.mjs'
+export { name } from 'x.mjs'
+```
 
+## 动态加载模块
 
+&emsp;浏览器中可用的 JavaScript 模块功能的最新部分是动态模块加载。这允许你仅在需要时动态加载模块，而不必预先加载所有模块。这有一些明显的性能优势；让我们继续阅读，看看它是如何工作的。
+
+&emsp;这个新功能允许你将 import() 作为函数调用，将其作为参数传递给模块的路径。它返回一个 promise，它用一个模块对象来实现，让你可以访问该对象的导出，例如：
+
+```javascript
+import('/modules/myModule.mjs')
+  .then((module) => {
+    // Do something with the module.
+  });
+```
+
+```javascript
+squareBtn.addEventListener('click', () => {
+  import('/js-examples/modules/dynamic-module-imports/modules/square.mjs').then((Module) => {
+    let square1 = new Module.Square(myCanvas.ctx, myCanvas.listId, 50, 50, 100, 'blue');
+    square1.draw();
+    square1.reportArea();
+    square1.reportPerimeter();
+  })
+});
+```
 
 ## 参考链接
 **参考链接:🔗**
