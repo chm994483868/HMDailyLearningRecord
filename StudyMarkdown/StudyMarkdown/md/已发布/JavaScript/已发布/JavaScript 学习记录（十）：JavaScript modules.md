@@ -154,7 +154,79 @@ import { function1 as newFunctionName,
          function2 as anotherNewFunctionName } from '/modules/module.mjs';
 ```
 
-&emsp;让我们看一个真实的例子。在我们的重命名目录中，您将看到与上一个示例中相同的模块系统，除了我们添加了 circle.mjs 和 triangle.mjs 模块以绘制和报告圆和三角形。
+&emsp;除了我们添加了 circle.mjs 和 triangle.mjs 模块以绘制和报告圆和三角形。在每个模块中，我们都有 export 相同名称的功能，因此每个模块底部都有相同的导出语句：
+
+```javascript
+export { name, draw, reportArea, reportPerimeter };
+```
+
+&emsp;将它们导入 main.mjs 时，如果我们尝试使用：
+
+```javascript
+import { name, draw, reportArea, reportPerimeter } from './modules/square.mjs';
+import { name, draw, reportArea, reportPerimeter } from './modules/circle.mjs';
+import { name, draw, reportArea, reportPerimeter } from './modules/triangle.mjs';
+```
+
+&emsp;浏览器会抛出一个错误，例如 "SyntaxError: redeclaration of import name"（Firefox）。
+
+&emsp;相反，我们需要重命名导入，使它们是唯一的：
+
+```javascript
+import { name as squareName,
+         draw as drawSquare,
+         reportArea as reportSquareArea,
+         reportPerimeter as reportSquarePerimeter } from './modules/square.mjs';
+
+import { name as circleName,
+         draw as drawCircle,
+         reportArea as reportCircleArea,
+         reportPerimeter as reportCirclePerimeter } from './modules/circle.mjs';
+
+import { name as triangleName,
+        draw as drawTriangle,
+        reportArea as reportTriangleArea,
+        reportPerimeter as reportTrianglePerimeter } from './modules/triangle.mjs';
+```
+
+&emsp;请注意，也可以在模块文件中解决问题，例如：
+
+```javascript
+// in square.mjs
+export { name as squareName,
+         draw as drawSquare,
+         reportArea as reportSquareArea,
+         reportPerimeter as reportSquarePerimeter };
+```
+
+```javascript
+// in main.mjs
+import { squareName, drawSquare, reportSquareArea, reportSquarePerimeter } from '/js-examples/modules/renaming/modules/square.mjs';
+```
+
+&emsp;它也会起作用。你使用什么样的风格取决于你，但是单独保留模块代码并在导入中进行更改可能更有意义。当你从没有任何控制权的第三方模块导入时，这尤其有意义。
+
+## 创建模块对象
+
+&emsp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
