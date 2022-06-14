@@ -186,6 +186,7 @@
 		8E8E5A05285026A200B5BF6B /* JavaScript 学习记录（八）：Iterators and generators.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（八）：Iterators and generators.md"; sourceTree = "<group>"; };
 		8E9E98FD285303DC00160878 /* JavaScript 学习记录（九）：Meta programming.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（九）：Meta programming.md"; sourceTree = "<group>"; };
 		8E9E98FE2853102B00160878 /* JavaScript 学习记录（十）：JavaScript modules.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（十）：JavaScript modules.md"; sourceTree = "<group>"; };
+		8EA477A72858CC9200020467 /* HTML 学习记录（一）：HTML 基础预览.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（一）：HTML 基础预览.md"; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
 		8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Optional 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
@@ -356,6 +357,7 @@
 				8E73B4A627D9DB6B009254D9 /* To_be_read_list  */,
 				8E73B46A27D708AE009254D9 /* Dart */,
 				8E8ACB5C27BC7A1B006D82FA /* JavaScript */,
+				8EA477A62858CC5C00020467 /* HTML */,
 				8EACBADC27D62C5F001AB602 /* TypeScript */,
 				8E73B42B27D58632009254D9 /* jQuery */,
 				8E64803627E852A5007ADB46 /* React */,
@@ -713,6 +715,14 @@
 				8E509EAF2847C62700DBFC98 /* 已发布 */,
 			);
 			path = JavaScript;
+			sourceTree = "<group>";
+		};
+		8EA477A62858CC5C00020467 /* HTML */ = {
+			isa = PBXGroup;
+			children = (
+				8EA477A72858CC9200020467 /* HTML 学习记录（一）：HTML 基础预览.md */,
+			);
+			path = HTML;
 			sourceTree = "<group>";
 		};
 		8EACBADC27D62C5F001AB602 /* TypeScript */ = {
