@@ -172,6 +172,79 @@
 <p>Mozilla 是一个全球社区，这里聚集着来自五湖四海的技术人员、思考者和建造者，我们致力于……</p>
 ```
 
+&emsp;可以这样更改标记：
+
+```javascript
+<p>Mozilla 是一个全球社区，这里聚集着来自五湖四海的</p>
+
+<ul>
+  <li>技术人员</li>
+  <li>思考者</li>
+  <li>建造者</li>
+</ul>
+
+<p>我们致力于……</p>
+```
+
+#### 链接
+
+&emsp;链接非常重要 — 它们赋予 Web 网络属性。要植入一个链接，我们需要使用一个简单的元素 — `<a>` — a 是 "anchor"（锚）的缩写。要将一些文本添加到链接中，只需如下几步：
+
+1. 选择一些文本。比如 "Mozilla 宣言"。
+2. 将文本包含在 `<a>` 元素内，就像这样：
+
+```javascript
+<a>Mozilla 宣言</a>
+```
+
+3. 为此 `<a>` 元素添加一个 href 属性，就像这样：
+
+```javascript
+<a href="">Mozilla 宣言</a>
+```
+
+4. 把属性的值设置为所需网址：
+
+```javascript
+<a href="https://www.mozilla.org/zh-CN/about/manifesto/">Mozilla 宣言</a>
+```
+
+&emsp;如果网址开始部分省略了 `https://` 或者 `http://`，可能会得到错误的结果。在完成一个链接后，可以试着点击它来确保指向正确。
+
+> &emsp;note：href 这个名字可能开始看起来有点令人费解，代表的含义是：超文本引用（hypertext reference）。
+
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>测试页面</title>
+  </head>
+  <body>
+    <h1>Mozilla 酷毙了！</h1>
+    <img src="images/firefox-icon.png" alt="Firefox 标志：一只盘旋在地球上的火狐">
+
+    <p>Mozilla 是一个全球社区，这里聚集着来自五湖四海的</p>
+
+    <ul>
+      <li>技术人员</li>
+      <li>思考者</li>
+      <li>建造者</li>
+    </ul>
+
+    <p>我们致力于让 Internet 保持活力，保持畅通，人人皆可贡献，人人皆可创造。我们坚信：开放平台的协作对于人的发展至关重要，也决定着我们共同的未来。</p>
+
+    <p>为了达成我们共同的理想，我们遵循一系列的价值观和理念，请参阅 <a href="https://www.mozilla.org/zh-CN/about/manifesto/">Mozilla 宣言</a>。</p>
+  </body>
+</html>
+```
+
+
+
+
+
+
+
 
 
 
