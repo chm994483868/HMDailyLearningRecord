@@ -187,6 +187,7 @@
 		8E9E98FD285303DC00160878 /* JavaScript 学习记录（九）：Meta programming.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（九）：Meta programming.md"; sourceTree = "<group>"; };
 		8E9E98FE2853102B00160878 /* JavaScript 学习记录（十）：JavaScript modules.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（十）：JavaScript modules.md"; sourceTree = "<group>"; };
 		8EA477A72858CC9200020467 /* HTML 学习记录（一）：HTML 基础预览.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（一）：HTML 基础预览.md"; sourceTree = "<group>"; };
+		8EA477A8285A0E9900020467 /* HTML 学习记录（二）：HTML 指南与教程.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（二）：HTML 指南与教程.md"; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
 		8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Optional 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
@@ -352,6 +353,7 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8EA477A9285A1EA100020467 /* Web 前端开发者 */,
 				8E7101D428294FC500BEB9A3 /* 2022面试题收集 */,
 				8E71016B2823F67200BEB9A3 /* xcodebuild */,
 				8E73B4A627D9DB6B009254D9 /* To_be_read_list  */,
@@ -721,8 +723,16 @@
 			isa = PBXGroup;
 			children = (
 				8EA477A72858CC9200020467 /* HTML 学习记录（一）：HTML 基础预览.md */,
+				8EA477A8285A0E9900020467 /* HTML 学习记录（二）：HTML 指南与教程.md */,
 			);
 			path = HTML;
+			sourceTree = "<group>";
+		};
+		8EA477A9285A1EA100020467 /* Web 前端开发者 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "Web 前端开发者";
 			sourceTree = "<group>";
 		};
 		8EACBADC27D62C5F001AB602 /* TypeScript */ = {
