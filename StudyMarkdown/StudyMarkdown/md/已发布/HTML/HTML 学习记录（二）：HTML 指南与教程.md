@@ -103,6 +103,58 @@
 + 块级元素在页面中以块的形式展现 —— 相对于其前面的内容它会出现在新的一行，其后的内容也会被挤到下一行展现。块级元素通常用于展示页面上结构化的内容，例如段落、列表、导航菜单、页脚等等。一个以 block 形式展现的块级元素不会被嵌套进内联元素中，但可以嵌套在其它块级元素中。
 + 内联元素通常出现在块级元素中并环绕文档内容的一小部分，而不是一整个段落或者一组内容。内联元素不会导致文本换行：它通常出现在一堆文字之间例如超链接元素 `<a>` 或者强调元素 `<em>` 和 `<strong>`。
 
+```javascript
+<p>第四</p><p>第五</p><p>第六</p>
+
+<em>第一</em><em>第二</em><em>第三</em>
+```
+
+&emsp;`<p>` 是一个块级元素，所以第一行代码中的每个元素分别都另起了新的一行展现，并且每个段落间都有一些间隔（这是因为默认的浏览器有着默认的展示 `<p>` 元素的 CSS styling），而 `<em>` 是一个内联元素，所以就像在下方可以看到的，第二行代码中的三个元素都没有间隙的展示在了同一行。。
+
+> &emsp;note：HTML 5 重新定义了元素的类别：[元素内容分类](https://html.spec.whatwg.org/multipage/indices.html#element-content-categories)。尽管这些新的定义更精确，但却比上述的 "块级元素" 和 "内联元素" 更难理解，在之后的讨论中仍使用旧的定义。
+
+> &emsp;note：文内提到的 "块" 和 "内联"，不应该与 [the types of CSS boxes](https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/The_box_model) 中的同名术语相混淆。尽管它们默认是相关的，但改变 CSS 显示类型并不会改变元素的分类，也不会影响它可以包含和被包含于哪些元素。防止这种混淆也是 HTML 5 摒弃这些术语的原因之一。
+
+> &emsp;note：可以查阅包含了块级元素和内联元素列表的参考页面 -— see [Block-level elements](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Block-level_elements) and [Inline elements](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Inline_elements).
+
+#### 空元素
+
+&emsp;不是所有元素都拥有开始标签、内容、结束标签。一些元素只有一个标签，通常用来在此元素所在位置插入/嵌入一些东西。例如：元素 `<img>` 是用来在元素 `<img>` 所在位置插入一张指定的图片。例子如下：
+
+```javascript
+<img src="https://roy-tian.github.io/learning-area/extras/getting-started-web/beginner-html-site/images/firefox-icon.png">
+```
+
+> &emsp;note：空元素（Empty elements）有时也被叫作 void elements。
+
+#### 属性
+
+&emsp;元素也可以拥有属性，如下开始标签中的 class 属性：
+
+```javascript
+<p class="editor-note">我的猫咪脾气爆:)</p>
+```
+
+&emsp;属性包含元素的额外信息，这些信息不会出现在实际的内容中。在上述例子中，这个 class 属性给元素赋了一个识别的名字（id），这个名字此后可以被用来识别此元素的样式信息和其他信息。
+
+&emsp;一个属性必须包含如下内容：
+
+1. 一个空格，在属性和元素名称之间。(如果已经有一个或多个属性，就与前一个属性之间有一个空格。)
+2. 属性名称，后面跟着一个等于号。
+3. 一个属性值，由一对引号 "" 引起来。
+
+&emsp;为一个元素添加属性：
+
+&emsp;另一个例子是关于元素 `<a>` 的 —— 元素 `<a>` 是锚，它使被标签包裹的内容成为一个超链接。此元素也可以添加大量的属性，其中几个如下：
+
++ href: 这个属性声明超链接的 web 地址，当这个链接被点击浏览器会跳转至 href 声明的 web 地址。例如：`href="https://www.mozilla.org/"`。
++ title: 标题 title 属性为超链接声明额外的信息，比如你将链接至的那个页面。例如：`title="The Mozilla homepage"`。当鼠标悬停在超链接上面时，这部分信息将以工具提示的形式显示。
++ target: 目标 target 属性用于指定链接如何呈现出来。例如：`target="_blank"` 将在新标签页中显示链接。如果你希望在当前标签页显示链接，忽略这个属性即可。
+
+&emsp;编辑下面的文本框中的内容，使之变成指向任一个你喜欢的 web 地址的链接。首先，添加 `<a>` 元素，然后为它添加 `href` 属性和 `title` 属性。你可以即时的在输出区域看到你修改的内容。你应该可以看到一个链接，当鼠标移上此链接时会显示 `title` 属性值，当点击此链接时会跳转到 `href` 指定的 web 地址。记住：在元素名和属性名之间以及两个属性之间要有一个空格。
+
+&emsp;布尔属性，有时你会看到没有值的属性，它是合法的。这些属性被称为布尔属性，他们只能有跟它的属性名一样的属性值。例如 disabled 属性，他们可以标记表单输入使之变为不可用 (变灰色)，此时用户不能向他们输入任何数据。
+
 
 
 
