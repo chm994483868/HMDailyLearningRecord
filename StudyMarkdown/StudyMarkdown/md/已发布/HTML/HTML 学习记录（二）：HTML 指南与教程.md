@@ -319,8 +319,32 @@
 &emsp;之前已经讲过 `<title>` 元素，它可以为文档添加标题。但别和 `<h1>` 元素搞混了，`<h1>` 是为 body 添加标题的。有时候 `<h1>` 也叫作网页标题。但是二者完全不相同。
 
 + `<h1>` 元素在页面加载完毕时显示在页面中，通常只出现一次，用来标记页面内容的标题（故事名称、新闻摘要，等等）。
-+ `<title>` 元素是一项元数据，用于表示整个 HTML 文档的标题（而不是文档内容）。
++ `<title>` 元素是一项元数据，用于表示整个 HTML 文档的标题，而不是文档内容的标题。
 
+### 一个简单的示例
+
+&emsp;如下示例 HTML：
+
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>&lt;title&gt; element</title>
+  </head>
+  <body>
+    <h1>&lt;h1&gt; element</h1>
+  </body>
+</html>
+```
+
+&emsp;在浏览器中打开此内容可看到：`<title> element` 字符串出现在标题栏中，而 `<h1> element` 字符串出现在页面内容中。 
+
+&emsp;然后我们尝试给页面添加标签，可看到 `<title element>` 字符串会被建议为书签名。
+
+&emsp;`<title>` 元素的内容也被用在搜索的结果中。
+
+### 元数据：`<meta>` 元素
 
 
 
