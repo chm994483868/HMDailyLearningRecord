@@ -188,7 +188,8 @@
 		8E9E98FE2853102B00160878 /* JavaScript 学习记录（十）：JavaScript modules.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（十）：JavaScript modules.md"; sourceTree = "<group>"; };
 		8EA477A72858CC9200020467 /* HTML 学习记录（一）：HTML 基础预览.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（一）：HTML 基础预览.md"; sourceTree = "<group>"; };
 		8EA477A8285A0E9900020467 /* HTML 学习记录（二）：HTML 入门和 HTML 中的元数据.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（二）：HTML 入门和 HTML 中的元数据.md"; sourceTree = "<group>"; };
-		8EA477AA285CAF6D00020467 /* HTML 学习记录（三）：HTML 文字处理基础.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（三）：HTML 文字处理基础.md"; sourceTree = "<group>"; };
+		8EA477AA285CAF6D00020467 /* HTML 学习记录（三）：HTML 文字处理基础和建立超链接.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（三）：HTML 文字处理基础和建立超链接.md"; sourceTree = "<group>"; };
+		8EA477AB285F5FB600020467 /* HTML 学习记录（四）：HTML 高级文本排版.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（四）：HTML 高级文本排版.md"; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
 		8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Optional 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
@@ -725,7 +726,8 @@
 			children = (
 				8EA477A72858CC9200020467 /* HTML 学习记录（一）：HTML 基础预览.md */,
 				8EA477A8285A0E9900020467 /* HTML 学习记录（二）：HTML 入门和 HTML 中的元数据.md */,
-				8EA477AA285CAF6D00020467 /* HTML 学习记录（三）：HTML 文字处理基础.md */,
+				8EA477AA285CAF6D00020467 /* HTML 学习记录（三）：HTML 文字处理基础和建立超链接.md */,
+				8EA477AB285F5FB600020467 /* HTML 学习记录（四）：HTML 高级文本排版.md */,
 			);
 			path = HTML;
 			sourceTree = "<group>";
