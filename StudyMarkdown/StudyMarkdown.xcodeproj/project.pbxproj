@@ -367,7 +367,7 @@
 				8E64803627E852A5007ADB46 /* React */,
 				8EB3AD7C27E8BF4F006336C1 /* MySQL */,
 				8ECD654D27CE4268002E63A7 /* AJAX */,
-				8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */,
+				8E8ACB5227B5ED94006D82FA /* Xcode工程相关 */,
 				8E79139627A0D0CC00900CDA /* Python */,
 				8E50F0012791A2EC00A4DBE1 /* Shell */,
 				8E50EFFF27919E5700A4DBE1 /* SwiftUI */,
@@ -704,12 +704,12 @@
 			path = Combine;
 			sourceTree = "<group>";
 		};
-		8E8ACB5227B5ED94006D82FA /* Xcode工程配置 */ = {
+		8E8ACB5227B5ED94006D82FA /* Xcode工程相关 */ = {
 			isa = PBXGroup;
 			children = (
 				8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */,
 			);
-			path = "Xcode工程配置";
+			path = "Xcode工程相关";
 			sourceTree = "<group>";
 		};
 		8E8ACB5C27BC7A1B006D82FA /* JavaScript */ = {
