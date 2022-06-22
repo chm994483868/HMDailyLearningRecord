@@ -181,6 +181,7 @@
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E80F65E27DC888B00942D35 /* SwiftUI 学习笔记（二）：Building Lists and Navigation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（二）：Building Lists and Navigation.md"; sourceTree = "<group>"; };
+		8E8A66D02862A352003DB257 /* xcodeproj 文件分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "xcodeproj 文件分析.md"; sourceTree = "<group>"; };
 		8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "cocoapods和Xcode工程.md"; sourceTree = "<group>"; };
 		8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（三）：Widgets 目录（1）.md"; sourceTree = "<group>"; };
 		8E8E5A05285026A200B5BF6B /* JavaScript 学习记录（八）：Iterators and generators.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（八）：Iterators and generators.md"; sourceTree = "<group>"; };
@@ -708,6 +709,7 @@
 			isa = PBXGroup;
 			children = (
 				8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */,
+				8E8A66D02862A352003DB257 /* xcodeproj 文件分析.md */,
 			);
 			path = "Xcode工程相关";
 			sourceTree = "<group>";
