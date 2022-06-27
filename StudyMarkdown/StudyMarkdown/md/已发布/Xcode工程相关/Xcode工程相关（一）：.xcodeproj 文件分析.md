@@ -43,7 +43,7 @@ xcodeprojDemo.xcodeproj % tree
 
 ## project.pbxproj 文件
 
-&emsp;初始 APP 工程的 project.pbxproj 文件只有 300 多行，下面我们来分析一下。
+&emsp;初始 APP 工程的 project.pbxproj 文件只有 300 多行，下面我们来看一下。
 
 ```c++
 // !$*UTF8*$!
@@ -53,19 +53,40 @@ xcodeprojDemo.xcodeproj % tree
     };
     objectVersion = 55;
     objects = {
-
+/* 构建所需的代码文件，资源文件，库文件等，平时 git 发生冲突也主要是在这个区域内冲突，你每新建一个 .h/.m 文件，就会修改这个区域, 各个 branch 都在创建的时候，容易冲突 */
 /* Begin PBXBuildFile section */
-...
+        8E8A67362863E745003DB257 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67352863E745003DB257 /* AppDelegate.swift */; };
+        8E8A67382863E745003DB257 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67372863E745003DB257 /* SceneDelegate.swift */; };
+        8E8A673A2863E745003DB257 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67392863E745003DB257 /* ViewController.swift */; };
+        8E8A673D2863E745003DB257 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8E8A673B2863E745003DB257 /* Main.storyboard */; };
+        8E8A673F2863E746003DB257 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8E8A673E2863E746003DB257 /* Assets.xcassets */; };
+        8E8A67422863E746003DB257 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8E8A67402863E746003DB257 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
+/* 记录了每个代码文件的文件类型、路径 path、sourceTree，不论引入文件的时候是 create group 还是 create reference，都会在这里添加一条记录 */
 /* Begin PBXFileReference section */
-...
+        8E8A67322863E745003DB257 /* xcodeprojDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xcodeprojDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+        8E8A67352863E745003DB257 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+        8E8A67372863E745003DB257 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+        8E8A67392863E745003DB257 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+        8E8A673C2863E745003DB257 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+        8E8A673E2863E746003DB257 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+        8E8A67412863E746003DB257 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+        8E8A67432863E746003DB257 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* 工程中所依赖的 Frameworks 的信息，对应 Build Phases 中的 `Link Binary With Libraries` */
 /* Begin PBXFrameworksBuildPhase section */
-...
+        8E8A672F2863E745003DB257 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
 /* End PBXFrameworksBuildPhase section */
 
+/* 工程中所有文件的 group 信息，这个和 xcode 文件目录是对应的，每一层的文件目录有唯一的 UUID，同一层 group 下的子 group 会和上一层的 group 的 UUID 有很高的重合度(基本只有 1-2 位不同)，这个 PBXGroup section 中，子 group 没有用树的方式，而是采用类似列表的方式呈现了所有的 group 目录，可以脑补：打开 xcode 左侧目录，然后让所有目录和文件"左对齐"，然后就会生成如下的结构` */
 /* Begin PBXGroup section */
         8E8A67292863E745003DB257 = {
             isa = PBXGroup;
@@ -99,6 +120,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End PBXGroup section */
 
+/* 每个 Target 的 BuildSettings 和 BuildPhases(Sources/Frameworks/Resources 等)的信息 */
 /* Begin PBXNativeTarget section */
         8E8A67312863E745003DB257 /* xcodeprojDemo */ = {
             isa = PBXNativeTarget;
@@ -119,6 +141,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End PBXNativeTarget section */
 
+/* 整个项目工程 Project 的信息，包括项目路径、Config 信息，相关版本号，所有的 Target 等信息 */
 /* Begin PBXProject section */
         8E8A672A2863E745003DB257 /* Project object */ = {
             isa = PBXProject;
@@ -391,8 +414,18 @@ xcodeprojDemo.xcodeproj % tree
     };
     rootObject = 8E8A672A2863E745003DB257 /* Project object */;
 }
-
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
