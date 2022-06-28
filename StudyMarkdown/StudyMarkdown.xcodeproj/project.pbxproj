@@ -40,6 +40,7 @@
 		8E50F0002791A1F100A4DBE1 /* SwiftUI 学习笔记（一）：Creating and Combining Views.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（一）：Creating and Combining Views.md"; sourceTree = "<group>"; };
 		8E51B8C52833201400B8D4C4 /* 浅学 Clang（一）：clang 指令介绍.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "浅学 Clang（一）：clang 指令介绍.md"; sourceTree = "<group>"; };
 		8E51E62F27CDAA8600F82C80 /* JavaScript Window 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript Window 学习笔记.md"; sourceTree = "<group>"; };
+		8E52DF2D2866DE8100AC7847 /* HTML 学习记录（五）：HTML 多媒体和嵌入.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（五）：HTML 多媒体和嵌入.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
@@ -730,6 +731,7 @@
 				8EA477A8285A0E9900020467 /* HTML 学习记录（二）：HTML 入门和 HTML 中的元数据.md */,
 				8EA477AA285CAF6D00020467 /* HTML 学习记录（三）：HTML 文字处理基础和建立超链接.md */,
 				8EA477AB285F5FB600020467 /* HTML 学习记录（四）：HTML 高级文本排版.md */,
+				8E52DF2D2866DE8100AC7847 /* HTML 学习记录（五）：HTML 多媒体和嵌入.md */,
 			);
 			path = HTML;
 			sourceTree = "<group>";
