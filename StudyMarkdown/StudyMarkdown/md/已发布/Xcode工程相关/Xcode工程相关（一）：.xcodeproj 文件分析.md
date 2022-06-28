@@ -4,7 +4,7 @@
 
 &emsp;.xcodeproj 文件（并不是文件而是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件 ）便是对整个项目工程信息以及项目内所有文件组织架构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 buildSettings。
 
-&emsp;.xcodeproj 文件并不是一个文件，而是一个文件夹，而其内部最重要的文件便是：project.pbxproj 文件。默认情况下 .xcodeproj 文件夹内部还有一个 xcuserdata 文件夹和 project.xcworkspace 文件夹，它们内部没什么重要信息，暂时忽略，我们把目光主要集中在 project.pbxproj 文件中，合并代码时我们大概遇到很多次 project.pbxproj 文件冲突，特别是需要手动处理时，当我们的项目大起来以后打开 project.pbxproj 看到其内部成千上万的行数差不多要当场裂开，乍一眼看上去它内部结构极其复杂，苹果在每个区域加了类似 `/* Begin xxx section */ ... /* End xxx section */` 的注释说明供我们参考😂。
+&emsp;.xcodeproj 文件并不是一个文件，而是一个文件夹，而其内部最重要的文件便是：project.pbxproj 文件。默认情况下 .xcodeproj 文件夹内部还有一个 xcuserdata 文件夹和 project.xcworkspace 文件夹，它们内部没什么重要信息，暂时忽略，我们把目光主要集中在 project.pbxproj 文件中，合并代码时我们大概遇到很多次 project.pbxproj 文件冲突，特别是需要手动处理时，当我们的项目大起来以后打开 project.pbxproj 看到其内部成千上万的行数差不多要当场裂开，乍一眼看上去它内部结构极其复杂，苹果在每个区域加了类似 `/* Begin xxx section */ ... /* End xxx section */` 的注释说明供我们参考。
 
 &emsp;project.pbxproj 文件本质是一个 ASCII text 文件。
 
@@ -53,7 +53,7 @@ xcodeprojDemo.xcodeproj % tree
     };
     objectVersion = 55;
     objects = {
-/* 构建所需的代码文件，资源文件，库文件等，平时 git 发生冲突也主要是在这个区域内冲突，你每新建一个 .h/.m 文件，就会修改这个区域, 各个 branch 都在创建的时候，容易冲突 */
+/* 构建所需的代码文件，资源文件，库文件等，平时 git 发生冲突也主要是在这个区域内冲突，每新建一个 .h/.m 文件，就会修改这个区域，各个 branch 都在创建的时候，容易冲突 */
 /* Begin PBXBuildFile section */
         8E8A67362863E745003DB257 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67352863E745003DB257 /* AppDelegate.swift */; };
         8E8A67382863E745003DB257 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67372863E745003DB257 /* SceneDelegate.swift */; };
@@ -173,6 +173,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End PBXProject section */
 
+/* 列举了项目中每个 Resources 的信息，包括 Build Phase 下 `Copy Bundle Resources` 文件、Assets.xcassets 等资源文件 */
 /* Begin PBXResourcesBuildPhase section */
         8E8A67302863E745003DB257 /* Resources */ = {
             isa = PBXResourcesBuildPhase;
@@ -186,6 +187,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End PBXResourcesBuildPhase section */
 
+/* 对应 Xcode 中 Build Phases 的 Complie Sources 的代码文件 */
 /* Begin PBXSourcesBuildPhase section */
         8E8A672E2863E745003DB257 /* Sources */ = {
             isa = PBXSourcesBuildPhase;
@@ -199,6 +201,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End PBXSourcesBuildPhase section */
 
+/* 不同地区的资源文件的引用信息，如果你项目使用了国际化，相关的 xxx.string 就在这个 section   中 */
 /* Begin PBXVariantGroup section */
         8E8A673B2863E745003DB257 /* Main.storyboard */ = {
             isa = PBXVariantGroup;
@@ -218,6 +221,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End PBXVariantGroup section */
 
+/* 在不同的 Configuration 下对应 Xcode 中 Build Settings 中的配置信息，默认的是：Debug 和 Release 两个 Configuration */
 /* Begin XCBuildConfiguration section */
         8E8A67442863E746003DB257 /* Debug */ = {
             isa = XCBuildConfiguration;
@@ -391,6 +395,7 @@ xcodeprojDemo.xcodeproj % tree
         };
 /* End XCBuildConfiguration section */
 
+/* XCBuildConfiguration 只是列举了所有 Target 的所有 Setting 项，下面这个文件区分，不同 Target 在 Debug 时使用哪个 Setting 项，在 Release 时使用哪个 Setting项 */
 /* Begin XCConfigurationList section */
         8E8A672D2863E745003DB257 /* Build configuration list for PBXProject "xcodeprojDemo" */ = {
             isa = XCConfigurationList;
@@ -440,3 +445,5 @@ xcodeprojDemo.xcodeproj % tree
 + [iOS 开发 xcode中的project.pbxproj--深入剖析](https://blog.csdn.net/kuangdacaikuang/article/details/52987132)
 + [iOS 开发：深入理解 Xcode 工程结构（一）](https://blog.csdn.net/y4x5M0nivSrJaY3X92c/article/details/84851561?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-84851561-blog-52987132.pc_relevant_aa&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-84851561-blog-52987132.pc_relevant_aa&utm_relevant_index=2)
 + [XCode工程文件结构及Xcodeproj框架的使用( 二 )](https://blog.csdn.net/ehyubewb/article/details/79954255?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-1-79954255-blog-84851561.pc_relevant_aa&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-1-79954255-blog-84851561.pc_relevant_aa&utm_relevant_index=2)
+
+   
