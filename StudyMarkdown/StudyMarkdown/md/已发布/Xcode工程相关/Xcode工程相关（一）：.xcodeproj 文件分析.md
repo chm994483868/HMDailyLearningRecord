@@ -2,11 +2,11 @@
 
 ## .xcodeproj 文件夹概述
 
-&emsp;.xcodeproj 文件（并不是文件而是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件 ）便是对整个项目工程信息以及项目内所有文件组织架构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 buildSettings。
+&emsp;.xcodeproj 文件（并不是文件而是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件）便是对整个项目工程信息以及项目内所有文件组织结构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 BuildSettings、BuildPhase。
 
 &emsp;.xcodeproj 文件并不是一个文件，而是一个文件夹，而其内部最重要的文件便是：project.pbxproj 文件。默认情况下 .xcodeproj 文件夹内部还有一个 xcuserdata 文件夹和 project.xcworkspace 文件夹，它们内部没什么重要信息，暂时忽略，我们把目光主要集中在 project.pbxproj 文件中，合并代码时我们大概遇到很多次 project.pbxproj 文件冲突，特别是需要手动处理时，当我们的项目大起来以后打开 project.pbxproj 看到其内部成千上万的行数差不多要当场裂开，乍一眼看上去它内部结构极其复杂，苹果在每个区域加了类似 `/* Begin xxx section */ ... /* End xxx section */` 的注释说明供我们参考。
 
-&emsp;project.pbxproj 文件本质是一个 ASCII text 文件。
+&emsp;project.pbxproj 文件本质是一个 ASCII text 文件。（The Xcode project file is an old-style plist (Next style) based on braces to delimit the hierarchy. 也被称为是一个旧式的 plist）
 
 ```c++
 xcodeprojDemo.xcodeproj % file project.pbxproj 
@@ -39,11 +39,13 @@ xcodeprojDemo.xcodeproj % tree
 7 directories, 5 files
 ```
 
-&emsp;那么下面我们把目光都集中到 project.pbxproj 文件内，看下它内部包含的内容都代表了什么含义。
+&emsp;那么下面我们把目光都集中到 project.pbxproj 文件上，看下它内部包含的内容都代表了什么含义。
 
 ## project.pbxproj 文件
 
 &emsp;初始 APP 工程的 project.pbxproj 文件只有 300 多行，下面我们来看一下。
+
+&emsp;map 中每个 key 是一个 24 位十六进制（96 位二进制）值。 
 
 ```c++
 // !$*UTF8*$!
