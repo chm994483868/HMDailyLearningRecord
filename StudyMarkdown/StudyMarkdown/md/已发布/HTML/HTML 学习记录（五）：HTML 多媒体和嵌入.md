@@ -253,7 +253,179 @@ p {
 
 > &emsp;note：你也许会疑惑为什么会有这样的情况存在。MP3 (音频格式) 和 MP4/H.264 (视频格式) 是被广泛支持的两种格式，并且质量良好。然而，他们却有专利的阻碍 — MP3 的专利会持续到 2017 年，而 H.264 会持续到 2027 年早期。意思也就是说浏览器若想要支持这些格式，就得支付高额的费用。此外，许多人反对软件技术垄断，支持开放的格式。这就是为什么我们需要准备不同的格式来兼容不同的浏览器。
 
-&emsp;刚刚所说的格式主要用于将音频和视频压缩成可管理的文件（原始的音频和视频文件非常大）。浏览器包含了不同的 Codecs（编解码器（从“coder-decoder”派生的混合词）是对数据流进行编码或解码的程序、算法或设备。给定的编解码器知道如何处理特定的编码或压缩技术。），如 Vorbis 和 H.264，它们用来将已压缩的音频和视频转化成二进制数字。不同的编码器和不同的容器都有各自的优缺点，在你更了解它们后，你可以自己选择使用哪个编码器和容器。
+&emsp;刚刚所说的格式主要用于将音频和视频压缩成可管理的文件（原始的音频和视频文件非常大）。浏览器包含了不同的 Codecs（编解码器（从 "coder-decoder" 派生的混合词）是对数据流进行编码或解码的程序、算法或设备。给定的编解码器知道如何处理特定的编码或压缩技术），如 Vorbis 和 H.264，它们用来将已压缩的音频和视频转化成二进制数字。不同的编码器和不同的容器都有各自的优缺点，在你更了解它们后，你可以自己选择使用哪个编码器和容器。
+
+&emsp;浏览器并不全支持相同的 Codecs，所以你得使用几个不同格式的文件来兼容不同的浏览器。如果你使用的格式都得不到浏览器的支持，那么媒体文件将不会播放。
+
+&emsp;要使你的媒体文件在不同平台，不同设备的浏览器上都可观看，这需要多种编码器组合使用，但是这是一种非常麻烦的事。
+
+&emsp;需要记住的另一件事：同一款浏览器，移动版与桌面版支持的格式可能会有不同。最重要的是，它们都可以减轻媒体播放的处理负担（对于所有媒体或仅针对其内部无法处理的特定类型）。这意味着设备的媒体支持还部分取决于用户安装了什么软件。
+
+> &emsp;note：这并没有那么简单，你可以从这里看到 [音视频编码兼容表](https://developer.mozilla.org/zh-CN/docs/Web/Media/Formats)。此外，许多移动平台的浏览器能够播放一些不支持的格式，但是它们用的却是底层系统的媒体播放器。但这也仅是现在支持。
+
+&emsp;我们该怎么做呢？请看如下例子：
+
+```javascript
+<video controls>
+  <source src="rabbit320.mp4" type="video/mp4">
+  <source src="rabbit320.webm" type="video/webm">
+  <p>你的浏览器不支持 HTML5 视频。可点击<a href="rabbit320.mp4">此链接</a>观看</p>
+</video>
+```
+
+&emsp;现在我们将 src 属性从 `<video>` 标签中移除，转而将它放在几个单独的标签 `<source>` 当中。在这个例子当中，浏览器将会检查 `<source>` 标签，并且播放第一个与其自身 codec 相匹配的媒体。你的视频应当包括 WebM 和 MP4 两种格式，这两种在目前已经足够支持大多数平台和浏览器。
+
+&emsp;每个 `<source>` 标签页含有一个 type 属性，这个属性是可选的，但是建议你添加上这个属性 — 它包含了视频文件的 MIME types ，同时浏览器也会通过检查这个属性来迅速的跳过那些不支持的格式。如果你没有添加 type 属性，浏览器会尝试加载每一个文件，直到找到一个能正确播放的格式，这样会消耗掉大量的时间和资源。
+
+&emsp;MIME type（现在称为 "媒体类型 (media type)"，但有时也是 "内容类型 (content type)"）是指示文件类型的字符串，与文件一起发送（例如，一个声音文件可能被标记为 audio/ogg ，一个图像文件可能是 image/png）。它与传统 Windows 上的文件扩展名有相同目的。
+
+### 其他 `<video>` 特性
+
+&emsp;这里有许多你可以用在 HTML5 `<video>` 上的特性，请看第三个例子：
+
+```c++
+<video controls width="400" height="400"
+       autoplay loop muted
+       poster="poster.png">
+  <source src="rabbit320.mp4" type="video/mp4">
+  <source src="rabbit320.webm" type="video/webm">
+  <p>你的浏览器不支持 HTML5 视频。可点击<a href="rabbit320.mp4">此链接</a>观看</p>
+</video>
+```
+
++ width 和 height：可以用属性控制视频的尺寸，也可以用 CSS 来控制视频尺寸。 无论使用哪种方式，视频都会保持它原始的长宽比 — 也叫做纵横比。如果你设置的尺寸没有保持视频原始长宽比，那么视频边框将会拉伸，而未被视频内容填充的部分，将会显示默认的背景颜色。
++ autoplay：这个属性会使音频和视频内容立即播放，即使页面的其他部分还没有加载完全。建议不要应用这个属性在你的网站上，因为用户们会比较反感自动播放的媒体文件。
++ loop：这个属性可以让音频或者视频文件循环播放。同样不建议使用，除非有必要。
++ muted：这个属性会导致媒体播放时，默认关闭声音。
++ poster：这个属性指向了一个图像的 URL，这个图像会在视频播放前显示。通常用于粗略的预览或者广告。
++ preload：这个属性被用来缓冲较大的文件，有 3 个值可选：
+  + "none" ：不缓冲
+  + "auto" ：页面加载后缓存媒体文件
+  + "metadata" ：仅缓冲文件的元数据
+
+&emsp;查看下面一个例子：
+
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Extra video features example</title>
+    <style>
+      video {
+        background: black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Extra video features example</h1>
+
+    <video controls width="400" height="400"
+           loop muted preload="auto"
+           poster="poster.png">
+      <source src="rabbit320.mp4" type="video/mp4">
+      <source src="rabbit320.webm" type="video/webm">
+      <p>Your browser doesn't support HTML5 video. Here is a <a href="rabbit320.mp4">link to the video</a> instead.</p>
+    </video>
+  </body>
+</html>
+```
+
+&emsp;注意示例中并没有使用 autoplay 属性在这个版本的例子中 — 如果当页面一加载就开始播放视频的话，就不会看到 poster 属性的效果了。
+
+### `<audio>` 标签
+
+&emsp;`<audio>` 标签与 `<video>` 标签的使用方式几乎完全相同，有一些细微的差别比如下面的边框不同，一个典型的例子如下：
+
+```javascript
+<audio controls>
+  <source src="viper.mp3" type="audio/mp3">
+  <source src="viper.ogg" type="audio/ogg">
+  <p>你的浏览器不支持 HTML5 音频，可点击<a href="viper.mp3">此链接</a>收听。</p>
+</audio>
+```
+
+&emsp;音频播放器所占用的空间比视频播放器要小，由于它没有视觉部件 — 你只需要显示出能控制音频播放的控件。一些与 HTML 5 `<video>` 的差异如下：
+
++ `<audio>` 标签不支持 width/height 属性 — 由于其并没有视觉部件，也就没有可以设置 width/height 的内容。
++ 同时也不支持 poster 属性 — 同样，没有视觉部件。
+
+&emsp;除此之外，`<audio>` 标签支持所有 `<video>` 标签拥有的特性 — 你可以回顾上面的章节来了解更多的有关信息。
+
+### 重新播放媒体
+
+&emsp;任何时候，你都可以在 Javascript 中调用 load() 方法来重置媒体。如果有多个由 `<source>` 标签指定的媒体来源，浏览器会从选择媒体来源开始重新加载媒体。
+
+```javascript
+const mediaElem = document.getElementById("my-media-element");
+mediaElem.load();
+```
+
+### 音轨增删事件
+
+&emsp;你可以监控媒体元素中的音频轨道，当音轨被添加或删除时，你可以通过监听相关事件来侦测到。具体来说，通过监听 AudioTrackList 对象的 addtrack 事件（即 HTMLMediaElement.audioTracks 对象），你可以及时对音轨的增加做出响应。
+
+```javascript
+const mediaElem = document.querySelector("video");
+mediaElem.audioTracks.onaddtrack = function(event) {
+  audioTrackAdded(event.track);
+}
+```
+
+## 显示音轨文本
+
+&emsp;现在，我们将讨论一个略微先进的概念，这个概念将会十分的有用。许多人不想（或者不能）听到 Web 上的音频/视频内容，至少在某些情况下是这样的，比如：
+
++ 许多人患有听觉障碍（通常来说是很难听清声音的人，或者聋人），所以他们不能听见音频中的声音。
++ 另外的情况可能是由于人们并不能听音频，可能是因为他们在一个非常嘈杂的环境当中（比如在一个拥挤的酒吧内恰好赶上了球赛），也可能是由于他们并不想打扰到其他人（比如在一个十分安静的地方，例如图书馆）。
++ 有一些人他们不说音频当中的语言，所以他们听不懂，因此他们想要一个副本或者是翻译来帮助他们理解媒体内容。
+
+&emsp;给那些听不懂音频语言的人们提供一个音频内容的副本岂不是一件很棒的事情吗？所以，感谢 HTML5 `<video>` 使之成为可能，有了 WebVTT 格式，你可以使用 `<track>` 标签。
+
+&emsp;WebVTT 是一个格式，用来编写文本文件，这个文本文件包含了众多的字符串，这些字符串会带有一些元数据，它们可以用来描述这个字符串将会在视频中显示的时间，甚至可以用来描述这些字符串的样式以及定位信息。这些字符串叫做 cues ，你可以根据不同的需求来显示不同的样式，最常见的如下：
+
++ subtitles：通过添加翻译字幕，来帮助那些听不懂外国语言的人们理解音频当中的内容。
++ captions：同步翻译对白，或是描述一些有重要信息的声音，来帮助那些不能听音频的人们理解音频中的内容。
++ timed descriptions：将文字转换为音频，用于服务那些有视觉障碍的人。
+
+&emsp;一个典型的 WebVTT 文件如下：
+
+```javascript
+WEBVTT
+
+1
+00:00:22.230 --> 00:00:24.606
+第一段字幕
+
+2
+00:00:30.739 --> 00:00:34.074
+第二段
+
+  ...
+```
+
+&emsp;让其与 HTML 媒体一起显示，你需要做如下工作：
+
+1. 以 .vtt 后缀名保存文件。
+2. 用 `<track>` 标签链接 .vtt 文件，`<track>` 标签需放在 `<audio>` 或 `<video>` 标签当中，同时需要放在所有 `<source>` 标签之后。使用 kind 属性来指明是哪一种类型，如 subtitles、captions、descriptions。然后，使用 srclang 来告诉浏览器你是用什么语言来编写的 subtitles。
+
+&emsp;如下：
+
+```javascript
+<video controls>
+    <source src="example.mp4" type="video/mp4">
+    <source src="example.webm" type="video/webm">
+    <track kind="subtitles" src="subtitles_en.vtt" srclang="en">
+</video>
+```
+
+> &emsp;note：文本轨道会使你的网站更容易被搜索引擎抓取到（SEO），由于搜索引擎的文本抓取能力非常强大，使用文本轨道甚至可以让搜索引擎通过视频的内容直接链接。
+
+## 从 `<object>` 到 `<iframe>` — 其他嵌入技术
+
+&emsp;在这一节，我们将来了解一些另辟蹊径的内容，看一组元素，它们可以让你在页面中嵌入许多不同类型的内容：`<iframe>`、`<embed>` 和 `<object>` 元素。`<iframe>` 用来嵌入其他网页，而另外两者可以帮助你嵌入 PDF、SVG 甚至是 Flash — 一种逐渐退出历史舞台的技术，不过也许你还是能时不时的看到它。
+
+
 
 
 
