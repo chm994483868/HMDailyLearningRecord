@@ -2,11 +2,11 @@
 
 ## .xcodeproj 文件夹概述
 
-&emsp;.xcodeproj 文件（并不是文件而是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件 ）便是对整个项目工程信息以及项目内所有文件组织架构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 buildSettings。
+&emsp;.xcodeproj 文件（并不是文件而是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件）便是对整个项目工程信息以及项目内所有文件组织结构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 BuildSettings、BuildPhase。
 
 &emsp;.xcodeproj 文件并不是一个文件，而是一个文件夹，而其内部最重要的文件便是：project.pbxproj 文件。默认情况下 .xcodeproj 文件夹内部还有一个 xcuserdata 文件夹和 project.xcworkspace 文件夹，它们内部没什么重要信息，暂时忽略，我们把目光主要集中在 project.pbxproj 文件中，合并代码时我们大概遇到很多次 project.pbxproj 文件冲突，特别是需要手动处理时，当我们的项目大起来以后打开 project.pbxproj 看到其内部成千上万的行数差不多要当场裂开，乍一眼看上去它内部结构极其复杂，苹果在每个区域加了类似 `/* Begin xxx section */ ... /* End xxx section */` 的注释说明供我们参考。
 
-&emsp;project.pbxproj 文件本质是一个 ASCII text 文件。
+&emsp;project.pbxproj 文件本质是一个 ASCII text 文件。（The Xcode project file is an old-style plist (Next style) based on braces to delimit the hierarchy. 也被称为是一个旧式的 plist）
 
 ```c++
 xcodeprojDemo.xcodeproj % file project.pbxproj 
@@ -39,11 +39,15 @@ xcodeprojDemo.xcodeproj % tree
 7 directories, 5 files
 ```
 
-&emsp;那么下面我们把目光都集中到 project.pbxproj 文件内，看下它内部包含的内容都代表了什么含义。
+&emsp;那么下面我们把目光都集中到 project.pbxproj 文件上，看下它内部包含的内容都代表了什么含义。
 
 ## project.pbxproj 文件
 
-&emsp;初始 APP 工程的 project.pbxproj 文件只有 300 多行，下面我们来看一下。
+&emsp;project.pbxproj 文件是一个旧式的 plist（Next style），基于大括号来分隔层次结构。该文件以显式编码信息开头，通常是 UTF-8 编码信息。这意味着文件在开始时不得带有 BOM（Byte Ordering Mark），否则解析将失败。
+
+&emsp;project.pbxproj 文件是类似于 JSON 的结构，重要的内容都包含在 objects 属性中，objects 是嵌套的一个 map，它其中的每个元素都由 24 位十六进制（96 位二进制位）表示形式的标识符作为唯一标识。此唯一标识符在整个文档中是唯一的。
+
+&emsp;把 objects 中的内容摘出来后，project.pbxproj 文件内容如下，其中 rootObject 指向 PBXProject section。PBXProject 为根节点，代表着整个工程。PBXProject 中的 targets 字段是一个数组，可以包含多个 PBXNativeTarget，每个 PBXNativeTarget 代表着工程中的一个 target（这里需要理解 Project 和 Target 的关系）
 
 ```c++
 // !$*UTF8*$!
@@ -53,7 +57,23 @@ xcodeprojDemo.xcodeproj % tree
     };
     objectVersion = 55;
     objects = {
-/* 构建所需的代码文件，资源文件，库文件等，平时 git 发生冲突也主要是在这个区域内冲突，每新建一个 .h/.m 文件，就会修改这个区域，各个 branch 都在创建的时候，容易冲突 */
+        ......
+    };
+    rootObject = 8E8A672A2863E745003DB257 /* Project object */;
+}
+```
+
+![截屏2022-06-30 09.25.16.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/674134c4124b4e29ade7b8c0eed541ad~tplv-k3u1fbpfcp-watermark.image?)
+
+&emsp;objects 中的内容被使用 `/* Begin xxx section */ ... /* End xxx section */` 格式的注释化作了一个一个区域，每个区域的几个元素加在一起表示工程的一些局部信息，下面我们一起来看看都有哪些内容。
+
+&emsp;下面我们集中目光看 objects 中的内容。
+
+### PBXBuildFile
+
+&emsp;构建所需的代码文件、资源文件、库文件等，平时 git 发生冲突也主要是在这个区域内冲突，每新建一个 .h/.m 文件，就会修改这个区域，各个 branch 都在创建的时候，容易冲突。
+
+```c++
 /* Begin PBXBuildFile section */
         8E8A67362863E745003DB257 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67352863E745003DB257 /* AppDelegate.swift */; };
         8E8A67382863E745003DB257 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8A67372863E745003DB257 /* SceneDelegate.swift */; };
@@ -62,8 +82,13 @@ xcodeprojDemo.xcodeproj % tree
         8E8A673F2863E746003DB257 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8E8A673E2863E746003DB257 /* Assets.xcassets */; };
         8E8A67422863E746003DB257 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8E8A67402863E746003DB257 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
+```
 
-/* 记录了每个代码文件的文件类型、路径 path、sourceTree，不论引入文件的时候是 create group 还是 create reference，都会在这里添加一条记录 */
+### PBXFileReference
+
+&emsp;记录了每个代码文件的文件类型、路径 path、sourceTree，不论引入文件的时候是 create group 还是 create reference，都会在这里添加一条记录。
+
+```c++
 /* Begin PBXFileReference section */
         8E8A67322863E745003DB257 /* xcodeprojDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xcodeprojDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
         8E8A67352863E745003DB257 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -74,8 +99,13 @@ xcodeprojDemo.xcodeproj % tree
         8E8A67412863E746003DB257 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
         8E8A67432863E746003DB257 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+```
 
-/* 工程中所依赖的 Frameworks 的信息，对应 Build Phases 中的 `Link Binary With Libraries` */
+### PBXFrameworksBuildPhase
+
+&emsp;在这个 section 中配置的是工程依赖的系统 framework、系统库、非系统 framework、非系统静态库，对应 Build Phases 中的 `Link Binary With Libraries`。可以在工程配置 Build Phases 的 Link Binary With Libraries 中配置。
+
+```c++
 /* Begin PBXFrameworksBuildPhase section */
         8E8A672F2863E745003DB257 /* Frameworks */ = {
             isa = PBXFrameworksBuildPhase;
@@ -85,8 +115,13 @@ xcodeprojDemo.xcodeproj % tree
             runOnlyForDeploymentPostprocessing = 0;
         };
 /* End PBXFrameworksBuildPhase section */
+```
 
-/* 工程中所有文件的 group 信息，这个和 xcode 文件目录是对应的，每一层的文件目录有唯一的 UUID，同一层 group 下的子 group 会和上一层的 group 的 UUID 有很高的重合度(基本只有 1-2 位不同)，这个 PBXGroup section 中，子 group 没有用树的方式，而是采用类似列表的方式呈现了所有的 group 目录，可以脑补：打开 xcode 左侧目录，然后让所有目录和文件"左对齐"，然后就会生成如下的结构` */
+### PBXGroup
+
+&emsp;工程中所有文件的 group 信息，这个和 xcode 文件目录是对应的，每一层的文件目录有唯一的 UUID，同一层 group 下的子 group 会和上一层的 group 的 UUID 有很高的重合度(基本只有 1-2 位不同)，这个 PBXGroup section 中，子 group 没有用树的方式，而是采用类似列表的方式呈现了所有的 group 目录，可以脑补：打开 xcode 左侧目录，然后让所有目录和文件 "左对齐"，然后就会生成如下的结构。
+
+```c++
 /* Begin PBXGroup section */
         8E8A67292863E745003DB257 = {
             isa = PBXGroup;
@@ -119,8 +154,13 @@ xcodeprojDemo.xcodeproj % tree
             sourceTree = "<group>";
         };
 /* End PBXGroup section */
+```
 
-/* 每个 Target 的 BuildSettings 和 BuildPhases(Sources/Frameworks/Resources 等)的信息 */
+### PBXNativeTarget
+
+&emsp;每个 Target 的 BuildSettings 和 BuildPhases(Sources/Frameworks/Resources 等)的信息。
+
+```c++
 /* Begin PBXNativeTarget section */
         8E8A67312863E745003DB257 /* xcodeprojDemo */ = {
             isa = PBXNativeTarget;
@@ -140,8 +180,13 @@ xcodeprojDemo.xcodeproj % tree
             productType = "com.apple.product-type.application";
         };
 /* End PBXNativeTarget section */
+```
 
-/* 整个项目工程 Project 的信息，包括项目路径、Config 信息，相关版本号，所有的 Target 等信息 */
+### PBXProject
+
+&emsp;整个项目工程 Project 的信息，包括项目路径、Config 信息，相关版本号，所有的 Target 等信息。
+
+```c++
 /* Begin PBXProject section */
         8E8A672A2863E745003DB257 /* Project object */ = {
             isa = PBXProject;
@@ -172,8 +217,13 @@ xcodeprojDemo.xcodeproj % tree
             );
         };
 /* End PBXProject section */
+```
 
-/* 列举了项目中每个 Resources 的信息，包括 Build Phase 下 `Copy Bundle Resources` 文件、Assets.xcassets 等资源文件 */
+### PBXResourcesBuildPhase
+
+&emsp;列举了项目中每个 Resources 的信息，包括 Build Phase 下 `Copy Bundle Resources` 文件、Assets.xcassets 等资源文件。
+
+```c++
 /* Begin PBXResourcesBuildPhase section */
         8E8A67302863E745003DB257 /* Resources */ = {
             isa = PBXResourcesBuildPhase;
@@ -186,8 +236,13 @@ xcodeprojDemo.xcodeproj % tree
             runOnlyForDeploymentPostprocessing = 0;
         };
 /* End PBXResourcesBuildPhase section */
+```
 
-/* 对应 Xcode 中 Build Phases 的 Complie Sources 的代码文件 */
+### PBXSourcesBuildPhase
+
+&emsp;对应 Xcode 中 Build Phases 的 Complie Sources 的代码文件。
+
+```c++
 /* Begin PBXSourcesBuildPhase section */
         8E8A672E2863E745003DB257 /* Sources */ = {
             isa = PBXSourcesBuildPhase;
@@ -200,8 +255,13 @@ xcodeprojDemo.xcodeproj % tree
             runOnlyForDeploymentPostprocessing = 0;
         };
 /* End PBXSourcesBuildPhase section */
+```
 
-/* 不同地区的资源文件的引用信息，如果你项目使用了国际化，相关的 xxx.string 就在这个 section   中 */
+### PBXVariantGroup
+
+&emsp;不同地区的资源文件的引用信息，如果你项目使用了国际化，相关的 xxx.string 就在这个 section 中。
+
+```c++
 /* Begin PBXVariantGroup section */
         8E8A673B2863E745003DB257 /* Main.storyboard */ = {
             isa = PBXVariantGroup;
@@ -220,8 +280,13 @@ xcodeprojDemo.xcodeproj % tree
             sourceTree = "<group>";
         };
 /* End PBXVariantGroup section */
+```
 
-/* 在不同的 Configuration 下对应 Xcode 中 Build Settings 中的配置信息，默认的是：Debug 和 Release 两个 Configuration */
+### XCBuildConfiguration
+
+&emsp;在不同的 Configuration 下对应 Xcode 中 Build Settings 中的配置信息，默认的是：Debug 和 Release 两个 Configuration。
+
+```c++
 /* Begin XCBuildConfiguration section */
         8E8A67442863E746003DB257 /* Debug */ = {
             isa = XCBuildConfiguration;
@@ -394,8 +459,13 @@ xcodeprojDemo.xcodeproj % tree
             name = Release;
         };
 /* End XCBuildConfiguration section */
+```
 
-/* XCBuildConfiguration 只是列举了所有 Target 的所有 Setting 项，下面这个文件区分，不同 Target 在 Debug 时使用哪个 Setting 项，在 Release 时使用哪个 Setting项 */
+### XCConfigurationList
+
+&emsp;XCBuildConfiguration 只是列举了所有 Target 的所有 Setting 项，下面这个文件区分，不同 Target 在 Debug 时使用哪个 Setting 项，在 Release 时使用哪个 Setting 项。
+
+```c++
 /* Begin XCConfigurationList section */
         8E8A672D2863E745003DB257 /* Build configuration list for PBXProject "xcodeprojDemo" */ = {
             isa = XCConfigurationList;
@@ -416,22 +486,7 @@ xcodeprojDemo.xcodeproj % tree
             defaultConfigurationName = Release;
         };
 /* End XCConfigurationList section */
-    };
-    rootObject = 8E8A672A2863E745003DB257 /* Project object */;
-}
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
