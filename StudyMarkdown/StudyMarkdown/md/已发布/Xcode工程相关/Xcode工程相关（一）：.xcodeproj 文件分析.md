@@ -2,22 +2,24 @@
 
 ## .xcodeproj 文件夹概述
 
-&emsp;.xcodeproj 文件（并不是文件而是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件）便是对整个项目工程信息以及项目内所有文件组织结构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 BuildSettings、BuildPhase。
+&emsp;.xcodeproj 文件（并不是文件其实是一个文件夹）我们大概再熟悉不过，每次创建一个 Xcode 的 App 项目，根目录下面默认就是一个 **项目名.xcodeprogj** 文件和一个 **项目名文件夹**，项目名文件夹里面是我们的初始几个文件：Assets.xcassets、Main.storybord、LaunchScreen.storyboard、Info.plist、.swift 文件，而 .xcodeproj 文件（内部的 project.pbxproj 文件）便是对整个项目工程信息以及项目内所有文件组织结构进行描述，它包含两个最重要的部分：项目内文件的引用和项目的 BuildSettings、BuildPhase 等。
 
-&emsp;.xcodeproj 文件并不是一个文件，而是一个文件夹，而其内部最重要的文件便是：project.pbxproj 文件。默认情况下 .xcodeproj 文件夹内部还有一个 xcuserdata 文件夹和 project.xcworkspace 文件夹，它们内部没什么重要信息，暂时忽略，我们把目光主要集中在 project.pbxproj 文件中，合并代码时我们大概遇到很多次 project.pbxproj 文件冲突，特别是需要手动处理时，当我们的项目大起来以后打开 project.pbxproj 看到其内部成千上万的行数差不多要当场裂开，乍一眼看上去它内部结构极其复杂，苹果在每个区域加了类似 `/* Begin xxx section */ ... /* End xxx section */` 的注释说明供我们参考。
+&emsp;.xcodeproj 文件并不是一个文件，而是一个文件夹，而其内部最重要的文件便是：project.pbxproj 文件。默认情况下 .xcodeproj 文件夹内部还有一个 xcuserdata 文件夹和 project.xcworkspace 文件夹，它们内部没什么重要信息，暂时忽略，我们把目光主要集中在 project.pbxproj 文件中，合并代码时我们大概遇到过很多次 project.pbxproj 文件冲突，特别是需要手动处理时，当我们的项目大起来以后打开 project.pbxproj 看到其内部成千上万的行数差不多要当场裂开，乍一眼看上去它内部结构极其复杂，仔细看下的话也可以发现清晰的规律，每个区域的划分都遵循一个规则，苹果在每个区域加了类似 `/* Begin xxx section */ ... /* End xxx section */` 的注释说明供我们参考。
 
-&emsp;project.pbxproj 文件本质是一个 ASCII text 文件。（The Xcode project file is an old-style plist (Next style) based on braces to delimit the hierarchy. 也被称为是一个旧式的 plist）
+&emsp;project.pbxproj 文件本质是一个 ASCII text 文件，但是看下来觉得更像是一个类似 JSON 的结构。（The Xcode project file is an old-style plist (Next style) based on braces to delimit the hierarchy. 也被称为是一个旧式的 plist）
+
+&emsp;使用 file 命令看到 project.pbxproj 文件是一个 ASCII text 文件：
 
 ```c++
 xcodeprojDemo.xcodeproj % file project.pbxproj 
 project.pbxproj: ASCII text
 ```
 
-&emsp;附带我们看一下 .xcodeproj 文件夹的内部组织：
+&emsp;附带使用 tree 命令我们看一下 .xcodeproj 文件夹的内部组织：
 
 ```javascript
 xcodeprojDemo % file xcodeprojDemo.xcodeproj 
-xcodeprojDemo.xcodeproj: directory
+xcodeprojDemo.xcodeproj: directory // xcodeproj 是一个文件夹
 xcodeprojDemo % cd xcodeprojDemo.xcodeproj 
 xcodeprojDemo.xcodeproj % ls
 project.pbxproj        project.xcworkspace    xcuserdata
@@ -39,16 +41,34 @@ xcodeprojDemo.xcodeproj % tree
 7 directories, 5 files
 ```
 
-&emsp;那么下面我们把目光都集中到 project.pbxproj 文件上，看下它内部包含的内容都代表了什么含义。
+&emsp;.xcodeproj 文件夹内部 7 个文件夹，5 个文件，下面我们把目光都集中到 project.pbxproj 文件上，看下它内部包含的内容都代表了什么含义。
 
 ## project.pbxproj 文件
 
-&emsp;project.pbxproj 文件是一个旧式的 plist（Next style），基于大括号来分隔层次结构。该文件以显式编码信息开头，通常是 UTF-8 编码信息。这意味着文件在开始时不得带有 BOM（Byte Ordering Mark），否则解析将失败。
+&emsp;project.pbxproj 文件是一个旧式的 plist（Next style），基于大括号来分隔层次结构。该文件以显式编码信息开头，通常是 UTF-8 编码信息。这意味着文件在开始时不得不带有 BOM（Byte Ordering Mark），否则解析将失败。
 
-&emsp;project.pbxproj 文件是类似于 JSON 的结构，重要的内容都包含在 objects 属性中，objects 是嵌套的一个 map，它其中的每个元素都由 24 位十六进制（96 位二进制位）表示形式的标识符作为唯一标识。此唯一标识符在整个文档中是唯一的。
+&emsp;project.pbxproj 文件更类似于 JSON 结构，重要的内容都包含在 objects 属性中，objects 嵌套其中，它其中的每个属性都由 24 位十六进制（96 位二进制位）表示形式的标识符作为唯一标识。此唯一标识符在整个文档中是唯一的。
 
-&emsp;把 objects 中的内容摘出来后，project.pbxproj 文件内容如下，其中 rootObject 指向 PBXProject section。PBXProject 为根节点，代表着整个工程。PBXProject 中的 targets 字段是一个数组，可以包含多个 PBXNativeTarget，每个 PBXNativeTarget 代表着工程中的一个 target（这里需要理解 Project 和 Target 的关系）
+&emsp;把 objects 中的内容摘出来后，project.pbxproj 文件内容如下，其中 rootObject 指向 PBXProject section。PBXProject 为根节点，代表着整个工程。PBXProject 中的 targets 属性是一个数组，可以包含多个 PBXNativeTarget，每个 PBXNativeTarget 代表着工程中的一个 target（这里需要理解 Project 和 Target 的包含关系），它维护着自己的需要编译的代码源文件（PBXSourcesBuildPhase）、storyboard 和 Assets.xcassets 等资源文件（PBXResourcesBuildPhase）以及依赖的库（PBXFrameworksBuildPhase，如：系统 framework、系统库、非系统 framework、非系统静态库）。
 
+
+
+
+            buildPhases = (
+                
+                /* 指向 PBXSourcesBuildPhase section，对应 Build Phases 中的 Compile Sources，表示那些需要编译的代码源文件 */
+                8E8A672E2863E745003DB257 /* Sources */,
+                
+                /* 指向 PBXFrameworksBuildPhase section，对应 Build Phases 中的 Link Binary With Libraries，表示引入的 framework 等库 */
+                8E8A672F2863E745003DB257 /* Frameworks */,
+                
+                /* 指向 PBXResourcesBuildPhase section，对应 Build Phases 中的 Copy Bundle Resources，表示项目资源文件，例如：LaunchScreen 和 Main Storyboard 以及 Assets.xcassets 文件 */
+                8E8A67302863E745003DB257 /* Resources */,
+            );
+            
+            
+            
+            
 ```c++
 // !$*UTF8*$!
 {
@@ -71,7 +91,7 @@ xcodeprojDemo.xcodeproj % tree
 
 ### PBXBuildFile
 
-&emsp;构建所需的代码文件、资源文件、库文件等，平时 git 发生冲突也主要是在这个区域内冲突，每新建一个 .h/.m 文件，就会修改这个区域，各个 branch 都在创建的时候，容易冲突。
+&emsp;构建所需的代码源文件、资源文件、引入库等，平时 git 发生冲突也主要是在这个区域内冲突，每新建一个 .h/.m 文件，就会修改这个区域，各个 branch 都在创建的时候，容易冲突。
 
 ```c++
 /* Begin PBXBuildFile section */
@@ -158,16 +178,25 @@ xcodeprojDemo.xcodeproj % tree
 
 ### PBXNativeTarget
 
-&emsp;每个 Target 的 BuildSettings 和 BuildPhases(Sources/Frameworks/Resources 等)的信息。
+&emsp;每个 Target 的 Build Settings 和 Build Phases（Sources/Frameworks/Resources 等）的信息。
 
 ```c++
 /* Begin PBXNativeTarget section */
         8E8A67312863E745003DB257 /* xcodeprojDemo */ = {
             isa = PBXNativeTarget;
+            
+            /* buildConfigurationList 属性指向了 Target 的 Configurations 列表，默认的：Debug 和 Release */
             buildConfigurationList = 8E8A67462863E746003DB257 /* Build configuration list for PBXNativeTarget "xcodeprojDemo" */;
+            
             buildPhases = (
+                
+                /* 指向 PBXSourcesBuildPhase section，对应 Build Phases 中的 Compile Sources，表示那些需要编译的代码源文件 */
                 8E8A672E2863E745003DB257 /* Sources */,
+                
+                /* 指向 PBXFrameworksBuildPhase section，对应 Build Phases 中的 Link Binary With Libraries，表示引入的系统 framework、系统库、非系统 framework、非系统静态库 */
                 8E8A672F2863E745003DB257 /* Frameworks */,
+                
+                /* 指向 PBXResourcesBuildPhase section，对应 Build Phases 中的 Copy Bundle Resources，表示 Target 使用的资源文件，例如：LaunchScreen 和 Main Storyboard、Assets.xcassets 文件、图片、音频、视频文件等 */
                 8E8A67302863E745003DB257 /* Resources */,
             );
             buildRules = (
@@ -200,7 +229,10 @@ xcodeprojDemo.xcodeproj % tree
                     };
                 };
             };
+            
+            /* buildConfigurationList 属性指向了 Project 的 Configuration 列表，默认的：Debug 和 Release */
             buildConfigurationList = 8E8A672D2863E745003DB257 /* Build configuration list for PBXProject "xcodeprojDemo" */;
+            
             compatibilityVersion = "Xcode 13.0";
             developmentRegion = en;
             hasScannedForEncodings = 0;
@@ -212,6 +244,8 @@ xcodeprojDemo.xcodeproj % tree
             productRefGroup = 8E8A67332863E745003DB257 /* Products */;
             projectDirPath = "";
             projectRoot = "";
+            
+            /* 当前 Project 下的 target 列表，默认情况下只有一个和 Project 同名的 Target */
             targets = (
                 8E8A67312863E745003DB257 /* xcodeprojDemo */,
             );
@@ -221,7 +255,7 @@ xcodeprojDemo.xcodeproj % tree
 
 ### PBXResourcesBuildPhase
 
-&emsp;列举了项目中每个 Resources 的信息，包括 Build Phase 下 `Copy Bundle Resources` 文件、Assets.xcassets 等资源文件。
+&emsp;列举了项目中每个 Resources 的信息，对应 Build Phase 下的 `Copy Bundle Resources`，例如：LaunchScreen、Main Storyboaryd、Assets.xcassets 等资源文件。
 
 ```c++
 /* Begin PBXResourcesBuildPhase section */
