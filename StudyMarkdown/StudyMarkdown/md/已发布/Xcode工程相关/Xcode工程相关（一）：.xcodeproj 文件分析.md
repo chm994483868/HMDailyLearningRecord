@@ -54,13 +54,13 @@ xcodeprojDemo.xcodeproj % tree
 ```c++ 
 ( "1", "2", "3" )
 ```
- 
+
 &emsp;字典：
 
 ```c++ 
-{ 
-"key" = "value"; 
-... 
+{
+"key" = "value";
+...
 }
 ```
 
