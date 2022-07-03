@@ -12,4 +12,3 @@
 + [XCode工程文件结构及Xcodeproj框架的使用( 二 )](https://blog.csdn.net/ehyubewb/article/details/79954255?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-1-79954255-blog-84851561.pc_relevant_aa&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-1-79954255-blog-84851561.pc_relevant_aa&utm_relevant_index=2)
 + [simonwagner/mergepbx](https://github.com/simonwagner/mergepbx)
 + [mjmsmith/pbxplorer](https://github.com/mjmsmith/pbxplorer)
-+ [iOS 开发 xcode中的project.pbxproj--深入剖析](https://blog.csdn.net/kuangdacaikuang/article/details/52987132)
