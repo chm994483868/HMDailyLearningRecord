@@ -170,7 +170,7 @@
 		8E64803727E85310007ADB46 /* React 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "React 学习笔记.md"; sourceTree = "<group>"; };
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
 		8E71016C2823F6A600BEB9A3 /* Xcode 相关的一些 Concepts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Xcode 相关的一些 Concepts.md"; sourceTree = "<group>"; };
-		8E7101D528294FF000BEB9A3 /* 2022 面试题收集.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2022 面试题收集.md"; sourceTree = "<group>"; };
+		8E7101D528294FF000BEB9A3 /* 2022 学习计划.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2022 学习计划.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
 		8E73B42C27D58674009254D9 /* jQuery 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "jQuery 学习笔记.md"; sourceTree = "<group>"; };
 		8E73B44D27D5ACC4009254D9 /* associatedtype 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "associatedtype 学习笔记.md"; sourceTree = "<group>"; };
@@ -359,7 +359,7 @@
 			isa = PBXGroup;
 			children = (
 				8EA477A9285A1EA100020467 /* Web 前端开发者 */,
-				8E7101D428294FC500BEB9A3 /* 2022面试题收集 */,
+				8E7101D428294FC500BEB9A3 /* 2022学习计划 */,
 				8E71016B2823F67200BEB9A3 /* xcodebuild */,
 				8E73B4A627D9DB6B009254D9 /* To_be_read_list  */,
 				8E73B46A27D708AE009254D9 /* Dart */,
@@ -659,12 +659,12 @@
 			path = xcodebuild;
 			sourceTree = "<group>";
 		};
-		8E7101D428294FC500BEB9A3 /* 2022面试题收集 */ = {
+		8E7101D428294FC500BEB9A3 /* 2022学习计划 */ = {
 			isa = PBXGroup;
 			children = (
-				8E7101D528294FF000BEB9A3 /* 2022 面试题收集.md */,
+				8E7101D528294FF000BEB9A3 /* 2022 学习计划.md */,
 			);
-			path = "2022面试题收集";
+			path = "2022学习计划";
 			sourceTree = "<group>";
 		};
 		8E73B42B27D58632009254D9 /* jQuery */ = {
