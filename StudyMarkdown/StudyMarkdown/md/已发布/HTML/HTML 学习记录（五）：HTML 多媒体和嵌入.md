@@ -627,20 +627,102 @@ WEBVTT
 &emsp;在网上，你会和两种类型的图片打交道 — 位图和矢量图：
 
 + 位图使用像素网格来定义 — 一个位图文件精确得包含了每个像素的位置和它的色彩信息。流行的位图格式包括 Bitmap (.bmp), PNG (.png), JPEG (.jpg), and GIF (.gif.)
++ 矢量图使用算法来定义 — 一个矢量图文件包含了图形和路径的定义，电脑可以根据这些定义计算出当它们在屏幕上渲染时应该呈现的样子。SVG 格式可以让我们创造用于 Web 的精彩的矢量图形。
 
+&emsp;为了让你清楚的认识到两者的区别，我们来一个例子。查看这个例子：[vector-versus-raster.html](https://mdn.github.io/learning-area/html/multimedia-and-embedding/adding-vector-graphics-to-the-web/vector-versus-raster.html) — 它并排展示了两个看起来一致的图像，一个红色的五角星以及黑色的阴影。不同的是，左边的是 PNG，而右边的是 SVG 图像。
 
+&emsp;当你放大网页的时候，区别就会变得明显起来 — 随着你的放大，PNG 图片变得像素化了，因为它存储是每个像素的颜色和位置信息 — 当它被放大时，每个像素就被放大以填满屏幕上更多的像素，所以图像就会开始变得马赛克感觉。矢量图像看起来仍然效果很好且清晰，因为无论它的尺寸如何，都使用算法来计算出图像的形状，仅仅是根据放大的倍数来调整算法中的值。
 
+&emsp;此外，矢量图形相较于同样的位图，通常拥有更小的体积，因为它们仅需储存少量的算法，而不是逐个储存每个像素的信息。
 
+## SVG 是什么？
 
+&emsp;SVG 是用于描述矢量图像的 XML 语言。它基本上是像 HTML 一样的标记，只是你有许多不同的元素来定义要显示在图像中的形状，以及要应用于这些形状的效果。SVG 用于标记图形，而不是内容。非常简单，你有一些元素来创建简单图形，如 `<circle>` 和 `<rect>`。更高级的 SVG 功能包括 `<feColorMatrix>`（使用变换矩阵转换颜色）`<animate>` （矢量图形的动画部分）和 `<mask>`（在图像顶部应用模板）。
 
+> &emsp;note：可扩展标记语言（XML）是由 W3C 指定的一种通用标记语言。信息技术（IT）行业使用许多基于 XML 的语言作为数据描述性语言。
+  XML 标签 类似 HTML 标签，但由于 XML 允许用户定义他们自己的标签，所以 XML 更加灵活。从这个层面来看，XML 表现的像一种元语言 —— 也就是说，它可以被用来定义其他语言，例如 RSS。不仅如此，HTML 是陈述性语言，而 XML 是数据描述性语言。这意味着 XML 除了 Web 之外有更远更广的应用。例如，Web 服务可以利用 XML 去交换请求和响应。
 
+> &emsp;note：RSS（简易信息聚合）指的是用于发布站点更新的数种 XML 文档格式。当你订阅一个网站的 RSS 摘要时，网站会将 RSS 信息和更新信息发送到一个称为资讯（feed）的 RSS 文档中，因此你无需手动查看所有喜爱的网站就可以获取这些网站的更新动态。
 
+&emsp;作为一个简单的例子，以下代码创建一个圆和一个矩形：
 
+```javascript
+<svg version="1.1"
+     baseProfile="full"
+     width="300" height="200"
+     xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="black" />
+  <circle cx="150" cy="100" r="90" fill="blue" />
+</svg>
+```
 
+&emsp;从上面的例子可以看出，SVG 很容易手工编码。是的，你可以在文本编辑器中手动编写简单的 SVG，但是对于复杂的图像，这很快就开始变得非常困难。为了创建 SVG 图像，大多数人使用矢量图形编辑器，如 Inkscape 或 Illustrator。这些软件包允许你使用各种图形工具创建各种插图，并创建照片的近似值（例如 Inkscape 的跟踪位图功能）。
 
+&emsp;SVG 除了迄今为止所描述的以外还有其他优点：
 
++ 矢量图像中的文本仍然可访问（这也有利于 SEO）。
++ SVG 可以很好地适应样式/脚本，因为图像的每个组件都是可以通过 CSS 或通过 JavaScript 编写的样式的元素。
 
+&emsp;那么为什么会有人想使用光栅图形而不是 SVG？其实 SVG 确实有一些缺点：
 
++ SVG 非常容易变得复杂，这意味着文件大小会增加; 复杂的 SVG 也会在浏览器中占用很长的处理时间。
++ SVG 可能比栅格图像更难创建，具体取决于你尝试创建哪种图像。
++ 旧版浏览器不支持 SVG，因此如果你需要在网站上支持旧版本的 IE，则可能不适合（SVG 从 IE9 开始得到支持）。
+
+&emsp;由于上述原因，光栅图形更适合照片那样复杂精密的图像。
+
+> &emsp;note：在 Inkscape 中，将文件保存为纯 SVG 以节省空间。
+
+## 将 SVG 添加到页面
+
+&emsp;在本节中，我们将介绍将 SVG 矢量图形添加到网页的不同方式。
+
+### 快捷方式：`<img>`
+
+&emsp;要通过 `<img>` 元素嵌入 SVG，你只需要按照预期的方式在 src 属性中引用它。你将需要一个 height 或 width 属性（或者如果你的 SVG 没有固有的宽高比）。
+
+```javascript
+<img
+    src="equilateral.svg"
+    alt="triangle with all three sides equal"
+    height="87px"
+    width="100px" />
+```
+
+### 优点
+
++ 快速，熟悉的图像语法与 alt 属性中提供的内置文本等效。
++ 可以通过在 `<a>` 元素嵌套 `<img>`，使图像轻松地成为超链接。
+
+### 缺点
+
++ 无法使用 JavaScript 操作图像。
++ 如果要使用 CSS 控制 SVG 内容，则必须在 SVG 代码中包含内联 CSS 样式。（从 SVG 文件调用的外部 CSS 不起作用）
++ 不能用 CSS 伪类来重设图像样式（如：focus）。
+
+### 疑难解答和跨浏览器支持
+
+&emsp;对于不支持 SVG（IE 8 及更低版本，Android 2.3 及更低版本）的浏览器，你可以从 src 属性引用 PNG 或 JPG，并使用 srcset 属性 只有最近的浏览器才能识别）来引用 SVG。在这种情况下，仅支持浏览器将加载 SVG - 较旧的浏览器将加载 PNG：
+
+```javascript
+<img src="equilateral.png" alt="triangle with equal sides" srcset="equilateral.svg">
+```
+
+&emsp;你还可以使用 SVG 作为 CSS 背景图像，如下所示。在下面的代码中，旧版浏览器会坚持他们理解的 PNG，而较新的浏览器将加载 SVG：
+
+```javascript
+background: url("fallback.png") no-repeat center;
+background-image: url("image.svg");
+background-size: contain;
+```
+
+&emsp;像上面描述的 `<img>` 方法一样，使用 CSS 背景图像插入 SVG 意味着它不能被 JavaScript 操作，并且也受到相同的 CSS 限制。
+
+&emsp;如果 SVG 根本没有显示，可能是因为你的服务器设置不正确。如果是这个问题，[这篇文章](https://developer.mozilla.org/zh-CN/docs/Web/SVG/Tutorial/Getting_Started#a_word_on_webservers) 将告诉你正确方向。
+
+## 如何在 HTML 中引入 SVG 代码
+
+&emsp;
 
 
 
