@@ -722,7 +722,293 @@ background-size: contain;
 
 ## 如何在 HTML 中引入 SVG 代码
 
+&emsp;你还可以在文本编辑器中打开 SVG 文件，复制 SVG 代码，并将其粘贴到 HTML 文档中 - 这有时称为将 SVG 内联或内联 SVG。确保你的 SVG 代码在 `<svg></svg>` 标签中（不要在外面添加任何内容）。这是一个非常简单的示例，你可以粘贴到文档中：
+
+```javascript
+<svg width="300" height="200">
+    <rect width="100%" height="100%" fill="green" />
+</svg>
+```
+
+### 优点
+
++ 将 SVG 内联减少 HTTP 请求，可以减少加载时间。
++ 你可以为 SVG 元素分配 class 和 id，并使用 CSS 修改样式，无论是在 SVG 中，还是 HTML 文档中的 CSS 样式规则。实际上，你可以使用任何 SVG 外观属性 作为 CSS 属性。
++ 内联 SVG 是唯一可以让你在 SVG 图像上使用 CSS 交互（如：focus）和 CSS 动画的方法（即使在常规样式表中）。
++ 你可以通过将 SVG 标记包在 `<a>` 元素中，使其成为超链接。
+
+### 缺点
+
++ 这种方法只适用于在一个地方使用的 SVG。多次使用会导致资源密集型维护（resource-intensive maintenance）。
++ 额外的 SVG 代码会增加 HTML 文件的大小。
++ 浏览器不能像缓存普通图片一样缓存内联 SVG。
++ 你可能会在 `<foreignObject>` 元素中包含回退，但支持 SVG 的浏览器仍然会下载任何后备图像。你需要考虑仅仅为支持过时的浏览器，而增加额外开销是否真的值得。
+
+## 如何使用 `<iframe>` 嵌入 SVG
+
+&emsp;你可以在浏览器中打开 SVG 图像，就像网页一样。因此，使用 `<iframe>` 嵌入 SVG 文档就像我们在从对象到 iframe - 其他嵌入技术中进行研究一样。
+
+&emsp;这是一个快速回顾：
+
+```javascript
+<iframe src="triangle.svg" width="500" height="500" sandbox>
+    <img src="triangle.png" alt="Triangle with three unequal sides" />
+</iframe>
+```
+
+&emsp;这绝对不是最好的方法：
+
+### 缺点
+
++ 如你所知， iframe 有一个回退机制，如果浏览器不支持 iframe，则只会显示回退。
++ 此外，除非 SVG 和你当前的网页具有相同的 origin，否则你不能在主页面上使用 JavaScript 来操纵 SVG。
+
+> &emsp;note：Web 内容的源由用于访问它的 URL 的方案（协议），主机 (域名) 和端口定义。只有当方案、主机和端口都匹配时，两个对象具有相同的起源。某些操作仅限于同源内容，而可以使用 CORS 解除这个限制。
+
+> &emsp;note：CORS（Cross-Origin Resource Sharing 跨域资源共享）是一个系统，它由一系列传输的 HTTP 头组成，这些 HTTP 头决定浏览器是否阻止前端 JavaScript 代码获取跨域请求的响应。同源安全策略默认阻止 "跨域" 获取资源。但是 CORS 给了 web 服务器这样的权限，即服务器可以选择，允许跨域请求访问到它们的资源。
+
+## 动手学习：使用 SVG
+
+&emsp;在这个动手学习部分中，我们希望你能够体验一下 SVG 的乐趣。在下面的 "input" 部分，你将看到我们已经提供了一些样例来开始使用。你还可以访问 SVG 元素参考，了解更多关于 SVG 可以使用的其他玩具的细节，也可以尝试一下。这部分都是为了锻炼你的研究技巧，并且有一些乐趣。
+
+```javascript
+  <svg width="100%" height="100%">
+    <rect width="100%" height="100%" fill="red" />
+    <circle cx="100%" cy="100%" r="150" fill="blue" stroke="black" />
+    <polygon points="120,0 240,225 0,225" fill="green"/>
+    <text x="50" y="100" font-family="Verdana" font-size="55"
+          fill="white" stroke="black" stroke-width="2">
+            Hello!
+    </text>
+  </svg>
+```
+
+## 总结
+
+&emsp;本文提供了一个矢量图形和 SVG 的快速浏览，让你了解他们的作用，以及如何在网页中引入 SVG。
+
+## 响应式图片
+
+&emsp;现在有许多不同的设备类型能够浏览网络 - 从手机到台式电脑 - 在现代网络世界中掌握的一个基本概念就是响应式设计。这是指创建可以自动更改其功能以适应不同屏幕尺寸、分辨率等的网页。稍后将在 CSS 模块中详细介绍这一点，但是现在我们将看看 HTML 可用于创建响应式图像的工具，包括 `<picture>` 元素。响应式图片仅仅只是响应式 web 设计的一部分，奠定了响应式 web 设计的良好基础。
+
+## 为什么要用自适应的图片？
+
+&emsp;让我们来看一个典型的场景。一个典型的网站可能会有一张页首图片，这让访问者看起来感到愉快。图片下面可能会添加一些内容图像。页首图像的跨度可能是整个页首的宽度。而内容图像会适应内容纵列的某处。此处有个简单的例子：
+
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Not responsive demo</title>
+    <style>
+      html {
+        font-family: sans-serif;
+        background-color: gray;
+      }
+
+      body {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+      }
+
+      header {
+        background: url(header.jpg) no-repeat center;
+        height: 200px;
+      }
+
+      section {
+        padding: 20px;
+      }
+
+      p {
+        line-height: 1.5;
+      }
+
+      img {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      
+    </header>
+
+    <main>
+      <section>
+        <h1>My website</h1>
+
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris eget venenatis ligula. Ut lacinia at dolor vitae pulvinar. Aliquam pretium dignissim eros. Integer faucibus, dui non aliquet bibendum, lectus orci lobortis odio, ornare porttitor est tellus eget velit. Nulla eros elit, malesuada id neque vel, viverra vehicula neque. Nullam auctor turpis non leo iaculis finibus. Quisque blandit arcu venenatis libero tempor, ac pulvinar ligula dapibus.</p>
+
+        <img src="elva-800w.jpg" alt="Chris standing up holding his daughter Elva">
+
+        <p>Suspendisse potenti. Ut in luctus eros. Mauris pulvinar vehicula aliquet. Etiam imperdiet eleifend luctus. Duis ut justo nec eros ornare consectetur. Vestibulum convallis condimentum varius. Maecenas rutrum porta varius. Phasellus volutpat sem id sagittis luctus. Morbi vitae quam vitae nisi iaculis dignissim.</p>
+
+        <img src="elva-fairy-800w.jpg" alt="Elva dressed as a fairy">
+
+        <p>Header image originally by <a href="https://www.flickr.com/photos/miwok/17086751527/">Miwok</a>.</p>
+      </section>
+    </main>
+  </body>
+</html>
+```
+
+&emsp;这个网页在宽屏设备上表现良好，例如笔记本电脑或台式机。我们不会在这一节课中讨论 CSS，除了下面提到的那些：
+
++ 正文内容被设置的最大宽度为 1200 像素 —— 在高于该宽度的可视窗口中，正文保持在 1200 像素，并将其本身置于可用空间的中间。在该宽度以下的可视窗口中，正文将保持在可视窗口宽度的 100%。
++ 页眉图像被设置为使其中心始终位于页眉的中心，无论页眉的宽度是多少。所以如果网站被显示在窄屏上，图片中心的重要细节（里面的人）仍然可以看到，而两边超出的部分都消失了。它的高度是 200px。
++ 内容图片已经被设置为如果 body 元素比图像更小，图像就开始缩小，这样图像总是在正文里，而不是溢出正文。
+
+&emsp;然而，当你尝试在一个狭小的屏幕设备上查看本页面时，问题就会产生。网页的页眉看起来还可以，但是页眉这张图片占据了屏幕的一大部分的高度，在这个尺寸下，你很难看到在第一张图片内容里的人。
+
+&emsp;一个改进的方法是，当网站在狭窄的屏幕上观看时，显示一幅图片的包含了重要细节的裁剪版本，第二个被裁剪的图片会在像平板电脑这样的中等宽度的屏幕设备上显示，这就是众所周知的美术设计问题（art direction problem）。
+
+&emsp;另外，如果是在小屏手机屏幕上显示网页，那么没有必要在网页上嵌入这样大的图片。这被称之为分辨率切换问题（resolution switching problem）。位图有固定数量的像素宽，固定数量的像素高，与 矢量图 外观相同，但本质不同。如果显示尺寸大于原始尺寸，一张自身较小的位图看起来会有颗粒感（矢量图则不会）。
+
+&emsp;相反，没有必要在比图片实际尺寸小的屏幕上显示一张大图，这样做会浪费带宽 —— 当可以在设备上使用小图像时，手机用户尤其不愿意因为下载用于桌面的大图像而浪费带宽。理想的情况是当访问网站时依靠不同的设备来提供不同的分辨率图片和不同尺寸的图片。
+
+&emsp;让事情变得复杂的是，有些设备有很高的分辨率，为了显示的更出色，可能需要超出你预料的更大的图像。这从本质上是一样的问题，但在环境上有一些不同。
+
+&emsp;你可能会认为矢量图形能解决这些问题，在某种程度上是这样的 —— 它们无论是文件大小还是比例都合适，无论在哪里你都应该尽可能的使用它们。然而，它们并不适合所有的图片类型，虽然在简单图形、图案、界面元素等方面较好，但如果是有大量的细节的照片，创建矢量图像会变得非常复杂。像 JPEG 格式这样的位图会更适合上面例子中的图像。
+
+&emsp;当 web 第一次出现时，这样的问题并不存在，在上世纪 90 年代中期，仅仅可以通过笔记本电脑和台式机来浏览 web 页面，所以浏览器开发者和规范制定者甚至没有想到要实现这种解决方式（响应式开发）。最近应用的响应式图像技术，通过让浏览器提供多个图像文件来解决上述问题，比如使用相同显示效果的图片但包含多个不同的分辨率（分辨率切换），或者使用不同的图片以适应不同的空间分配（美术设计）。
+
+> &emsp;note：在这篇文章中讨论的新特性 — `srcset/sizes/<picture>` — 都已经被新版本的现代浏览器和移动浏览器所支持（包括 Edge，而不是 IE）。
+
+## 怎样创建自适应的图片？
+
+&emsp;在这一部分中，我们将看看上面说明的两个问题，并且展示怎样用 HTML 的响应式图片来解决这些问题。需要注意的是，如以上示例所示，在本节中我们将专注于 HTML 的 `<img>`，但网站页眉的图片仅是装饰性的，实际上应该要用 CSS 的背景图片来实现。CSS 是比 HTML 更好的响应式设计的工具，我们会在未来的 CSS 模块中讨论。
+
+### 分辨率切换：不同的尺寸
+
+&emsp;那么，我们想要用分辨率切换解决什么问题呢？我们想要显示相同的图片内容，仅仅依据设备来显示更大或更小的图片 —— 这是我们在示例中使用第二个内容图像的情况。标准的 `<img>` 元素传统上仅仅让你给浏览器指定唯一的资源文件。
+
+```javascript
+<img src="elva-fairy-800w.jpg" alt="Elva dressed as a fairy">
+```
+
+&emsp;我们可以使用两个新的属性 —— srcset 和 sizes —— 来提供更多额外的资源图像和提示，帮助浏览器选择正确的一个资源。你可以看到如下示例代码：
+
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Responsive HTML images demo</title>
+    <style>
+      html {
+        font-family: sans-serif;
+        background-color: gray;
+      }
+
+      body {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+      }
+
+      header {
+        background: url(header.jpg) no-repeat center;
+        height: 200px;
+      }
+
+      section {
+        padding: 20px;
+      }
+
+      p {
+        line-height: 1.5;
+      }
+
+      img {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+
+    </header>
+
+    <main>
+      <section>
+        <h1>My website</h1>
+
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris eget venenatis ligula. Ut lacinia at dolor vitae pulvinar. Aliquam pretium dignissim eros. Integer faucibus, dui non aliquet bibendum, lectus orci lobortis odio, ornare porttitor est tellus eget velit. Nulla eros elit, malesuada id neque vel, viverra vehicula neque. Nullam auctor turpis non leo iaculis finibus. Quisque blandit arcu venenatis libero tempor, ac pulvinar ligula dapibus.</p>
+
+        <picture>
+          <source media="(max-width: 799px)" srcset="elva-480w-close-portrait.jpg">
+          <source media="(min-width: 800px)" srcset="elva-800w.jpg">
+          <img src="elva-800w.jpg" alt="Chris standing up holding his daughter Elva">
+        </picture>
+
+        <p>Suspendisse potenti. Ut in luctus eros. Mauris pulvinar vehicula aliquet. Etiam imperdiet eleifend luctus. Duis ut justo nec eros ornare consectetur. Vestibulum convallis condimentum varius. Maecenas rutrum porta varius. Phasellus volutpat sem id sagittis luctus. Morbi vitae quam vitae nisi iaculis dignissim.</p>
+
+        <img srcset="elva-fairy-480w.jpg 480w,
+                     elva-fairy-800w.jpg 800w"
+             sizes="(max-width: 600px) 480px,
+                    800px"
+             src="elva-fairy-800w.jpg" alt="Elva dressed as a fairy">
+
+        <p>Header image originally by <a href="https://www.flickr.com/photos/miwok/17086751527/">Miwok</a>.</p>
+      </section>
+    </main>
+  </body>
+</html>
+```
+
+```javascript
+<img srcset="elva-fairy-320w.jpg 320w,
+             elva-fairy-480w.jpg 480w,
+             elva-fairy-800w.jpg 800w"
+     sizes="(max-width: 320px) 280px,
+            (max-width: 480px) 440px,
+            800px"
+     src="elva-fairy-800w.jpg" alt="Elva dressed as a fairy">
+```
+
+&emsp;srcset 和 sizes 属性看起来很复杂，但是如果你按照上图所示进行格式化，那么他们并不是很难理解，每一行有不同的属性值。每个值都包含逗号分隔的列表。列表的每一部分由三个子部分组成。让我们来看看现在的每一个内容：
+
+&emsp;srcset 定义了我们允许浏览器选择的图像集，以及每个图像的大小。在每个逗号之前，我们写：
+
+1. 一个文件名 (elva-fairy-480w.jpg.)
+2. 一个空格
+3. 图像的固有宽度（以像素为单位）（480w）。注意，这里使用宽度描述符 w，而非你可能期望的 px。这是图像的真实大小。
+
+&emsp;sizes 定义了一组媒体条件（例如屏幕宽度）并且指明当某些媒体条件为真时，什么样的图片尺寸是最佳选择 — 我们在之前已经讨论了一些提示。在这种情况下，在每个逗号之前，我们写：
+
+1. 一个媒体条件（(max-width:480px)）—— 你会在 CSS topic中学到更多的。但是现在我们仅仅讨论的是媒体条件描述了屏幕可能处于的状态。在这里，我们说 "当可视窗口的宽度是 480 像素或更少"。
+2. 一个空格。
+3. 当媒体条件为真时，图像将填充的槽的宽度（440px）。
+
+&emsp;对于槽的宽度，你也许会提供一个固定值 (px, em) 或者是一个相对于视口的长度 (vw)，但不是百分比。你也许已经注意到最后一个槽的宽度是没有媒体条件的，它是默认的，当没有任何一个媒体条件为真时，它就会生效。当浏览器成功匹配第一个媒体条件的时候，剩下所有的东西都会被忽略，所以要注意媒体条件的顺序。
+
+&emsp;所以，有了这些属性，浏览器会：
+
+1. 查看设备宽度
+2. 检查 sizes 列表中哪个媒体条件是第一个为真
+3. 查看给予该媒体查询的槽大小
+4. 加载 srcset 列表中引用的最接近所选的槽大小的图像
+
+&emsp;就是这样！所以在这里，如果支持浏览器以视窗宽度为 480px 来加载页面，那么 (max-width: 480px) 的媒体条件为真，因此 440px 的槽会被选择，所以 elva-fairy-480w.jpg 将加载，因为它的的固定宽度（480w）最接近于 440px。800px 的照片大小为 128KB 而 480px 版本仅有 63KB 大小 — 节省了 65KB。现在想象一下，如果这是一个有很多图片的页面。使用这种技术会节省移动端用户的大量带宽。
+
+&emsp;老旧的浏览器不支持这些特性，它会忽略这些特征。并继续正常加载 src 属性引用的图像文件。
+
+> &emsp;note：在 HTML 文件中的 `<head>` 标签里，你将会找到这一行代码 `<meta name="viewport" content="width=device-width">`: 这行代码会强制地让手机浏览器采用它们真实可视窗口的宽度来加载网页（有些手机浏览器会提供不真实的可视窗口宽度，然后加载比浏览器真实可视窗口的宽度大的宽度的网页，然后再缩小加载的页面，这样的做法对响应式图片或其他设计，没有任何帮助。我们会在未来的模块教给你更多关于这方面的知识）。
+
+### 分辨率切换：相同的尺寸，不同的分辨率
+
 &emsp;
+
+
 
 
 
