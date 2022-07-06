@@ -1006,18 +1006,91 @@ background-size: contain;
 
 ### 分辨率切换：相同的尺寸，不同的分辨率
 
-&emsp;
+&emsp;如果你支持多种分辨率显示，但希望每个人在屏幕上看到的图片的实际尺寸是相同的，你可以让浏览器通过 srcset 和 x 语法结合 —— 一种更简单的语法 —— 而不用 sizes，来选择适当分辨率的图片。你可以看一个例子：
 
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Responsive HTML images demo</title>
+    <style>
 
+      img {
+        width: 320px;
+      }
 
+    </style>
+  </head>
+  <body>
+    
 
+        <img srcset="elva-fairy-320w.jpg,
+                     elva-fairy-480w.jpg 1.5x,
+                     elva-fairy-640w.jpg 2x"
+             src="elva-fairy-640w.jpg" alt="Elva dressed as a fairy"> 
 
+        
+  </body>
+</html>
+```
 
+&emsp;在这个例子中，下面的 CSS 会应用在图片上，所以它的宽度在屏幕上是 320 像素（也称作 CSS 像素）：
 
+&emsp;在这种情况下，sizes 并不需要 —— 浏览器只是计算出正在显示的显示器的分辨率，然后提供 srcset 引用的最适合的图像。因此，如果访问页面的设备具有标准/低分辨率显示，一个设备像素表示一个 CSS 像素，elva-fairy-320w.jpg 会被加载（1x 是默认值，所以你不需要写出来）。如果设备有高分辨率，两个或更多的设备像素表示一个 CSS 像素，elva-fairy-640w.jpg 会被加载。640px 的图像大小为 93KB，320px 的图像的大小仅仅有 39KB。
 
+### 美术设计
 
+&emsp;回顾一下，美术设计问题涉及要更改显示的图像以适应不同的图像显示尺寸。例如，如果在桌面浏览器上的一个网站上显示一张大的、横向的照片，照片中央有个人，然后当在移动端浏览器上浏览这个网站时，照片会缩小，这时照片上的人会变得非常小，看起来会很糟糕。这种情况可能在移动端显示一个更小的肖像图会更好，这样人物的大小看起来更合适。`<picture>` 元素允许我们这样实现。
 
+&emsp;我们有一张图片需要美术设计：
 
+```javascript
+<img src="elva-800w.jpg" alt="Chris standing up holding his daughter Elva">
+```
+
+&emsp;让我们改用 `<picture>`！就像 `<video>` 和 `<audio>`，`<picture>` 素包含了一些 `<source>` 元素，它使浏览器在不同资源间做出选择，紧跟着的是最重要的 `<img>` 元素。
+
+```javascript
+<picture>
+  <source media="(max-width: 799px)" srcset="elva-480w-close-portrait.jpg">
+  <source media="(min-width: 800px)" srcset="elva-800w.jpg">
+  <img src="elva-800w.jpg" alt="Chris standing up holding his daughter Elva">
+</picture>
+```
+
++ `<source>` 元素包含一个 media 属性，这一属性包含一个媒体条件 —— 就像第一个 srcset 例子，这些条件来决定哪张图片会显示 —— 第一个条件返回真，那么就会显示这张图片。在这种情况下，如果视窗的宽度为 799px 或更少，第一个 `<source>` 元素的图片就会显示。如果视窗的宽度是 800px 或更大，就显示第二张图片。
++ srcset 属性包含要显示图片的路径。请注意，正如我们在 `<img>` 上面看到的那样，`<source>` 可以使用引用多个图像的 srcset 属性，还有 sizes 属性。所以你可以通过一个 `<picture>` 元素提供多个图片，不过也可以给每个图片提供多分辨率的图片。实际上，你可能不想经常做这样的事情。
++ 在任何情况下，你都必须在 `</picture>` 之前正确提供一个 `<img>` 元素以及它的 src 和 alt 属性，否则不会有图片显示。当媒体条件都不返回真的时候（你可以在这个例子中删除第二个 `<source>` 元素），它会提供图片；如果浏览器不支持 `<picture>` 元素时，它可以作为后备方案。
+
+> &emsp;note：你应该仅仅当在美术设计场景下使用 media 属性；当你使用 media 时，不要在 sizes 属性中也提供媒体条件。
+
+### 为什么我们不能使用 CSS 或 JavaScript 来做到这一效果？
+
+&emsp;当浏览器开始加载一个页面，它会在主解析器开始加载和解析页面的 CSS 和 JavaScript 之前先下载 (预加载) 任意的图片。这是一个非常有用的技巧，平均下来减少了页面加载时间的 20%。但是，这对响应式图片一点帮助都没有，所以需要类似 srcset 的实现方法。因为你不能先加载好 `<img>` 元素后，再用 JavaScript 检测可视窗口的宽度，如果觉得大小不合适，再动态地加载小的图片替换已经加载好的图片，这样的话，原始的图像已经被加载了，然后你又加载了小的图像，这样的做法对于响应式图像的理念来说，是很糟糕的。
+
+### 大胆的使用现代图像格式
+
+&emsp;有很多令人激动的新图像格式（例如 WebP 和 JPEG-2000）可以在有高质量的同时有较低的文件大小。然而，浏览器对其的支持参差不齐。
+
+&emsp;`<picture>` 让我们能继续满足老式浏览器的需要。你可以在 type 属性中提供 MIME 类型，这样浏览器就能立即拒绝其不支持的文件类型：
+
+```javascript
+<picture>
+  <source type="image/svg+xml" srcset="pyramid.svg">
+  <source type="image/webp" srcset="pyramid.webp">
+  <img src="pyramid.png" alt="regular pyramid built from four equilateral triangles">
+</picture>
+```
+
++ 不要使用 media 属性，除非你也需要美术设计。
++ 在 `<source>` 元素中，你只可以引用在 `type` 中声明的文件类型。
++ 像之前一样，如果必要，你可以在 `srcset` 和 `sizes` 中使用逗号分割的列表。
+
+&emsp;美术设计：当你想为不同布局提供不同剪裁的图片——比如在桌面布局上显示完整的、横向图片，而在手机布局上显示一张剪裁过的、突出重点的纵向图片，可以用 `<picture>` 元素来实现。
+
+&emsp;分辨率切换：当你想要为窄屏提供更小的图片时，因为小屏幕不需要像桌面端显示那么大的图片；以及你想为高/低分辨率屏幕提供不同分辨率的图片时，都可以通过 vector graphics (SVG images)、 srcset 以及 sizes 属性来实现。
 
 ## 参考链接
 **参考链接:🔗**
