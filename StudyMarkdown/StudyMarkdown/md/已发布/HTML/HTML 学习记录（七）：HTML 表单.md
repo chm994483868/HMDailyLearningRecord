@@ -122,7 +122,165 @@
 
 ## 基本表单样式
 
-&emsp;
+&emsp;现在我们完成了表单的 HTML 代码：
+
+```javascript
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Your first HTML form</title>
+  </head>
+
+  <body>
+    <form action="/my-handling-form-page" method="post">
+      <ul>
+        <li>
+          <label for="name">Name:</label>
+          <input type="text" id="name" name="user_name" />
+        </li>
+        <li>
+          <label for="mail">E-mail:</label>
+          <input type="email" id="mail" name="user_mail" />
+        </li>
+        <li>
+          <label for="msg">Message:</label>
+          <textarea id="msg" name="user_message"></textarea>
+        </li>
+        <li class="button">
+          <button type="submit">Send your message</button>
+        </li>
+      </ul>
+    </form>
+  </body>
+</html>
+```
+
+&emsp;如何排布好表单是公认的难点。这超出了本文的讨论范围，所以现在我们只需要让你添加一些 CSS 来让它看起来很好。
+
+&emsp;首先，在你的 HTML 头部中添加一个 `<style>` 元素。应该是这样的：
+
+```javascript
+<style>
+</style>
+```
+
+&emsp;在样式标签中，添加如下的 CSS，如下所示：
+
+```javascript
+form {
+  /* 居中表单 */
+  margin: 0 auto;
+  width: 400px;
+  /* 显示表单的轮廓 */
+  padding: 1em;
+  border: 1px solid #CCC;
+  border-radius: 1em;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+form li + li {
+  margin-top: 1em;
+}
+
+label {
+  /* 确保所有 label 大小相同并正确对齐 */
+  display: inline-block;
+  width: 90px;
+  text-align: right;
+}
+
+input, textarea {
+  /* 确保所有文本输入框字体相同
+     textarea 默认是等宽字体 */
+  font: 1em sans-serif;
+
+  /* 使所有文本输入框大小相同 */
+  width: 300px;
+  box-sizing: border-box;
+
+  /* 调整文本输入框的边框样式 */
+  border: 1px solid #999;
+}
+
+input:focus, textarea:focus {
+  /* 给激活的元素一点高亮效果 */
+  border-color: #000;
+}
+
+textarea {
+  /* 使多行文本输入框和它们的 label 正确对齐 */
+  vertical-align: top;
+
+  /* 给文本留下足够的空间 */
+  height: 5em;
+}
+
+.button {
+  /* 把按钮放到和文本输入框一样的位置 */
+  padding-left: 90px; /* 和 label 的大小一样 */
+}
+
+button {
+  /* 这个外边距的大小与 label 和文本输入框之间的间距差不多 */
+  margin-left: .5em;
+}
+```
+
+## 向你的 web 服务器发送表单数据
+
+&emsp;最后一部分，也许是最棘手的部分，是在服务器端处理表单数据。如前所述，大多数时候 HTML 表单是向用户请求数据并将其发送到 web 服务器的一种方便的方式。
+
+&emsp;`<form>` 元素将定义如何通过 action 属性和 method 属性来发送数据的位置和方式。
+
+&emsp;但这还不够，我们还需要为我们的数据提供一个名称。这些名字对双方都很重要：在浏览器端，它告诉浏览器给数据各自哪个名称，在服务器端，它允许服务器按名称处理每个数据块。
+
+&emsp;要将数据命名为表单，你需要在每个表单小部件上使用 name 属性来收集特定的数据块。让我们再来看看我们的表单代码：
+
+```javascript
+<form action="/my-handling-form-page" method="post">
+  <div>
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="user_name">
+  </div>
+  <div>
+    <label for="mail">E-mail:</label>
+    <input type="email" id="mail" name="user_email">
+  </div>
+  <div>
+    <label for="msg">Message:</label>
+    <textarea id="msg" name="user_message"></textarea>
+  </div>
+
+  ...
+```
+
+&emsp;在我们的例子中，表单会发送三个已命名的数据块 "user_name"、"user_email" 和 "user_message"，这些数据将使用 HTTP POST 方法，把信息发送到 URL 为 "/my-handling-form-page" 目录下。
+
+&emsp;在服务器端，位于 URL "/my-handling-form-page" 上的脚本将接收的数据作为 HTTP 请求中包含的 3 个键/值项的列表。这个脚本处理这些数据的方式取决于你。每个服务器端语言(PHP、Python、Ruby、Java、c 等等)都有自己的机制。深入到这个主题已经超出了本指南的范围，但是如果你想了解更多，我们已经在发送表单数据文章中提供了一些示例。 
+
+## 如何构造 HTML 表单
+
+&emsp;有了基础知识，我们现在更详细地了解了用于为表单的不同部分提供结构和意义的元素。
+
+&emsp;HTML 表单的灵活性使它们成为 HTML 中最复杂的结构之一;你可以使用专用的表单元素和属性构建任何类型的基本表单。在构建 HTML 表单时使用正确的结构将有助于确保表单可用性和可访问性。
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

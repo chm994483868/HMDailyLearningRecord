@@ -1,0 +1,49 @@
+# iOS 组件化实践（一）：中间层方案选择
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 当前学习路线
+
+1. JavaScript 学习路线：-> 《你不知道的 JavaScript 上中下》三卷阅读，MDN 上 JavaScript 参考阅读一遍，JavaScript 语言学习基本成型。
+2. HTML 学习路线：-> MDN 上 HTML 基础教程阅读一遍，还剩表单、表格部分基本马上就可以结束了，然后阅读 HTML 参考，把 HTML 中所有标签通读一遍。
+3. CSS 学习路线：-> MDN 上 CSS 教程阅读一遍，还没开始。
+4. jQuery、React、VUE、ReactNative、node 学习...
+5. HTTP 学习：-> 《图解 TCP/IP》《图解 HTTP》阅读。
+6. Dart Flutter 学习路线：-> Dart 语言概览阅读，先看一遍 Dart 语言文档，再看 Flutter 系统库。
+7. SwiftUI/Combine 学习路线：-> 阅读 《SwiftUI 与 Combine 编程》、《SwiftUI 编程思想》
+8. Swift 并发学习路线：-> 《Swift 异步和并发》阅读。
+9. Shell 学习路线：-> 《鸟哥的私房菜》中 Shell 章节的学习。
+10. WWDC 2022 文章总结学习。
+11. 使用 Markdown 格式写一份简历。
+12. 复习算法路线：-> 七大排序、《剑指 Offer》。
+13. 组件化方案总结学习。
+14. APP 启动优化和组件化这两个方向定为项目中的难点的回答。
+15. DYLD 学习。
+16. 英语的学习！
