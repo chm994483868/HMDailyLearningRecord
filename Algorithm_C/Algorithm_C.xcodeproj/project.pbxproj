@@ -10,8 +10,8 @@
 		8E0F473428765E7C0023B594 /* BubbleSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E0F473328765E7C0023B594 /* BubbleSort.cpp */; };
 		8E0F47362876619D0023B594 /* SelectionSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E0F47352876619D0023B594 /* SelectionSort.cpp */; };
 		8E0F4738287668570023B594 /* InsertionSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E0F4737287668570023B594 /* InsertionSort.cpp */; };
-		8E52DF48287B1E3500AC7847 /* ShellSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF47287B1E3500AC7847 /* ShellSort.cpp */; };
-		8E52DF4A287B213100AC7847 /* QuickSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF49287B213100AC7847 /* QuickSort.cpp */; };
+		8E52DF4F287C769B00AC7847 /* ShellSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF4E287C769B00AC7847 /* ShellSort.cpp */; };
+		8E52DF52287C780100AC7847 /* QuickSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF51287C780100AC7847 /* QuickSort.cpp */; };
 		8E5E5BB62686A0E30088C814 /* TwoSum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AF22686A0E20088C814 /* TwoSum.cpp */; };
 		8E5E5BB72686A0E30088C814 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AF32686A0E20088C814 /* main.cpp */; };
 		8E5E5BB82686A0E30088C814 /* Power.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AF72686A0E30088C814 /* Power.cpp */; };
@@ -96,8 +96,8 @@
 		8E0F473328765E7C0023B594 /* BubbleSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BubbleSort.cpp; sourceTree = "<group>"; };
 		8E0F47352876619D0023B594 /* SelectionSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SelectionSort.cpp; sourceTree = "<group>"; };
 		8E0F4737287668570023B594 /* InsertionSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InsertionSort.cpp; sourceTree = "<group>"; };
-		8E52DF47287B1E3500AC7847 /* ShellSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ShellSort.cpp; sourceTree = "<group>"; };
-		8E52DF49287B213100AC7847 /* QuickSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = QuickSort.cpp; sourceTree = "<group>"; };
+		8E52DF4E287C769B00AC7847 /* ShellSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ShellSort.cpp; sourceTree = "<group>"; };
+		8E52DF51287C780100AC7847 /* QuickSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = QuickSort.cpp; sourceTree = "<group>"; };
 		8E5E57FF2685965D0088C814 /* Algorithm_C */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Algorithm_C; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E5E5AF12686A0E20088C814 /* TwoSum.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = TwoSum.hpp; sourceTree = "<group>"; };
 		8E5E5AF22686A0E20088C814 /* TwoSum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TwoSum.cpp; sourceTree = "<group>"; };
@@ -249,8 +249,8 @@
 				8E0F473328765E7C0023B594 /* BubbleSort.cpp */,
 				8E0F47352876619D0023B594 /* SelectionSort.cpp */,
 				8E0F4737287668570023B594 /* InsertionSort.cpp */,
-				8E52DF47287B1E3500AC7847 /* ShellSort.cpp */,
-				8E52DF49287B213100AC7847 /* QuickSort.cpp */,
+				8E52DF4E287C769B00AC7847 /* ShellSort.cpp */,
+				8E52DF51287C780100AC7847 /* QuickSort.cpp */,
 			);
 			path = SortingAlgorithmReview;
 			sourceTree = "<group>";
@@ -1013,9 +1013,8 @@
 				8E5E5BE92686A0E30088C814 /* MoreThanHalfNumber.cpp in Sources */,
 				8E5E5BD02686A0E30088C814 /* FirstCommonNodesInLists.cpp in Sources */,
 				8E5E5BB62686A0E30088C814 /* TwoSum.cpp in Sources */,
-				8E52DF4A287B213100AC7847 /* QuickSort.cpp in Sources */,
+				8E52DF52287C780100AC7847 /* QuickSort.cpp in Sources */,
 				8E5E5BDC2686A0E30088C814 /* IntegerIdenticalToIndex.cpp in Sources */,
-				8E52DF48287B1E3500AC7847 /* ShellSort.cpp in Sources */,
 				8E5E5BDF2686A0E30088C814 /* SquenceOfBST.cpp in Sources */,
 				8E5E5BBD2686A0E30088C814 /* StringToInt.cpp in Sources */,
 				8E5E5BD72686A0E30088C814 /* PrintMatrix.cpp in Sources */,
@@ -1048,6 +1047,7 @@
 				8E5E5BF42686A0E30088C814 /* FirstNotRepeatingChar.cpp in Sources */,
 				8E5E5BED2686A0E30088C814 /* CommonParentInTree.cpp in Sources */,
 				8E5E5BF32686A0E30088C814 /* DeleteNodeInList.cpp in Sources */,
+				8E52DF4F287C769B00AC7847 /* ShellSort.cpp in Sources */,
 				8E0F47362876619D0023B594 /* SelectionSort.cpp in Sources */,
 				8E5E5BC92686A0E30088C814 /* GreatestSumOfSubarrays.cpp in Sources */,
 				8E5E5BDD2686A0E30088C814 /* NumberAppearingOnce.cpp in Sources */,

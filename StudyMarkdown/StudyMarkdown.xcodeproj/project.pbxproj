@@ -46,6 +46,7 @@
 		8E52DF302875D58E00AC7847 /* HTML 学习记录（六）：HTML 表格.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（六）：HTML 表格.md"; sourceTree = "<group>"; };
 		8E52DF312875D7AB00AC7847 /* HTML 学习记录（七）：HTML 表单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（七）：HTML 表单.md"; sourceTree = "<group>"; };
 		8E52DF4C287B276200AC7847 /* iOS 组件化实践（一）：中间层方案选择.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择.md"; sourceTree = "<group>"; };
+		8E52DF4D287C67EE00AC7847 /* resume.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = resume.md; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
@@ -238,6 +239,7 @@
 			isa = PBXGroup;
 			children = (
 				8E0F47162873B9B10023B594 /* 单线程语言.md */,
+				8E52DF4D287C67EE00AC7847 /* resume.md */,
 			);
 			path = "语言概念学习";
 			sourceTree = "<group>";
