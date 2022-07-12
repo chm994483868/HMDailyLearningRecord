@@ -270,20 +270,58 @@ button {
 
 &emsp;HTML 表单的灵活性使它们成为 HTML 中最复杂的结构之一;你可以使用专用的表单元素和属性构建任何类型的基本表单。在构建 HTML 表单时使用正确的结构将有助于确保表单可用性和可访问性。
 
+## `<form>` 元素
 
+&emsp;`<form>` 元素按照一定的格式定义了表单和确定表单行为的属性。当你想要创建一个 HTML 表单时，都必须从这个元素开始，然后把所有内容都放在里面。许多辅助技术或浏览器插件可以发现 `<form>` 元素并实现特殊的钩子，使它们更易于使用。
 
+&emsp;我们早在之前的文章中就遇见过它了。 
 
+> &emsp;note：严格禁止在一个表单内嵌套另一个表单。嵌套会使表单的行为不可预知，而这取决于正在使用的浏览器。
 
+&emsp;请注意，在 `<form>` 元素之外使用表单小部件是可以的，但是如果你这样做了，那么表单小部件与任何表单都没有任何关系。这样的小部件可以在表单之外使用，但是你应该对于这些小部件有特别的计划，因为它们自己什么也不做。你将不得不使用 JavaScript 定制他们的行为。
 
+&emsp;HTML5 在 HTML 表单元素中引入 form 属性。它让你显式地将元素与表单绑定在一起，即使元素不在 `<form>` 中。不幸的是，就目前而言，跨浏览器对这个特性的实现还不足以使用。
 
+## `<fieldset>` 和 `<legend>` 元素
 
+&emsp;`<fieldset>` 元素是一种方便的用于创建具有相同目的的小部件组的方式，出于样式和语义目的。你可以在 `<fieldset>` 开口标签后加上一个 `<legend>` 元素来给 `<fieldset>` 标上标签。`<legend>` 的文本内容正式地描述了 `<fieldset>` 里所含有部件的用途。
 
+&emsp;许多辅助技术将使用 `<legend>` 元素，就好像它是相应的 `<fieldset>` 元素里每个部件的标签的一部分。例如，在说出每个小部件的标签之前，像 Jaws 或 NVDA 这样的屏幕阅读器会朗读出 legend 的内容。
 
+&emsp;这里有一个小例子：
 
+```javascript
+<!DOCTYPE html>
+<html>
 
+<head>
+    <meta charset="utf-8">
+    <title>fieldset and legend example</title>
+</head>
 
+<body>
+    <form>
+        <fieldset>
+            <legend>Fruit juice size</legend>
+            <p> <input type="radio" name="size" id="size_1" value="small"> <label for="size_1">Small</label> </p>
+            <p> <input type="radio" name="size" id="size_2" value="medium"> <label for="size_2">Medium</label> </p>
+            <p> <input type="radio" name="size" id="size_3" value="large"> <label for="size_3">Large</label> </p>
+        </fieldset>
+    </form>
+</body>
 
+</html>
+```
 
+&emsp;当阅读上述表格时，屏幕阅读器将会读第一个小部件 "Fruit juice size small"、"Fruit juice size medium" 为第二个，"Fruit juice size large" 为第三个。
+
+&emsp;本例中的用例是最重要的。每当你有一组单选按钮时，你应该将它们嵌套在 `<fieldset>` 元素中。还有其他用例，一般来说，`<fieldset>` 元素也可以用来对表单进行分段。理想情况下，长表单应该在拆分为多个页面，但是如果表单很长，却必须在单个页面上，那么将以不同的关联关系划分的分段，分别放在不同的 fieldset 里，可以提高可用性。
+
+&emsp;因为它对辅助技术的影响，`<fieldset>` 元素是构建可访问表单的关键元素之一。无论如何，你有责任不去滥用它。如果可能，每次构建表单时，尝试侦听屏幕阅读器如何解释它。如果听起来很奇怪，试着改进表单结构。
+
+## `<label>` 元素
+
+&emsp;
 
 
 
