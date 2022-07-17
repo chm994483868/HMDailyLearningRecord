@@ -321,7 +321,322 @@ button {
 
 ## `<label>` 元素
 
-&emsp;
+&emsp;正如我们在前一篇文章中看到的，`<label>` 元素是为 HTML 表单小部件定义标签的正式方法。如果你想构建可访问的表单，这是最重要的元素 —— 当实现的恰当时，屏幕阅读器会连同有关的说明和表单元素的标签一起朗读。以我们在上一篇文章中看到的例子为例：
+
+```javascript
+<label for="name">Name:</label> <input type="text" id="name" name="user_name">
+```
+
+&emsp;`<label>` 标签与 `<input>` 通过他们各自的 for 属性和 id 属性正确相关联（label 的 for 属性和它对应的小部件的 id 属性），这样，屏幕阅读器会读出诸如 "Name, edit text" 之类的东西。
+
+&emsp;如果标签没有正确设置，屏幕阅读器只会读出 "Edit text blank" 之类的东西，这样会没什么帮助。
+
+&emsp;注意，一个小部件可以嵌套在它的 `<label>` 元素中，就像这样：
+
+```javascript
+<label for="name">
+  Name: <input type="text" id="name" name="user_name">
+</label>
+```
+
+&emsp;尽管可以这样做，但人们认为设置 for 属性才是最好的做法，因为一些辅助技术不理解标签和小部件之间的隐式关系。
+
+## 标签也可点击！
+
+&emsp;正确设置标签的另一个好处是可以在所有浏览器中单击标签来激活相应的小部件。这对于像文本输入这样的例子很有用，这样你可以通过点击标签，和点击输入区效果一样，来聚焦于它，这对于单选按钮和复选框尤其有用 —— 这种控件的可点击区域可能非常小，设置标签来使它们可点击区域变大是非常有用的。
+
+&emsp;举个例子：
+
+```javascript
+<form>
+  <p>
+    <input type="checkbox" id="taste_1" name="taste_cherry" value="1">
+    <label for="taste_1">I like cherry</label>
+  </p>
+  <p>
+    <input type="checkbox" id="taste_2" name="taste_banana" value="2">
+    <label for="taste_2">I like banana</label>
+  </p>
+</form>
+```
+
+## 多个标签
+
+&emsp;严格地说，你可以在一个小部件上放置多个标签，但是这不是一个好主意，因为一些辅助技术可能难以处理它们。在多个标签的情况下，你应该将一个小部件和它的标签嵌套在一个 `<label>` 元素中。
+
+&emsp;让我们考虑下面这个例子：
+
+```javascript
+<p>Required fields are followed by <abbr title="required">*</abbr>.</p>
+
+<!--这样写：-->
+<div>
+  <label for="username">Name:</label>
+  <input type="text" name="username">
+  <label for="username"><abbr title="required">*</abbr></label>
+</div>
+
+<!--但是这样写会更好：-->
+<div>
+  <label for="username">
+    <span>Name:</span>
+    <input id="username" type="text" name="username">
+    <abbr title="required">*</abbr>
+  </label>
+</div>
+
+<!--但最好的可能是这样：-->
+<div>
+  <label for="username">Name: <abbr title="required">*</abbr></label>
+  <input id="username" type="text" name="username">
+</div>
+```
+
+&emsp;顶部的段落定义了所需元素的规则。它必须在开始时确保像屏幕阅读器这样的辅助技术在用户找到必需的元素之前显示或念出它们。这样，他们就知道星号表达的是什么意思了。根据屏幕阅读器的设置，屏幕阅读器会把星号读为 "star" 或 "required"，取决于屏幕阅读器的设置 —— 不管怎样，要念出来的都会在第一段清楚的呈现出来。
+
++ 在第一个例子中，标签根本没有和 input 一起被念出来 —— 读出来的只是 "edit the blank"，和单独被念出的标签。多个 `<label>` 元素会使屏幕阅读器迷惑。
++ 在第二个例子中，事情变得清晰一点了 —— 标签和输入一起，读出的是 "name star name edit text"，但标签仍然是单独读出的。这还是有点令人困惑，但这次还是稍微好一点了，因为 input 和 label 联系起来了。
++ 第三个例子是最好的 —— 标签是一起读出的，标签和输入读出的是 "name star edit text"。
+
+## 用于表单的通用 HTML 结构
+
+&emsp;除了特定于 HTML 表单的结构之外，还应该记住表单同样是 HTML。这意味着你可以使用 HTML 的所有强大功能来构造一个 HTML 表单。
+
+&emsp;正如你在示例中可以看到的，用 `<div>` 元素包装标签和它的小部件是很常见的做法。`<p>` 元素也经常被使用，HTML 列表也是如此（后者在构造多个复选框或单选按钮时最为常见）。
+
+&emsp;除了 `<fieldset>` 元素之外，使用 HTML 标题（例如，`<h1>`、`<h2>`）和分段（如 `<section>`）来构造一个复杂的表单也是一种常见的做法。
+
+&emsp;最重要的是，你要找到一种你觉得很舒服的风格去码代码，而且它也能带来可访问的、可用的形式。
+
+&emsp;它包含了从功能上划分开并分别包含在 `<section>` 元素中的部分，以及一个 `<fieldset>` 来包含单选按钮。
+
+## 自主学习：构建一个表单结构
+
+&emsp;让我们把这些想法付诸实践，建立一个稍微复杂一点的表单结构 —— 一个支付表单。这个表单将包含许多你可能还不了解的小部件类型 — 现在不要担心这个；在下一篇文章（原生表单小部件）中，你将了解它们是如何工作的。现在，当你遵循下面的指令时，请仔细阅读这些描述，并开始理解我们使用的包装器元素是如何构造表单的，以及为什么这么做。
+
+1. 在开始之前，在计算机上的一个新目录中，创建一个 空白模板文件 和我们的支付表单的 CSS 样式的本地副本。
+
+```javascript
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <title>My test page</title>
+  </head>
+  <body>
+    <p>This is my page</p>
+  </body>
+</html>
+```
+
+```javascript
+h1 {
+    margin-top: 0;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+form {
+    margin: 0 auto;
+    width: 400px;
+    padding: 1em;
+    border: 1px solid #CCC;
+    border-radius: 1em;
+}
+
+div+div {
+    margin-top: 1em;
+}
+
+label span {
+    display: inline-block;
+    width: 120px;
+    text-align: right;
+}
+
+input, textarea {
+    font: 1em sans-serif;
+    width: 250px;
+    box-sizing: border-box;
+    border: 1px solid #999;
+}
+
+input[type=checkbox], input[type=radio] {
+    width: auto;
+    border: none;
+}
+
+input:focus, textarea:focus {
+    border-color: #000;
+}
+
+textarea {
+    vertical-align: top;
+    height: 5em;
+    resize: vertical;
+}
+
+fieldset {
+    width: 250px;
+    box-sizing: border-box;
+    margin-left: 136px;
+    border: 1px solid #999;
+}
+
+button {
+    margin: 20px 0 0 124px;
+}
+
+label {
+  position: relative;
+}
+```
+
+2. 首先，通过添加下面这行代码到你的 HTML `<head>` 使你的 HTML 应用 CSS。
+
+```javascript
+<link href="payment-form.css" rel="stylesheet">
+```
+
+3. 接下来，通过添加外部 `<form>` 元素来开始一张表单：
+
+```javascript
+<form>
+
+</form>
+```
+
+4. 在 `<form>` 标签内，以添加一个标题和段落开始，告诉用户必需的字段是如何标记的：
+
+```javascript
+<h1>Payment form</h1>
+<p>Required fields are followed by <strong><abbr title="required">*</abbr></strong>.</p>
+```
+
+5. 接下来，我们将在表单中添加一个更大的代码段，在我们之前的代码下面。在这里，你将看到，我们正在将联系人信息字段包装在一个单独的 `<section>` 元素中。此外，我们有一组两个单选按钮，每个单选按钮都放在自己的列表中 (`<li>`)) 元素。最后，我们有两个标准文本 `<input>` 和它们相关的 `<label>` 元素，每个元素包含在 `<p>` 中，加上输入密码的密码输入。现在将这些代码添加到你的表单中：
+
+```javascript
+<section>
+    <h2>Contact information</h2>
+    <fieldset>
+      <legend>Title</legend>
+      <ul>
+          <li>
+            <label for="title_1">
+              <input type="radio" id="title_1" name="title" value="K" >
+              King
+            </label>
+          </li>
+          <li>
+            <label for="title_2">
+              <input type="radio" id="title_2" name="title" value="Q">
+              Queen
+            </label>
+          </li>
+          <li>
+            <label for="title_3">
+              <input type="radio" id="title_3" name="title" value="J">
+              Joker
+            </label>
+          </li>
+      </ul>
+    </fieldset>
+    <p>
+      <label for="name">
+        <span>Name: </span>
+        <strong><abbr title="required">*</abbr></strong>
+      </label>
+      <input type="text" id="name" name="username">
+    </p>
+    <p>
+      <label for="mail">
+        <span>E-mail: </span>
+        <strong><abbr title="required">*</abbr></strong>
+      </label>
+      <input type="email" id="mail" name="usermail">
+    </p>
+    <p>
+      <label for="pwd">
+        <span>Password: </span>
+        <strong><abbr title="required">*</abbr></strong>
+      </label>
+      <input type="password" id="pwd" name="password">
+    </p>
+</section>
+```
+
+6. 现在，我们将转到表单的第二个 `<section>` —— 支付信息。在这里，我们有三个不同的小部件以及它们的标签，每个都包含在一个 `<p>` 中。第一个是选择信用卡类型的下拉菜单 (`<select>`)。第二个是输入一个信用卡号的类型编号的 `<input>` 元素。最后一个是输入 date 类型的 `<input>` 元素，用来输入卡片的过期日期（这将在支持的浏览器中出现一个日期选择器小部件，并在非支持的浏览器中回退到普通的文本输入）。同样，在之前的代码后面输入以下内容：
+
+```javascript
+<section>
+    <h2>Payment information</h2>
+    <p>
+      <label for="card">
+        <span>Card type:</span>
+      </label>
+      <select id="card" name="usercard">
+        <option value="visa">Visa</option>
+        <option value="mc">Mastercard</option>
+        <option value="amex">American Express</option>
+      </select>
+    </p>
+    <p>
+      <label for="number">
+        <span>Card number:</span>
+        <strong><abbr title="required">*</abbr></strong>
+      </label>
+        <input type="number" id="number" name="cardnumber">
+    </p>
+    <p>
+      <label for="date">
+        <span>Expiration date:</span>
+        <strong><abbr title="required">*</abbr></strong>
+        <em>formatted as mm/yy</em>
+      </label>
+      <input type="date" id="date" name="expiration">
+    </p>
+</section>
+```
+
+7. 我们要添加的最后一个部分要简单得多，它只包含了一个 submit 类型的 `<button>`，用于提交表单数据。现在把这个添加到你的表单的底部：
+
+```javascript
+<p> <button type="submit">Validate the payment</button> </p>
+```
+
+## 总结
+
+&emsp;现在，已经具备了正确地构造 HTML 表单所需的所有知识;下一篇文章将深入介绍各种不同类型的表单小部件，将希望从用户那里收集信息。
+
+## 不同的表单控件
+
+## 原生表单部件
+
+&emsp;我们从详细了解原始 HTML `<input>` 元素的类型开始，同时学习在收集不同类型数据时可用的选择。
+
+&emsp;在上面，我们标记了一个功能性的 web 表单示例，介绍了一些表单部件和常见的结构元素，并重点介绍了无障碍的最佳实践。现在，我们将详细研究不同表单部件的功能，查看了哪些选项可用于收集不同类型的数据。这个指南有些详尽，涵盖了所有可用的原生表单小部件。
+
+&emsp;要了解在浏览器中可以使用什么类型的原生表单小部件来收集数据，以及如何使用 HTML 实现它们。
+
+> &emsp;note：widget 在本页面中被统一翻译为部件，但在其他地方可能也被译为组件。
+
+&emsp;你可能已经遇见过了一些表单元素，包括：`<form>`、`<fieldset>`、`<legend>`、`<textarea>`、`<label>`、`<button>` 和 `<input>`。这篇文章提到了：
+
++ 常见的输入（input）类型元素：button、checkbox、file、hidden、image、password、radio、reset、submit 和 text。
+
+
+
+
+
+
+
+
+
+
 
 
 

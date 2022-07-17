@@ -13,7 +13,7 @@
 		8E52DF4F287C769B00AC7847 /* ShellSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF4E287C769B00AC7847 /* ShellSort.cpp */; };
 		8E52DF52287C780100AC7847 /* QuickSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF51287C780100AC7847 /* QuickSort.cpp */; };
 		8E52DF54287DC49A00AC7847 /* MergeSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF53287DC49A00AC7847 /* MergeSort.cpp */; };
-		8E52DF56287EF4FE00AC7847 /* heapSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF55287EF4FE00AC7847 /* heapSort.cpp */; };
+		8E52DF56287EF4FE00AC7847 /* HeapSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */; };
 		8E5E5BB62686A0E30088C814 /* TwoSum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AF22686A0E20088C814 /* TwoSum.cpp */; };
 		8E5E5BB82686A0E30088C814 /* Power.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AF72686A0E30088C814 /* Power.cpp */; };
 		8E5E5BB92686A0E30088C814 /* StreamMedian.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AFA2686A0E30088C814 /* StreamMedian.cpp */; };
@@ -100,7 +100,7 @@
 		8E52DF4E287C769B00AC7847 /* ShellSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ShellSort.cpp; sourceTree = "<group>"; };
 		8E52DF51287C780100AC7847 /* QuickSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = QuickSort.cpp; sourceTree = "<group>"; };
 		8E52DF53287DC49A00AC7847 /* MergeSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MergeSort.cpp; sourceTree = "<group>"; };
-		8E52DF55287EF4FE00AC7847 /* heapSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = heapSort.cpp; sourceTree = "<group>"; };
+		8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HeapSort.cpp; sourceTree = "<group>"; };
 		8E5E57FF2685965D0088C814 /* Algorithm_C */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Algorithm_C; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E5E5AF12686A0E20088C814 /* TwoSum.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = TwoSum.hpp; sourceTree = "<group>"; };
 		8E5E5AF22686A0E20088C814 /* TwoSum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TwoSum.cpp; sourceTree = "<group>"; };
@@ -254,7 +254,7 @@
 				8E52DF4E287C769B00AC7847 /* ShellSort.cpp */,
 				8E52DF51287C780100AC7847 /* QuickSort.cpp */,
 				8E52DF53287DC49A00AC7847 /* MergeSort.cpp */,
-				8E52DF55287EF4FE00AC7847 /* heapSort.cpp */,
+				8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */,
 			);
 			path = SortingAlgorithmReview;
 			sourceTree = "<group>";
@@ -1048,7 +1048,7 @@
 				8E5E5BC32686A0E30088C814 /* ContinousCards.cpp in Sources */,
 				8E5E5BF42686A0E30088C814 /* FirstNotRepeatingChar.cpp in Sources */,
 				8E5E5BED2686A0E30088C814 /* CommonParentInTree.cpp in Sources */,
-				8E52DF56287EF4FE00AC7847 /* heapSort.cpp in Sources */,
+				8E52DF56287EF4FE00AC7847 /* HeapSort.cpp in Sources */,
 				8E5E5BF32686A0E30088C814 /* DeleteNodeInList.cpp in Sources */,
 				8E52DF4F287C769B00AC7847 /* ShellSort.cpp in Sources */,
 				8E0F47362876619D0023B594 /* SelectionSort.cpp in Sources */,
