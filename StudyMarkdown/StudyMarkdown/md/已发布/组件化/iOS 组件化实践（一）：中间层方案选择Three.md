@@ -15,9 +15,9 @@
 
 &emsp;CTMediator 单例类的内容看完了，下面我们看一下它是如何在组件化方案中发挥作用的。
 
-&emsp;首先我们创建模块（组件）时都需要依赖 CTMediator 这个单例类，然后把模块（组件）的公开 API 统一放在 CTMediator 类的一个分类中（Swift 中使用的是 CTMediator 类的 extension）。然后当模块（组件）之间需要通信时，直接通过模块对应的 CTMediator 分类中定义的公开 API 完成通信，完全不需要模块中的原始文件引用依赖，这样通过 CTMediator 单例类及其分类就解除了需要通信的各个模块之间的强依赖关系，同时 CTMediator 分类中定义好的公开 API 也对函数的参数进行了一定的校验。
+&emsp;首先我们创建模块（组件）时都需要依赖 CTMediator 这个单例类，然后把模块（组件）的公开 API 统一放在 CTMediator 类的一个分类中（Swift 中使用的是 CTMediator 类的 extension），而在 CTMediator 分类的实现中通过 `performTarget...` 函数指定 Target 和 Action 的字符串并把参数包装在字典中进行函数调用。然后当模块（组件）之间需要通信时，直接通过模块对应的 CTMediator 分类中定义的公开 API 完成通信，完全不需要模块中的原始文件引用依赖，这样通过 CTMediator 单例类及其分类就解除了需要通信的各个模块之间的强依赖关系，同时 CTMediator 分类中定义好的公开 API 也对函数的参数进行了一定的校验。
 
-&emsp;CTMediator 项目中有三个标准文件夹：
+&emsp;然后我们每个模块（组件）需要创建一个对应的 CTMediator 分类中的 Target 名字的类，并让它实际实现 CTMediator 分类中公开的 API，那么当模块之间发生通信时就会实际执行到这里。上面的三部分内容也对应了 CTMediator 项目中的三个文件夹： 
 
 + Categories（它里面是每个模块的公开 API 对应的 CTMediator 的一个分类，实际应用中，这是一个单独的 repo，所用需要调度其他模块的人，只需要依赖这个 repo。这个 repo 由 target-action 维护者维护）
 + CTMediator（这也是单独的 repo，完整的中间件就这 100 行代码）
@@ -35,29 +35,10 @@
 
 &emsp;CTMediator 帮助你将项目划分为多个项目（这里是指引入多个自己制作的 pod 库），并使用 Target-Action 模式让 subprojects 相互通信。没有注册过程！
 
-
 ## BeeHive
 
 &emsp;
 
-//# iOS 组件化实践（一）：中间层方案选择
-//
-//&emsp;CTMediator 以 Target-Action 的方式使用 NSInvocation/NSMethodSignature/SEL 来完成函数的调用执行。以 CTMediator 这个单例类作为中间层，然后把一个模块的（或者一个组件的）公共 API 通过 CTMediator 分类的形式放出来，让需要使用它的模块通过该模块对应的 CTMediator 分类完成调用，这样便解除了各个模块（组件）间的引用依赖。
-//
-//&emsp;CTMediator 项目中有三个标准文件夹：
-//
-//+ CTMediator（这也是单独的 repo，完整的中间件就这 100 行代码）
-//+ Categories（实际应用中，这是一个单独的 repo，所用需要调度其他模块的人，只需要依赖这个 repo。这个 repo 由 target-action 维护者维护）
-//+ DemoModule（target-action 所在的模块，也就是提供服务的模块，这也是单独的 repo，但无需被其他人依赖，其他人通过 category 调用到这里的功能）
-//
-//&emsp;CTMediator 文件夹中最核心的是 CTMediator 单例类的实现，它提供了两种方式的 Target-Action 调用，一种是我们直接传入 targetName、actionName、params 进行调用，一种是通过类似 `scheme://[target]/[action]?[params]`（`aaa://targetA/actionB?id=1234`） URL 的形式，内部则是对这个 URL 进行处理，首先提取出其中的 Target/Action/Params 然后再进行直接的 Target-Action 调用。
-//
-//```c++
-//- (BOOL)respondsToSelector:(SEL)aSelector;
-//- (id)performSelector:(SEL)aSelector withObject:(id)object;
-//```
-//
-//&emsp;
 
 
 
@@ -83,4 +64,5 @@
 + [casatwy/CTMediator](https://github.com/casatwy/CTMediator)
 + [alibaba/BeeHive](https://github.com/alibaba/BeeHive)
 + [iOS应用架构谈 组件化方案](https://casatwy.com/iOS-Modulization.html)
+
 
