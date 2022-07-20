@@ -43,7 +43,7 @@
 
 ### Annotation 方式注册/注解的方式进行注册
 
-&emsp;通过注解的进行注册，这个注册过程与 BeeHive 项目中的 BHAnnotation 类是绑定在一起的，下面我们直接学习 BHAnnotation 这个类，首先是 BHAnnotation.h 中的预处理语句和几个宏定义：
+&emsp;通过注解的方式进行注册，注册过程中所涉及的实现细节是与 BeeHive 项目中的 BHAnnotation 类文件绑定在一起的，实际 BHAnnotation 类中没有定义任何内容，它的 .h .m 文件仅用来存放代码的。下面我们直接学习 BHAnnotation.h .m 中的内容，首先是 BHAnnotation.h 中的预处理语句和几个宏定义：
 
 ```c++
 
@@ -65,11 +65,11 @@ class BeeHive; char * k##name##_mod BeeHiveDATA(BeehiveMods) = ""#name"";
 class BeeHive; char * k##servicename##_service BeeHiveDATA(BeehiveServices) = "{ \""#servicename"\" : \""#impl"\"}";
 ```
 
-&emsp;首先是 BeehiveModSectName 和 BeehiveServiceSectName 两个字符串宏定义，分别用来给 module 和 service 起的在 DATA 段中存放数据的 section 名，这里一定要有 Mach-O 的基础知识，要不然会不理解这里的含义。
+&emsp;BeehiveModSectName 和 BeehiveServiceSectName 两个字符串宏定义，分别用来给 module 和 service 起的在 DATA 段中存放数据的 section 名，这里一定要有 Mach-O 的基础知识，要不然会不理解这里的含义。
 
 &emsp;下面的 BeeHiveMod 和 BeeHiveService 两个宏便是在 `__DATA` 段的指定 section 中存入指定的内容。直接把我们需要的 mod 和 service 信息在 main 函数之前就注入到 Mach-O 中去。
 
-&emsp;在 BeeHive Example 项目中看到：`@BeeHiveMod(ShopModule)`、`@BeeHiveService(UserTrackServiceProtocol,BHUserTrackViewController)`、`@BeeHiveService(HomeServiceProtocol,BHViewController)` 三个宏的使用，把它们展开的话分别如下看着更清晰一些：
+&emsp;在 BeeHive Example 项目中看到：`@BeeHiveMod(ShopModule)`、`@BeeHiveService(UserTrackServiceProtocol,BHUserTrackViewController)`、`@BeeHiveService(HomeServiceProtocol,BHViewController)` 三个宏的使用，把它们展开的话分别如下，看着更清晰一些：
 
 ```c++
 @class BeeHive; 
@@ -82,14 +82,105 @@ char * kUserTrackServiceProtocol_service __attribute((used, section("__DATA,""Be
 char * kHomeServiceProtocol_service __attribute((used, section("__DATA,""BeehiveServices"" "))) = "{ \"""HomeServiceProtocol""\" : \"""BHViewController""\"}";
 ```
 
-&emsp;在 DATA 段的 BeehiveMods 区中写入 `""ShopModule""` 字符串。在 DATA 段的 BeehiveServices 区中写入 `{ \"""UserTrackServiceProtocol""\" : \"""BHUserTrackViewController""\"}` 和 `{ \"""HomeServiceProtocol""\" : \"""BHViewController""\"}` 字符串，这里表明在当前项目注入了 Shop 模块、UserTrackServiceProtocol 协议的实现类是 BHUserTrackViewController、HomeServiceProtocol 协议的实现类是 BHViewController  
+&emsp;在 DATA 段的 BeehiveMods 区中写入 `""ShopModule""` 字符串。在 DATA 段的 BeehiveServices 区中写入 `{ \"""UserTrackServiceProtocol""\" : \"""BHUserTrackViewController""\"}` 和 `{ \"""HomeServiceProtocol""\" : \"""BHViewController""\"}` 字符串，这里表明在当前项目注入了 Shop 模块、UserTrackServiceProtocol 协议的实现类是 BHUserTrackViewController、HomeServiceProtocol 协议的实现类是 BHViewController，这也对应了在 BeeHive 项目中通过协议创建对象：
 
+```c++
+id<HomeServiceProtocol> homeVc = [[BeeHive shareInstance] createService:@protocol(HomeServiceProtocol)];
+id<UserTrackServiceProtocol> v4 = [[BeeHive shareInstance] createService:@protocol(UserTrackServiceProtocol)];
+```  
 
+&emsp;homeVc 和 V4 分别是 BHViewController 和 BHUserTrackViewController 控制器实例。
 
+&emsp;下面我们来看 BHAnnotation.m 文件中的几个函数：
 
+#### BHReadConfiguration
 
-/Users/hmc/Library/Developer/Xcode/DerivedData/kyyApp-brhibjeslxxhbeedjiggefiycnrd/Build/Intermediates.noindex/ArchiveIntermediates/kyyApp/BuildProductsPath/Release-iphoneos/
+&emsp;读取指定 section 中的数据，在当前项目中指定 section 中保存的是配置信息。mhp 是当前可执行文件的 header 指针。
 
+&emsp;单纯看 BHReadConfiguration 函数的话，其实其内容很简单，传入 header 和 section 的名字，然后在这个 Mach-O 中读取 DATA 段中此 section 的内容。其中指针转换、循环取内容的代码看起来可能有点绕，其实是 section 中保存的并不是字符串的内容，而是字符串的地址。
+
+```c++
+NSArray<NSString *>* BHReadConfiguration(char *sectionName,const struct mach_header *mhp)
+{
+    NSMutableArray *configs = [NSMutableArray array];
+    unsigned long size = 0;
+#ifndef __LP64__
+    uintptr_t *memory = (uintptr_t*)getsectiondata(mhp, SEG_DATA, sectionName, &size);
+#else
+    const struct mach_header_64 *mhp64 = (const struct mach_header_64 *)mhp;
+    
+    // #define SEG_DATA "__DATA" /* the tradition UNIX data segment */
+    uintptr_t *memory = (uintptr_t*)getsectiondata(mhp64, SEG_DATA, sectionName, &size);
+#endif
+    
+    unsigned long counter = size/sizeof(void*);
+    for(int idx = 0; idx < counter; ++idx){
+        char *string = (char*)memory[idx];
+        NSString *str = [NSString stringWithUTF8String:string];
+        if(!str)continue;
+        
+        BHLog(@"config = %@", str);
+        if(str) [configs addObject:str];
+    }
+    
+    return configs;
+}
+```
+
+#### initProphet
+
+&emsp;initProphet 函数比较特殊，它被添加了 `__attribute__((constructor))` 修饰，这样 initProphet 函数会在 main 函数之前得到调用，而它的内部只有一行代码，即把 dyld_callback 函数注册为 dyld 的添加新 image 的回调，这样在 APP 启动之前每一个 image 被加载后 dyld_callback 函数就会被调用一次，测试一下可发现在 BeeHive 启动过程中 dyld_callback 函数被调用了多次。 
+
+```c++
+__attribute__((constructor))
+void initProphet() {
+    _dyld_register_func_for_add_image(dyld_callback);
+}
+```
+
+#### dyld_callback
+
+&emsp;
+
+```c++
+static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
+{
+    NSLog(@"☁️☁️☁️ dyld_callback %p", mhp);
+    
+    NSArray *mods = BHReadConfiguration(BeehiveModSectName, mhp);
+    for (NSString *modName in mods) {
+        Class cls;
+        if (modName) {
+            cls = NSClassFromString(modName);
+            
+            if (cls) {
+                [[BHModuleManager sharedManager] registerDynamicModule:cls];
+            }
+        }
+    }
+    
+    //register services
+    NSArray<NSString *> *services = BHReadConfiguration(BeehiveServiceSectName,mhp);
+    for (NSString *map in services) {
+        NSData *jsonData =  [map dataUsingEncoding:NSUTF8StringEncoding];
+        NSError *error = nil;
+        id json = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+        if (!error) {
+            if ([json isKindOfClass:[NSDictionary class]] && [json allKeys].count) {
+                
+                NSString *protocol = [json allKeys][0];
+                NSString *clsName  = [json allValues][0];
+                
+                if (protocol && clsName) {
+                    [[BHServiceManager sharedManager] registerService:NSProtocolFromString(protocol) implClass:NSClassFromString(clsName)];
+                }
+                
+            }
+        }
+    }
+    
+}
+```
 
 
 
