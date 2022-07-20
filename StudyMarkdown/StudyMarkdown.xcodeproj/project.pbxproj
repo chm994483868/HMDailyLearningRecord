@@ -45,7 +45,6 @@
 		8E52DF2E2874853B00AC7847 /* HTML 参考学习笔记（一）：HTML 元素参考.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 参考学习笔记（一）：HTML 元素参考.md"; sourceTree = "<group>"; };
 		8E52DF302875D58E00AC7847 /* HTML 学习记录（六）：HTML 表格.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（六）：HTML 表格.md"; sourceTree = "<group>"; };
 		8E52DF312875D7AB00AC7847 /* HTML 学习记录（七）：HTML 表单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（七）：HTML 表单.md"; sourceTree = "<group>"; };
-		8E52DF4C287B276200AC7847 /* iOS 组件化实践（一）：中间层方案选择.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择.md"; sourceTree = "<group>"; };
 		8E52DF4D287C67EE00AC7847 /* resume.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = resume.md; sourceTree = "<group>"; };
 		8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（二）：协议方案.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
@@ -223,6 +222,7 @@
 		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
+		8EDC030A28878301001263C6 /* iOS 组件化实践（一）：中间层方案选择Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择Two.md"; sourceTree = "<group>"; };
 		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -339,8 +339,8 @@
 		8E52DF4B287B271F00AC7847 /* 组件化 */ = {
 			isa = PBXGroup;
 			children = (
-				8E52DF4C287B276200AC7847 /* iOS 组件化实践（一）：中间层方案选择.md */,
 				8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */,
+				8EDC030A28878301001263C6 /* iOS 组件化实践（一）：中间层方案选择Two.md */,
 			);
 			path = "组件化";
 			sourceTree = "<group>";

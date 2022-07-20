@@ -67,16 +67,28 @@ class BeeHive; char * k##servicename##_service BeeHiveDATA(BeehiveServices) = "{
 
 &emsp;首先是 BeehiveModSectName 和 BeehiveServiceSectName 两个字符串宏定义，分别用来给 module 和 service 起的在 DATA 段中存放数据的 section 名，这里一定要有 Mach-O 的基础知识，要不然会不理解这里的含义。
 
-&emsp;下面的 BeeHiveMod 和 BeeHiveService 便是在 `__DATA` 段的指定 section 中存入指定的内容。直接把我们需要的 mod 和 service 信息注入 Mach-O 中去。
+&emsp;下面的 BeeHiveMod 和 BeeHiveService 两个宏便是在 `__DATA` 段的指定 section 中存入指定的内容。直接把我们需要的 mod 和 service 信息在 main 函数之前就注入到 Mach-O 中去。
+
+&emsp;在 BeeHive Example 项目中看到：`@BeeHiveMod(ShopModule)`、`@BeeHiveService(UserTrackServiceProtocol,BHUserTrackViewController)`、`@BeeHiveService(HomeServiceProtocol,BHViewController)` 三个宏的使用，把它们展开的话分别如下看着更清晰一些：
+
+```c++
+@class BeeHive; 
+char * kShopModule_mod __attribute((used, section("__DATA,""BeehiveMods"" "))) = """ShopModule""";
+
+@class BeeHive;
+char * kUserTrackServiceProtocol_service __attribute((used, section("__DATA,""BeehiveServices"" "))) = "{ \"""UserTrackServiceProtocol""\" : \"""BHUserTrackViewController""\"}";
+
+@class BeeHive;
+char * kHomeServiceProtocol_service __attribute((used, section("__DATA,""BeehiveServices"" "))) = "{ \"""HomeServiceProtocol""\" : \"""BHViewController""\"}";
+```
+
+&emsp;在 DATA 段的 BeehiveMods 区中写入 `""ShopModule""` 字符串。在 DATA 段的 BeehiveServices 区中写入 `{ \"""UserTrackServiceProtocol""\" : \"""BHUserTrackViewController""\"}` 和 `{ \"""HomeServiceProtocol""\" : \"""BHViewController""\"}` 字符串，这里表明在当前项目注入了 Shop 模块、UserTrackServiceProtocol 协议的实现类是 BHUserTrackViewController、HomeServiceProtocol 协议的实现类是 BHViewController  
 
 
 
 
 
-
-
-
-
+/Users/hmc/Library/Developer/Xcode/DerivedData/kyyApp-brhibjeslxxhbeedjiggefiycnrd/Build/Intermediates.noindex/ArchiveIntermediates/kyyApp/BuildProductsPath/Release-iphoneos/
 
 
 
@@ -92,6 +104,7 @@ class BeeHive; char * k##servicename##_service BeeHiveDATA(BeehiveServices) = "{
 + [casatwy/CTMediator](https://github.com/casatwy/CTMediator)
 + [alibaba/BeeHive](https://github.com/alibaba/BeeHive)
 + [iOS应用架构谈 组件化方案](https://casatwy.com/iOS-Modulization.html)
+
 
 
 
