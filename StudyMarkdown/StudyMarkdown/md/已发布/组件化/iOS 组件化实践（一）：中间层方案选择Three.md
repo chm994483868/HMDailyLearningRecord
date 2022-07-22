@@ -87,7 +87,7 @@ char * kHomeServiceProtocol_service __attribute((used, section("__DATA,""Beehive
 ```c++
 id<HomeServiceProtocol> homeVc = [[BeeHive shareInstance] createService:@protocol(HomeServiceProtocol)];
 id<UserTrackServiceProtocol> v4 = [[BeeHive shareInstance] createService:@protocol(UserTrackServiceProtocol)];
-```  
+```
 
 &emsp;homeVc 和 V4 分别是 BHViewController 和 BHUserTrackViewController 控制器实例。
 
@@ -95,15 +95,18 @@ id<UserTrackServiceProtocol> v4 = [[BeeHive shareInstance] createService:@protoc
 
 #### BHReadConfiguration
 
-&emsp;读取指定 section 中的数据，在当前项目中指定 section 中保存的是配置信息。mhp 是当前可执行文件的 header 指针。
+&emsp;读取指定 section 中的数据，在当前可执行文件指定 section 中保存的是配置信息。mhp 是当前可执行文件启动过程中加载的 image 的 header 指针。
 
-&emsp;单纯看 BHReadConfiguration 函数的话，其实其内容很简单，传入 header 和 section 的名字，然后在这个 Mach-O 中读取 DATA 段中此 section 的内容。其中指针转换、循环取内容的代码看起来可能有点绕，其实是 section 中保存的并不是字符串的内容，而是字符串的地址。
+&emsp;单纯看 BHReadConfiguration 函数的话，其实其内容很简单，传入 image header（mhp）指针和 sectionName 字符串，然后在这个 image 中读取 DATA 段中此 section 的内容。其中指针转换、循环取内容的代码看起来可能有点绕，其实是 section 中保存的并不是字符串的内容，而是字符串的地址，它指向 TEXT 段的 `__cstring` section，字符串内容实际保存在这里。
+
+![截屏2022-07-21 20.59.09.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6c988927c78a4249b1714028a4d33797~tplv-k3u1fbpfcp-watermark.image?)
 
 ```c++
 NSArray<NSString *>* BHReadConfiguration(char *sectionName,const struct mach_header *mhp)
 {
     NSMutableArray *configs = [NSMutableArray array];
     unsigned long size = 0;
+    
 #ifndef __LP64__
     uintptr_t *memory = (uintptr_t*)getsectiondata(mhp, SEG_DATA, sectionName, &size);
 #else
@@ -113,7 +116,10 @@ NSArray<NSString *>* BHReadConfiguration(char *sectionName,const struct mach_hea
     uintptr_t *memory = (uintptr_t*)getsectiondata(mhp64, SEG_DATA, sectionName, &size);
 #endif
     
+    // sectionName 区中的数据长度，然后除以一个指针长度，可得出指针个数，这里是因为我们在指定的 section 中保存的都是字符串，所以我们直接读取时，是一个指针。  
     unsigned long counter = size/sizeof(void*);
+    
+    // 遍历指针读出指向的字符串并保存在一个数组中
     for(int idx = 0; idx < counter; ++idx){
         char *string = (char*)memory[idx];
         NSString *str = [NSString stringWithUTF8String:string];
@@ -129,7 +135,7 @@ NSArray<NSString *>* BHReadConfiguration(char *sectionName,const struct mach_hea
 
 #### initProphet
 
-&emsp;initProphet 函数比较特殊，它被添加了 `__attribute__((constructor))` 修饰，这样 initProphet 函数会在 main 函数之前得到调用，而它的内部只有一行代码，即把 dyld_callback 函数注册为 dyld 的添加新 image 的回调，这样在 APP 启动之前每一个 image 被加载后 dyld_callback 函数就会被调用一次，测试一下可发现在 BeeHive 启动过程中 dyld_callback 函数被调用了多次。 
+&emsp;initProphet 函数比较特殊，它被添加了 `__attribute__((constructor))` 修饰，这样 initProphet 函数会在 main 函数之前得到调用，而它的内部只有一行代码，即把 dyld_callback 函数注册为 dyld 的添加新 image 的回调，这样在 APP 启动之前每一个 image 被加载后 dyld_callback 函数就会被调用一次，打印一下可发现在 BeeHive 启动过程中 dyld_callback 函数被调用了多次。 
 
 ```c++
 __attribute__((constructor))
@@ -140,7 +146,7 @@ void initProphet() {
 
 #### dyld_callback
 
-&emsp;
+&emsp;dyld_callback 函数中主要进行读取 BeehiveMods 和 BeehiveServices section 中的数据，
 
 ```c++
 static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
@@ -159,7 +165,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
         }
     }
     
-    //register services
+    // register services
     NSArray<NSString *> *services = BHReadConfiguration(BeehiveServiceSectName,mhp);
     for (NSString *map in services) {
         NSData *jsonData =  [map dataUsingEncoding:NSUTF8StringEncoding];
@@ -195,6 +201,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 + [casatwy/CTMediator](https://github.com/casatwy/CTMediator)
 + [alibaba/BeeHive](https://github.com/alibaba/BeeHive)
 + [iOS应用架构谈 组件化方案](https://casatwy.com/iOS-Modulization.html)
+
 
 
 
