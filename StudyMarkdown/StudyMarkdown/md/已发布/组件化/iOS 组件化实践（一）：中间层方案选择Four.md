@@ -285,7 +285,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 }
 ```
 
-&emsp;BHContext 是一个单例类，保存许多上下文信息。其中 moduleConfigName 和 serviceConfigName 属性记录 .plist 文件的路径和名字。在 BeeHive 类的 setContext 函数中会对 .plist 文件进行读取：
+&emsp;BHContext 是一个单例类，保存许多上下文信息。其中 moduleConfigName 和 serviceConfigName 两个属性分别记录了 .plist 文件的路径和名字。在 BeeHive 类的 setContext 函数中会对 .plist 文件进行读取并对其中的 modules 和 services 数据：
 
 ```c++
 -(void)setContext:(BHContext *)context
@@ -300,6 +300,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 }
 ```
 
+&emsp;
 
 
 
@@ -342,6 +343,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 + [alibaba/BeeHive](https://github.com/alibaba/BeeHive)
 + [iOS应用架构谈 组件化方案](https://casatwy.com/iOS-Modulization.html)
 + [深入iOS系统底层之 image 文件操作API介绍](https://blog.csdn.net/ios8988/article/details/89510599)
+
 
 
 

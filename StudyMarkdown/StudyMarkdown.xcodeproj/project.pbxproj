@@ -188,7 +188,6 @@
 		8E79139727A0D10600900CDA /* Python笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Python笔记.md"; sourceTree = "<group>"; };
 		8E7B22D9269E5F8C00ED3945 /* 待学清单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "待学清单.md"; sourceTree = "<group>"; };
 		8E7BDC1628704BED0027A0CB /* Xcode 工程相关（二）：.xcodeproj 文件分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Xcode 工程相关（二）：.xcodeproj 文件分析.md"; sourceTree = "<group>"; };
-		8E7FCE062888D5DE00D61253 /* iOS 组件化实践（一）：中间层方案选择Three.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择Three.md"; sourceTree = "<group>"; };
 		8E80F65E27DC888B00942D35 /* SwiftUI 学习笔记（二）：Building Lists and Navigation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（二）：Building Lists and Navigation.md"; sourceTree = "<group>"; };
 		8E8A66D02862A352003DB257 /* Xcode工程相关（一）：.xcodeproj 文件分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Xcode工程相关（一）：.xcodeproj 文件分析.md"; sourceTree = "<group>"; };
 		8E8ACB5327B5EDE5006D82FA /* cocoapods和Xcode工程.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "cocoapods和Xcode工程.md"; sourceTree = "<group>"; };
@@ -224,6 +223,7 @@
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
 		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
+		8EE3B4B8288CF63200B59C1E /* iOS 组件化实践（一）：中间层方案选择Four.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择Four.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -339,7 +339,7 @@
 		8E52DF4B287B271F00AC7847 /* 组件化 */ = {
 			isa = PBXGroup;
 			children = (
-				8E7FCE062888D5DE00D61253 /* iOS 组件化实践（一）：中间层方案选择Three.md */,
+				8EE3B4B8288CF63200B59C1E /* iOS 组件化实践（一）：中间层方案选择Four.md */,
 				8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */,
 			);
 			path = "组件化";
