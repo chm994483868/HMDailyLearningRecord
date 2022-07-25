@@ -386,46 +386,60 @@ BH_EXPORT_MODULE(NO)
 
 ## MGJRouter
 
-&emsp;
+&emsp;MGJRouter 超简单，只有一对 MGJRouter.h .m 文件，总共不到 220 行，下面我们以 [lyujunwei/MGJRouter](https://github.com/lyujunwei/MGJRouter) 仓库为例，来看一下它的使用。
 
+&emsp;MGJRouter 是一个单例类，它有一个 `@property (nonatomic) NSMutableDictionary *routes;` 属性用来记录注册的 URL，例如下面最简单的注册：
 
+```c++
+[MGJRouter registerURLPattern:@"mgj://foo/bar" toHandler:^(NSDictionary *routerParameters) {
+    [self appendLog:@"匹配到了 url，以下是相关信息"];
+    [self appendLog:[NSString stringWithFormat:@"routerParameters:%@", routerParameters]];
+}];
+```
 
+&emsp;`mgj://foo/bar` 注册完毕后，我们打印 routes 可看到如下，即把注册 URL 时的 handler block 沿着 URL 的 path 保存在 routes 字典中（如果 path 很长，那么这个 block 会嵌好深）。
 
+```c++
+🌹🌹🌹 mgj://foo/bar 
+{
+    mgj =     {
+        "~" =         {
+            foo =             {
+                bar =                 {
+                    "_" = "<__NSMallocBlock__: 0x600003bd21f0>";
+                };
+            };
+        };
+    };
+}
+```
 
+&emsp;然后我们通过 URL 调用时：`[MGJRouter openURL:@"mgj://foo/bar"]`，此时便是根据指定 URL 从 routes 中提取出 block 执行，示例代码中提取出的执行数据如下，然后以 `{ "MGJRouterParameterURL": "mgj://foo/bar" }` 为参数，执行上面注册的 handleer block。
 
+```c++
+🚀🚀🚀
+{
+    MGJRouterParameterURL = "mgj://foo/bar";
+    block = "<__NSMallocBlock__: 0x600003bd21f0>";
+}
+```
 
+&emsp;然后还有一些其他方式的注册和调用，例如：
 
++ 调用 open 时，可以传递 userinfo 作为参数：` [MGJRouter openURL:@"mgj://category/travel" withUserInfo:@{@"user_id": @1900} completion:nil]`。
++ 如果有可变参数（包括 URL Query Parameter）会被自动解析：`[MGJRouter openURL:@"mgj://search/bicycle?color=red"]`，此时可变参数的名字需要双方协定好。
++ 当 Open 结束时，执行 Completion Block：`[MGJRouter openURL:@"mgj://detail" withUserInfo:nil completion:^{ }]`。
+...
 
+&emsp;MGJRouter 主页介绍的贼详细，函数封装的也贼清晰，这里就不再复述了。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;至此 CTMediator、BeeHive、MGJRouter 三种不同的解耦方式方式我们就看完了，个人更偏向 BeeHive 一些，虽然目前采用的是更简单的 CTMediator 的方案。
 
 ## 参考链接
 **参考链接:🔗**
 + [casatwy/CTMediator](https://github.com/casatwy/CTMediator)
 + [alibaba/BeeHive](https://github.com/alibaba/BeeHive)
++ [lyujunwei/MGJRouter](https://github.com/lyujunwei/MGJRouter)
 + [iOS应用架构谈 组件化方案](https://casatwy.com/iOS-Modulization.html)
 + [深入iOS系统底层之 image 文件操作API介绍](https://blog.csdn.net/ios8988/article/details/89510599)
 
