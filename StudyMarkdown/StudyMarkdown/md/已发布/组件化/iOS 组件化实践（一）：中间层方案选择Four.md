@@ -1,6 +1,6 @@
 # iOS 组件化实践（一）：中间层方案选择
 
-&emsp;这里主要分析 [casatwy/CTMediator](https://github.com/casatwy/CTMediator) 和 [alibaba/BeeHive](https://github.com/alibaba/BeeHive) 两个库的源码。
+&emsp;这里主要分析 [casatwy/CTMediator](https://github.com/casatwy/CTMediator)、[alibaba/BeeHive](https://github.com/alibaba/BeeHive)、[lyujunwei/MGJRouter](https://github.com/lyujunwei/MGJRouter) 三个库的源码。
 
 ## CTMediator
 
@@ -266,15 +266,21 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 ```c++
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    // 记录 application 和 launchOptions 两个属性
     [BHContext shareInstance].application = application;
     [BHContext shareInstance].launchOptions = launchOptions;
     
+    // 指定存储 module 和 service 数据的 .plist 文件的位置
     [BHContext shareInstance].moduleConfigName = @"BeeHive.bundle/BeeHive"; // 可选，默认为 BeeHive.bundle/BeeHive.plist
     [BHContext shareInstance].serviceConfigName = @"BeeHive.bundle/BHService";
     
+    // 是否开启 Exception，如果开启的话当发生异常情况时会进行抛错
     [BeeHive shareInstance].enableException = YES;
+    
+    // 对 BeeHive 单例类的 context 属性进行赋值，并且并且并且读取保存在本地 .plist 文件中的 module 和 service 数据，并注册它们  
     [[BeeHive shareInstance] setContext:[BHContext shareInstance]];
     
+    // 仅记录 DEBUG 下的 event time
     [[BHTimeProfiler sharedTimeProfiler] recordEventTime:@"BeeHive::super start launch"];
 
     [super application:application didFinishLaunchingWithOptions:launchOptions];
@@ -285,7 +291,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 }
 ```
 
-&emsp;BHContext 是一个单例类，保存许多上下文信息。其中 moduleConfigName 和 serviceConfigName 两个属性分别记录了 .plist 文件的路径和名字。在 BeeHive 类的 setContext 函数中会对 .plist 文件进行读取并对其中的 modules 和 services 数据：
+&emsp;BHContext 是一个单例类，保存许多上下文信息。其中 moduleConfigName 和 serviceConfigName 属性记录 .plist 文件的路径和名字。在 BeeHive 单例类的 setContext 函数中会对 .plist 文件内容进行读取，并注册其中的 module 和 service：
 
 ```c++
 -(void)setContext:(BHContext *)context
@@ -294,14 +300,93 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        // 使用 dispatch_once 包裹，保证全局只调用一次 
         [self loadStaticServices];
         [self loadStaticModules];
     });
 }
 ```
 
-&emsp;
+&emsp;loadStaticModules 函数读取本地 .plist 文件中的内容，然后把它们添加到 allServicesDict 字典中即完成了注册过程。
 
+&emsp;BeeHive.bundle/BHService.plist 文件的内容如：`{"service":"UserTrackServiceProtocol", "impl":"BHUserTrackViewController"}` 此类字符串数组，协议名和实现协议的类名成对存放。
+
+```c++
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+    <dict>
+        <key>service</key>
+        <string>UserTrackServiceProtocol</string>
+        <key>impl</key>
+        <string>BHUserTrackViewController</string>
+    </dict>
+</array>
+</plist>
+```
+
+```c++
+-(void)loadStaticServices
+{
+    // 传递是否开启 Exception
+    [BHServiceManager sharedManager].enableException = self.enableException;
+    
+    // 读取并注册本地的 service 信息
+    [[BHServiceManager sharedManager] registerLocalServices];
+}
+
+- (void)registerLocalServices
+{
+    // @"BeeHive.bundle/BHService"
+    NSString *serviceConfigName = [BHContext shareInstance].serviceConfigName;
+    
+    // 读取 BeeHive.bundle/BHService.plist 文件
+    NSString *plistPath = [[NSBundle mainBundle] pathForResource:serviceConfigName ofType:@"plist"];
+    if (!plistPath) {
+        return;
+    }
+    
+    NSArray *serviceList = [[NSArray alloc] initWithContentsOfFile:plistPath];
+    
+    [self.lock lock];
+    for (NSDictionary *dict in serviceList) {
+        NSString *protocolKey = [dict objectForKey:@"service"];
+        NSString *protocolImplClass = [dict objectForKey:@"impl"];
+        
+        if (protocolKey.length > 0 && protocolImplClass.length > 0) {
+            // 然后直接把协议和实现协议的类的名字添加到 allServicesDict 字典中，没有进行验证协议是否存在，这个类是否遵循这个协议，刚刚在注解注册的过程中进行了验证
+            [self.allServicesDict addEntriesFromDictionary:@{protocolKey:protocolImplClass}];
+        }
+    }
+    [self.lock unlock];
+}
+```
+
+&emsp;通过 .plist 文件注册的方式看完了，还有一种使用 +load 函数的方式。 
+
+### 使用 +load 的方式进行注册
+
+&emsp;无需保存文件名直接在 +load 方法中利用 serviceCenter 进行 protocol 与 class 的注册，等待使用的时候进行初始化，避免内存常驻。比较简单，就不再过多的分析了。
+
+```c++
++ (void)load
+{
+    [BeeHive registerDynamicModule:[self class]];
+}
+```
+
+```c++
+BH_EXPORT_MODULE(NO)
+
+#define BH_EXPORT_MODULE(isAsync) \
++ (void)load { [BeeHive registerDynamicModule:[self class]]; } \
+-(BOOL)async { return [[NSString stringWithUTF8String:#isAsync] boolValue];}
+```
+
+## MGJRouter
+
+&emsp;
 
 
 

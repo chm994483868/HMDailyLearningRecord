@@ -160,3 +160,19 @@ void selectSort(int nums[], int count) {
         swap(&nums[minIndex], &nums[i]);
     }
 }
+
+void selectSort(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
+    
+    for (int i = 0; i < count; ++i) {
+        int minIndex = i;
+        for (int j = i + 1; j < count; ++j) {
+            if (nums[minIndex] > nums[j]) {
+                minIndex = j;
+            }
+        }
+        swap(&nums[minIndex], &nums[i]);
+    }
+}
