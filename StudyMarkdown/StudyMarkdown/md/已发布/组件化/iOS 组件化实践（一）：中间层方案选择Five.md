@@ -259,7 +259,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 
 ### 读取 .plist 文件内容的方式进行注册
 
-&emsp;把需要的 modules 和 services 数据保存在 .plist 文件中，然后在 `application:didFinishLaunchingWithOptions:` 函数中进行读取。
+&emsp;把需要的 modules 和 services 数据保存在 .plist 文件中，然后在 `application:didFinishLaunchingWithOptions:` 回调函数中进行读取。
 
 &emsp;在 TestAppDelegate.m 文件中有如下代码：
 
@@ -291,7 +291,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 }
 ```
 
-&emsp;BHContext 是一个单例类，保存许多上下文信息。其中 moduleConfigName 和 serviceConfigName 属性记录 .plist 文件的路径和名字。在 BeeHive 单例类的 setContext 函数中会对 .plist 文件内容进行读取，并注册其中的 module 和 service：
+&emsp;BHContext 是一个单例类，保存许多上下文信息。其中 moduleConfigName 和 serviceConfigName 属性记录 .plist 文件的路径和名字。在 BeeHive 单例类的 context 属性的 setter 函数中会对 .plist 文件内容进行读取，并注册其中的 module 和 service（并不是什么高深的操作，就是把这些数据放进 allServicesDict 这个全局变量内）：
 
 ```c++
 -(void)setContext:(BHContext *)context
@@ -329,7 +329,7 @@ static void dyld_callback(const struct mach_header *mhp, intptr_t vmaddr_slide)
 ```c++
 -(void)loadStaticServices
 {
-    // 传递是否开启 Exception
+    // 传递是否开启 Exception 的值
     [BHServiceManager sharedManager].enableException = self.enableException;
     
     // 读取并注册本地的 service 信息
@@ -428,6 +428,7 @@ BH_EXPORT_MODULE(NO)
 + [alibaba/BeeHive](https://github.com/alibaba/BeeHive)
 + [iOS应用架构谈 组件化方案](https://casatwy.com/iOS-Modulization.html)
 + [深入iOS系统底层之 image 文件操作API介绍](https://blog.csdn.net/ios8988/article/details/89510599)
+
 
 
 
