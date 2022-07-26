@@ -223,7 +223,8 @@
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
 		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
-		8EE3B4B9288E19F500B59C1E /* iOS 组件化实践（一）：中间层方案选择Five.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择Five.md"; sourceTree = "<group>"; };
+		8EE3B535288F679900B59C1E /* iOS 组件化实践（一）：中间层方案选择.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择.md"; sourceTree = "<group>"; };
+		8EE3B536288F68E100B59C1E /* 函数调用堆栈.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "函数调用堆栈.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -339,8 +340,9 @@
 		8E52DF4B287B271F00AC7847 /* 组件化 */ = {
 			isa = PBXGroup;
 			children = (
+				8EE3B535288F679900B59C1E /* iOS 组件化实践（一）：中间层方案选择.md */,
 				8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */,
-				8EE3B4B9288E19F500B59C1E /* iOS 组件化实践（一）：中间层方案选择Five.md */,
+				8EE3B536288F68E100B59C1E /* 函数调用堆栈.md */,
 			);
 			path = "组件化";
 			sourceTree = "<group>";
