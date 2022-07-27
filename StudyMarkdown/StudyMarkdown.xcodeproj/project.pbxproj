@@ -49,6 +49,7 @@
 		8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（二）：协议方案.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
+		8E58900F289107A000267BA9 /* 函数调用堆栈TWO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "函数调用堆栈TWO.md"; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
 		8E5E58452685979D0088C814 /* StudyMarkdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StudyMarkdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E5E58482685979D0088C814 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -224,7 +225,6 @@
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
 		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
 		8EE3B535288F679900B59C1E /* iOS 组件化实践（一）：中间层方案选择.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择.md"; sourceTree = "<group>"; };
-		8EE3B536288F68E100B59C1E /* 函数调用堆栈.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "函数调用堆栈.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -342,7 +342,7 @@
 			children = (
 				8EE3B535288F679900B59C1E /* iOS 组件化实践（一）：中间层方案选择.md */,
 				8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */,
-				8EE3B536288F68E100B59C1E /* 函数调用堆栈.md */,
+				8E58900F289107A000267BA9 /* 函数调用堆栈TWO.md */,
 			);
 			path = "组件化";
 			sourceTree = "<group>";
