@@ -648,7 +648,170 @@ label {
 
 ### 单行文本框
 
-&emsp;
+&emsp;使用 type 属性值被设置为 text 的 `<input>` 元素创建一个单行文本框（同样的，如果你不提供 type 属性，该属性将被默认设置为 text）。在你指定的 type 属性的值在浏览器中是未知的情况下（比如你指定 type="date"，但是浏览器不支持原生日期选择器），属性值也将会回落到 text。
+
+```javascript
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Single line text field examples</title>
+</head>
+
+<body>
+    <form>
+        <p>
+          <label for="comment">Add a comment here:</label>
+          <input type="text" id="comment" name="comment" value="I'm a text field">
+        </p>
+        <p>
+          <label for="email">Enter your email address:</label>
+          <input type="email" id="email" name="email" multiple>
+        </p>
+        <p>
+          <label for="pwd">Enter your password:</label>
+          <input type="password" id="pwd" name="pwd">
+        </p>
+        <p>
+          <label for="search">Search:</label>
+          <input type="search" id="search" name="search">
+        </p>
+        <p>
+          <label for="tel">Enter your number:</label>
+          <input type="tel" id="tel" name="tel">
+        </p>
+        <p>
+          <label for="url">Web address:</label>
+          <input type="url" id="url" name="url">
+        </p>
+        <p>
+          <button type="submit">Submit me!</button>
+        </p>
+    </form>
+</body>
+
+</html>
+```
+
+&emsp;这是一个基本的单行文本框示例：
+
+```javascript
+<input type="text" id="comment" name="comment" value="I'm a text field">
+```
+
+&emsp;单行文本框只有一个真正的约束：如果你输入带有换行符的文本，浏览器会在发送数据之前删除这些换行符。
+
+> &emsp;note：HTML 5 通过为 type 属性增加特殊值增强了基本单行文本框。这些值仍然将 `<input>` 元素转换为单行文本框，但它们为字段添加了一些额外的约束和特性。例如，URL 和 数值类型的约束。
+
+### 密码框
+
+&emsp;通过设置 type 属性值为 password 来设置该类型框：
+
+```javascript
+<input type="password" id="pwd" name="pwd">
+```
+
+&emsp;它不会为输入的文本添加任何特殊的约束，但是它会模糊输入到字段中的值（例如，用点或星号），这样它就不能被其他人读取。
+
+&emsp;请记住，这只是一个用户界面特性；除非你安全地提交你的表单，否则它会以明文发送，这不利于安全 —— 恶意的一方可能会截获你的数据，窃取你的密码、信用卡信息，或者你提交的其他任何东西。保护用户不受此影响的最佳方式是在安全连接上托管任何涉及表单的页面（例如：https://…… 地址），使得数据在发送之前就已加密。
+
+&emsp;现代浏览器认识到在不安全的连接上发送表单数据所带来的安全影响，并且已经实现了警告，以阻止用户使用不安全的表单。
+
+### 隐藏内容
+
+&emsp;另一个原生的文本框控件是 hidden input 类型。它被用于创建对用户不可见的表单部件，但在发送表单时，会与其它的表单数据一起被发送到服务器 —— 例如，你可能希望向服务器提交一个时间戳，说明订单是何时产生的。因为它是隐藏的，所以用户看不到也不能简单地修改该值，它将永远不会获得焦点，屏幕阅读器也不会注意到它。
+
+```javascript
+<input type="hidden" id="timestamp" name="timestamp" value="1286705410">
+```
+
+&emsp;如果你创建了这样一个元素，就需要设置它的 name 和 value 属性。元素的值可以通过 JavaScript 动态设置。hidden input 类型不应有关联的标签（label 元素）。
+
+## 可选中项：复选框和单选按钮
+
+&emsp;可选中项是可以通过单击它们来更改状态的小部件。有两种可选中项：复选框和单选按钮。两者都使用 checked 属性，以指示该部件的默认状态："选中" 或 "未选中"。
+
+&emsp;值得注意的是，这些小部件与其他表单小部件不一样。对于大多数表单部件，一旦表单提交，所有具有 name 属性的小部件都会被发送，即使没有任何值被填。对于可选中项，只有在勾选时才发送它们的值。如果他们没有被勾选，就不会发送任何东西，甚至连他们的名字也没有。而在它们被勾选且没有提供值（value）时，将会发送名字和缺省值 on。
+
+```javascript
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Checkable items examples</title>
+</head>
+
+<body>
+    <form>
+        <fieldset>
+          <legend>Choose all the vegetables you like to eat</legend>
+          <ul>
+            <li>
+              <label for="carrots">Carrots</label>
+              <input type="checkbox" checked id="carrots" name="vegetable" value="carrots">
+            </li>
+            <li>
+              <label for="peas">Peas</label>
+              <input type="checkbox" id="peas" name="vegetable" value="peas">
+            </li>
+            <li>
+              <label for="cabbage">Cabbage</label>
+              <input type="checkbox" id="cabbage" name="vegetable" value="cabbage">
+            </li>
+            <li>
+              <label for="cauli">Cauliflower</label>
+              <input type="checkbox" id="cauli" name="vegetable" value="cauli">
+            </li>
+            <li>
+              <label for="broc">Broccoli</label>
+              <input type="checkbox" id="broc" name="vegetable" value="broc">
+            </li>
+          </ul>
+        </fieldset>
+        <fieldset>
+          <legend>What is your favorite meal?</legend>
+          <ul>
+            <li>
+              <label for="soup">Soup</label>
+              <input type="radio" checked id="soup" name="meal" value="soup">
+            </li>
+            <li>
+              <label for="curry">Curry</label>
+              <input type="radio" id="curry" name="meal" value="curry">
+            </li>
+            <li>
+              <label for="pizza">Pizza</label>
+              <input type="radio" id="pizza" name="meal" value="pizza">
+            </li>
+            <li>
+              <label for="tacos">Tacos</label>
+              <input type="radio" id="tacos" name="meal" value="tacos">
+            </li>
+            <li>
+              <label for="bolognaise">Bolognaise</label>
+              <input type="radio" id="bolognaise" name="meal"  value="bolognaise">
+            </li>
+          </ul>
+        </fieldset>
+    </form>
+</body>
+
+</html>
+```
+
+&emsp;为了获得最大的可用性和可访问性（无障碍），建议你在 `<fieldset>` 中包围每个相关项目的列表，并使用 `<legend>` 提供对列表的全面描述。每个单独的 `<label>/<input>` 元素都应该包含在它自己的列表项中（或者类似的）。正如在下方示例中显示的。
+
+### 复选框
+
+&emsp;使用 type 属性值为 checkbox 的 `<input>` 元素来创建一个复选框。
+
+```javascript
+<input type="checkbox" id="questionOne" name="subscribe" value="yes" checked>
+```
+
+&emsp;相关的复选框元素应该使用具有相同值的 name 属性。包含 checked 属性使复选框在页面加载时自动被选中。点击复选框或其相关联的标签也将自动翻转复选框的状态（选中、取消选中）
 
 
 
