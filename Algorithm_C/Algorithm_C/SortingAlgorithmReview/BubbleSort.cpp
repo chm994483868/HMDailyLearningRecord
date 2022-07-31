@@ -256,8 +256,14 @@ void bubbleSort(int nums[], int count) {
         int n = 0;
         for (int j = 0; j < k; ++j) {
             if (nums[j] > nums[j + 1]) {
-                swap(&nums[], <#int *b#>)
+                swap(&nums[j], &nums[j + 1]);
+                noChange = false;
+                n = j;
             }
         }
+        if (noChange) {
+            break;
+        }
+        k = n;
     }
 }
