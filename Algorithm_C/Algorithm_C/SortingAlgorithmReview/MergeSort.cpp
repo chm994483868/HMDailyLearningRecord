@@ -105,7 +105,49 @@ void mergeSort(int nums[], int first, int last, int temp[]) {
 }
 
 void mergeArray(int nums[], int first, int mid, int last, int temp[]) {
-    if (nums[mid] < nums[mid + 1]) {
+    if (nums[mid] <= nums[mid + 1]) {
+        return;
+    }
+    
+    int i = first, j = mid + 1;
+    int m = mid, n = last;
+    int k = 0;
+    
+    while (i <= m && j <= n) {
+        if (nums[i] <= nums[j]) {
+            temp[k++] = nums[i++];
+        } else {
+            temp[k++] = nums[j++];
+        }
+    }
+    
+    while (i <= m) {
+        temp[k++] = nums[i++];
+    }
+    
+    while (j <= n) {
+        temp[k++] = nums[j++];
+    }
+    
+    for (i = 0; i < k; ++i) {
+        nums[first + i] = temp[i];
+    }
+}
+
+void mergeSort(int nums[], int first, int last, int temp[]) {
+    if (first >= last) {
+        return;
+    }
+    
+    int mid = ((last - first) >> 1) + first;
+    mergeSort(nums, first, mid, temp);
+    mergeSort(nums, mid + 1, last, temp);
+    
+    mergeArray(nums, first, mid, last, temp);
+}
+
+void mergeArray(int nums[], int first, int mid, int last, int temp[]) {
+    if (nums[mid] <= nums[mid + 1]) {
         return;
     }
     

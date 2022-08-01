@@ -182,7 +182,7 @@ void selectSort(int nums[], int count) {
         return;
     }
     
-    for (int i = 0; i < count - 1; ++i) {
+    for (int i = 0; i < count; ++i) {
         int minIndex = i;
         for (int j = i + 1; j < count; ++j) {
             if (nums[minIndex] > nums[j]) {
@@ -201,7 +201,27 @@ void selectSort(int nums[], int count) {
     for (int i = 0; i < count; ++i) {
         int minIndex = i;
         for (int j = i + 1; j < count; ++j) {
-            
+            if (nums[minIndex] > nums[j]) {
+                minIndex = j;
+            }
+            minIndex = j;
         }
+        swap(&nums[minIndex], &nums[i]);
+    }
+}
+
+void selectSort(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
+    
+    for (int i = 0; i < count; ++i) {
+        int minIndex = i;
+        for (int j = i + 1; j < count; ++j) {
+            if (nums[minIndex] > nums[j]) {
+                minIndex = j;
+            }
+        }
+        swap(&nums[minIndex], &nums[i]);
     }
 }
