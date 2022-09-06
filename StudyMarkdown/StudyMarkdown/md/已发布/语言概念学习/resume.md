@@ -1,5 +1,3 @@
-# 简历
-
 ## 联系方式
 
 + 电话：18101219127
@@ -57,7 +55,7 @@
 + AR 知识点及 ARKit 核心技术点分享，给团队其他小伙伴补充 AR 知识
 + ...
 
-2. 个人阅读书籍清单：《程序员的自我修养-编译、链接、库》、《操作系统》、《》《深入理解计算机系统》、《汇编语言(第3版)》、《C Primer Plus》、《C++ Primer Plus》、《Effective C++(52 个)》、《从 C++ 到 Objective-C》、《Objective-C 高级编程 iOS 与 OS X 多线程和内存管理》、《Effective Objective-C 2.0(52个)》、《Swift 进阶》、《函数式 Swift》、《iOS 开发进阶》、《iOS Auto Layout 开发秘籍》、《iOS UI 开发捷径》、《高性能 iOS 应用开发》、《iOS 面试之道》、《图解 HTTP》、《iOS Core Animation:Advanced Techniques》、《JavaScript 面向对象编程 指南》、《剑指 offer》
+2. 个人阅读书籍清单：《程序员的自我修养--链接、装载与库》、《操作系统--精髓与设计原理》、《深入解析 macOS iOS 操作系统》、《你不知道的 JavaScript 上中下》、《深入理解计算机系统》、《汇编语言(第3版)》、《C Primer Plus》、《C++ Primer Plus》、《Effective C++(52 个)》、《从 C++ 到 Objective-C》、《Objective-C 高级编程 iOS 与 OS X 多线程和内存管理》、《Effective Objective-C 2.0(52个)》、《Swift 进阶》、《函数式 Swift》、《iOS 开发进阶》、《iOS Auto Layout 开发秘籍》、《iOS UI 开发捷径》、《高性能 iOS 应用开发》、《iOS 面试之道》、《图解 HTTP》、《iOS Core Animation:Advanced Techniques》、《JavaScript 面向对象编程 指南》、《剑指 offer》
 3. 掘金个人博客，通读 Apple 的五份源码: objc4-781、libdispatch-1173.40.5、CF-1151.16、libmalloc-283.100.6、libclosure-74 并输出文章，基本对 iOS 的底层原理都有一个详细的认知。 
 
 ## 其他 
