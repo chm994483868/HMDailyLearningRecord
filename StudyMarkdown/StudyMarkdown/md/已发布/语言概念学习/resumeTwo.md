@@ -3,17 +3,17 @@
 + 电话：18101219127
 + 邮箱：hm_dev@outlook.com
 + 博客：https://juejin.cn/user/1591748569076078
-  (目前共产出 100 多篇 iOS 相关的文章，累计 784 位关注者) 
+  (目前共产出 122 篇 iOS 相关的文章，累计 784 位关注者) 
 
 ## 个人简介
 
 + 程贺明，男，1992.09
-+ 黄河科技大学，计算机科学与技术，统招本科：12-16，16 年毕业工作至今，有 6 年 iOS 开发经验
++ 黄河科技大学，计算机科学与技术专业，统招本科：12-16，16 年毕业工作至今，有 6 年 iOS 开发经验
 
 ## 工作经历
 
-1. 北京小呀科技有限公司（2021.03 - 至今）
-  + 负责 考呀呀 APP 的日常需求开发和维护
+1. 北京小呀教育科技有限公司（2021.03 - 至今）
+  + 负责考呀呀 APP 的日常需求开发和维护
   + 基础架构改造搭建、崩溃统计与处理以及防劣化、组件化方案设计等等
 2. 北京微赢互动科技有限公司（2019.08 - 2021.03）
   + 负责斗地主游戏中内嵌原生部分以及广告 APP 开发
@@ -59,7 +59,7 @@
 + Mach-O 结构知识点分析
 + ...
 
-2. 个人阅读书籍清单：《程序员的自我修养--链接、装载与库》、《操作系统--精髓与设计原理》、《深入解析 macOS iOS 操作系统》、《你不知道的 JavaScript 上中下》、《深入理解计算机系统》、《汇编语言(第3版)》、《C Primer Plus》、《C++ Primer Plus》、《Swift 异步和并发》、《SwiftUI 与 Combine 编程》、《Effective C++(52 个)》、《从 C++ 到 Objective-C》、《Objective-C 高级编程 iOS 与 OS X 多线程和内存管理》、《Effective Objective-C 2.0(52个)》、《Swift 进阶》、《函数式 Swift》、《iOS 开发进阶》、《iOS Auto Layout 开发秘籍》、《iOS UI 开发捷径》、《高性能 iOS 应用开发》、《iOS 面试之道》、《图解 HTTP》、《iOS Core Animation:Advanced Techniques》、《JavaScript 面向对象编程 指南》、《剑指 offer》...
+2. 个人阅读书籍清单：《程序员的自我修养--链接、装载与库》、《操作系统--精髓与设计原理》、《深入解析 macOS iOS 操作系统》、《你不知道的 JavaScript 上中下》、《深入理解计算机系统》、《汇编语言(第3版)》、《C Primer Plus》、《C++ Primer Plus》、《Swift 异步和并发》、《SwiftUI 与 Combine 编程》、《Effective C++(52 个)》、《从 C++ 到 Objective-C》、《Objective-C 高级编程 iOS 与 OS X 多线程和内存管理》、《Effective Objective-C 2.0(52个)》、《Swift 进阶》、《函数式 Swift》、《iOS 开发进阶》、《iOS Auto Layout 开发秘籍》、《iOS UI 开发捷径》、《高性能 iOS 应用开发》、《iOS 面试之道》、《图解 HTTP》、《图解 TCP/IP》、《iOS Core Animation:Advanced Techniques》、《JavaScript 面向对象编程 指南》、《剑指 offer》...
 3. 掘金个人博客，通读 Apple 的五份源码: objc4-781、libdispatch-1173.40.5、CF-1151.16、libmalloc-283.100.6、libclosure-74 并输出文章，基本对 iOS 的底层原理都有一个详细的认知。 
 
 ## 其他 
