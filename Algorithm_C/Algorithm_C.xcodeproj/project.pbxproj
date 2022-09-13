@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		8E0F47362876619D0023B594 /* SelectionSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E0F47352876619D0023B594 /* SelectionSort.cpp */; };
 		8E0F4738287668570023B594 /* InsertionSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E0F4737287668570023B594 /* InsertionSort.cpp */; };
+		8E30A35C28D023AA00867D9B /* MergeSortReview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E30A35B28D023AA00867D9B /* MergeSortReview.cpp */; };
 		8E52DF4F287C769B00AC7847 /* ShellSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF4E287C769B00AC7847 /* ShellSort.cpp */; };
 		8E52DF52287C780100AC7847 /* QuickSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF51287C780100AC7847 /* QuickSort.cpp */; };
-		8E52DF54287DC49A00AC7847 /* MergeSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF53287DC49A00AC7847 /* MergeSort.cpp */; };
 		8E52DF56287EF4FE00AC7847 /* HeapSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */; };
 		8E540D1E28C866F900124C2A /* BubbleSort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E540D1D28C866F900124C2A /* BubbleSort.cpp */; };
 		8E5E5BB62686A0E30088C814 /* TwoSum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5AF22686A0E20088C814 /* TwoSum.cpp */; };
@@ -96,9 +96,9 @@
 /* Begin PBXFileReference section */
 		8E0F47352876619D0023B594 /* SelectionSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SelectionSort.cpp; sourceTree = "<group>"; };
 		8E0F4737287668570023B594 /* InsertionSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InsertionSort.cpp; sourceTree = "<group>"; };
+		8E30A35B28D023AA00867D9B /* MergeSortReview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MergeSortReview.cpp; sourceTree = "<group>"; };
 		8E52DF4E287C769B00AC7847 /* ShellSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ShellSort.cpp; sourceTree = "<group>"; };
 		8E52DF51287C780100AC7847 /* QuickSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = QuickSort.cpp; sourceTree = "<group>"; };
-		8E52DF53287DC49A00AC7847 /* MergeSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MergeSort.cpp; sourceTree = "<group>"; };
 		8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HeapSort.cpp; sourceTree = "<group>"; };
 		8E540D1D28C866F900124C2A /* BubbleSort.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BubbleSort.cpp; sourceTree = "<group>"; };
 		8E5E57FF2685965D0088C814 /* Algorithm_C */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Algorithm_C; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -253,8 +253,8 @@
 				8E0F4737287668570023B594 /* InsertionSort.cpp */,
 				8E52DF4E287C769B00AC7847 /* ShellSort.cpp */,
 				8E52DF51287C780100AC7847 /* QuickSort.cpp */,
-				8E52DF53287DC49A00AC7847 /* MergeSort.cpp */,
 				8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */,
+				8E30A35B28D023AA00867D9B /* MergeSortReview.cpp */,
 			);
 			path = SortingAlgorithmReview;
 			sourceTree = "<group>";
@@ -1042,6 +1042,7 @@
 				8E5E5BE62686A0E30088C814 /* NumberOf1.cpp in Sources */,
 				8E5E5BEC2686A0E30088C814 /* ContinuousSquenceWithSum.cpp in Sources */,
 				8E5E5BE12686A0E30088C814 /* LeftRotateString.cpp in Sources */,
+				8E30A35C28D023AA00867D9B /* MergeSortReview.cpp in Sources */,
 				8E5E5BCA2686A0E30088C814 /* ReverseList.cpp in Sources */,
 				8E5E5BF22686A0E30088C814 /* StringPermutation.cpp in Sources */,
 				8E5E5BCB2686A0E30088C814 /* CopyComplexList.cpp in Sources */,
@@ -1083,7 +1084,6 @@
 				8E5E5BCC2686A0E30088C814 /* MaxInSlidingWindow.cpp in Sources */,
 				8E5E5BD32686A0E30088C814 /* EntryNodeInListLoop.cpp in Sources */,
 				8E5E5BC02686A0E30088C814 /* StackWithMin.cpp in Sources */,
-				8E52DF54287DC49A00AC7847 /* MergeSort.cpp in Sources */,
 				8E5E5BF02686A0E30088C814 /* PathInTree.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
