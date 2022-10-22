@@ -253,8 +253,8 @@
 				8E0F4737287668570023B594 /* InsertionSort.cpp */,
 				8E52DF4E287C769B00AC7847 /* ShellSort.cpp */,
 				8E52DF51287C780100AC7847 /* QuickSort.cpp */,
-				8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */,
 				8E30A35B28D023AA00867D9B /* MergeSortReview.cpp */,
+				8E52DF55287EF4FE00AC7847 /* HeapSort.cpp */,
 			);
 			path = SortingAlgorithmReview;
 			sourceTree = "<group>";
