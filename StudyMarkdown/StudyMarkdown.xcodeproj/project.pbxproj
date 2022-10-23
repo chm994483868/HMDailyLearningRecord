@@ -45,11 +45,10 @@
 		8E52DF2E2874853B00AC7847 /* HTML 参考学习笔记（一）：HTML 元素参考.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 参考学习笔记（一）：HTML 元素参考.md"; sourceTree = "<group>"; };
 		8E52DF302875D58E00AC7847 /* HTML 学习记录（六）：HTML 表格.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（六）：HTML 表格.md"; sourceTree = "<group>"; };
 		8E52DF312875D7AB00AC7847 /* HTML 学习记录（七）：HTML 表单.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（七）：HTML 表单.md"; sourceTree = "<group>"; };
-		8E52DF4D287C67EE00AC7847 /* resume.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = resume.md; sourceTree = "<group>"; };
 		8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（二）：协议方案.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
-		8E540D1C28C8403000124C2A /* resumeTwo.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = resumeTwo.md; sourceTree = "<group>"; };
+		8E540D2628CACDA100124C2A /* 程贺明个人简历.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "程贺明个人简历.md"; sourceTree = "<group>"; };
 		8E543AF82899F59E00D91E4A /* 函数调用堆栈Six.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "函数调用堆栈Six.md"; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
 		8E5E58452685979D0088C814 /* StudyMarkdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StudyMarkdown; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -244,8 +243,7 @@
 			isa = PBXGroup;
 			children = (
 				8E0F47162873B9B10023B594 /* 单线程语言.md */,
-				8E540D1C28C8403000124C2A /* resumeTwo.md */,
-				8E52DF4D287C67EE00AC7847 /* resume.md */,
+				8E540D2628CACDA100124C2A /* 程贺明个人简历.md */,
 			);
 			path = "语言概念学习";
 			sourceTree = "<group>";
