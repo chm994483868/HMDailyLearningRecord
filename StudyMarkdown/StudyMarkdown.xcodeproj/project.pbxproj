@@ -210,6 +210,7 @@
 		8EB3AD7D27E8BF76006336C1 /* MySQL 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "MySQL 学习笔记.md"; sourceTree = "<group>"; };
 		8EB3AD7E27EB703A006336C1 /* SwiftUI 学习笔记（三）：Handling User Input.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（三）：Handling User Input.md"; sourceTree = "<group>"; };
 		8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md"; sourceTree = "<group>"; };
+		8EC45C5129056D830058B6DF /* SwiftUI 学习笔记（六）：Composing Complex Interfaces.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（六）：Composing Complex Interfaces.md"; sourceTree = "<group>"; };
 		8EC967DF27F850C20049151A /* SwiftUI 学习笔记（五）：Animating Views and Transitions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（五）：Animating Views and Transitions.md"; sourceTree = "<group>"; };
 		8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md"; sourceTree = "<group>"; };
 		8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md"; sourceTree = "<group>"; };
@@ -318,6 +319,7 @@
 				8EB3AD7E27EB703A006336C1 /* SwiftUI 学习笔记（三）：Handling User Input.md */,
 				8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */,
 				8EC967DF27F850C20049151A /* SwiftUI 学习笔记（五）：Animating Views and Transitions.md */,
+				8EC45C5129056D830058B6DF /* SwiftUI 学习笔记（六）：Composing Complex Interfaces.md */,
 			);
 			path = SwiftUI;
 			sourceTree = "<group>";
