@@ -35,6 +35,7 @@
 		8E3327EF26F2C30C00753049 /* iOS App Crash 学习：(六)：dsym文件讲解.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(六)：dsym文件讲解.md"; sourceTree = "<group>"; };
 		8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
+		8E3DDAD029061E6B007888AD /* SwiftUI 学习笔记（六）：Composing Complex Interfaces_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（六）：Composing Complex Interfaces_Two.md"; sourceTree = "<group>"; };
 		8E509EAD2847C2B300DBFC98 /* JavaScript 学习记录（五）：asynchronous JavaScript.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（五）：asynchronous JavaScript.md"; sourceTree = "<group>"; };
 		8E509EB0284CA22600DBFC98 /* JavaScript 学习记录（六）：Memory Management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（六）：Memory Management.md"; sourceTree = "<group>"; };
 		8E509EB1284CAB8100DBFC98 /* JavaScript 学习记录（七）：Concurrency model and Event Loop.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（七）：Concurrency model and Event Loop.md"; sourceTree = "<group>"; };
@@ -48,7 +49,7 @@
 		8E52DF57288011E400AC7847 /* iOS 组件化实践（二）：协议方案.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（二）：协议方案.md"; sourceTree = "<group>"; };
 		8E53C9E926B2240F00FB0AD7 /* iOS App 启动优化(九)：AOP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：AOP.md"; sourceTree = "<group>"; };
 		8E53C9F326B29D9400FB0AD7 /* main.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = main.md; sourceTree = "<group>"; };
-		8E540D2628CACDA100124C2A /* 程贺明个人简历.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "程贺明个人简历.md"; sourceTree = "<group>"; };
+		8E540D2628CACDA100124C2A /* resume.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = resume.md; sourceTree = "<group>"; };
 		8E543AF82899F59E00D91E4A /* 函数调用堆栈Six.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "函数调用堆栈Six.md"; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
 		8E5E58452685979D0088C814 /* StudyMarkdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StudyMarkdown; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -210,7 +211,6 @@
 		8EB3AD7D27E8BF76006336C1 /* MySQL 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "MySQL 学习笔记.md"; sourceTree = "<group>"; };
 		8EB3AD7E27EB703A006336C1 /* SwiftUI 学习笔记（三）：Handling User Input.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（三）：Handling User Input.md"; sourceTree = "<group>"; };
 		8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md"; sourceTree = "<group>"; };
-		8EC45C5129056D830058B6DF /* SwiftUI 学习笔记（六）：Composing Complex Interfaces.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（六）：Composing Complex Interfaces.md"; sourceTree = "<group>"; };
 		8EC967DF27F850C20049151A /* SwiftUI 学习笔记（五）：Animating Views and Transitions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（五）：Animating Views and Transitions.md"; sourceTree = "<group>"; };
 		8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md"; sourceTree = "<group>"; };
 		8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md"; sourceTree = "<group>"; };
@@ -244,7 +244,7 @@
 			isa = PBXGroup;
 			children = (
 				8E0F47162873B9B10023B594 /* 单线程语言.md */,
-				8E540D2628CACDA100124C2A /* 程贺明个人简历.md */,
+				8E540D2628CACDA100124C2A /* resume.md */,
 			);
 			path = "语言概念学习";
 			sourceTree = "<group>";
@@ -319,7 +319,7 @@
 				8EB3AD7E27EB703A006336C1 /* SwiftUI 学习笔记（三）：Handling User Input.md */,
 				8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */,
 				8EC967DF27F850C20049151A /* SwiftUI 学习笔记（五）：Animating Views and Transitions.md */,
-				8EC45C5129056D830058B6DF /* SwiftUI 学习笔记（六）：Composing Complex Interfaces.md */,
+				8E3DDAD029061E6B007888AD /* SwiftUI 学习笔记（六）：Composing Complex Interfaces_Two.md */,
 			);
 			path = SwiftUI;
 			sourceTree = "<group>";
