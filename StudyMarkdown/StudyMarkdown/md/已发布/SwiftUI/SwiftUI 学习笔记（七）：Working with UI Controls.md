@@ -1,10 +1,10 @@
-# SwiftUI 学习笔记（六）：Composing Complex Interfaces.md
+# SwiftUI 学习笔记（七）：Working with UI Controls.md
 
 &emsp;SwiftUI 官方教程：[SwiftUI Tutorials](https://developer.apple.com/tutorials/swiftui) 仅是几个体现 SwiftUI 简单使用的小 demo 而已，简单易学，循序渐进，先看完可以对 SwiftUI 有一个大概的认知。
 
-## 六：Composing Complex Interfaces
+## 七：Working with UI Controls
 
-&emsp;[App Design and Layout - Composing Complex Interfaces](https://developer.apple.com/tutorials/swiftui/composing-complex-interfaces) 为视图和过渡添加动画效果
+&emsp;[App Design and Layout - Working with UI Controls](https://developer.apple.com/tutorials/swiftui/working-with-ui-controls) 使用 UI 控件。
 
 &emsp;
 
@@ -14,16 +14,9 @@
 
 
 
-
-
-
-
-
-
-
 ## 参考链接
 **参考链接:🔗**
-+ [Composing Complex Interfaces](https://developer.apple.com/tutorials/swiftui/composing-complex-interfaces)
++ [Working with UI Controls](https://developer.apple.com/tutorials/swiftui/working-with-ui-controls)
 
 
 
