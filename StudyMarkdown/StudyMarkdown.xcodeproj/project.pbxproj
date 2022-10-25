@@ -36,6 +36,7 @@
 		8E3530A627F0773A00110319 /* SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（四）：Drawing Paths and Shapes.md"; sourceTree = "<group>"; };
 		8E35318926C210EF0067E763 /* iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(十)：Hook 总结之 Method Swizzle 源码分析.md"; sourceTree = "<group>"; };
 		8E3DDAD029061E6B007888AD /* SwiftUI 学习笔记（六）：Composing Complex Interfaces.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（六）：Composing Complex Interfaces.md"; sourceTree = "<group>"; };
+		8E3DDAD329079EE1007888AD /* SwiftUI 学习笔记（七）：Working with UI Controls_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（七）：Working with UI Controls_Two.md"; sourceTree = "<group>"; };
 		8E509EAD2847C2B300DBFC98 /* JavaScript 学习记录（五）：asynchronous JavaScript.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（五）：asynchronous JavaScript.md"; sourceTree = "<group>"; };
 		8E509EB0284CA22600DBFC98 /* JavaScript 学习记录（六）：Memory Management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（六）：Memory Management.md"; sourceTree = "<group>"; };
 		8E509EB1284CAB8100DBFC98 /* JavaScript 学习记录（七）：Concurrency model and Event Loop.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（七）：Concurrency model and Event Loop.md"; sourceTree = "<group>"; };
@@ -322,6 +323,7 @@
 				8EC967DF27F850C20049151A /* SwiftUI 学习笔记（五）：Animating Views and Transitions.md */,
 				8E3DDAD029061E6B007888AD /* SwiftUI 学习笔记（六）：Composing Complex Interfaces.md */,
 				8EC45C592906DDBF0058B6DF /* SwiftUI 学习笔记（七）：Working with UI Controls.md */,
+				8E3DDAD329079EE1007888AD /* SwiftUI 学习笔记（七）：Working with UI Controls_Two.md */,
 			);
 			path = SwiftUI;
 			sourceTree = "<group>";
