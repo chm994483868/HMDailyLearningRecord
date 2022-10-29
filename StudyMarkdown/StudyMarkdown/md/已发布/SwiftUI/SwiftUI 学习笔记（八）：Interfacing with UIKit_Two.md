@@ -222,15 +222,67 @@ struct PageViewController<Page: View>: UIViewControllerRepresentable {
 
 &emsp;首先添加一个 currentPage 绑定作为 PageViewController 的属性。除了声明 @Binding 属性之外，还可以更新对 `setViewControllers(_:direction:animated:)` 的调用，传递 currentPage 绑定的值。
 
+```swift
+...
+@Binding var currentPage: Int
+...
+    func updateUIViewController(_ pageViewController: UIPageViewController, context: Context) {
+        pageViewController.setViewControllers(
+            [context.coordinator.controllers[currentPage]], direction: .forward, animated: true)
+    }
+```
 &emsp;在 PageView 中声明 @State 变量，并在创建子 PageViewController 时将绑定传递给该属性。请记住使用 $ 语法创建与存储为 state 的值的绑定。
+
+```swift
+...
+@State private var currentPage = 0
+...
+    var body: some View {
+        PageViewController(pages: pages, currentPage: $currentPage)
+    }
+```
 
 &emsp;通过更改其初始值来测试该值是否通过绑定流向 PageViewController。向 PageView 添加一个按钮，使 page view controller 跳转到第二个视图。
 
 &emsp;添加带有 currentPage 属性的文本视图，以便你可以密切关注 @State 属性的值。请注意，当你从一页滑动到另一页时，该值不会改变。
 
+```swift
+...
+    var body: some View {
+        VStack {
+            PageViewController(pages: pages, currentPage: $currentPage)
+            Text("Current Page: \(currentPage)")
+        }
+    }
+...
+```
+
 &emsp;在 PageViewController.swift 中，使 Coordinator 遵循 UIPageViewControllerDelegate 协议，并添加 `pageViewController(_:didFinishAnimating:previousViewControllers:transitionCompleted completed: Bool)` 方法。
 
+```swift
+...
+class Coordinator: NSObject, UIPageViewControllerDataSource, UIPageViewControllerDelegate {
+...
+        func pageViewController(
+            _ pageViewController: UIPageViewController,
+            didFinishAnimating finished: Bool,
+            previousViewControllers: [UIViewController],
+            transitionCompleted completed: Bool) {
+            if completed,
+               let visibleViewController = pageViewController.viewControllers?.first,
+               let index = controllers.firstIndex(of: visibleViewController) {
+                parent.currentPage = index
+            }
+        }
+}
+...
+```
+
 &emsp;除了 dataSource 之外，还将 coordinator 分配为 UIPageViewController 的委托。在两个方向上绑定链接后，文本视图将在每次轻扫后更新以显示正确的页码。
+
+```swift
+pageViewController.delegate = context.coordinator
+```
 
 ### Add a Custom Page Control
 
@@ -240,7 +292,41 @@ struct PageViewController<Page: View>: UIViewControllerRepresentable {
 
 &emsp;UIViewRepresentable 和 UIViewControllerRepresentable 类型具有相同的生命周期，其方法对应于它们的底层 UIKit 类型。
 
+```swift
+import SwiftUI
+import UIKit
+
+struct PageControl: UIViewRepresentable {
+    var numberOfPages: Int
+    @Binding var currentPage: Int
+
+    func makeUIView(context: Context) -> UIPageControl {
+        let control = UIPageControl()
+        control.numberOfPages = numberOfPages
+
+        return control
+    }
+
+    func updateUIView(_ uiView: UIPageControl, context: Context) {
+        uiView.currentPage = currentPage
+    }
+}
+```
+
 &emsp;将 text box 替换为 page control，从 VStack 切换到 ZStack 进行布局。因为你将页数和绑​​定传递给当前页面，所以页面控件已经显示了正确的值。
+
+```swift
+...
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            PageViewController(pages: pages, currentPage: $currentPage)
+            PageControl(numberOfPages: pages.count, currentPage: $currentPage)
+                .frame(width: CGFloat(pages.count * 18))
+                .padding(.trailing)
+        }
+    }
+...
+```
 
 &emsp;接下来，使 page control 具有交互性，以便用户可以点击一侧或另一侧在页面之间移动。
 
@@ -248,30 +334,48 @@ struct PageViewController<Page: View>: UIViewControllerRepresentable {
 
 &emsp;由于 UIControl 子类（如 UIPageControl）使用 target-action 模式而不是 delegation，因此此 Coordinator 实现 @objc 方法来更新 currentPage 绑定。
 
+```swift
+...
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+...
+    class Coordinator: NSObject {
+        var control: PageControl
+
+        init(_ control: PageControl) {
+            self.control = control
+        }
+
+        @objc
+        func updateCurrentPage(sender: UIPageControl) {
+            control.currentPage = sender.currentPage
+        }
+    }
+```
+
 &emsp;添加 coordinator 作为 valueChanged 事件的 target，指定 `updateCurrentPage(sender:)` 方法作为要执行的 action。
+
+```swift
+...
+        control.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.updateCurrentPage(sender:)),
+            for: .valueChanged)
+...
+```
 
 &emsp;最后，在 CategoryHome 中，将 placeholder feature image 替换为新的 page View。
 
+```swift
+...
+                PageView(pages: modelData.features.map { FeatureCard(landmark: $0) })
+                    .aspectRatio(3 / 2, contentMode: .fit)
+                    .listRowInsets(EdgeInsets())
+...
+```
+
 &emsp;现在尝试所有不同的交互 —— PageView 展示了 UIKit 和 SwiftUI 视图和控制器如何协同工作。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 参考链接
 **参考链接:🔗**
