@@ -189,29 +189,181 @@ MapView(coordinate: landmark.locationCoordiante)
 
 &emsp;你为 iOS 创建的 LandmarkList 也适用于你的 watchOS app，它会自动 navigates 到你刚刚为 watchOS 编译时创建的特定于 watchOS 的 watch-specific detail view。接下来，你将 list 连接到 watch 的 ContentView，以便它充当手表应用程序的顶级视图。
 
-&emsp;在 WatchLandmarks Watch App 文件夹中选择 ContentView.swift 与 LandmarkDetail.swift 一样，watchOS target 的内容视图与 iOS 目标的内容视图具有相同的名称。保持名称和接口相同可以轻松地在目标之间共享文件。
+&emsp;在 WatchLandmarks Watch App 文件夹中选择 ContentView.swift。与 LandmarkDetail.swift 一样，watchOS target 的 content view 与 iOS target 的 content view 具有相同的名称。保持 name 和 interfaces 相同可以轻松地在 targets 之间共享文件。
 
-&emsp;
+&emsp;watchOS app 的 root view 显示默认的 "Hello, World!" 信息。修改 ContentView，使其显示 List view。
 
+&emsp;请务必将 model data 作为 environment object 提供给 preview。LandmarksApp 在运行时已经在应用级别提供了此功能，就像它在 iOS 上一样，但你还必须为需要它的任何 previews 提供它。
 
+&emsp;启动 live preview 以查看应用的行为方式。
 
+### Create a Custom Notification Interface
 
+&emsp;你的 watchOS 版 Landmarks 即将完成。在最后一部分中，你将创建一个 notification interface，它会在你收到指示你靠近你最喜欢的位置之一的通知时显示地标信息。
 
+&emsp;本节仅介绍如何在收到通知后显示通知。它没有描述如何设置或发送通知。
 
+&emsp;打开 NotificationView.swift 并创建一个显示有关 Landmark、title 和消息信息的视图。由于任何通知值都可以为 nil，因此预览将显示通知视图的两个版本。第一个仅显示未提供数据时的默认值，第二个显示你提供的标题、消息和位置。
 
+```swift
+import SwiftUI
 
+struct NotificationView: View {
+    var title: String?
+    var message: String?
+    var landmark: Landmark?
+    
+    var body: some View {
+        VStack {
+            if landmark != nil {
+                CircleImage(image: landmark!.image.resizable())
+                    .scaledToFit()
+            }
+            
+            Text(title ?? "Unknown Landmark")
+                .font(.headline)
+            
+            Divider()
+            
+            Text(message ?? "You are within 5 miles of one of your favorite landmarks.")
+                .font(.caption)
+        }
+        .lineLimit(0)
+    }
+}
 
+struct NotificationView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            NotificationView()
+            NotificationView(title: "Turtle Rock",
+                             message: "You are within 5 miles of Turtle Rock.",
+                             landmark: ModelData().landmarks[0])
+        }
+    }
+}
+```
 
+&emsp;打开 NotificationController 并添加 landmark、title 和 message properties。这些属性存储有关传入通知的值。
 
+```swift
+import WatchKit
+import SwiftUI
+import UserNotifications
 
+class NotificationController: WKUserNotificationHostingController<NotificationView> {
+    var landmark: Landmark?
+    var title: String?
+    var message: String?
+    
+    override var body: NotificationView {
+        NotificationView()
+    }
+    
+    override func willActivate() {
+        // This method is called when watch view controller is about to be visible to user
+        super.willActivate()
+    }
+    
+    override func didDeactivate() {
+        // This method is called when watch view controller is no longer visible
+        super.didDeactivate()
+    }
+    
+    override func didReceive(_ notification: UNNotification) {
+        // This method is called when a notification needs to be presented.
+        // Implement it if you use a dynamic notification interface.
+        // Populate your dynamic notification interface as quickly as possible.
+    }
+}
+```
 
+&emsp;更新 body() 方法以使用这些属性。此方法实例化你之前创建的通知视图。
 
+```swift
+...
+    override var body: NotificationView {
+        NotificationView(title: title, message: message, landmark: landmark)
+    }
+...
+```
 
+&emsp;定义 LandmarkIndexKey。
 
+&emsp;你可以使用此 key 从通知中提取 landmark 索引。
 
+```swift
+...
+    let landmarkIndexKey = "landmarkIndex"
+...
+```
 
+&emsp;更新 `didReceive(_:)` 方法分析通知中的数据。此方法更新控制器的属性。调用此方法后，系统会使控制器的 body 属性失效，该属性将更新导航视图。然后，系统会在 Apple Watch 上显示通知。
 
+```swift
+...
+    override func didReceive(_ notification: UNNotification) {
+        // This method is called when a notification needs to be presented.
+        // Implement it if you use a dynamic notification interface.
+        // Populate your dynamic notification interface as quickly as possible.
+        
+        let modelData = ModelData()
+        let notificationData = notification.request.content.userInfo as? [String: Any]
+        
+        let aps = notificationData?["aps"] as? [String: Any]
+        let alert = aps?["alert"] as? [String: Any]
+        
+        title = alert?["title"] as? String
+        message = alert?["body"] as? String
+        
+        if let index = notificationData?[landmarkIndexKey] as? Int {
+            landmark = modelData.landmarks[index]
+        }
+    }
+...
+```
 
+&emsp;当 Apple Watch 收到通知时，它会在你的 app 中查找与通知类别关联的场景。
+
+```swift
+...
+        #if os(watchOS)
+        WKNotificationScene(controller: NotificationController.self, category: "LandmarkNear")
+        #endif
+...
+```
+
+&emsp;转到 LandmarksApp.swif 并使用 LandmarkNear 类别添加 WKNotificationScene。该 scene 仅对 watchOS 有意义，因此请添加条件编译。
+
+&emsp;将测试 payload 配置为使用 LandmarkNear 类别并传递通知控制器所需的数据。选择 PushNotificationPayload.apns 文件，并更新标题、正文、类别和地标索引属性。请务必将类别设置为 LandmarkNear。还可以删除本教程中未使用的任何键，例如副标题、WatchKit 模拟器操作和自定义键。payload 文件在远程通知中模拟从服务器发送的数据。
+
+```swift
+{
+    "aps": {
+        "alert": {
+            "title": "Silver Salmon Creek",
+            "body": "You are within 5 miles of Silver Salmon Creek."
+        },
+        "category": "LandmarkNear",
+        "thread-id": "5280"
+    },
+
+    "landmarkIndex": 1,
+
+    "WatchKit Simulator Actions": [
+        {
+            "title": "First Button",
+            "identifier": "firstButtonAction"
+        }
+    ],
+
+    "customKey": "Use this file to define a testing payload for your notifications. The aps dictionary specifies the category, alert text and title. The WatchKit Simulator Actions array can provide info for one or more action buttons in addition to the standard Dismiss button. Any other top level keys are custom payload. If you have multiple such JSON files in your project, you'll be able to select them when choosing to debug the notification interface of your Watch App."
+}
+```
+
+&emsp;选择 Landmarks-Watch (Notification) scheme，然后生成并运行应用。首次运行 notification scheme 时，系统会请求发送通知的权限。选择允许。
+
+&emsp;授予权限后，模拟器会显示可滚动的通知，其中包括：帮助将地标应用标识为发件人的应用图标、通知视图以及通知操作的按钮。
 
 ## 参考链接
 **参考链接:🔗**
