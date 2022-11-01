@@ -18,7 +18,9 @@
 
 &emsp;为了能够预览和运行该应用程序，请确保你的 Mac 运行的是 macOS Monterey 或更高版本。
 
-&emsp;选择“文件”>“新建>目标”。当模板工作表出现时，选择 macOS 选项卡，选择应用程序模板，然后单击下一步。
+&emsp;选择 File > New > Target，当 template sheet 出现时，选择 macOS 选项卡，选择 App template，然后单击下一步。此 template 将新的 macOS app target 添加到 project 中。
+
+&emsp;
 
 
 
@@ -84,5 +86,6 @@
 3. 再尝试领取一下爱奇艺中的京东会员。
 4. 富士康走路回家。
 5. 天冷了，冬天的衣服怎么回家拿。
+
 
 

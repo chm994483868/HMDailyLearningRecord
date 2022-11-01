@@ -30,7 +30,7 @@
 		8E12B93126A65B1900BC72AC /* 埋点.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "埋点.md"; sourceTree = "<group>"; };
 		8E13B7FE290BE4D8001F9606 /* SwiftUI 学习笔记（八）：Interfacing with UIKit_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（八）：Interfacing with UIKit_Two.md"; sourceTree = "<group>"; };
 		8E13B7FF290F5656001F9606 /* SwiftUI 学习笔记（九）：Creating a watchOS App_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（九）：Creating a watchOS App_Two.md"; sourceTree = "<group>"; };
-		8E13B8A02910A7B8001F9606 /* SwiftUI 学习笔记（十）：Creating a macOS App.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（十）：Creating a macOS App.md"; sourceTree = "<group>"; };
+		8E13B8AE29112A78001F9606 /* SwiftUI 学习笔记（十）：Creating a macOS App_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（十）：Creating a macOS App_Two.md"; sourceTree = "<group>"; };
 		8E1B718727618434005D2CD3 /* iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）.md"; sourceTree = "<group>"; };
 		8E2137B226D2365700CB9B03 /* LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md"; sourceTree = "<group>"; };
 		8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记（一）：第一个 Flutter 应用.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（一）：第一个 Flutter 应用.md"; sourceTree = "<group>"; };
@@ -327,7 +327,7 @@
 				8E3DDAD329079EE1007888AD /* SwiftUI 学习笔记（七）：Working with UI Controls_Two.md */,
 				8E13B7FE290BE4D8001F9606 /* SwiftUI 学习笔记（八）：Interfacing with UIKit_Two.md */,
 				8E13B7FF290F5656001F9606 /* SwiftUI 学习笔记（九）：Creating a watchOS App_Two.md */,
-				8E13B8A02910A7B8001F9606 /* SwiftUI 学习笔记（十）：Creating a macOS App.md */,
+				8E13B8AE29112A78001F9606 /* SwiftUI 学习笔记（十）：Creating a macOS App_Two.md */,
 			);
 			path = SwiftUI;
 			sourceTree = "<group>";
