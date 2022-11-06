@@ -323,23 +323,239 @@ struct LandmarkRow: View {
 
 &emsp;Import SwiftUI 并添加符合 Commands 协议的 LandmarkCommands structure，该 structure 具有名为 body 的计算属性。
 
-&emsp;与 View structure 一样，Commands structure 需要使用生成器语义的计算正文属性，但使用命令而不是视图除外。
+&emsp;与 View structure 一样，Commands structure 需要使用 builder semantics 的 body 的计算属性，但使用 commands 而不是 views 除外。
 
+&emsp;将 SidebarCommands command 添加到 body 中。此 built-in command set 包括用于切换边栏的命令。
 
+```swift
+import SwiftUI
 
+struct LandmarkCommands: Commands {
+    var body: some Commands {
+        SidebarCommands()
+    }
+}
+```
 
+&emsp;要在 App 中使用 commands，你必须将它们应用于 scene，接下来将执行此操作。
 
+&emsp;打开 LandmarksApp.swift 文件，然后使用 commands(content:) scene modifier 应用 LandmarkCommands。Scene modifiers 的工作方式与 view modifiers 类似，不同之处在于将它们应用于 scenes 而不是 views。
 
+```swift
+...
+.commands {
+    LandmarkCommands()
+}
+...
+```
 
+&emsp;再次运行 macOS App，并且你可以使用 View > Toggle Sidebar 恢复列表视图。遗憾的是，watchOS 应用无法构建，因为 Commands 没有 watchOS 可用性。接下来你将修复此问题。
 
+```swift
+...
+#if !os(watchOS)
+.commands {
+    LandmarkCommands()
+}
+#endif
+```
 
+&emsp;在 commands modifier 周围添加一个条件，以在 watchOS 应用中省略它。保存后 watchOS App 将再次构建。
 
+### Add a Custom Menu Command
 
+&emsp;在上一节中，你添加了一个 built-in menu command set。在本节中，你将添加一个 custom command，用于切换当前所选 landmark 的收藏状态。要了解当前选择了哪个 landmark，你将使用 focused binding。
 
+&emsp;在 LandmarkCommands 中，使用名为 SelectedLandmarkKey 的自定义键，使用 selectedLandmark value 扩展 FocusedValues structure。
 
+&emsp;定义 focused values 的模式类似于定义 new Environment values 的模式：使用 private key 在 system-defined 的 FocusedValues structure 上读取和写入自定义属性。
 
+```swift
+import SwiftUI
 
+struct LandmarkCommands: Commands {
+    var body: some Commands {
+        SidebarCommands()
+    }
+}
 
+private struct SelectedLandmarkKey: FocusedValueKey {
+    typealias Value = Binding<Landmark>
+}
+
+extension FocusedValues {
+    var selectedLandmark: Binding<Landmark>? {
+        get { self[SelectedLandmarkKey.self] }
+        set { self[SelectedLandmarkKey.self] = newValue }
+    }
+}
+```
+
+&emsp;添加 @FocusedBinding 属性包装器以跟踪当前选定的 landmark。你正在读取此处的值。稍后将在用户进行选择的 list view 中进行设置。
+
+```swift
+@FocusedBinding(\.selectedLandmark) var selectedLandmark
+```
+
+&emsp;将一个名为 Landmarks 的新 CommandMenu 添加到 commands 中。接下来，你将定义菜单的内容。
+
+```swift
+CommandMenu("Landmark") {
+}
+```
+
+&emsp;向 menu 中添加一个按钮，用于切换所选 landmark 的收藏状态，其外观会根据当前选定的 landmark 及其状态而变化。
+
+```swift
+CommandMenu("Landmark") {
+    Button("\(selectedLandmark?.isFavorite == true ? "Remove" : "Mark") as Favorite") {
+        selectedLandmark?.isFavorite.toggle()
+    }
+    .disabled(selectedLandmark == nil)
+}
+```
+
+&emsp;使用 `keyboardShortcut(_:modifiers:)` modifier 为 menu item 添加 keyboard shortcut。SwiftUI 会自动在菜单中显示 keyboard shortcut。
+
+```swift
+.keyboardShortcut("f", modifiers: [.shift, .option])
+```
+
+&emsp;菜单现在包含新 command，但你需要设置 selectedLandmark focused binding 才能使其正常工作。在 LandmarkList.swift 中，为所选 landmark 添加一个状态变量，并添加一个指示所选 landmark 索引的计算属性。
+
+```swift
+@State private var selectedLandmark: Landmark?
+
+...
+var index: Int? {
+    modelData.landmarks.firstIndex(where: { $0.id == selectedLandmark?.id } )
+}
+```
+
+&emsp;使用与 selected value 的 binding 初始化 List，并向 navigation link 添加标记。
+
+```swift
+List(selection: $selectedLandmark) {
+    ...
+    .tag(landmark)
+}
+```
+
+&emsp;添加 `focusedValue(_:_:)` modifier 到 NavigationView，提供 landmarks array 中的值 binding。
+
+```swift
+.focusedValue(\.selectedLandmark, $modelData.landmarks[index ?? 0])
+```
+
+&emsp;运行 macOS 应用程序并尝试新菜单项。
+
+### Add Preferences with a Settings Scene
+
+&emsp;用户希望能够使用标准的 Preferences menu item 调整 macOS 应用程序的设置。你将通过添加 Settings scene 来向 MacLandmarks 添加 preferences。scene’s view 定义 preferences 窗口的内容，你将使用该窗口控制 MapView 的初始缩放级别。将值传达给 MapView，并使用 @AppStorage 属性包装器将其永久存储（在本地持久化）。
+
+&emsp;首先，你将在 MapView 中添加一个控件，该控件将初始缩放设置为以下三个级别之一：近、中或远。在 MapView.swift 中，添加缩放枚举以表征缩放级别。
+
+```swift
+enum Zoom: String, CaseIterable, Identifiable {
+    case near = "Near"
+    case medium = "Medium"
+    case far = "Far"
+    
+    var id: Zoom {
+        return self
+    }
+}
+```
+
+&emsp;添加一个名为 zoom 的 @AppStorage 属性，该属性默认采用中等缩放级别。使用唯一标识参数的存储键，就像在 UserDefaults 中存储项目时一样，因为这是 SwiftUI 所依赖的底层机制。
+
+```swift
+@AppStorage("MapView.zoom")
+private var zoom: Zoom = .medium
+```
+
+&emsp;将用于构造区域属性的经度和纬度增量更改为取决于缩放的值。
+
+```swift
+var delta: CLLocationDegrees {
+    switch zoom {
+    case .near: return 0.02
+    case .medium: return 0.2
+    case .far: return 2
+    }
+}
+
+...
+span: MKCoordinateSpan(latitudeDelta: delta, longitudeDelta: delta)
+```
+
+&emsp;若要确保 SwiftUI 在 delta 更改时刷新地图，你必须更改计算和应用 region 的方式。将 region 状态变量、setRegion 方法和地图的 onAppear 修饰符替换为作为 constant binding 传递给地图初始值设定项的 computed region property。
+
+```swift
+Map(coordinateRegion: .constant(region))
+
+...
+var region: MKCoordianteRegion {
+    MKCoordinateRegion(
+    ...
+    )
+}
+```
+
+&emsp;接下来，你将创建一个控制存储的缩放值的 Settings scene。创建一个名为 LandmarkSettings 的新 SwiftUI 视图，该视图仅面向 macOS 应用。
+
+```swift
+import SwiftUI
+
+struct LandmarkSettings: View {
+    var body: some View {
+        Text("Hello, World!")
+    }
+}
+
+struct LandmarkSettings_Previews: PreviewProvider {
+    static var previews: some View {
+        LandmarkSettings()
+    }
+}
+```
+
+&emsp;添加一个 @AppStorage 属性，该属性使用与你在 map view 中使用的相同的 key。
+
+```swift
+@AppStorage("MapView.zoom")
+private var zoom: MapView.Zoom = .medium
+```
+
+&emap;添加一个通过 binding 控制缩放值的 Picker。通常使用 Form 在 settings view 中排列控件。
+
+```swift
+var body: some View {
+    Form {
+        Picker("Map Zoom:", selection: $zoom) {
+            ForEach(MapView.Zoom.allCases) { level in
+                Text(level.rawValue)
+            }
+        }
+        .pickerStyle(.inline)
+    }
+    .frame(width: 300)
+    .navigationTitle("Landmark Settings")
+    .padding(80)
+}
+```
+
+&emsp;在 LandmarksApp.swift 中，将 Settings scene 添加到你的应用程序中，但仅适用于 macOS。
+
+```swift
+#if os(macOS)
+Settings {
+    LandmarkSetting()
+}
+#endif
+```
+
+&emsp;运行应用并尝试设置 preferences。请注意，只要你更改缩放级别，地图就会刷新。
 
 ## 参考链接
 **参考链接:🔗**
