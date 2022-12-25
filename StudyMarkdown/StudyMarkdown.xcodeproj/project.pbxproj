@@ -32,6 +32,7 @@
 		8E13B7FF290F5656001F9606 /* SwiftUI 学习笔记（九）：Creating a watchOS App_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（九）：Creating a watchOS App_Two.md"; sourceTree = "<group>"; };
 		8E13B8AE29112A78001F9606 /* SwiftUI 学习笔记（十）：Creating a macOS App_Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（十）：Creating a macOS App_Two.md"; sourceTree = "<group>"; };
 		8E13B8B129122B3B001F9606 /* SwiftUI 学习笔记（十）：Creating a macOS App_Three.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（十）：Creating a macOS App_Three.md"; sourceTree = "<group>"; };
+		8E18B9D029588F4400F85C2A /* Flutter 学习过程中不容错过的项目进阶实践.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习过程中不容错过的项目进阶实践.md"; sourceTree = "<group>"; };
 		8E1B718727618434005D2CD3 /* iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(三)：KSCrash 使用以及源码解读（1）.md"; sourceTree = "<group>"; };
 		8E2137B226D2365700CB9B03 /* LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "LLDB Debugger 学习(一)：LLDB Xcode 文档：LLDB Quick Start Guide.md"; sourceTree = "<group>"; };
 		8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记（一）：第一个 Flutter 应用.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（一）：第一个 Flutter 应用.md"; sourceTree = "<group>"; };
@@ -182,7 +183,7 @@
 		8E5E5EA22686AB280088C814 /* iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "iOS APP 启动优化(六)：在指定的 segment 和 section 中存入数据.md"; sourceTree = "<group>"; };
 		8E64803727E85310007ADB46 /* React 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "React 学习笔记.md"; sourceTree = "<group>"; };
 		8E6496A827151413009DD7FC /* iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(一)：Objective-C 异常分析（NSException）.md"; sourceTree = "<group>"; };
-		8E69B643292F3F4300AA29B9 /* Flutter_DouBan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Flutter_DouBan.md; sourceTree = "<group>"; };
+		8E69B643292F3F4300AA29B9 /* Flutter 学习过程中不容错过的项目实践.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习过程中不容错过的项目实践.md"; sourceTree = "<group>"; };
 		8E71016C2823F6A600BEB9A3 /* Xcode 相关的一些 Concepts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Xcode 相关的一些 Concepts.md"; sourceTree = "<group>"; };
 		8E7101D528294FF000BEB9A3 /* 2022 学习计划.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2022 学习计划.md"; sourceTree = "<group>"; };
 		8E72348126BCB01200E13B1B /* iOS App 启动优化(九)：fishhook 延展阅读.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(九)：fishhook 延展阅读.md"; sourceTree = "<group>"; };
@@ -234,6 +235,7 @@
 		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
 		8EE3B535288F679900B59C1E /* iOS 组件化实践（一）：中间层方案选择.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择.md"; sourceTree = "<group>"; };
 		8EE69B2E2894B69300049601 /* 2022学习计划Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2022学习计划Two.md"; sourceTree = "<group>"; };
+		8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 状态管理技巧.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -274,7 +276,9 @@
 				8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */,
 				8E110CCE270F1F020016FF16 /* Flutter 学习笔记（四）：Widgets 目录（2）.md */,
 				8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */,
-				8E69B643292F3F4300AA29B9 /* Flutter_DouBan.md */,
+				8E69B643292F3F4300AA29B9 /* Flutter 学习过程中不容错过的项目实践.md */,
+				8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */,
+				8E18B9D029588F4400F85C2A /* Flutter 学习过程中不容错过的项目进阶实践.md */,
 			);
 			path = Flutter;
 			sourceTree = "<group>";

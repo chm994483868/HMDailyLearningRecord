@@ -1,4 +1,4 @@
-# Flutter 不容错过的项目实践
+# Flutter 学习过程中不容错过的项目实践
 
 &emsp;首先感谢原作者的无私奉献：[kaina404/FlutterDouBan](https://github.com/kaina404/FlutterDouBan)，为我学习 Flutter 开发技术的路上亮起了明灯！
 
