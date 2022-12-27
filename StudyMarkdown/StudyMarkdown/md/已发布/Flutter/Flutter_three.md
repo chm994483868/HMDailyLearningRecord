@@ -4,7 +4,27 @@
 
 &emsp;这里首先要感谢两位大佬：[用 SwiftUI 实现一个开源的 App Store](https://juejin.cn/post/7051512478630412301) 和 [season_zhu](https://juejin.cn/user/4353721778057997/posts) 和 [seasonZhu/GetXStudy](https://github.com/seasonZhu/GetXStudy)。
 
-&emsp;本项目我是以 iAppStore-SwiftUI 为原型然后也直接使用里面的 Apple 的接口，然后参考着 GetXStudy 项目使用 GetX 为状态管理完成的。我大概给它起了一个：iAppStore-Flutter 的名字：[chm994483868/iAppStore_Flutter](https://github.com/chm994483868/iAppStore_Flutter)。比起前一个项目的 setState 和 StatefulWidget 一把梭，本项目我全部自己手打完成，内部几乎写满了注释，整个开发过程下来，对我而言也加深了很多对 Flutter 的理解，特别是状态管理以及 Widget 的 rebuild，同时自己的 Flutter 开发技术也算是大概上了一个台阶，继续进步，加油！
+&emsp;本项目我是以 iAppStore-SwiftUI 为原型然后也直接使用里面的 Apple 的接口，然后参考着 GetXStudy 项目使用 GetX 为状态管理完成的。我大概给它起了一个：iAppStore-Flutter 的名字：[chm994483868/iAppStore_Flutter](https://github.com/chm994483868/iAppStore_Flutter)。比起前一个项目的 setState 和 StatefulWidget 一把梭，本项目我全部自己手打完成，内部几乎写满了注释，整个开发过程下来，对我而言也加深了很多对 Flutter 的理解，特别是状态管理以及 Widget 的 rebuild。这样一路下来自己的 Flutter 开发技术也算是大概上了一个台阶，继续进步，加油！
+
+<figure class="half">
+    <img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/acec99bfcdaa432f9b69e852f29a131b~tplv-k3u1fbpfcp-watermark.image?">
+    <img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/17da5e4da42e45e8aacf955c4f0804bb~tplv-k3u1fbpfcp-watermark.image?">
+</figure>
+
+<figure class="half">
+    <img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/97a40254562e49ac9d908771dfd85508~tplv-k3u1fbpfcp-watermark.image?">
+    <img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4ce6da21488948f69e0269bd8bbfc319~tplv-k3u1fbpfcp-watermark.image?">
+</figure>
+
+<figure class="half">
+    <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e2446d45993a45baa4109c75c806cd60~tplv-k3u1fbpfcp-watermark.image?">
+    <img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/171a9719e3c34671b22b36167e509064~tplv-k3u1fbpfcp-watermark.image?">
+</figure>
+
+<figure class="half">
+    <img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/833dc4279f76439da6d3a0f01b16041c~tplv-k3u1fbpfcp-watermark.image?">
+    <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dac02bad9ff04905833e1ff6fb025ea9~tplv-k3u1fbpfcp-watermark.image?">
+</figure>
 
 ## FlutterJsonBeanFactory（Json 模型转换模块）
 
@@ -375,17 +395,22 @@ class RankHomeBinding extends Bindings {
 }
 ```
 
-+ controller：继承自 `abstract class GetxController extends DisposableInterface with ListenableMixin, ListNotifierMixin {...}` 的子类，这里主要放置页面所需要使用到的数据，以及各种操作逻辑。作用有点类似 MVVM 中的 VM。例如在 `RankHomeController` 中：
++ controller：继承自 `abstract class GetxController extends DisposableInterface with ListenableMixin, ListNotifierMixin {...}` 的子类，这里主要放置页面所需要使用到的数据，以及各种操作逻辑。作用有点类似 MVVM 中的 VM。例如在 `RankHomeController` 中，所有的数据变量都放在其中，以及网络请求、下拉刷新、错误重试等逻辑。
 
 ```dart
-class RankHomeController extends BaseRefreshControlleriAppStore<RankHomeRepository, AppRankMEntity>
-    implements IClassName {
+class RankHomeController extends BaseRefreshControlleriAppStore<RankHomeRepository, AppRankMEntity> implements IClassName {
+  // 实现 IClassName 抽象类中定义的 className
   static String? get className => (RankHomeController).toString();
+
+  // 取得请求得到的 App 排行榜数据列表
   List<AppRankMFeedEntry> get dataSource => response?.data?.feed?.entry ?? [];
 
+  // 导航栏中的标题，因为要动态更新，所以这里使用 RxString 类型
   final rankTitle = "排行榜".obs;
+  // 导航栏底部的更新时间，因为要动态更新，同样使用 RxString 类型
   final updateTimeString = DateTime.now().toLocal().toString().obs;
 
+  // 筛选页面默认三个筛选项：都用数据源中第一个筛选项：热门免费榜-所有 App-中国
   String rankName = Constant.rankingTypeLists.first;
   String categoryName = Constant.categoryTypeLists.first;
   String regionName = Constant.regionTypeLists.first;
@@ -393,14 +418,18 @@ class RankHomeController extends BaseRefreshControlleriAppStore<RankHomeReposito
   @override
   void onInit() {
     super.onInit();
+
+    // 在 init 中直接 find 到 RankHomeBinding 中 dependencies 函数中添加的：Get.lazyPut(tag: RankHomeController.className, () => RefreshController(initialRefresh: true));
     refreshController = Get.find(tag: RankHomeController.className);
   }
 
+  // 刷新函数直接调用 fetchRankData，传 false 不显示加载 loading
   @override
   Future<void> onRefresh() async {
     fetchRankData(false);
   }
 
+  // rank_home 不需要加载更多，这里直接 loadComplete 完成，并 update
   @override
   Future<void> onLoadMore() async {
     refreshController.loadComplete();
@@ -408,28 +437,46 @@ class RankHomeController extends BaseRefreshControlleriAppStore<RankHomeReposito
     update();
   }
 
+  // 根据当前的筛选类型搜索排行榜的数据
   void fetchRankData(bool isShowLoading) async {
+    // 根据排行榜的名字，找到对应的排行榜的 ID
     final rankID = Constant.rankingTypeListIds[rankName] ?? "topFreeApplications";
+    // 根据类型的名字，找到对应的类型的 ID
     final categoryID = Constant.categoryTypeListIds[categoryName] ?? "0";
+    // 根据地区的名字，找到对应的地区的 ID
     final regionID = Constant.regionTypeListIds[regionName] ?? "cn";
+    // 根据排行榜的 ID 找到对应的枚举类型
     final rankingType = RankingType.convert(rankID);
 
+    // 根据入参判断是否需要展示 loading 动画
     if (isShowLoading == true) {
       status = ResponseStatus.loading;
       update();
     }
 
+    // 请求排行榜的 App 数据列表
     response = await request.applications(url: rankingType.url(categoryID, regionID, 200));
+
+    // 请求响应以后根据响应的状态更新 status 的值，此值决定了 rank_home 页面的显示内容：loading 页面、空页面、App 列表页面、请求失败的重试页面
     status = response?.responseStatus ?? ResponseStatus.successHasContent;
 
+    // 如果响应成功后返回的 App 列表为空表示，数据为空
+    if ((response?.data?.feed?.entry?.length ?? 0) <= 0) {
+      status = ResponseStatus.successNoData;
+    }
+    
+    // 根据响应的数据更新导航栏的标题
     rankTitle.value = (response?.data?.feed?.title?.label ?? "").split("：").last;
+    // 更新更新的时间
     updateTimeString.value = DateTime.now().toLocal().toString();
-
+    // 如果是下拉刷新的话，结束刷新动画
     refreshController.refreshCompleted();
 
+    // 更新 RankHome 中 RefreshStatusView 中 contentBuilder 中的内容
     update();
   }
 
+  // 重写 onRetry 函数，当网络请求失败时，点击重试按钮，重新请求数据
   @override
   void onRetry() {
     super.onRetry();
@@ -440,22 +487,31 @@ class RankHomeController extends BaseRefreshControlleriAppStore<RankHomeReposito
 }
 ```
 
-+ repository：存放页面需要使用到的各个网络请求。例如在 `RankHomeRepository` 中，把请求 App 排行榜列表的网络请求放在里面：
++ repository：存放页面需要使用到的各个网络请求。例如在 `RankHomeRepository` 中，把请求 App 排行榜的网络请求放在里面：
 
 ```dart
 class RankHomeRepository extends IRepository {
-  Future<BaseEntityiAppStore<AppRankMEntity>> applications({required String url}) =>
-      http.Request.postiAppStore(api: url);
+  Future<BaseEntityiAppStore<AppRankMEntity>> applications({required String url}) => http.Request.postiAppStore(api: url);
 }
 ```
 
-+ view：继承自 `abstract class GetView<T> extends StatelessWidget {...}` 的子类，主要添加了 `tag` 和 `controlelr` 两个字段，`controller` 作为一个 `GetView` 的 get 函数使用，
++ view：继承自 `abstract class GetView<T> extends StatelessWidget {...}` 的子类。`GetView` 主要添加了 `tag` 和 `controlelr` 两个字段，`controller` 作为 `GetView` 的一个 get 函数：`T get controller => GetInstance().find<T>(tag: tag)!;`，可以在 `GetView` 的任何位置找到并使用 `controlelr`，例如在 `class RankHomePage extends GetView<RankHomeController> {...}` 中，`RankHomePage` 的 T 正是 `RankHomeController`，在上面的 `RankHomeController` 示例代码中我们已经看到其内部所有逻辑，而且在 `RankHomeBinding` 中 `Get.lazyPut(() => RankHomeController());` 这样也保证了 `GetInstance().find<RankHomeController>` 必定能找到已经 `put` 的 `RankHomeController` 使用。 
 
+&emsp;同时在 `RankHomePage` 中，我们也把 `RefreshStatusView` 的 `contentBuilder` 控制在了涵盖范围最小，这样也保证了在 `RankHomeController` 中调用 `update` 函数进行 Widget 重建的性能消耗最小。
 
+&emsp;这里可以认真研习一下 `RefreshStatusView` 的封装，由于时间原因，这里就不展开细说了。
 
+&emsp;GetX 如果继续展开的话，还有很多内容要学习，由于时间原因，这里就不展开了，作为我下一个阶段的学习目标。当前仅涉及到 GetX 的基本使用。
+
+&emsp;当前分析就先到这里把，所有的代码和注释都在：[chm994483868/iAppStore_Flutter](https://github.com/chm994483868/iAppStore_Flutter)，欢迎大家阅读并提出宝贵的修改意见。
 
 ## 参考链接
 **参考链接:🔗**
 + [get 4.6.5](https://pub.flutter-io.cn/packages/get)
 + [FlutterJsonBeanFactory​(Only Null Safety)​](https://plugins.jetbrains.com/plugin/11415-flutterjsonbeanfactory-only-null-safety-)
++ [用 SwiftUI 实现一个开源的 App Store](https://juejin.cn/post/7051512478630412301)
++ [season_zhu](https://juejin.cn/user/4353721778057997/posts)
++ [seasonZhu/GetXStudy](https://github.com/seasonZhu/GetXStudy)
++ [FlutterJsonBeanFactory​(Only Null Safety)​](https://plugins.jetbrains.com/plugin/11415-flutterjsonbeanfactory-only-null-safety-)
+
 
