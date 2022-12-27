@@ -210,6 +210,7 @@
 		8EA477AB285F5FB600020467 /* HTML 学习记录（四）：HTML 高级文本排版.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（四）：HTML 高级文本排版.md"; sourceTree = "<group>"; };
 		8EA4A4E7288701CB009FE182 /* MDN 上的 HTTP 学习（一）：跨源资源共享（CORS）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "MDN 上的 HTTP 学习（一）：跨源资源共享（CORS）.md"; sourceTree = "<group>"; };
 		8EA8F6FE29592ABA0063A7A6 /* Flutter_two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Flutter_two.md; sourceTree = "<group>"; };
+		8EA8F6FF295A7B1D0063A7A6 /* Flutter_three.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Flutter_three.md; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
 		8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Optional 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
@@ -281,6 +282,7 @@
 				8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */,
 				8E18B9D029588F4400F85C2A /* Flutter 学习过程中不容错过的项目进阶实践.md */,
 				8EA8F6FE29592ABA0063A7A6 /* Flutter_two.md */,
+				8EA8F6FF295A7B1D0063A7A6 /* Flutter_three.md */,
 			);
 			path = Flutter;
 			sourceTree = "<group>";
