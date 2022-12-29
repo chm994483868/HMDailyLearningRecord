@@ -36,3 +36,15 @@ void insertSort_1(int nums[], int count) {
         }
     }
 }
+
+void insertionSort_2(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
+    
+    for (int i = 1; i < count; ++i) {
+        for (int j = i; j > 0 && nums[j - 1] > nums[j]; --j) {
+            swap(&nums[j - 1], &nums[j]);
+        }
+    }
+}

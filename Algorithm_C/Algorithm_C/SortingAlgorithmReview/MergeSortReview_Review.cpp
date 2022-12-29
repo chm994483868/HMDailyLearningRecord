@@ -92,3 +92,45 @@ void mergeArray_1(int nums[], int first, int mid, int last, int temp[]) {
         nums[first + i] = temp[i];
     }
 }
+
+void mergeArray_2(int nums[], int first, int mid, int last, int temp[]);
+void mergeSort_2(int nums[], int first, int last, int temp[]) {
+    if (first >= last) {
+        return;
+    }
+    
+    int mid = ((last - first) >> 1) + first;
+    mergeSort_2(nums, first, mid, temp);
+    mergeSort_2(nums, mid + 1, last, temp);
+    mergeArray_2(nums, first, mid, last, temp);
+}
+
+void mergeArray_2(int nums[], int first, int mid, int last, int temp[]) {
+    if (nums[mid] < nums[mid + 1]) {
+        return;
+    }
+    
+    int i = first, j = mid + 1;
+    int m = mid, n = last;
+    int k = 0;
+    
+    while (i <= m && j <= n) {
+        if (nums[i] <= nums[j]) {
+            temp[k++] = nums[i++];
+        } else {
+            temp[k++] = nums[j++];
+        }
+    }
+    
+    while (i <= m) {
+        temp[k++] = temp[i++];
+    }
+    
+    while (j <= n) {
+        temp[k++] = temp[j++];
+    }
+    
+    for (i = 0; i < k; ++i) {
+        nums[first + i] = temp[i];
+    }
+}

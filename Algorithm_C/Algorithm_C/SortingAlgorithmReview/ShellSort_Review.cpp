@@ -40,3 +40,17 @@ void shellSort_1(int nums[], int count) {
         }
     }
 }
+
+void shellSort_2(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
+    
+    for (int gap = count / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < count; ++i) {
+            for (int j = i - gap; j >= 0 && nums[j] > nums[j + gap]; j -= gap) {
+                swap(&nums[j], &nums[j + gap]);
+            }
+        }
+    }
+}
