@@ -149,11 +149,11 @@
 		8E5E5AE42686A0A60088C814 /* NumbersAppearOnce.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A482686A0A60088C814 /* NumbersAppearOnce.cpp */; };
 		8E5E5AE52686A0A60088C814 /* CommonParentInTree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A4A2686A0A60088C814 /* CommonParentInTree.cpp */; };
 		8E5E5AE62686A0A60088C814 /* TreeDepth.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A4E2686A0A60088C814 /* TreeDepth.cpp */; };
-		8E5E5AE72686A0A60088C814 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A4F2686A0A60088C814 /* main.cpp */; };
 		8E5E5AE82686A0A60088C814 /* Array.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A552686A0A60088C814 /* Array.cpp */; };
 		8E5E5AE92686A0A60088C814 /* BinaryTree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A562686A0A60088C814 /* BinaryTree.cpp */; };
 		8E5E5AEA2686A0A60088C814 /* List.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A572686A0A60088C814 /* List.cpp */; };
 		8E5E5AEB2686A0A60088C814 /* ComplexList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5A582686A0A60088C814 /* ComplexList.cpp */; };
+		8EEFB40F29627F6D009EE7CE /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8EEFB40E29627F6D009EE7CE /* main.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -454,7 +454,6 @@
 		8E5E5A4B2686A0A60088C814 /* CommonParentInTree.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CommonParentInTree.hpp; sourceTree = "<group>"; };
 		8E5E5A4D2686A0A60088C814 /* TreeDepth.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = TreeDepth.hpp; sourceTree = "<group>"; };
 		8E5E5A4E2686A0A60088C814 /* TreeDepth.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TreeDepth.cpp; sourceTree = "<group>"; };
-		8E5E5A4F2686A0A60088C814 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../AlgorithmExample/Algorithm_C/OfferReview/main.cpp; sourceTree = "<group>"; };
 		8E5E5A512686A0A60088C814 /* Array.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Array.hpp; sourceTree = "<group>"; };
 		8E5E5A522686A0A60088C814 /* BinaryTree.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = BinaryTree.hpp; sourceTree = "<group>"; };
 		8E5E5A532686A0A60088C814 /* List.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
@@ -463,6 +462,7 @@
 		8E5E5A562686A0A60088C814 /* BinaryTree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BinaryTree.cpp; sourceTree = "<group>"; };
 		8E5E5A572686A0A60088C814 /* List.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = List.cpp; sourceTree = "<group>"; };
 		8E5E5A582686A0A60088C814 /* ComplexList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComplexList.cpp; sourceTree = "<group>"; };
+		8EEFB40E29627F6D009EE7CE /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -495,48 +495,11 @@
 		8E5E58332685973B0088C814 /* OfferReview */ = {
 			isa = PBXGroup;
 			children = (
+				8EEFB4102962817C009EE7CE /* 39_68 */,
 				8E5E590F2686A0A40088C814 /* 01_38 */,
-				8E5E5A322686A0A50088C814 /* 39_MoreThanHalfNumber */,
-				8E5E58F22686A0A30088C814 /* 40_KLeastNumbers */,
-				8E5E58FA2686A0A30088C814 /* 41_StreamMedian */,
-				8E5E58EF2686A0A30088C814 /* 42_GreatestSumOfSubarrays */,
-				8E5E590C2686A0A40088C814 /* 43_NumberOf1 */,
-				8E5E5A372686A0A50088C814 /* 44_DigitsInSequence */,
-				8E5E5A432686A0A60088C814 /* 45_SortArrayForMinNumber */,
-				8E5E58EC2686A0A30088C814 /* 46_TranslateNumbersToStrings */,
-				8E5E58F72686A0A30088C814 /* 47_MaxValueOfGifts */,
-				8E5E58DD2686A0A30088C814 /* 48_LongestSubstringWithoutDup */,
-				8E5E5A0D2686A0A50088C814 /* 49_UglyNumber */,
-				8E5E58FD2686A0A30088C814 /* 50_01_FirstNotRepeatingChar */,
-				8E5E5A402686A0A50088C814 /* 50_02_FirstNotRepeatingChar */,
-				8E5E59FE2686A0A50088C814 /* 51_InversePairs */,
-				8E5E5A162686A0A50088C814 /* 52_FirstCommonNodesInLists */,
-				8E5E59032686A0A30088C814 /* 53_01_NumberOfK */,
-				8E5E59062686A0A30088C814 /* 53_02_MissingNumber */,
-				8E5E5A072686A0A50088C814 /* 53_03_IntegerIdenticalToIndex */,
-				8E5E58DA2686A0A30088C814 /* 54_KthNodeInBST */,
-				8E5E5A4C2686A0A60088C814 /* 55_01_TreeDepth */,
-				8E5E59092686A0A30088C814 /* 55_02_BalancedBinaryTree */,
-				8E5E5A462686A0A60088C814 /* 56_01_NumbersAppearOnce */,
-				8E5E5A192686A0A50088C814 /* 56_02_NumberAppearingOnce */,
-				8E5E58E02686A0A30088C814 /* 57_01_TwoNumbersWithSum */,
-				8E5E59002686A0A30088C814 /* 57_02_ContinuousSquenceWithSum */,
-				8E5E5A012686A0A50088C814 /* 58_01_ReverseWordsInSentence */,
-				8E5E59FB2686A0A40088C814 /* 58_02_LeftRotateString */,
-				8E5E5A3A2686A0A50088C814 /* 59_01_MaxInSlidingWindow */,
-				8E5E5A0A2686A0A50088C814 /* 59_02_QueueWithMax */,
-				8E5E5A042686A0A50088C814 /* 60_DicesProbability */,
-				8E5E58E32686A0A30088C814 /* 61_ContinousCards */,
-				8E5E5A3D2686A0A50088C814 /* 62_LastNumberInCircle */,
-				8E5E5A102686A0A50088C814 /* 63_MaximalProfit */,
-				8E5E58E92686A0A30088C814 /* 64_Accumulate */,
-				8E5E59F82686A0A40088C814 /* 65_AddTwoNumbers */,
-				8E5E5A132686A0A50088C814 /* 66_ConstuctArray */,
-				8E5E58E62686A0A30088C814 /* 67_StringToInt */,
-				8E5E5A492686A0A60088C814 /* 68_CommonParentInTree */,
-				8E5E5A4F2686A0A60088C814 /* main.cpp */,
 				8E5E5A1C2686A0A50088C814 /* Sort */,
 				8E5E5A502686A0A60088C814 /* Utilities */,
+				8EEFB40E29627F6D009EE7CE /* main.cpp */,
 			);
 			path = OfferReview;
 			sourceTree = "<group>";
@@ -699,48 +662,48 @@
 		8E5E590F2686A0A40088C814 /* 01_38 */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E59102686A0A40088C814 /* 22_KthNodeFromEnd */,
-				8E5E59152686A0A40088C814 /* 11_MinNumberInRotatedArray */,
-				8E5E591C2686A0A40088C814 /* 12_StringPathInMatrix */,
-				8E5E59212686A0A40088C814 /* 32_02_PrintTreesInLines */,
-				8E5E59262686A0A40088C814 /* 20_NumericStrings */,
-				8E5E592B2686A0A40088C814 /* 23_EntryNodeInListLoop */,
-				8E5E59302686A0A40088C814 /* 26_SubstructureInTree */,
-				8E5E59352686A0A40088C814 /* 38_StringPermutation */,
-				8E5E59382686A0A40088C814 /* 35_CopyComplexList */,
-				8E5E593D2686A0A40088C814 /* 10_Fibonacci */,
 				8E5E59442686A0A40088C814 /* 01_AssignmentOperator */,
-				8E5E594B2686A0A40088C814 /* 21_ReorderArray */,
-				8E5E59502686A0A40088C814 /* 27_MirrorOfBinaryTree */,
-				8E5E59552686A0A40088C814 /* 18_01_DeleteNodeInList */,
-				8E5E595A2686A0A40088C814 /* 19_RegularExpressionsMatching */,
-				8E5E595F2686A0A40088C814 /* 15_NumberOf1InBinary */,
-				8E5E59642686A0A40088C814 /* 09_QueueWithTwoStacks */,
+				8E5E59A72686A0A40088C814 /* 03_01_DuplicationInArray */,
 				8E5E596B2686A0A40088C814 /* 03_02_DuplicationInArrayNoEdit */,
-				8E5E59722686A0A40088C814 /* 31_StackPushPopOrder */,
-				8E5E59772686A0A40088C814 /* 34_PathInTree */,
-				8E5E597C2686A0A40088C814 /* 37_SerializeBinaryTrees */,
+				8E5E59962686A0A40088C814 /* 04_FindInPartiallySortedMatrix */,
+				8E5E598F2686A0A40088C814 /* 05_ReplaceSpaces */,
 				8E5E59812686A0A40088C814 /* 06_PrintListInReversedOrder */,
 				8E5E59882686A0A40088C814 /* 07_ConstructBinaryTree */,
-				8E5E598F2686A0A40088C814 /* 05_ReplaceSpaces */,
-				8E5E59962686A0A40088C814 /* 04_FindInPartiallySortedMatrix */,
-				8E5E599D2686A0A40088C814 /* 18_02_DeleteDuplicatedNode */,
-				8E5E59A22686A0A40088C814 /* 25_MergeSortedLists */,
-				8E5E59A72686A0A40088C814 /* 03_01_DuplicationInArray */,
-				8E5E59AE2686A0A40088C814 /* 09_02_StackWithTwoQueues */,
-				8E5E59B52686A0A40088C814 /* 33_SquenceOfBST */,
 				8E5E59BA2686A0A40088C814 /* 08_NextNodeInBinaryTrees */,
-				8E5E59C12686A0A40088C814 /* 14_CuttingRope */,
-				8E5E59C62686A0A40088C814 /* 29_PrintMatrix */,
+				8E5E59AE2686A0A40088C814 /* 09_02_StackWithTwoQueues */,
+				8E5E59642686A0A40088C814 /* 09_QueueWithTwoStacks */,
+				8E5E593D2686A0A40088C814 /* 10_Fibonacci */,
+				8E5E59152686A0A40088C814 /* 11_MinNumberInRotatedArray */,
+				8E5E591C2686A0A40088C814 /* 12_StringPathInMatrix */,
 				8E5E59CB2686A0A40088C814 /* 13_RobotMove */,
-				8E5E59D02686A0A40088C814 /* 28_SymmetricalBinaryTree */,
-				8E5E59D52686A0A40088C814 /* 32_01_PrintTreeFromTopToBottom */,
-				8E5E59DA2686A0A40088C814 /* 36_ConvertBinarySearchTree */,
-				8E5E59DF2686A0A40088C814 /* 32_03_PrintTreesInZigzag */,
-				8E5E59E42686A0A40088C814 /* 30_MinInStack */,
-				8E5E59E92686A0A40088C814 /* 17_Print1ToMaxOfNDigits */,
-				8E5E59EE2686A0A40088C814 /* 24_ReverseList */,
+				8E5E59C12686A0A40088C814 /* 14_CuttingRope */,
+				8E5E595F2686A0A40088C814 /* 15_NumberOf1InBinary */,
 				8E5E59F32686A0A40088C814 /* 16_Power */,
+				8E5E59E92686A0A40088C814 /* 17_Print1ToMaxOfNDigits */,
+				8E5E59552686A0A40088C814 /* 18_01_DeleteNodeInList */,
+				8E5E599D2686A0A40088C814 /* 18_02_DeleteDuplicatedNode */,
+				8E5E595A2686A0A40088C814 /* 19_RegularExpressionsMatching */,
+				8E5E59262686A0A40088C814 /* 20_NumericStrings */,
+				8E5E594B2686A0A40088C814 /* 21_ReorderArray */,
+				8E5E59102686A0A40088C814 /* 22_KthNodeFromEnd */,
+				8E5E592B2686A0A40088C814 /* 23_EntryNodeInListLoop */,
+				8E5E59EE2686A0A40088C814 /* 24_ReverseList */,
+				8E5E59A22686A0A40088C814 /* 25_MergeSortedLists */,
+				8E5E59302686A0A40088C814 /* 26_SubstructureInTree */,
+				8E5E59502686A0A40088C814 /* 27_MirrorOfBinaryTree */,
+				8E5E59D02686A0A40088C814 /* 28_SymmetricalBinaryTree */,
+				8E5E59C62686A0A40088C814 /* 29_PrintMatrix */,
+				8E5E59E42686A0A40088C814 /* 30_MinInStack */,
+				8E5E59722686A0A40088C814 /* 31_StackPushPopOrder */,
+				8E5E59D52686A0A40088C814 /* 32_01_PrintTreeFromTopToBottom */,
+				8E5E59212686A0A40088C814 /* 32_02_PrintTreesInLines */,
+				8E5E59DF2686A0A40088C814 /* 32_03_PrintTreesInZigzag */,
+				8E5E59B52686A0A40088C814 /* 33_SquenceOfBST */,
+				8E5E59772686A0A40088C814 /* 34_PathInTree */,
+				8E5E59382686A0A40088C814 /* 35_CopyComplexList */,
+				8E5E59DA2686A0A40088C814 /* 36_ConvertBinarySearchTree */,
+				8E5E597C2686A0A40088C814 /* 37_SerializeBinaryTrees */,
+				8E5E59352686A0A40088C814 /* 38_StringPermutation */,
 			);
 			path = 01_38;
 			sourceTree = "<group>";
@@ -1340,13 +1303,13 @@
 		8E5E5A1C2686A0A50088C814 /* Sort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A1D2686A0A50088C814 /* 05_QuickSort */,
-				8E5E5A202686A0A50088C814 /* 04_SelectSort */,
-				8E5E5A232686A0A50088C814 /* 02_InsertSort */,
-				8E5E5A262686A0A50088C814 /* 07_HeapSort */,
-				8E5E5A292686A0A50088C814 /* 03_ShellSort */,
 				8E5E5A2C2686A0A50088C814 /* 01_bubbleSort */,
+				8E5E5A232686A0A50088C814 /* 02_InsertSort */,
+				8E5E5A292686A0A50088C814 /* 03_ShellSort */,
+				8E5E5A202686A0A50088C814 /* 04_SelectSort */,
+				8E5E5A1D2686A0A50088C814 /* 05_QuickSort */,
 				8E5E5A2F2686A0A50088C814 /* 06_MergeSort */,
+				8E5E5A262686A0A50088C814 /* 07_HeapSort */,
 			);
 			path = Sort;
 			sourceTree = "<group>";
@@ -1500,16 +1463,61 @@
 		8E5E5A502686A0A60088C814 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A512686A0A60088C814 /* Array.hpp */,
-				8E5E5A522686A0A60088C814 /* BinaryTree.hpp */,
-				8E5E5A532686A0A60088C814 /* List.hpp */,
-				8E5E5A542686A0A60088C814 /* ComplexList.hpp */,
 				8E5E5A552686A0A60088C814 /* Array.cpp */,
+				8E5E5A512686A0A60088C814 /* Array.hpp */,
 				8E5E5A562686A0A60088C814 /* BinaryTree.cpp */,
-				8E5E5A572686A0A60088C814 /* List.cpp */,
+				8E5E5A522686A0A60088C814 /* BinaryTree.hpp */,
 				8E5E5A582686A0A60088C814 /* ComplexList.cpp */,
+				8E5E5A542686A0A60088C814 /* ComplexList.hpp */,
+				8E5E5A572686A0A60088C814 /* List.cpp */,
+				8E5E5A532686A0A60088C814 /* List.hpp */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		8EEFB4102962817C009EE7CE /* 39_68 */ = {
+			isa = PBXGroup;
+			children = (
+				8E5E5A322686A0A50088C814 /* 39_MoreThanHalfNumber */,
+				8E5E58F22686A0A30088C814 /* 40_KLeastNumbers */,
+				8E5E58FA2686A0A30088C814 /* 41_StreamMedian */,
+				8E5E58EF2686A0A30088C814 /* 42_GreatestSumOfSubarrays */,
+				8E5E590C2686A0A40088C814 /* 43_NumberOf1 */,
+				8E5E5A372686A0A50088C814 /* 44_DigitsInSequence */,
+				8E5E5A432686A0A60088C814 /* 45_SortArrayForMinNumber */,
+				8E5E58EC2686A0A30088C814 /* 46_TranslateNumbersToStrings */,
+				8E5E58F72686A0A30088C814 /* 47_MaxValueOfGifts */,
+				8E5E58DD2686A0A30088C814 /* 48_LongestSubstringWithoutDup */,
+				8E5E5A0D2686A0A50088C814 /* 49_UglyNumber */,
+				8E5E58FD2686A0A30088C814 /* 50_01_FirstNotRepeatingChar */,
+				8E5E5A402686A0A50088C814 /* 50_02_FirstNotRepeatingChar */,
+				8E5E59FE2686A0A50088C814 /* 51_InversePairs */,
+				8E5E5A162686A0A50088C814 /* 52_FirstCommonNodesInLists */,
+				8E5E59032686A0A30088C814 /* 53_01_NumberOfK */,
+				8E5E59062686A0A30088C814 /* 53_02_MissingNumber */,
+				8E5E5A072686A0A50088C814 /* 53_03_IntegerIdenticalToIndex */,
+				8E5E58DA2686A0A30088C814 /* 54_KthNodeInBST */,
+				8E5E5A4C2686A0A60088C814 /* 55_01_TreeDepth */,
+				8E5E59092686A0A30088C814 /* 55_02_BalancedBinaryTree */,
+				8E5E5A462686A0A60088C814 /* 56_01_NumbersAppearOnce */,
+				8E5E5A192686A0A50088C814 /* 56_02_NumberAppearingOnce */,
+				8E5E58E02686A0A30088C814 /* 57_01_TwoNumbersWithSum */,
+				8E5E59002686A0A30088C814 /* 57_02_ContinuousSquenceWithSum */,
+				8E5E5A012686A0A50088C814 /* 58_01_ReverseWordsInSentence */,
+				8E5E59FB2686A0A40088C814 /* 58_02_LeftRotateString */,
+				8E5E5A3A2686A0A50088C814 /* 59_01_MaxInSlidingWindow */,
+				8E5E5A0A2686A0A50088C814 /* 59_02_QueueWithMax */,
+				8E5E5A042686A0A50088C814 /* 60_DicesProbability */,
+				8E5E58E32686A0A30088C814 /* 61_ContinousCards */,
+				8E5E5A3D2686A0A50088C814 /* 62_LastNumberInCircle */,
+				8E5E5A102686A0A50088C814 /* 63_MaximalProfit */,
+				8E5E58E92686A0A30088C814 /* 64_Accumulate */,
+				8E5E59F82686A0A40088C814 /* 65_AddTwoNumbers */,
+				8E5E5A132686A0A50088C814 /* 66_ConstuctArray */,
+				8E5E58E62686A0A30088C814 /* 67_StringToInt */,
+				8E5E5A492686A0A60088C814 /* 68_CommonParentInTree */,
+			);
+			path = 39_68;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1609,6 +1617,7 @@
 				8E5E5AD42686A0A60088C814 /* FirstCommonNodesInLists.cpp in Sources */,
 				8E5E5AAE2686A0A60088C814 /* StackWithTwoQueues.cpp in Sources */,
 				8E5E5A842686A0A60088C814 /* ReorderArray_1.cpp in Sources */,
+				8EEFB40F29627F6D009EE7CE /* main.cpp in Sources */,
 				8E5E5A702686A0A60088C814 /* StringPathInMatrix_1.cpp in Sources */,
 				8E5E5AA52686A0A60088C814 /* DeleteDuplicatedNode.cpp in Sources */,
 				8E5E5AA22686A0A60088C814 /* FindInPartiallySortedMatrix_1.cpp in Sources */,
@@ -1679,7 +1688,6 @@
 				8E5E5A7D2686A0A60088C814 /* Fibonacci_2.cpp in Sources */,
 				8E5E5ADA2686A0A60088C814 /* ShellSort.cpp in Sources */,
 				8E5E5AB52686A0A60088C814 /* CuttingRope_1.cpp in Sources */,
-				8E5E5AE72686A0A60088C814 /* main.cpp in Sources */,
 				8E5E5AB22686A0A60088C814 /* NextNodeInBinaryTrees.cpp in Sources */,
 				8E5E5AC12686A0A60088C814 /* PrintTreesInZigzag.cpp in Sources */,
 				8E5E5A942686A0A60088C814 /* StackPushPopOrder_1.cpp in Sources */,

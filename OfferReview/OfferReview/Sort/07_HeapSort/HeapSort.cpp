@@ -12,14 +12,14 @@ void HeapSort::heapSort(int nums[], int count) {
     if (nums == nullptr || count <= 0) {
         return;
     }
-    
-    int i = (count - 1 - 1) / 2;
-    
+    // 建堆
+    int i = ((count - 1) - 1) / 2; // 最后一个节点的父节点
     for (; i >= 0; --i) {
         maxHeapFixdown(nums, i, count);
     }
     
-    for (i = count - 1; i >= 1; --i) {
+    // 建堆完成以后进行堆排序
+    for (i = count - 1; i > 0; --i) {
         swap(&nums[0], &nums[i]);
         maxHeapFixdown(nums, 0, i);
     }
@@ -44,7 +44,7 @@ void HeapSort::heapSort(int nums[], int count) {
 void HeapSort::maxHeapFixdown(int nums[], int i, int n) {
     int j = i * 2 + 1;
     int temp = nums[i];
-    
+
     while (j < n) {
         if (j + 1 < n && nums[j + 1] > nums[j]) {
             ++j;
@@ -53,6 +53,8 @@ void HeapSort::maxHeapFixdown(int nums[], int i, int n) {
         if (nums[j] <= temp) {
             break;
         }
+        
+        swap(&nums[i], &nums[j]);
         
         i = j;
         j = i * 2 + 1;
@@ -82,8 +84,9 @@ void HeapSort::maxHeapFixdown(int nums[], int i, int n) {
 }
 
 // 测试代码
-void HeapSort::test(char* testName, int nums[], int count) {
-    printf("%s begins: \n", testName);
+void HeapSort::test(string testName, int nums[], int count) {
+//    printf("%s begins: \n", testName);
+    cout << testName + " begins:\n";
     printArray("", nums, count);
     heapSort(nums, count);
     printArray("", nums, count);
@@ -116,7 +119,7 @@ void HeapSort::test5() {
 
 void HeapSort::test6() {
     int nums[] = {};
-    test("test5", nums, 0);
+    test("test6 空数组测试", nums, 0);
 }
 
 void HeapSort::Test() {

@@ -8,10 +8,6 @@
 
 #include "BubbleSort.hpp"
 
-int sum(int n) {
-    return n > 1? sum(n - 1) + n: 1;
-}
-
 void BubbleSort::bubbleSort(int nums[], int count) {
     if (nums == nullptr || count <= 0) {
         return;
@@ -33,6 +29,28 @@ void BubbleSort::bubbleSort(int nums[], int count) {
         }
         k = n;
     }
+    
+    
+//    if (nums == nullptr || count <= 0) {
+//        return;
+//    }
+//
+//    int k = count - 1;
+//    for (int i = 0; i < count - 1; ++i) {
+//        bool noExchange = true;
+//        int n = 0;
+//        for (int j = 0; j < k; ++j) {
+//            if (nums[j] > nums[j + 1]) {
+//                swap(&nums[j], &nums[j + 1]);
+//                noExchange = false;
+//                n = j;
+//            }
+//        }
+//        if (noExchange) {
+//            break;
+//        }
+//        k = n;
+//    }
     
     //if (nums == nullptr || count <= 0) {
     //    return;
@@ -58,8 +76,9 @@ void BubbleSort::bubbleSort(int nums[], int count) {
 }
 
 // 测试代码
-void BubbleSort::test(char* testName, int nums[], int count) {
-    printf("%s begins: \n", testName);
+void BubbleSort::test(string testName, int nums[], int count) {
+//    printf("%s begins: \n", testName);
+    cout << testName + " begins:\n";
     printArray("", nums, count);
     bubbleSort(nums, count);
     printArray("", nums, count);
@@ -92,7 +111,7 @@ void BubbleSort::test5() {
 
 void BubbleSort::test6() {
     int nums[] = {};
-    test("test5", nums, 0);
+    test("test6 空数组测试", nums, 0);
 }
 
 

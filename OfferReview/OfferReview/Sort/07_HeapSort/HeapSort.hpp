@@ -13,6 +13,7 @@
 #include "Array.hpp"
 
 using namespace Partition;
+using namespace std;
 
 namespace HeapSort {
 
@@ -20,7 +21,7 @@ void heapSort(int nums[], int count);
 void maxHeapFixdown(int nums[], int i, int n);
 
 // 测试代码
-void test(char* testName, int nums[], int count);
+void test(string testName, int nums[], int count);
 
 void test1();
 void test2();
