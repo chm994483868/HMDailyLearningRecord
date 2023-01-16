@@ -222,6 +222,7 @@
 		8EB3CEB2273FBEDC00C4CF32 /* iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(二)：Mach exceptions 和 Unix signals 分析.md"; sourceTree = "<group>"; };
 		8EC967DF27F850C20049151A /* SwiftUI 学习笔记（五）：Animating Views and Transitions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（五）：Animating Views and Transitions.md"; sourceTree = "<group>"; };
 		8ECAE73A2915F886004ED07C /* SwiftUI 学习笔记（十）：Creating a macOS App_Four.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "SwiftUI 学习笔记（十）：Creating a macOS App_Four.md"; sourceTree = "<group>"; };
+		8ECD26852974F0C6000BFD05 /* optimize.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = optimize.md; sourceTree = "<group>"; };
 		8ECD64EF27A18A2B002E63A7 /* iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(六)：汇编知识点学习-指令集篇.md"; sourceTree = "<group>"; };
 		8ECD64F027B2BA85002E63A7 /* iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 分析：(七)：汇编知识点学习-指令篇.md"; sourceTree = "<group>"; };
 		8ECD64F727B8AB32002E63A7 /* Shell 笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Shell 笔记.md"; sourceTree = "<group>"; };
@@ -420,10 +421,10 @@
 		8E5E58692686A0010088C814 /* 已发布 */ = {
 			isa = PBXGroup;
 			children = (
+				8ECD26842974F0A8000BFD05 /* Optimized */,
 				8EA4A4E62887017B009FE182 /* MDN_HTTP */,
 				8E52DF4B287B271F00AC7847 /* 组件化 */,
 				8E0F47152873B97C0023B594 /* 语言概念学习 */,
-				8EA477A9285A1EA100020467 /* Web 前端开发者 */,
 				8E7101D428294FC500BEB9A3 /* 2022学习计划 */,
 				8E71016B2823F67200BEB9A3 /* xcodebuild */,
 				8E73B4A627D9DB6B009254D9 /* To_be_read_list  */,
@@ -806,13 +807,6 @@
 			path = HTML;
 			sourceTree = "<group>";
 		};
-		8EA477A9285A1EA100020467 /* Web 前端开发者 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "Web 前端开发者";
-			sourceTree = "<group>";
-		};
 		8EA4A4E62887017B009FE182 /* MDN_HTTP */ = {
 			isa = PBXGroup;
 			children = (
@@ -835,6 +829,14 @@
 				8EB3AD7D27E8BF76006336C1 /* MySQL 学习笔记.md */,
 			);
 			path = MySQL;
+			sourceTree = "<group>";
+		};
+		8ECD26842974F0A8000BFD05 /* Optimized */ = {
+			isa = PBXGroup;
+			children = (
+				8ECD26852974F0C6000BFD05 /* optimize.md */,
+			);
+			path = Optimized;
 			sourceTree = "<group>";
 		};
 		8ECD64F127B2BC3D002E63A7 /* 汇编知识点 */ = {
