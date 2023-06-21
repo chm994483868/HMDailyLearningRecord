@@ -59,6 +59,7 @@
 		8E543AF82899F59E00D91E4A /* 函数调用堆栈Six.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "函数调用堆栈Six.md"; sourceTree = "<group>"; };
 		8E5AAF19268EA5BD00A845FB /* iOS App 启动优化(八)：符号化相关内容学习（feature）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App 启动优化(八)：符号化相关内容学习（feature）.md"; sourceTree = "<group>"; };
 		8E5BE94D2A414A2000F09973 /* GlobalAI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GlobalAI.md; sourceTree = "<group>"; };
+		8E5BE9502A42910000F09973 /* GlobalAI_Copy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GlobalAI_Copy.md; sourceTree = "<group>"; };
 		8E5E58452685979D0088C814 /* StudyMarkdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StudyMarkdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E5E58482685979D0088C814 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		8E5E58512686A0010088C814 /* 总路线-> 冲冲冲.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = "总路线-> 冲冲冲.md"; sourceTree = "<group>"; };
@@ -387,6 +388,7 @@
 			isa = PBXGroup;
 			children = (
 				8E5BE94D2A414A2000F09973 /* GlobalAI.md */,
+				8E5BE9502A42910000F09973 /* GlobalAI_Copy.md */,
 			);
 			path = AI;
 			sourceTree = "<group>";
