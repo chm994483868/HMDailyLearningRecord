@@ -1,4 +1,4 @@
-# 2023年末 - iOS 实时面试题：如何使用 Associated Object 在 Category 中添加一个 Weak 属性？
+# 2023年末 - iOS 实时面试题：如何在 Category 中添加一个 Weak 属性？
 
 &emsp;当我们想要在分类中添加属性时，需要手动为属性添加 Setter 和 Getter 函数，否则读取或者写入属性值时会因为没有对应的 Setter 和 Getter 函数而直接触发 `unrecognized selector sent to instance` 崩溃，那么我们便借助 Associated Object 机制手动为属性添加 Setter 和 Getter 函数，看到这里便引出第一个面试题：分类中添加的属性可以使用 KVO 监听吗？答案很显然是可以的，然后接着往下，既然刚刚我们提到了关联对象，那么我们再延伸一下，我们手动实现 Setter 函数时会使用 `objc_setAssociatedObject` 这个函数，它的的最后一个参数表示关联策略，但是其中没有对应 `weak` 属性修饰符的策略，那么我们怎么手动实现一个呢？
 
