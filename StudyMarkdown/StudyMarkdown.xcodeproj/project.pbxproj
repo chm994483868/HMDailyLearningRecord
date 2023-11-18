@@ -241,7 +241,8 @@
 		8EE3B535288F679900B59C1E /* iOS 组件化实践（一）：中间层方案选择.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS 组件化实践（一）：中间层方案选择.md"; sourceTree = "<group>"; };
 		8EE69B2E2894B69300049601 /* 2022学习计划Two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2022学习计划Two.md"; sourceTree = "<group>"; };
 		8EE822FA2B053F2500E1418C /* 2023年末 - iOS 实时面试题：如何在 Category 中添加一个 Weak 属性？.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2023年末 - iOS 实时面试题：如何在 Category 中添加一个 Weak 属性？.md"; sourceTree = "<group>"; };
-		8EE823262B06DD9100E1418C /* 2023年末 - iOS 实时面试题：NSTimer 循环引用问题.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2023年末 - iOS 实时面试题：NSTimer 循环引用问题.md"; sourceTree = "<group>"; };
+		8EE823262B06DD9100E1418C /* 2023年末 - iOS 实时面试题：如何解决 NSTimer 引发的循环引用问题？.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2023年末 - iOS 实时面试题：如何解决 NSTimer 引发的循环引用问题？.md"; sourceTree = "<group>"; };
+		8EE823302B07C8E200E1418C /* 2023年末 - iOS 实时面试题：如何在低版本 iOS 中使用仅高版本支持的 SwiftUI API？.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2023年末 - iOS 实时面试题：如何在低版本 iOS 中使用仅高版本支持的 SwiftUI API？.md"; sourceTree = "<group>"; };
 		8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 状态管理技巧.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -885,7 +886,8 @@
 			isa = PBXGroup;
 			children = (
 				8EE822FA2B053F2500E1418C /* 2023年末 - iOS 实时面试题：如何在 Category 中添加一个 Weak 属性？.md */,
-				8EE823262B06DD9100E1418C /* 2023年末 - iOS 实时面试题：NSTimer 循环引用问题.md */,
+				8EE823262B06DD9100E1418C /* 2023年末 - iOS 实时面试题：如何解决 NSTimer 引发的循环引用问题？.md */,
+				8EE823302B07C8E200E1418C /* 2023年末 - iOS 实时面试题：如何在低版本 iOS 中使用仅高版本支持的 SwiftUI API？.md */,
 			);
 			path = "2024_iOS实时题目";
 			sourceTree = "<group>";
