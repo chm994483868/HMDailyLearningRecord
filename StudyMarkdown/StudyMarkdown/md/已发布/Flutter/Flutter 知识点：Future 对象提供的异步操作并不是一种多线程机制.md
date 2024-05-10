@@ -49,7 +49,7 @@
     tag 3️⃣ current thread：<_NSMainThread: 0x600001708040>{number = 1, name = main}
 ```
 
-&emsp;我们在主线程中调用 `getUsers` 函数，首先看到 tag 1️⃣ 和 tag 4️⃣ 被执行，且当前都是主线程，tag 4️⃣ 并未等 `URLSession.shared.dataTask` 网络请求完成后才去执行，而是立即得到了执行，这里可以看出 `URLSession.shared.dataTask` 也是非阻塞的，这里它和 Future 的非阻塞机制并不相同的，但是呈现的结果则是相同的。然后重点来了，看 tag 2️⃣ 处的打印，它当前并未在主线程，而是在一个子线程中，这里说明 `URLSession.shared.dataTask` 发起网络请求，iOS 为其准备了一条子线程来进行处理后续事宜。那么在 Flutter 中呢？下面看同 iOS 代码结构完全相同的 Flutter 代码：
+&emsp;我们在主线程中调用 `getUsers` 函数，首先看到 tag 1️⃣ 和 tag 4️⃣ 被执行，且当前都是主线程，tag 4️⃣ 并未等 `URLSession.shared.dataTask` 网络请求完成后才去执行，而是立即得到了执行，这里可以看出 `URLSession.shared.dataTask` 也是非阻塞的，这里它和 Future 的非阻塞机制并不相同的，但是呈现的结果则是相同的。然后重点来了，看 tag 2️⃣ 处的打印，它当前并未在主线程，而是在一个子线程中，这里说明 `URLSession.shared.dataTask` 在子线程发起了网络请求，iOS 为其准备了一条子线程来进行处理后续事宜。那么在 Flutter 中呢？下面看同 iOS 代码结构完全相同的 Flutter 代码：
 
 ```dart
   getUsers() {
@@ -83,7 +83,26 @@
   flutter: tag 2️⃣ current isolate hashCode: 310700307 current isolate name: main
 ```
 
-&emsp;我们在主 Isolate 中调用 `getUsers` 函数，同样的看到 tag 1️⃣ 和 tag 4️⃣ 首先被执行，且都打印了当前是主 Isolate，即使 `http.get(Uri.parse(userUrl))` 请求完成后回调执行打印 tag 2️⃣ 依然在主 Isolate 中。这里 `http.get(Uri.parse(userUrl))` 函数返回的就是一个 Future 对象。可以看到在网络请求的整个过程中都没有出现子线程，但是这样看好像不明显，下面直接通过创建一个 Future 对象看看：
+&emsp;我们在主 Isolate 中调用 `getUsers` 函数，同样的看到 tag 1️⃣ 和 tag 4️⃣ 首先被执行，且都打印了当前是主 Isolate，即使 `http.get(Uri.parse(userUrl))` 请求完成后回调执行打印 tag 2️⃣ 依然在主 Isolate 中。这里 `http.get(Uri.parse(userUrl))` 函数返回的就是一个 Future 对象，可以看到在网络请求的整个过程中都没有出现子线程，但是这样看好像不明显，因为 `http.get(Uri.parse(userUrl))` 函数返回的 Future 对象的异步操作执行过程被包裹起来了。下面我们会直接自己手动创建 Future 对象来验证，在开始之前，我们再测试一种情况，让你切实看到：iOS 的网络请求自行去到了子线程去执行，而 Flutter 中通过 Future 添加的网络请求，只是被添加到了 Dart 的事件循环的事件队列中，等待着下一个循环得到执行。这里我们改造一下 `getUsers` 函数调用处，直接在 `getUsers` 函数下添加一行 `sleep`:
+
+```
+// ios
+{
+        getUsers()
+        sleep(5);
+}
+
+// flutter
+{
+    getUsers();
+    sleep(const Duration(seconds: 5));
+}
+
+``` 
+
+&emsp;运行代码后我们可以发现 iOS 和 Flutter 的天差地别，在 iOS 中不管有没有这个 `sleep` 函数的调用，`getUsers` 函数中的网络请求都可以直接发起，并正常打印请求响应。而在 Flutter 中，必须等到 5 秒以后，网络请求才能正常发起执行。那么从这种表现下，你能得出什么结论呢？
+ 
+&emsp;由于 Flutter 示例代码中 `http.get(Uri.parse(userUrl))` 函数返回的 Future 对象的异步操作执行过程被包裹起来了，所有我们看的不那么明显，下面我们直接自己手动创建一个 Future 对象，并尝试让它的异步行为执行耗时操作看看：
 
 ```dart
   getUsers() {
@@ -116,7 +135,7 @@
   flutter: tag 3️⃣ current isolate hashCode: 979228963 current isolate name: main
 ``` 
 
-&emsp;我们自己直接创建 Future 对象，看到 tag 4️⃣ 早于 tag 2️⃣、tag 3️⃣ 执行，且四个打印完全都在主 Isolate 中。然后可以再做个实验，直接在 tag 2️⃣ 上面添加一行 `sleep(const Duration(seconds: 5));` 然后执行，可以看到 tag 1️⃣ 和 tag 4️⃣ 执行后 UI 卡顿了 5 秒完全不可交互，5 秒后卡顿才结束，才执行 tag 2️⃣ 和 tag 3️⃣。看到这里既可验证了：Future 异步操作都是在主 Isolate 中执行的，并没有开辟新线程。  
+&emsp;我们自己直接创建 Future 对象，看到 tag 4️⃣ 早于 tag 2️⃣、tag 3️⃣ 执行，且四个打印完全都在主 Isolate 中。然后可以再做个实验，直接在 tag 2️⃣ 上面添加一行 `sleep(const Duration(seconds: 5));` 然后执行，可以看到 tag 1️⃣ 和 tag 4️⃣ 执行后 UI 卡顿了 5 秒完全不可交互，5 秒后卡顿才结束 UI 才恢复正常，tag 2️⃣ 和 tag 3️⃣ 才得到执行。看到这里既可验证了：Future 异步操作都是在主 Isolate 中执行的，并没有开辟新线程，且异步操作中的耗时操作会直接导致 Flutter 中的 UI 卡顿。
 
 ## 对比 Isolate 异步操作(在新线程中异步操作)
 
