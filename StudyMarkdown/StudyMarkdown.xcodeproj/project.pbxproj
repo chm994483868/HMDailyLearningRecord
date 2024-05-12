@@ -248,6 +248,7 @@
 		8EE90AD82B08B888006B7A02 /* RN 优化.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "RN 优化.md"; sourceTree = "<group>"; };
 		8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 状态管理技巧.md"; sourceTree = "<group>"; };
 		D25AAFF22BEB4D690095511B /* Flutter 知识点：Future 对象提供的异步操作并不是一种多线程机制.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 知识点：Future 对象提供的异步操作并不是一种多线程机制.md"; sourceTree = "<group>"; };
+		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现的？.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现的？.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -294,6 +295,7 @@
 				8EA8F6FE29592ABA0063A7A6 /* Flutter_two.md */,
 				8EA8F6FF295A7B1D0063A7A6 /* Flutter_three.md */,
 				D25AAFF22BEB4D690095511B /* Flutter 知识点：Future 对象提供的异步操作并不是一种多线程机制.md */,
+				D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现的？.md */,
 			);
 			path = Flutter;
 			sourceTree = "<group>";
