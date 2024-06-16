@@ -13,29 +13,34 @@ void InsertSort::insertSort(int nums[], int count) {
         return;
     }
     
+    // 把原数组在逻辑上分两个组，左边是已排序序列，右边是待排序序列
+    // 每次从右边序列取最后一个值插入左边序列中，并保持左边序列有序
+    // i 从 1 开始，0 定为左侧已排序序列第一个元素
     for (int i = 1; i < count; ++i) {
         for (int j = i; j > 0 && nums[j - 1] > nums[j]; --j) {
             swap(&nums[j - 1], &nums[j]);
         }
     }
+}
+
+// 稳定，时间复杂度最好是 O(n)
+void insertionSort(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
     
-    //if (nums == nullptr || count <= 0) {
-    //    return;
-    //}
-    //
-    //// 把原数组在逻辑上分两个组，左边是已排序序列，右边是待排序序列
-    //// 每次从右边序列取最后一个值插入左边序列中，并保持左边序列有序
-    //// i 从 1 开始，0 定为左侧已排序序列第一个元素
-    //for (int i = 1; i < count; ++i) {
-    //    for (int j = i; j > 0 && nums[j - 1] > nums[j]; --j) {
-    //        swap(&nums[j - 1], &nums[j]);
-    //    }
-    //}
+    for (int i = 1; i < count; ++i) {
+        
+        for (int j = i; j > 0 && nums[j - 1] > nums[j]; --j) {
+            swap(&nums[j - 1], &nums[j]);
+        }
+    }
 }
 
 // 测试代码
-void InsertSort::test(char* testName, int nums[], int count) {
-    printf("%s begins: \n", testName);
+void InsertSort::test(string testName, int nums[], int count) {
+//    printf("%s begins: \n", testName);
+    cout << testName + " begins:\n";
     printArray("", nums, count);
     insertSort(nums, count);
     printArray("", nums, count);
@@ -80,16 +85,3 @@ void InsertSort::Test() {
     test5();
     test6();
 }
-
-//if (nums == nullptr || count <= 0) {
-//    return;
-//}
-//
-//// 把原数组在逻辑上分两个组，左边是已排序序列，右边是待排序序列
-//// 每次从右边序列取最后一个值插入左边序列中，并保持左边序列有序
-//// i 从 1 开始，0 定为左侧已排序序列第一个元素
-//for (int i = 1; i < count; ++i) {
-//    for (int j = i; j > 0 && nums[j - 1] > nums[j]; --j) {
-//        swap(&nums[j - 1], &nums[j]);
-//    }
-//}

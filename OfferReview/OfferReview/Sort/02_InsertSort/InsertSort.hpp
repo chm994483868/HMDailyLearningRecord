@@ -13,13 +13,14 @@
 #include "Array.hpp"
 
 using namespace Partition;
+using namespace std;
 
 namespace InsertSort {
 
 void insertSort(int nums[], int count);
 
 // 测试代码
-void test(char* testName, int nums[], int count);
+void test(string testName, int nums[], int count);
 
 void test1();
 void test2();

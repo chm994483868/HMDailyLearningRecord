@@ -30,35 +30,27 @@ void ShellSort::shellSort(int nums[], int count) {
             }
         }
     }
+}
+
+// 不稳定
+void shellSort(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
     
-    //    if (nums == nullptr || count <= 0) {
-    //        return;
-    //    }
-    //
-    //    //    for (int gap = count / 2; gap > 0; gap /= 2) {
-    //    //        for (int i = 0; i < gap; ++i) {
-    //    //            for (int j = i + gap; j < count; j += gap) {
-    //    //                for (int k = j - gap; k >= 0 && nums[k] > nums[k + gap]; k -= gap) {
-    //    //                    swap(&nums[k], &nums[k + gap]);
-    //    //                }
-    //    //            }
-    //    //        }
-    //    //    }
-    //
-    //    for (int gap = count / 2; gap > 0; gap /= 2) {
-    //        for (int i = gap; i < count; ++i) {
-    //            for (int j = i - gap; j >= 0 && nums[j] > nums[j + gap]; j -= gap) { // j 是左边元素
-    //                swap(&nums[j], &nums[j + gap]);
-    //            }
-    //        }
-    //    }
-    
-    
+    for (int gap = count / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < count; ++i) {
+            for (int j = i - gap; j >= 0 && nums[j] > nums[j + gap]; j -= gap) {
+                swap(&nums[j], &nums[j + gap]);
+            }
+        }
+    }
 }
 
 // 测试代码
-void ShellSort::test(char* testName, int nums[], int count) {
-    printf("%s begins: \n", testName);
+void ShellSort::test(string testName, int nums[], int count) {
+//    printf("%s begins: \n", testName);
+    cout << testName + " begins:\n";
     printArray("", nums, count);
     shellSort(nums, count);
     printArray("", nums, count);
@@ -102,25 +94,3 @@ void ShellSort::Test() {
     test5();
     test6();
 }
-
-//    if (nums == nullptr || count <= 0) {
-//        return;
-//    }
-//
-//    //    for (int gap = count / 2; gap > 0; gap /= 2) {
-//    //        for (int i = 0; i < gap; ++i) {
-//    //            for (int j = i + gap; j < count; j += gap) {
-//    //                for (int k = j - gap; k >= 0 && nums[k] > nums[k + gap]; k -= gap) {
-//    //                    swap(&nums[k], &nums[k + gap]);
-//    //                }
-//    //            }
-//    //        }
-//    //    }
-//
-//    for (int gap = count / 2; gap > 0; gap /= 2) {
-//        for (int i = gap; i < count; ++i) {
-//            for (int j = i - gap; j >= 0 && nums[j] > nums[j + gap]; j -= gap) { // j 是左边元素
-//                swap(&nums[j], &nums[j + gap]);
-//            }
-//        }
-//    }

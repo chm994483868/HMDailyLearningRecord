@@ -1317,8 +1317,8 @@
 		8E5E5A1D2686A0A50088C814 /* 05_QuickSort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A1E2686A0A50088C814 /* QuickSort.hpp */,
 				8E5E5A1F2686A0A50088C814 /* QuickSort.cpp */,
+				8E5E5A1E2686A0A50088C814 /* QuickSort.hpp */,
 			);
 			path = 05_QuickSort;
 			sourceTree = "<group>";
@@ -1326,8 +1326,8 @@
 		8E5E5A202686A0A50088C814 /* 04_SelectSort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A212686A0A50088C814 /* SelectSort.hpp */,
 				8E5E5A222686A0A50088C814 /* SelectSort.cpp */,
+				8E5E5A212686A0A50088C814 /* SelectSort.hpp */,
 			);
 			path = 04_SelectSort;
 			sourceTree = "<group>";
@@ -1335,8 +1335,8 @@
 		8E5E5A232686A0A50088C814 /* 02_InsertSort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A242686A0A50088C814 /* InsertSort.hpp */,
 				8E5E5A252686A0A50088C814 /* InsertSort.cpp */,
+				8E5E5A242686A0A50088C814 /* InsertSort.hpp */,
 			);
 			path = 02_InsertSort;
 			sourceTree = "<group>";
@@ -1353,8 +1353,8 @@
 		8E5E5A292686A0A50088C814 /* 03_ShellSort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A2A2686A0A50088C814 /* ShellSort.hpp */,
 				8E5E5A2B2686A0A50088C814 /* ShellSort.cpp */,
+				8E5E5A2A2686A0A50088C814 /* ShellSort.hpp */,
 			);
 			path = 03_ShellSort;
 			sourceTree = "<group>";
@@ -1362,8 +1362,8 @@
 		8E5E5A2C2686A0A50088C814 /* 01_bubbleSort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A2D2686A0A50088C814 /* BubbleSort.hpp */,
 				8E5E5A2E2686A0A50088C814 /* BubbleSort.cpp */,
+				8E5E5A2D2686A0A50088C814 /* BubbleSort.hpp */,
 			);
 			path = 01_bubbleSort;
 			sourceTree = "<group>";
@@ -1371,8 +1371,8 @@
 		8E5E5A2F2686A0A50088C814 /* 06_MergeSort */ = {
 			isa = PBXGroup;
 			children = (
-				8E5E5A302686A0A50088C814 /* MergeSort.hpp */,
 				8E5E5A312686A0A50088C814 /* MergeSort.cpp */,
+				8E5E5A302686A0A50088C814 /* MergeSort.hpp */,
 			);
 			path = 06_MergeSort;
 			sourceTree = "<group>";

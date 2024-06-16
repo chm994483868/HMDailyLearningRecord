@@ -13,13 +13,14 @@
 #include "Array.hpp"
 
 using namespace Partition;
+using namespace std;
 
 namespace QuickSort {
 
 void quickSort(int nums[], int l, int r);
 
 // 测试代码
-void test(char* testName, int nums[], int count);
+void test(string testName, int nums[], int count);
 
 void test1();
 void test2();

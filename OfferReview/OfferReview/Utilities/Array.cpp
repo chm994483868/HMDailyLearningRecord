@@ -25,6 +25,13 @@ void Partition::swap(int* num1, int* num2) {
     *num2 = temp;
 }
 
+//// 传入两个 int 值的地址，然后把两个地址中保存的数值进行交换
+//void tempSwap(int* num1, int* num2) {
+//    int temp = *num1;
+//    *num1 = *num2;
+//    *num2 = temp;
+//}
+
 int Partition::randomInRange(int min, int max) {
     // 取模用的 (max - min + 1) 谨记
     int random = rand() % (max - min + 1) + min;

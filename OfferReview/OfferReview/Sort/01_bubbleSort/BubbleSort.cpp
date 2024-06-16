@@ -13,10 +13,10 @@ void BubbleSort::bubbleSort(int nums[], int count) {
         return;
     }
     
-    int k = count - 1;
+    int k = count - 1; // 第二层循环的边界
     for (int i = 0; i < count - 1; ++i) {
-        bool noExchange = true;
-        int n = 0;
+        bool noExchange = true; // 标记一趟比较操作下来是否发生过交换，如果没有的话表示当前序列已经有序
+        int n = 0; // 记录一趟排序中最后一次交换的两个相邻元素的最小下标，此后该最小下标以后的数据就都是有序的
         for (int j = 0; j < k; ++j) {
             if (nums[j] > nums[j + 1]) {
                 swap(&nums[j], &nums[j + 1]);
@@ -24,55 +24,37 @@ void BubbleSort::bubbleSort(int nums[], int count) {
                 n = j;
             }
         }
+        
+        if (noExchange) {
+            break;
+        }
+        k = n; // 更新 k 值
+    }
+}
+
+void bubblesort(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
+    
+    int k = count - 1;
+    for (int i = 0; i < count - 1; ++i) {
+        bool noExchange = true;
+        int n = 0;
+        
+        for (int j = 0; j < k; ++j) {
+            if (nums[j] > nums[j + 1]) {
+                swap(&nums[j], &nums[j + 1]);
+                noExchange = false;
+                n = j;
+            }
+        }
+        
         if (noExchange) {
             break;
         }
         k = n;
     }
-    
-    
-//    if (nums == nullptr || count <= 0) {
-//        return;
-//    }
-//
-//    int k = count - 1;
-//    for (int i = 0; i < count - 1; ++i) {
-//        bool noExchange = true;
-//        int n = 0;
-//        for (int j = 0; j < k; ++j) {
-//            if (nums[j] > nums[j + 1]) {
-//                swap(&nums[j], &nums[j + 1]);
-//                noExchange = false;
-//                n = j;
-//            }
-//        }
-//        if (noExchange) {
-//            break;
-//        }
-//        k = n;
-//    }
-    
-    //if (nums == nullptr || count <= 0) {
-    //    return;
-    //}
-    //
-    //int k = count - 1; // 第二层循环的边界
-    //for (int i = 0; i < count - 1; ++i) {
-    //    bool noExchange = true; // 标记一趟比较操作下来是否发生过交换，如果没有的话表示当前序列已经有序
-    //    int n = 0; // 记录一趟排序中最后一次交换的两个相邻元素的最小下标，此后该最小下标以后的数据就都是有序的
-    //    for (int j = 0; j < k; ++j) {
-    //        if (nums[j] > nums[j + 1]) {
-    //            swap(&nums[j], &nums[j + 1]);
-    //            noExchange = false;
-    //            n = j;
-    //        }
-    //    }
-    //
-    //    if (noExchange) {
-    //        break;
-    //    }
-    //    k = n; // 更新 k 值
-    //}
 }
 
 // 测试代码
@@ -123,25 +105,3 @@ void BubbleSort::Test() {
     test5();
     test6();
 }
-
-//if (nums == nullptr || count <= 0) {
-//    return;
-//}
-//
-//int k = count - 1; // 第二层循环的边界
-//for (int i = 0; i < count - 1; ++i) {
-//    bool noExchange = true; // 标记一趟比较操作下来是否发生过交换，如果没有的话表示当前序列已经有序
-//    int n = 0; // 记录一趟排序中最后一次交换的两个相邻元素的最小下标，此后该最小下标以后的数据就都是有序的
-//    for (int j = 0; j < k; ++j) {
-//        if (nums[j] > nums[j + 1]) {
-//            swap(&nums[j], &nums[j + 1]);
-//            noExchange = false;
-//            n = j;
-//        }
-//    }
-//
-//    if (noExchange) {
-//        break;
-//    }
-//    k = n; // 更新 k 值
-//}

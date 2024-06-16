@@ -13,6 +13,7 @@
 #include "Array.hpp"
 
 using namespace Partition;
+using namespace std;
 
 namespace MergeSort {
 
@@ -20,7 +21,7 @@ void mergeSort(int nums[], int first, int last, int temp[]);
 void mergeArray(int nums[], int first, int mid, int last, int temp[]);
 
 // 测试代码
-void test(char* testName, int nums[], int count);
+void test(string testName, int nums[], int count);
 
 void test1();
 void test2();
