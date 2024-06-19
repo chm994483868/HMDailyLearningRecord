@@ -43,7 +43,7 @@ void selectSort(int nums[], int count) {
             }
         }
         
-        swap(&nums[i], &nums[minIndex]);
+        swap(&nums[minIndex], &nums[i]);
     }
 }
 

@@ -24,15 +24,14 @@ void InsertSort::insertSort(int nums[], int count) {
 }
 
 // 稳定，时间复杂度最好是 O(n)
-void insertionSort(int nums[], int count) {
+void insertSort(int nums[], int count) {
     if (nums == nullptr || count <= 0) {
         return;
     }
     
     for (int i = 1; i < count; ++i) {
-        
-        for (int j = i; j > 0 && nums[j - 1] > nums[j]; --j) {
-            swap(&nums[j - 1], &nums[j]);
+        for (int j = i; j > 0 && nums[j] < nums[j - 1]; --j) {
+            swap(&nums[j], &nums[j - 1]);
         }
     }
 }

@@ -98,14 +98,11 @@ void mergeSort(int nums[], int first, int last, int temp[]) {
     
     int mid = ((last - first) >> 1) + first;
     
-    // 左边和右边 分别 进行排序
     mergeSort(nums, first, mid, temp);
     mergeSort(nums, mid + 1, last, temp);
     
-    // 然后把它们合并在一起
     mergeArray(nums, first, mid, last, temp);
 }
-
 
 // 测试代码
 void MergeSort::test(string testName, int nums[], int count) {

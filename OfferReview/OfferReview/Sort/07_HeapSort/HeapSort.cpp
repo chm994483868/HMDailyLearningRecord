@@ -50,6 +50,45 @@ void HeapSort::maxHeapFixdown(int nums[], int i, int n) {
     }
 }
 
+void maxHeapFixdown(int nums[], int i, int n) {
+    int j = i * 2 + 1;
+    int temp = nums[i];
+    
+    while (j < n) {
+        // 找到 左右子节点值较大的节点
+        if (j + 1 < n && nums[j + 1] > nums[j]) {
+            ++j;
+        }
+        
+        if (nums[j] <= temp) {
+            break;
+        }
+        
+        swap(&nums[i], &nums[j]);
+        
+        i = j;
+        j = i * 2 + 1;
+    }
+}
+
+void heapSort(int nums[], int count) {
+    if (nums == nullptr || count <= 0) {
+        return;
+    }
+    
+    // 建堆
+    int i = ((count - 1) - 1) / 2;
+    for (; i >= 0; --i) {
+        maxHeapFixdown(nums, i, count);
+    }
+    
+    // 排序
+    for (int i = count - 1; i > 0; --i) {
+        swap(&nums[0], &nums[i]);
+        maxHeapFixdown(nums, 0, i);
+    }
+}
+
 // 测试代码
 void HeapSort::test(string testName, int nums[], int count) {
 //    printf("%s begins: \n", testName);
