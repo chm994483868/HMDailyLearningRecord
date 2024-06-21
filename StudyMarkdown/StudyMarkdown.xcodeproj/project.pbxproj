@@ -211,8 +211,6 @@
 		8EA477AA285CAF6D00020467 /* HTML 学习记录（三）：HTML 文字处理基础和建立超链接.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（三）：HTML 文字处理基础和建立超链接.md"; sourceTree = "<group>"; };
 		8EA477AB285F5FB600020467 /* HTML 学习记录（四）：HTML 高级文本排版.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "HTML 学习记录（四）：HTML 高级文本排版.md"; sourceTree = "<group>"; };
 		8EA4A4E7288701CB009FE182 /* MDN 上的 HTTP 学习（一）：跨源资源共享（CORS）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "MDN 上的 HTTP 学习（一）：跨源资源共享（CORS）.md"; sourceTree = "<group>"; };
-		8EA8F6FE29592ABA0063A7A6 /* Flutter_two.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Flutter_two.md; sourceTree = "<group>"; };
-		8EA8F6FF295A7B1D0063A7A6 /* Flutter_three.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Flutter_three.md; sourceTree = "<group>"; };
 		8EACBADD27D63F95001AB602 /* TypeScript 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "TypeScript 学习笔记.md"; sourceTree = "<group>"; };
 		8EACBADE27DA44A8001AB602 /* Optional 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Optional 学习笔记.md"; sourceTree = "<group>"; };
 		8EAFFB4427946FDA00B70023 /* 汇编第二篇.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "汇编第二篇.md"; sourceTree = "<group>"; };
@@ -234,7 +232,7 @@
 		8ECD652527CB5D21002E63A7 /* JavaScript HTML DOM 学习笔记.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript HTML DOM 学习笔记.md"; sourceTree = "<group>"; };
 		8ECD652627CCE7BE002E63A7 /* JavaScript 学习笔记 nine.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习笔记 nine.md"; sourceTree = "<group>"; };
 		8ECE502426DEF9F400681115 /* Swift 进阶笔记（一）：Swift 源码编译.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Swift 进阶笔记（一）：Swift 源码编译.md"; sourceTree = "<group>"; };
-		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md"; sourceTree = "<group>"; };
+		8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（二）：Flutter 的 widget 介绍.md"; sourceTree = "<group>"; };
 		8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 学习笔记（五）：Cookbook.md"; sourceTree = "<group>"; };
 		8ED36F4A27780A01002BBC42 /* iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "iOS App Crash 学习：(四)：KSCrash 使用以及源码解读（2）.md"; sourceTree = "<group>"; };
 		8EDEFC312803AD59003AD8EC /* JavaScript 学习记录（三）：ES6 Map、Set.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "JavaScript 学习记录（三）：ES6 Map、Set.md"; sourceTree = "<group>"; };
@@ -246,12 +244,10 @@
 		8EE90ABC2B088569006B7A02 /* 调整NSTimer的文章.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "调整NSTimer的文章.md"; sourceTree = "<group>"; };
 		8EE90AD72B08A0B9006B7A02 /* SwiftUI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SwiftUI.md; sourceTree = "<group>"; };
 		8EE90AD82B08B888006B7A02 /* RN 优化.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "RN 优化.md"; sourceTree = "<group>"; };
-		8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 状态管理技巧.md"; sourceTree = "<group>"; };
 		D25AAFF22BEB4D690095511B /* Flutter 知识点：解析 Future 对象提供的异步操作.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 知识点：解析 Future 对象提供的异步操作.md"; sourceTree = "<group>"; };
-		D2BA36B62C1C46D100823817 /* Flutter-Introduction to Dart VM.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter-Introduction to Dart VM.md"; sourceTree = "<group>"; };
 		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现.md"; sourceTree = "<group>"; };
-		D2D76D662BF1CEFC00037022 /* Flutter 面试题：Dart 中 Mixin、With、Extend.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Dart 中 Mixin、With、Extend.md"; sourceTree = "<group>"; };
 		D2FC92A82C231B1E00EF34D0 /* Widget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Widget.md; sourceTree = "<group>"; };
+		D2FC92A92C25BAE500EF34D0 /* ProxyWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProxyWidget.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -288,20 +284,14 @@
 			isa = PBXGroup;
 			children = (
 				8E2137B426D3D99B00CB9B03 /* Flutter 学习笔记（一）：第一个 Flutter 应用.md */,
-				8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md.md */,
+				8ECE502526DF048C00681115 /* Flutter 学习笔记（二）：Flutter 的 widget 介绍.md */,
 				8E8B83AB26EA5F4E003BB703 /* Flutter 学习笔记（三）：Widgets 目录（1）.md */,
 				8E110CCE270F1F020016FF16 /* Flutter 学习笔记（四）：Widgets 目录（2）.md */,
 				8ED0613E272160AE00D65609 /* Flutter 学习笔记（五）：Cookbook.md */,
 				8E69B643292F3F4300AA29B9 /* Flutter 学习过程中不容错过的项目实践.md */,
-				8EF8E1C4293ED7BE0057FBB8 /* Flutter 状态管理技巧.md */,
 				8E18B9D029588F4400F85C2A /* Flutter 学习过程中不容错过的项目进阶实践.md */,
-				8EA8F6FE29592ABA0063A7A6 /* Flutter_two.md */,
-				8EA8F6FF295A7B1D0063A7A6 /* Flutter_three.md */,
 				D25AAFF22BEB4D690095511B /* Flutter 知识点：解析 Future 对象提供的异步操作.md */,
 				D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */,
-				D2D76D662BF1CEFC00037022 /* Flutter 面试题：Dart 中 Mixin、With、Extend.md */,
-				D2BA36B62C1C46D100823817 /* Flutter-Introduction to Dart VM.md */,
-				D2FC92A82C231B1E00EF34D0 /* Widget.md */,
 			);
 			path = Flutter;
 			sourceTree = "<group>";
@@ -472,6 +462,7 @@
 				8E80F65F27DC89A700942D35 /* Combine */,
 				8E110CCF270F48A30016FF16 /* LLDB */,
 				8E3327F026F2C38000753049 /* crash */,
+				D2FC92AA2C25BD4D00EF34D0 /* Flutter源码阅读 */,
 				8E2137B326D2382E00CB9B03 /* Flutter */,
 				8E53C9F226B29D6400FB0AD7 /* Swift */,
 				8E5E5EA82686AC090088C814 /* KVCKVO */,
@@ -906,6 +897,15 @@
 				8EE90AD82B08B888006B7A02 /* RN 优化.md */,
 			);
 			path = "2024_iOS实时题目";
+			sourceTree = "<group>";
+		};
+		D2FC92AA2C25BD4D00EF34D0 /* Flutter源码阅读 */ = {
+			isa = PBXGroup;
+			children = (
+				D2FC92A82C231B1E00EF34D0 /* Widget.md */,
+				D2FC92A92C25BAE500EF34D0 /* ProxyWidget.md */,
+			);
+			path = "Flutter源码阅读";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
