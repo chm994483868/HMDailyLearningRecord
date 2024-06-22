@@ -407,6 +407,7 @@ abstract class ParentDataWidget<T extends ParentData> extends ProxyWidget {
 
 ## 参考链接
 **参考链接:🔗**
++ [Unlocking Efficiency: When and Why to Use const with Constant Constructors in Flutter](https://www.dhiwise.com/post/why-flutter-prefer-const-with-constant-constructor)
 + [widgets library - ProxyWidget class](https://api.flutter.dev/flutter/widgets/ProxyWidget-class.html)
 + [ParentData class](https://api.flutter.dev/flutter/rendering/ParentData-class.html)
 + [ParentDataWidget<T extends ParentData> class](https://api.flutter.dev/flutter/widgets/ParentDataWidget-class.html)

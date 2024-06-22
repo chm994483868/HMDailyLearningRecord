@@ -248,6 +248,8 @@
 		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现.md"; sourceTree = "<group>"; };
 		D2FC92A82C231B1E00EF34D0 /* Widget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Widget.md; sourceTree = "<group>"; };
 		D2FC92A92C25BAE500EF34D0 /* ProxyWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProxyWidget.md; sourceTree = "<group>"; };
+		D2FC92AB2C26D35A00EF34D0 /* RenderObjectWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RenderObjectWidget.md; sourceTree = "<group>"; };
+		D2FC92AC2C271E2300EF34D0 /* Object.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Object.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -904,6 +906,8 @@
 			children = (
 				D2FC92A82C231B1E00EF34D0 /* Widget.md */,
 				D2FC92A92C25BAE500EF34D0 /* ProxyWidget.md */,
+				D2FC92AB2C26D35A00EF34D0 /* RenderObjectWidget.md */,
+				D2FC92AC2C271E2300EF34D0 /* Object.md */,
 			);
 			path = "Flutter源码阅读";
 			sourceTree = "<group>";

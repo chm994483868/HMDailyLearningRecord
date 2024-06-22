@@ -179,6 +179,8 @@ analyzer:
 1. 尽量减少通过 build 方法和其创建的任何 widget 进行的传递性节点数量。例如，不要使用复杂的 Rows、Columns、Paddings 和 SizedBox 来将单个子项以特别精致的方式定位，考虑只使用 Align 或 CustomSingleChildLayout。不要通过多个 Containers 和 Decorations 的复杂分层来绘制恰到好处的图形效果，可以考虑使用单个 CustomPaint 小部件。(一句话总结：尽量减少 widget 嵌套的层级。)
 2. 尽可能使用 const widget，并为该 widget 提供一个 const 构造函数，以便该 widget 的用户也可以这样做。（一句话总结：使用 const widget。这个是 Flutter framework 级别的优化，当使用 const widget 时，新旧 widget 是同一个（且不再执行 widget 的 build 过程），可以保证在 element 的 updateChild 时，child.widget == newWidget 相等，优化更新行为。达到直接复用 widget 的目的。）[Better Performance with const Widgets in Flutter](https://medium.com/@Ruben.Aster/better-performance-with-const-widgets-in-flutter-50d60d9fe482)
 
+&emsp;还有这篇，超级详细介绍了 const widget 相关内容，一定要阅读：[Unlocking Efficiency: When and Why to Use const with Constant Constructors in Flutter](https://www.dhiwise.com/post/why-flutter-prefer-const-with-constant-constructor)。
+
 &emsp;如下的示例代码，如果 EmbedChildWidget 添加 const 的话，那么在 ChildWidget build 的时候，EmbedChildWidget 不必进行重建，如果我们去掉 const 的话，每次 ChildWidget build 的时候，EmbedChildWidget 也会跟着执行 build，这就造成性能浪费了！
 
 ```dart
@@ -522,3 +524,5 @@ State<SomeWidget> createState() => _SomeWidgetState();
 + [Dart OOP: Method Overriding, Field Overriding, Super Keyword, Super Constructor, and Object Class (Dart OOP Part 5)](https://medium.com/@wafiqmuhaz/dart-oop-method-overriding-field-overriding-super-keyword-super-constructor-and-object-class-fab8bfbfc902)
 + [Dart Generics: Generic Classes, Generic Functions, and Bounded Type Parameters (Dart Generics Part 1)](https://medium.com/@wafiqmuhaz/dart-generics-generic-classes-generic-functions-and-bounded-type-parameters-dart-generics-part-a75099a193c5)
 + [annotate_overrides](https://dart.dev/tools/linter-rules/annotate_overrides)
++ [Unlocking Efficiency: When and Why to Use const with Constant Constructors in Flutter](https://www.dhiwise.com/post/why-flutter-prefer-const-with-constant-constructor)
++ [Why use const in Flutter Dart?](https://medium.com/@calvin.kamardi/why-use-const-in-flutter-dart-34f3496baaf9)
