@@ -10,7 +10,7 @@
 
 &emsp;Widgets 本身没有可变状态（所有字段必须是 final）。如果你想将可变状态与 widget 关联起来，则需要使用 StatefulWidget，它会在被 inflated 为 element 并被纳入树中时创建一个 State 对象（通过 StatefulWidget.createState）。
 
-&emsp;给定的 widget 可以零次或多次包含在树中。特别地，给定的 widget 可以多次放置在树中。每次将 widget 放置在树中时，它都会被填充为一个 Element，这意味着一个被多次放置在树中的 widget 会被多次填充。(这里需要理解 `Element createElement();` 函数。已知 Widget 和 Element 是一一对应的，然后假如我们有一个 const 的全局 Widget(非使用 `GlobalKey`)(如：`Text temp = const Text('123');`)，我们直接把它放在页面的多个地方，那么这个 temp Widget 在每处都会生成一个不同的 Element 实例，)
+&emsp;给定的 widget 可以零次或多次包含在树中。特别地，给定的 widget 可以多次放置在树中。每次将 widget 放置在树中时，它都会被填充为一个 Element，这意味着一个被多次放置在树中的 widget 会被多次填充。(这里需要理解 `Element createElement();` 函数。已知 Widget 和 Element 是一一对应的，然后假如我们有一个 const 的全局 Widget(非使用 `GlobalKey`)(如：`Text temp = const Text('123');`)，我们直接把它放在页面的多个地方，那么这个 temp Widget 在每处都会生成一个不同的 Element 实例。)
 
 &emsp;key 属性控制一个 widget 如何替换树中的另一个 widget。如果两个 widget 的 runtimeType 和 key 属性分别为 operator ==，则新 widget 通过更新底层 element（即通过调用 Element.update 与新 widget）来替换旧 widget。否则，旧 element 将从树中移除，新 widget 将被 inflated 为一个新 element，并将新 element 插入到树中。
 
@@ -177,7 +177,42 @@ analyzer:
 &emsp;有几种技巧可以用来减小重建 stateless widget 的影响：
 
 1. 尽量减少通过 build 方法和其创建的任何 widget 进行的传递性节点数量。例如，不要使用复杂的 Rows、Columns、Paddings 和 SizedBox 来将单个子项以特别精致的方式定位，考虑只使用 Align 或 CustomSingleChildLayout。不要通过多个 Containers 和 Decorations 的复杂分层来绘制恰到好处的图形效果，可以考虑使用单个 CustomPaint 小部件。(一句话总结：尽量减少 widget 嵌套的层级。)
-2. 尽可能使用 const widget，并为该 widget 提供一个 const 构造函数，以便该 widget 的用户也可以这样做。（一句话总结：使用 const 构造函数。）
+2. 尽可能使用 const widget，并为该 widget 提供一个 const 构造函数，以便该 widget 的用户也可以这样做。（一句话总结：使用 const widget。这个是 Flutter framework 级别的优化，当使用 const widget 时，新旧 widget 是同一个（且不再执行 widget 的 build 过程），可以保证在 element 的 updateChild 时，child.widget == newWidget 相等，优化更新行为。达到直接复用 widget 的目的。）[Better Performance with const Widgets in Flutter](https://medium.com/@Ruben.Aster/better-performance-with-const-widgets-in-flutter-50d60d9fe482)
+
+&emsp;如下的示例代码，如果 EmbedChildWidget 添加 const 的话，那么在 ChildWidget build 的时候，EmbedChildWidget 不必进行重建，如果我们去掉 const 的话，每次 ChildWidget build 的时候，EmbedChildWidget 也会跟着执行 build，这就造成性能浪费了！
+
+```dart
+class ChildWidget extends StatelessWidget {
+  const ChildWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final data = MyInheritedWidget.of(context).data;
+    debugPrint('ChildWidget build 执行！');
+
+    return Column(
+      children: [
+        Text('Data from InheritedWidget: $data'),
+        
+        // 注意此处添加了 const
+        const EmbedChildWidget(),
+      ],
+    );
+  }
+}
+
+class EmbedChildWidget extends StatelessWidget {
+  const EmbedChildWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('EmbedChildWidget build 执行！');
+
+    return const Text('123');
+  }
+}
+```
+
 3. 考虑将频繁重建的 stateless widget 重构为 stateful widget，这样它就可以使用 StatefulWidget 中描述的一些技术，比如缓存子树的常见部分以及在更改树结构时使用 GlobalKey。（一句话总结：使用 stateful widget 进行优化。）
 4. 如果由于使用 InheritedWidgets 而导致 widget 可能经常重建，考虑将 stateless widget 重构为多个 widget，其中会将发生变化的部分推送到叶子节点。例如：不要构建一个包含四个 widget 的树，内部 widget 依赖于 Theme，考虑将构建内部 widget 的 build 函数的部分提取到自己的 widget 中，这样只有内部 widget 在 Theme 更改时需要重建。（一句话总结：将依赖于 InheritedWidgets 导致需要重建的 widget 提取出来，封装为一个新 widget。）
 5. 当尝试创建可重用的 UI widget 时，最好使用 widget 而不是辅助函数。比如，如果使用一个辅助函数来构建一个 widget，当调用 State.setState 方法时，Flutter 需要重新构建返回的包裹小部件。但如果使用 Widget，Flutter 将能够有效地重新渲染只有那些真正需要更新的部分。更好的是，如果创建的 widget 是 const 类型，Flutter 将跳过大部分重建工作。（一句话总结：创建可重用的 UI 时，封装一个新 widget 使用，而不是直接使用一个辅助函数返回 widget，类似👆。）
@@ -302,7 +337,7 @@ abstract class StatelessWidget extends Widget {
 
 ## StatefulWidget
 
-&emsp;首先我们要先有一个思想大纲：不管我们用 widget 构建的 UI 界面再怎么变化，无状态的 widget：`StatelessWidget` 还是有状态的 widget：`StatefulWidget`，它们 wiget 本身都是不可变的，直接理解为这个 `widget` 实例对象是内存中一个 `const` 变量即可，然后每次 `build` 函数执行时，都会完全新建一个 `widget` 实例对象！当旧的 `widget` 实例对象不再有用时（UI 更新完毕后），那么旧的 `widget` 实例对象就可以被 GC 回收啦♻️！
+&emsp;首先我们要先有一个思想大纲：不管我们用 widget 构建的 UI 界面再怎么变化，无状态的 widget：`StatelessWidget` 还是有状态的 widget：`StatefulWidget`，它们 wiget 本身都是不可变的，直接理解为这个 `widget` 实例对象是内存中一个 `const` 变量即可，然后每次 `build` 函数执行时，都会完全新建一个 `widget` 实例对象（除去 flutter framework 优化的 const Widget，它们前后都是同一个 widget，执行 == 时，得到的是 true。）！当旧的 `widget` 实例对象不再有用时（UI 更新完毕后），那么旧的 `widget` 实例对象就可以被 GC 回收啦♻️！
 
 &emsp;`StatefulWidget` 是一个具有可变状态(State)的 widget。(对应于 `StatelessWidget` 是一个不需要可变状态的 widget。)
 
@@ -334,7 +369,7 @@ abstract class StatelessWidget extends Widget {
 
 3. 如果子树不更改，可以缓存表示该子树的 widget，并在每次可以重复使用时重复使用。为此，将一个 widget 分配给一个 final 状态变量，并在 build 方法中重复使用。widget 被重复使用要比创建一个新的（但配置完全相同）widget 效率更高。另一种缓存策略是将 widget 的可变部分提取为 StatefulWidget，该 StatefulWidget 接受一个 child 参数。（一句话总结：使用 final widget 实例变量。）
 
-4. 尽可能使用 const 小部件。（这相当于缓存小部件并重复使用它。）
+4. 尽可能使用 const widget。（这相当于缓存 widget 并重复使用它，Flutter framework 对 const widget 进行优化。）
 
 5. 避免更改创建的子树的深度或更改子树中任何 widget 的类型。例如，而不是返回 widget 或在 IgnorePointer 中包装 widget，应始终在 IgnorePointer 中包装 widget 并控制 `IgnorePointer.ignoring` 属性。这是因为更改子树的深度需要重新构建、布局和绘制整个子树，而仅更改属性将使 render tree 变化最小（例如，在 IgnorePointer 的情况下，根本不需要布局或重绘）。(一句话总结：尽量保证新旧 widget 调用 canUpdate 时返回 true。)
 
@@ -479,6 +514,7 @@ State<SomeWidget> createState() => _SomeWidgetState();
 **参考链接:🔗**
 + [widgets library - Widget class](https://api.flutter.dev/flutter/widgets/Widget-class.html)
 + [immutable top-level constant](https://api.flutter.dev/flutter/meta/immutable-constant.html)
++ [Better Performance with const Widgets in Flutter](https://medium.com/@Ruben.Aster/better-performance-with-const-widgets-in-flutter-50d60d9fe482)
 + [Immutable in Dart and Flutter: Understanding, Usage, and Best Practices](https://medium.com/@yetesfadev/immutable-in-dart-and-flutter-understanding-usage-and-best-practices-742be5fa25ea)
 + [Protected keyword in Dart](https://medium.com/@nijatnamazzade/protected-keyword-in-dart-b8b8ef024c89)
 + [How to Use Override Annotation and the super Keyword in Dart.](https://blog.devgenius.io/how-to-use-override-annotation-and-the-super-keyword-in-dart-9f9d9df326bb)
