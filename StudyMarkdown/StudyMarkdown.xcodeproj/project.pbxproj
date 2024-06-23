@@ -250,6 +250,7 @@
 		D2FC92A92C25BAE500EF34D0 /* ProxyWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProxyWidget.md; sourceTree = "<group>"; };
 		D2FC92AB2C26D35A00EF34D0 /* RenderObjectWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RenderObjectWidget.md; sourceTree = "<group>"; };
 		D2FC92AC2C271E2300EF34D0 /* Object.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Object.md; sourceTree = "<group>"; };
+		D2FC92AD2C28288200EF34D0 /* Key.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Key.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -908,6 +909,7 @@
 				D2FC92A92C25BAE500EF34D0 /* ProxyWidget.md */,
 				D2FC92AB2C26D35A00EF34D0 /* RenderObjectWidget.md */,
 				D2FC92AC2C271E2300EF34D0 /* Object.md */,
+				D2FC92AD2C28288200EF34D0 /* Key.md */,
 			);
 			path = "Flutter源码阅读";
 			sourceTree = "<group>";
