@@ -96,7 +96,9 @@ void testCost() {
 
 ## Object
 
-&emsp;下面开始看 Object class 的源码。首先是它的 const 构造函数，const Object() 用于创建一个新的 Object 实例，Object 实例没有有意义的状态，只能通过其标识符使用。对象实例只等于自身。
+&emsp;下面开始看 Object class 的源码。（Object class 来自：dart:core，它的函数被标记了 external，由外部定义。）。
+
+&emsp;首先是它的 const 构造函数，const Object() 用于创建一个新的 Object 实例，Object 实例没有有意义的状态，只能通过其标识符使用。对象实例只等于自身。
 
 ```dart
 // 通过使用 @pragma('vm:entry-point') ，我们指示编译器在编译期间保留此代码，以防止意外排除。
@@ -170,7 +172,7 @@ int foo;
 
 &emsp;等式操作符：所有 Object 的默认行为是当且仅当此 object 和另一个 object 是同一个对象时才返回 true。
 
-&emsp;重写此方法以在类上指定不同的等式关系。重写 operator == 后仍然必须是等价关系。也就是说，它必须是符合以下要求：
+&emsp;重写此方法可以为类指定不同的等式关系。重写 operator == 后仍然必须是等价关系。也就是说，它必须是符合以下要求：
 
 + Total：对于所有参数，它必须返回一个布尔值。不应抛出异常。
 + Reflexive：对于所有对象 o，o == o 必须为 true。
@@ -210,9 +212,9 @@ int foo;
 
 ### identityHashCode
 
-&emsp;identityHashCode 用于返回一个对象的标识哈希码。
+&emsp;identityHashCode 用于返回一个对象的标识哈希码。可以直白的理解为：返回对象的原始哈希码，使用 dart 给对象定下的原始取哈希码的方式，即使已经重写了对象所属类的 hashCode getter。
 
-&emsp;返回原始 Object.hashCode 在此对象上返回的值，即使 hashCode 已被重写。这个哈希码与相等性兼容，这意味着无论对于任何非 Record 对象，在单个程序执行期间，每次传递相同的参数时它都保证给出相同的结果。
+&emsp;返回原始 Object.hashCode 在此对象上返回的值，即使对象的 hashCode 方法已被重写。这个哈希码与相等性兼容，这意味着无论对于任何非 Record 对象，在单个程序执行期间，每次传递相同的参数时它都保证给出相同的结果。
 
 &emsp;Record class 的标识哈希码是未定义的，因为 Record 没有持久的标识。Record 的标识和标识哈希码可以随时发生变化。
 

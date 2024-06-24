@@ -251,6 +251,9 @@
 		D2FC92AB2C26D35A00EF34D0 /* RenderObjectWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RenderObjectWidget.md; sourceTree = "<group>"; };
 		D2FC92AC2C271E2300EF34D0 /* Object.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Object.md; sourceTree = "<group>"; };
 		D2FC92AD2C28288200EF34D0 /* Key.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Key.md; sourceTree = "<group>"; };
+		D2FC92AE2C295C9300EF34D0 /* GlobalKey.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GlobalKey.md; sourceTree = "<group>"; };
+		D2FC92AF2C29B90B00EF34D0 /* PageStorageKey.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PageStorageKey.md; sourceTree = "<group>"; };
+		D2FC92B02C29BD7600EF34D0 /* Element.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Element.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -910,6 +913,9 @@
 				D2FC92AB2C26D35A00EF34D0 /* RenderObjectWidget.md */,
 				D2FC92AC2C271E2300EF34D0 /* Object.md */,
 				D2FC92AD2C28288200EF34D0 /* Key.md */,
+				D2FC92AE2C295C9300EF34D0 /* GlobalKey.md */,
+				D2FC92AF2C29B90B00EF34D0 /* PageStorageKey.md */,
+				D2FC92B02C29BD7600EF34D0 /* Element.md */,
 			);
 			path = "Flutter源码阅读";
 			sourceTree = "<group>";
