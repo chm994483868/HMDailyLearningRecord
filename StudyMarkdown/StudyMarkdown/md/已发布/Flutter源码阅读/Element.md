@@ -1,5 +1,7 @@
 # Element
 
+> &emsp;基于：Flutter 3.22.2 • 2024-06-06 09:51 • 761747bfc5 • stable
+
 &emsp;下面开始学习整个 Flutter framework 最核心的一个类：Element。
 
 &emsp;Element 是树中特定位置的 Widget 的实例化。
@@ -20,7 +22,7 @@
 
 + 在某些情况下，祖先 element(ancestor element)可能会决定将当前 element（或者中间祖先 element）从树上移除，祖先 element 通过调用 deactivateChild 函数来实现这个操作。当中间祖先 element 被移除时，该 element 的 render object 就会从 render tree 中移除，并将当前 element 添加到 owner 的不活跃元素列表(inactive elements)中，这会导致 Flutter framework 调用当前 element 的 deactivate 方法。
 
-+ 在这种情况下，element 被认为是 "inactive"，不会出现在屏幕上。一个 element 只能保持在 inactive 状态直到当前动画帧结束。在动画帧结束时，任何仍然处于 inactive 状态的 element 将会被卸载。(即当前帧结束了，收集的那些处于非活动状态的 element 就可以被 GC 回收了，这个是对移除的 element 的优化复用机制，主导思想就是：如果 element 能复用就不进行新建。)  换句话说，如果一个 element 在当前帧没有在屏幕上展示出来，那么它将会被移除(unmounted)。
++ 在这种情况下，element 被认为是 "inactive"，不会出现在屏幕上。一个 element 只能保持在 inactive 状态直到当前动画帧结束。在动画帧结束时，任何仍然处于 inactive 状态的 element 将会被卸载。(即当前帧结束了，收集的那些依然处于非活动状态的 element 就可以被 GC 回收了，这个是对移除的 element 的优化复用机制，主导思想就是：如果 element 能复用就不进行新建。)  换句话说，如果一个 element 在当前帧没有在屏幕上展示出来，那么它将会被移除(unmounted)。
 
 + 如果一个 element 被重新加入到树中（例如，因为它或它的祖先之一使用的 global key 被重用了），Flutter framework 会从 owner 的非活动元素列表(list of inactive elements)中移除该 element，调用该 element 的 activate 函数，然后将该 element 的 render object 重新附加到 render tree 中。（在这一点上，该 element 再次被认为是 "active"，可能会出现在屏幕上。）
 
@@ -28,7 +30,65 @@
 
 + 在这种情况下，这个 element 被认为是 "defunct"，并且将来不会被加入到树中。换句话说，这个 element 已经被标记为不再需要，不会被使用到。
 
-&mesp;OK，下面我们开始看 Element 的源码，说到底还是看代码的话，条理比较清晰！
+&mesp;OK，下面我们开始看 Element 的源码，说到底还是看代码的话，条理比较清晰，但是在正式看 Element 之前，我们先通过一个简单的示例代码，并通过打断点，看下函数堆栈。
+
+&emsp;我们准备了一个极简单的页面，主要帮助我们梳理两个过程：
+
+```dart
+void main() {
+  runApp(const MyUpdateApp());
+}
+
+class MyUpdateApp extends StatelessWidget {
+  const MyUpdateApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+          appBar: AppBar(title: const Text('Element Study')),
+          body: const Center(child: OneWidget())),
+    );
+  }
+}
+
+class OneWidget extends StatefulWidget {
+  const OneWidget({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _OneWidgetState();
+}
+
+class _OneWidgetState extends State<OneWidget> {
+  void _click() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('_OneWidgetState build');
+
+    return ElevatedButton(onPressed: _click, child: const Text('Click me'));
+  }
+}
+```
+
+1. Widget 初次在页面上呈现的过程。
+2. 当调用 setState 后，Widget 的更新过程。
+
+&emsp;这两个过程中涉及的函数调用栈是我们的关注重点，它们会把 Element 的各个函数串联起来。
+
+&emsp;虽然我们的示例代码只是看一个 Widget 层级较少的页面，但其实复杂 Widget 层级的构建流程是一样的，只是复杂 Widget 页面有更多的完全一样的重复构建过程而已，但其实只要我们能看懂一层的构建流程即可，再多的 Widget 层级每层的构建流程也都是一样的。
+
+&emsp;当我们自己在 StatelessWidget 子类或者 State 子类重写的 build 函数意味着什么？首先从代码角度看 build 函数的话，它只是一个有着一个 BuildContext 参数和返回值 Widget 的普通函数，它实际跟我们自己写一个有参数和返回值 Widget 的函数没什么两样，那么每当 build 函数被调用的话，实际就会返回一个新的 Widget 对象了。
+
+&emsp;我们继续思考，如果 build 函数被调用了，那么返回了一个新 Widget 对象后要做什么用呢？以日常我们自己创建的 Widget 子类初次构建为例，它意味着当前父级 element 要构建它的子 element 了，build 函数返回的 Widget 就是为创建这个新子 element 准备的，Widget 对象调用自己的 createElement 函数，便会创建引用自己的 element 对象(Element 构造函数初始化列表便把 Widget 对象赋值给自己的 `_widget` 字段)。
+
+&emsp;那不妨再往前一点，Widget 对象是先于 Element 对象创建的，还记得 Widget 的抽象函数 Element createElement() 吗？是的，我们必是要先有了 Widget 对象才能调用它的 createElement 函数，创建一个 Element 对象出来。那再往前一点，APP 刚启动时呢？此时还没有任何 Element 呢，先有的第一个 Widget 对象是谁呢？第一个 Widget 对象必是我们传递给 runApp 函数的 const MyUpdateApp() 对象！
+
+
+
+
 
 ## element
 
@@ -378,8 +438,11 @@ enum _ElementLifecycle {
 
 &emsp;我们看到其中一种最省事的情况：新旧 Widget 相等时，widget 不进行任何操作（此 newWidget 的 build 也不会被执行），没有任何开销，仅有的一点是新旧 slot 不同的话，会更新下 element 的 slot。而这个最省事的情况就是对应了官方推荐的优化技巧：提取封装子 widget，声明 const 构造函数，使用时添加 const 修饰使用常量表达式。
 
-&emsp;
+&emsp;Element.updateChild -> StatefulElement.update -> Element.rebuild -> StatefulElement.performRebuild -> ComponentElement.performRebuild -> StatefulElement.build -> `_ThreeWidgetState.build`。
 
+1. BuildOwner.buildScope -> `BuildScope._flushDirtyElements` -> `BuildScope._tryRebuild` -> Element.rebuild -> StatefulElement.performRebuild(ComponentElement.performRebuild) -> StatefulElement.build -> `_OneWidgetState.build` -> 调完这个 build 就拿到返回到新 widget 啦，接下来就是调用 element 的：`_child = updateChild(_child, built, slot);` 啦，这个 build 返回的 widget 就是当前 element 的下一个节点的 widget，然后沿着 element 链顺序向下更新 element 节点。
+
+2. 所以到这里就要理解 StatelessWidget/State 的 build 函数返回的 widget 就是当前 element 节点的下个节点的 widget，即：`_child._widget` 就是这个 build 返回的 widget 了。
 
 
 
