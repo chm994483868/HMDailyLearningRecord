@@ -80,11 +80,75 @@ class _OneWidgetState extends State<OneWidget> {
 
 &emsp;虽然我们的示例代码只是看一个 Widget 层级较少的页面，但其实复杂 Widget 层级的构建流程是一样的，只是复杂 Widget 页面有更多的完全一样的重复构建过程而已，但其实只要我们能看懂一层的构建流程即可，再多的 Widget 层级每层的构建流程也都是一样的。
 
-&emsp;当我们自己在 StatelessWidget 子类或者 State 子类重写的 build 函数意味着什么？首先从代码角度看 build 函数的话，它只是一个有着一个 BuildContext 参数和返回值 Widget 的普通函数，它实际跟我们自己写一个有参数和返回值 Widget 的函数没什么两样，那么每当 build 函数被调用的话，实际就会返回一个新的 Widget 对象了。
+&emsp;下面我们自己先轻捋一下 Widget 对象和 Element 对象构建，以及 Element 对象被挂载，然后慢慢构建出 Element tree 的过程。
 
-&emsp;我们继续思考，如果 build 函数被调用了，那么返回了一个新 Widget 对象后要做什么用呢？以日常我们自己创建的 Widget 子类初次构建为例，它意味着当前父级 element 要构建它的子 element 了，build 函数返回的 Widget 就是为创建这个新子 element 准备的，Widget 对象调用自己的 createElement 函数，便会创建引用自己的 element 对象(Element 构造函数初始化列表便把 Widget 对象赋值给自己的 `_widget` 字段)。
+&emsp;首先，我们知道 Widget 子类需要实现 Widget 的抽象方法：`Element createElement();` 由此创建 Element 对象，从这可以看出：Widget 对象必要早于 Element 对象先创建，有了 Widget 对象，然后调用它的 createElement 方法便可创建 Element 对象。回顾之前的 Widget 系列学习过程中已知，不同的 Widget 子类也会分别创建不同的 Element 子类。
 
-&emsp;那不妨再往前一点，Widget 对象是先于 Element 对象创建的，还记得 Widget 的抽象函数 Element createElement() 吗？是的，我们必是要先有了 Widget 对象才能调用它的 createElement 函数，创建一个 Element 对象出来。那再往前一点，APP 刚启动时呢？此时还没有任何 Element 呢，先有的第一个 Widget 对象是谁呢？第一个 Widget 对象必是我们传递给 runApp 函数的 const MyUpdateApp() 对象！
++ StatelessWidget -> `StatelessElement createElement() => StatelessElement(this);`
++ StatefulWidget -> `StatefulElement createElement() => StatefulElement(this);`
++ `ParentDataWidget<T extends ParentData>` -> `ParentDataElement<T> createElement() => ParentDataElement<T>(this);`
++ InheritedWidget -> `InheritedElement createElement() => InheritedElement(this);`
+
++ LeafRenderObjectWidget -> `LeafRenderObjectElement createElement() => LeafRenderObjectElement(this);`
++ SingleChildRenderObjectWidget -> `SingleChildRenderObjectElement createElement() => SingleChildRenderObjectElement(this);`
++ MultiChildRenderObjectWidget -> `MultiChildRenderObjectElement createElement() => MultiChildRenderObjectElement(this);`
+
+&emsp;那么既然 Widget 对象必是先于 Element 对象（此 Widget 对象对应的 Element 对象）创建的，那我们必是要先有了 Widget 对象才能调用它的 createElement 函数，创建一个 Element 对象出来。那往前一点，APP 刚启动时，先有的第一个 Widget 对象是谁呢？如⬆️示例代码第一个 Widget 对象必是我们传递给 runApp 函数的 `const MyUpdateApp()` 对象！
+
+&emsp;首先虽然 RenderObjectWidget 子类和 ProxyWidget 子类有一些单向的 Widget 之间的父子关系，例如：ProxyWidget 有自己的子 widget：`final Widget child;`， SingleChildRenderObjectWidget 有自己的可 null 子 widget：`final Widget? child;`，MultiChildRenderObjectWidget 有自己的子 widget 列表：`final List<Widget> children;`，但是我们其实是并没有一棵完整的 Widget tree 的，因为如果上面的 `child` 字段指向的是：StatelessWidget 或者 StatefulWidget 子类的话，它们是没有 child 字段的，所以无法继续沿着 widget tree 继续向下延伸了。但是 Element 则不同，首先 Element 基类有一个 `Element? _parent;` 字段，可以直接指向当前这个 Element 的父 Element，然后其它 Element 子类如：ComponentElement、SingleChildRenderObjectElement 等都有自己的：`Element? _child;` 字段，即指向它们的子 Element，所以基于这样的数据结构，我们是有一棵完整的类似双向链表的 Element tree 的。
+
+&emsp;而这个 Element tree 呢，正是通过我们日常编码的那些 Widget tree 构建起来的。大部分情况下我们日常写的都是 StatelessWidget 和 StatefulWidget 子类，刚刚说到由于它们都没有 child 字段，所以无法构建一棵完整的 widget tree，不过它们都提供了一个 build 函数，用来返回继续向下的 widget，由此我们便得以继续向下构建 Element tree。
+
+&emsp;那么 build 函数被调用时返回 widget 对象的情况如下：
+
++ StatelessElement 的 build 函数调用时会直接调用它的 widget 字段的 build 函数，并以自己为参数（StatelessElement 对象即 BuildContext context）。
++ StatefulElement 的 build 函数调用时会直接调用它的 state 字段的 build 函数，同样也是以自己为参数（StatefulElement 对象即 BuildContext context）。
++ ProxyElement 的 build 函数被调用时则是直接返回自己 widget 的 child 字段。
+
+&emsp;那么这个 Element tree 是如何构建起来的呢？下面我们直接在 MyUpdateApp 的 build 函数处打一个断点，捋一捋它的函数调用堆栈，沿着调用链走下来，你会看到它们一直是在重复的调用相同的函数，直到 Element.updateChild 函数调用时 newWidget 参数为 null 了，updateChild 函数 return null，没有 element 节点要 mount 了，整个循环便结束了，即表示当前帧的 element tree 构建完成了。
+
+&emsp;如果从 App 启动看到 MyUpdateApp build 断点，调用堆栈过长，不利于我们理解，暂时我们先从开始构建 MyUpdateApp widget 对象对应的 Element 开始。
+
+&emsp;虽然我们传递给 runApp 的第一个 Widget 是 MyUpdateApp 对象，但是直到着手开始构建 MyUpdateApp 对象对应的 Element 节点，已经到了：`_depth = 13` 的位置，Flutter framework 在前面插了 13 层的 Element。
+
+&emsp;现在我们把函数堆栈定位到：
+
+1️⃣：ComponentElement.performRebuild：`ComponentElement.performRebuild(framework.dart:5642) this = {_InheritedNotifierElement}_FocusInheritedScope built = {MyUpdateApp}MyUpdateApp`  的位置，此时正是 `_FocusInheritedScope` element 将要执行重建的位置，这里说是重建，其实是 `_FocusInheritedScope` element 节点 mount 完成后，开始执行 `_firstBuild`，然后执行到这里的，它其实是 `_FocusInheritedScope` element 节点 mount 完成后，开始对其下的 Widget 对象进行构建。`_FocusInheritedScope` 是一个 InheritedElement 的子类，而它的 widget 的 child 正是我们的 MyUpdateApp 变量。所以，当 `_FocusInheritedScope` 执行它的 `build` 函数，返回的正是我们的 MyUpdateApp widget 对象，并把它赋值给了 `built` 变量。OK，继续往下个栈帧：Element.updateChild ⬇️
+
+2️⃣：Element.updateChild: `_child = updateChild(_child, built, slot);` 的调用，此时 `_FocusInheritedScope` 的 `_child` 为 null，built 是我们的 MyUpdateApp 变量，`_child = updateChild(_child, built, slot);` 调用要做的正是把 MyUpdateApp 变量构建的 element 对象赋值给 `_FocusInheritedScope` 的 `_child`。进入 Element.updateChild 函数内部，updateChild 是一个综合函数，它会根据它的三个参数：`Element? child, Widget? newWidget, Object? newSlot` 值的情况决定本次调用执行何种操作，包括：更新 Element/失活 Element/新建 Element，而我们这次调用根据入参 `Element? child` 为 null，便直接定位到了：`newChild = inflateWidget(newWidget, newSlot)` 即新建 Element。大名鼎鼎的 inflateWidget 函数。OK，我们继续进入下个栈帧：Element.inflateWidget ⬇️
+
+3️⃣：Element.inflateWidget：大名鼎鼎的 inflateWidget 函数，最重要的功能就是把入参 newWidget 对象膨胀为一个新 element，这里我们进入它函数内部细观察它的实现，它其实做了三个极重要的事件：1. 判断传来的 widget 对象是否有 GlobalKey，如果有的话并能取到对应的 element 的话，则把这个 element 挂载到当前 element 节点下，然后使用入参 newWidget 更新 element。2. 直接调用入参 `final Element newChild = newWidget.createElement();`，创建一个新 Element，即我们前面说了好久的，拿 Widget 对象创建 Element 对象，且会直接把 Widget 对象赋值给 Element 对象的 `_widget` 字段（即所有的 Element 对象都会直接持有创建它的 Widget 对象）。3. 执行这个新 element 的挂载：`newChild.mount(this, newSlot);`。我们点击 Element.inflateWidget 栈帧时便直接定位到了：`newChild.mount(this, newSlot);`，newChild 便是使用我们的 MyUpdateApp widget 对象刚创建的 StatelessElement 对象。OK，我们继续进入下个栈帧：ComponentElement.mount ⬇️
+
+4️⃣：ComponentElement.mount：`newChild.mount(this, newSlot);` 函数的调用，newChild 是新创建的 MyUpdateApp widget 对象对应的 element 对象，入参是我们的 `_FocusInheritedScope` element，现在便是要把这新 element 对象挂载到它的父级 element 下了。ComponentElement.mount 内首先是调用父类的 mount 函数，即 Element.mount，内部做了不少事情，如：首先把当前 element 对象的 `_parent` 字段指向它的父级 Element，更新自己的 `_slot`，是的，没错，所有的 Element 的 `_slot` 都是直接由父级传递下来的。然后更新 `_lifecycleState` 为 active，表示当前 Element 节点处于活动状态啦，然后是 `_depth` 深度信息是用父深度加 1，下面还会进行 `_owner` 和 `_parentBuildScope` 的赋值。再接下来便是一个较重要的操作：如果这个 element 的 widget 有 GlobalKey 的话，会把 global key 和 element 对象作为键值对直接保存在全局 map 中。然后还有两个传递父级的 `_inheritedElements` 和 `_notificationTree` 字段直接赋值给子级 element。此时，新建的 Element 就挂载完成到父级 Element 下了，然后就要开始这个子级 Element 下面的新的子级的构建了。那么这里就要呼应到 1️⃣ 中提到的：`_FocusInheritedScope` element 节点 mount 完成后，开始执行 `_firstBuild` 了。而这里不同的是 `_FocusInheritedScope` 是系统自动构建的，我们看起来不清晰。而这次不同了，要执行 `_firstBuild` 的是我们的 MyUpdateApp widget 对应的 StatelessElement 了，这里也更好可以看一下：StatelessElement 的 build 和上面 `_FocusInheritedScope` InheritedElement(ProxyElement) 的 build 的不同。OK，我们继续进入下个栈帧：ComponentElement._firstBuild ⬇️
+
+5️⃣：ComponentElement._firstBuild：
+
+
+
+
+
+
+
+
+
+
+&emsp;那么什么情况下：updateChild 函数调用时 newWidget 参数为 null 呢？SingleChildRenderObjectElement 的 widget 的 child 字段为 null 时。（(widget as SingleChildRenderObjectWidget).child 为 null。）
+
+&emsp;在整个调用堆栈中一直重复的有这些函数：
+
++ Element? Element.updateChild(Element? child, Widget? newWidget, Object? newSlot)、
++ Element Element.inflateWidget(Widget newWidget, Object? newSlot)、
++ void ComponentElement.mount(Element? parent, Object? newSlot)、
++ `void StatefulElement._firstBuild()`、
++ `void ComponentElement._firstBuild()`、
++ void Element.rebuild({bool force = false})、
++ void StatefulElement.performRebuild()、
++ void ComponentElement.performRebuild()、
+
+&emsp;
+
+
+
 
 
 
