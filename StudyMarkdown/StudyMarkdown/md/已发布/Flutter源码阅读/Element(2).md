@@ -47,7 +47,9 @@ void mount(
     }
     
     // 传递全局的 PersistentHashMap<Type, InheritedElement>? _inheritedElements，
-    // 从 element tree 的根节点开始，所有的 InheritedElement 对象都会以它们的类型为 key 保存在 _inheritedElements 中
+    // 从 element tree 的根节点开始，所有的 InheritedElement 对象都会以它们的类型为 key 保存在 _inheritedElements 中，
+    // InheritedElement 重写了此函数，如果是 InheritedElement 对象调用 _updateInheritance 的话，是把自己添加到 _parent?._inheritedElements 中并赋值给自己，
+    // 如果是其它类型的 Element 对象的话，则只是把 _parent?._inheritedElements 赋值给自己。
     _updateInheritance();
     
     // 传递全局的 _notificationTree
@@ -391,7 +393,9 @@ Element inflateWidget(
     _hadUnsatisfiedDependencies = false;
     
     // 把父节点的 _inheritedElements 赋值给自己的。（原来如果是 element 对象自己调用 deactivate 的话，是不会把自己的 _parent 置为 null 的）
-    // 当然如果是 element 对象调用自己的 deactivateChild 函数是指定的自己的子级失活的话，会把子级的 _parent 置为 null
+    // 当然如果是 element 对象调用自己的 deactivateChild 函数是指定的自己的子级失活的话，会把子级的 _parent 置为 null。
+    // InheritedElement 重写了此函数，如果是 InheritedElement 对象调用 _updateInheritance 的话，是把自己添加到 _parent?._inheritedElements 中并赋值给自己，
+    // 如果是其它类型的 Element 对象的话，则只是把 _parent?._inheritedElements 赋值给自己。
     _updateInheritance();
     
     // 把父节点的 _notificationTree 赋值给自己的。
@@ -708,7 +712,11 @@ Element inflateWidget(
   }
 ```
 
-&emsp;还有下面这个，在整个 element tree 中，每个 element 节点都引用：`_inheritedElements`。
+## `_updateInheritance`
+
+&emsp;在 Element.mount 和 Element.activate 中都会调用此函数。
+
+&emsp;在整个 element tree 中，每个 element 节点都引用同一个：`_inheritedElements`。同时还有一个特别重要的点：InheritedElement 重写了此函数，如果是 InheritedElement 对象调用 `_updateInheritance` 的话，是把自己添加到 `_parent?._inheritedElements` 中并赋值给自己，如果是其它类型的 Element 对象的话，则只是把 `_parent?._inheritedElements` 赋值给自己。
 
 ```dart
   void _updateInheritance() {
@@ -999,7 +1007,7 @@ Element inflateWidget(
 
 ## performRebuild
 
-&emsp;在适当的检查之后，使 widget 更新自身。在 rebuild 被调用后调用。基本实现只是清除了 dirty 标志。不同的 Element 子类都对其进行了重写。
+&emsp;在适当的检查之后，使 widget 更新自身。在 rebuild 被调用后调用。Element 基本实现只是清除了 dirty 标志。不同的 Element 子类都对其进行了重写。
 
 ```dart
   @protected

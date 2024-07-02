@@ -259,7 +259,7 @@
 		D2FC92B32C315D2900EF34D0 /* Element(2).md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Element(2).md"; sourceTree = "<group>"; };
 		D2FC92B42C3278C900EF34D0 /* InheritedModel.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = InheritedModel.md; sourceTree = "<group>"; };
 		D2FC92B52C3279A900EF34D0 /* BuildOwner.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BuildOwner.md; sourceTree = "<group>"; };
-		D2FC92B62C3279BE00EF34D0 /* BuildScope.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BuildScope.md; sourceTree = "<group>"; };
+		D2FC92B62C3279BE00EF34D0 /* Flutter 源码梳理系列（九）：BuildScope.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（九）：BuildScope.md"; sourceTree = "<group>"; };
 		D2FC92B72C327D2A00EF34D0 /* NotificationListener.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NotificationListener.md; sourceTree = "<group>"; };
 		D2FC92B82C32A3D800EF34D0 /* AnimatedBuilder.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AnimatedBuilder.md; sourceTree = "<group>"; };
 		D2FC92B92C32BFD700EF34D0 /* Flutter 源码梳理系列（八）：State<T extends StatefulWidget> class.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（八）：State<T extends StatefulWidget> class.md"; sourceTree = "<group>"; };
@@ -925,10 +925,10 @@
 				D2FC92A92C25BAE500EF34D0 /* Flutter 源码梳理系列（六）：ProxyWidget、InheritedWidget、ParentDataWidget.md */,
 				D2FC92AB2C26D35A00EF34D0 /* Flutter 源码梳理系列（七）：RenderObjectWidget.md */,
 				D2FC92B92C32BFD700EF34D0 /* Flutter 源码梳理系列（八）：State<T extends StatefulWidget> class.md */,
+				D2FC92B62C3279BE00EF34D0 /* Flutter 源码梳理系列（九）：BuildScope.md */,
 				D2FC92AF2C29B90B00EF34D0 /* PageStorageKey.md */,
 				D2FC92B42C3278C900EF34D0 /* InheritedModel.md */,
 				D2FC92B52C3279A900EF34D0 /* BuildOwner.md */,
-				D2FC92B62C3279BE00EF34D0 /* BuildScope.md */,
 				D2FC92B72C327D2A00EF34D0 /* NotificationListener.md */,
 				D2FC92B82C32A3D800EF34D0 /* AnimatedBuilder.md */,
 				D2FC92B22C2FBE7000EF34D0 /* Element前言.md */,

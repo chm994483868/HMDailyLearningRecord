@@ -131,7 +131,7 @@ const bool kFlutterMemoryAllocationsEnabled = _kMemoryAllocations || kDebugMode;
 
 ## buildScope
 
-&emsp;当这个 Element 已经被 mounted 时，通常访问这个 getter 才是安全的。默认实现会返回父 Element 的 buildScope，因为在大多数情况下，一个 Element 一旦其祖先不再是脏的就可以准备重建。一个值得注意的例外是 LayoutBuilder 的子孙节点，在接收到约束之前不应该进行重建。LayoutBuilder 的 Element 重写了 buildScope 以确保其所有子孙节点在接收到约束之前都不会进行重建。如果你选择重写这个 getter 来建立自己的 BuildScope，需要在适当的时候手动调用 BuildOwner.buildScope，并传入你的 BuildScope 的根 Element，因为 Flutter framework 不会尝试注册或管理自定义的 BuildScope。如果你重写这个 getter，请始终返回相同的 BuildScope 实例。不支持在运行时更改此 getter 返回的值。updateChild 方法忽略 buildScope：如果父 Element 在一个具有不同 BuildScope 的子 Element 上调用 updateChild]，子 Element 可能仍然会重建。
+&emsp;当这个 Element 已经被 mounted 时，通常访问这个 getter 才是安全的。默认实现会返回父 Element 的 buildScope，因为在大多数情况下，一个 Element 一旦其祖先不再是脏的就可以准备重建。一个值得注意的例外是 LayoutBuilder 的子孙节点，在接收到约束之前不应该进行重建。LayoutBuilder 的 Element 重写了 buildScope 以确保其所有子孙节点在接收到约束之前都不会进行重建。如果你选择重写这个 getter 来建立自己的 BuildScope，需要在适当的时候手动调用 BuildOwner.buildScope，并传入你的 BuildScope 的根 Element，因为 Flutter framework 不会尝试注册或管理自定义的 BuildScope。如果你重写这个 getter，请始终返回相同的 BuildScope 实例。不支持在运行时更改此 getter 返回的值。updateChild 方法忽略 buildScope：如果父 Element 在一个具有不同 BuildScope 的子 Element 上调用 updateChild，子 Element 可能仍然会重建。
 
 &emsp;有点晕，后面再来看。
 
