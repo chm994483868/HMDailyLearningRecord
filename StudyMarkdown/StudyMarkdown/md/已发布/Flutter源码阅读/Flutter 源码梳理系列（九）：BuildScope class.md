@@ -1,4 +1,4 @@
-# Flutter 源码梳理系列（九）：BuildScope
+# Flutter 源码梳理系列（九）：BuildScope class
 
 &emsp;在接下来的内容之前呢，我们先来看一下 BuildScope 和 BuildOwner 的内容，为我们学习 Element 而铺路。但其实客观来讲，感觉还是先去学 Element 的内容，把整个 Element Tree 相关的内容搞懂了，再回过头来补充这些细节。
 
@@ -35,7 +35,7 @@
 
 # RootElementMixin
 
-&emsp;RootElementMixin 是 Element tree 根节点的 Mixin。只有 root elements 可以显式设置其 owner。所有其他 element 都从其 parent element 继承其 owner。RootElementMixin 直接混入了 Element 类，然后它添加了一个很重要的 assignOwner 函数。
+&emsp;RootElementMixin 是为 Element Tree 根节点 RootElement 类添加 Mixin。主要是为 RootElement 类添加一个 assignOwner 函数。注意只有 root element 可以显式设置其 owner 属性。所有其他 element 对象都从其 parent element 继承其 owner。RootElementMixin 直接混入了 Element 类，然后它添加了一个很重要的 assignOwner，在 Element 根节点创建完成就会立即调用此 assignOwner 函数为自己设置 `_owner`。
 
 ```dart
 mixin RootElementMixin on Element { //... }
@@ -324,9 +324,20 @@ final class BuildScope {
 
 ## BuildScope 总结
 
-&emsp;
+&emsp;BuildScope class 全部内容围绕着 `final List<Element> _dirtyElements = <Element>[]` -- 脏 element 对象列表展开。替 BuildOwner 收集脏 element、重建脏 element，内容还是比较清晰的，内容如其名，管理着 Element 的重建范围。
 
+&emsp;BuildScope 内容看完了，这是我们自上一个 Element tree 上所有 element 节点共享的 `_inheritedElements` 之后的，又一个所有 element 节点共享的：`_parentBuildScope._dirtyElements`。它们都是沿着 element 链一层一层往下传递的，既然如此直接把它们定义为一个全局对象，任意地点都可以直接访问不好吗？为什么还要这么麻烦，一级一级的传递，你能立即回答出这个问题的答案吗？
 
++ `_inheritedElements`：Element tree 是从根 Element，一层一层构建的，某层想要找某个类型的 InheritedElement 时，只需要 O(1) 的时间就可以找到了（当然全局变量可以做到），这样一层一层的传递可以防止同类型的 InheritedElement 被覆盖。那如果整个 Element tree 上没有同类型的 InheritedElement 的话，是否就可以用全局变量代替，不需要在每个 element 节点传递了呢？
+
++ `_parentBuildScope._dirtyElements`：当 BuildOwner.buildScope 调用时，读取入参 element 的 buildScope（`_parentBuildScope`），然后刷新这个 buildScope 的 `_dirtyElements` 脏 element 列表。如果所有 element 节点共用一个 `_parentBuildScope`，即共用一个脏 element 列表，那每次脏 element 列表刷新的话，就是大家都全部一起，而无法更细粒度的控制 build scope 的范围。当某个 Element 想要单独控制自己的脏 element 列表刷新的话，就可以重写自己的 buildScope（`_parentBuildScope`），那如果用全局变量的话，还要建立某个 Element 节点与某个全局变量的关系，那将会是更麻烦的实现。那如果所有 Element 节点的脏 element 列表都用一个的话，是不是就不需要在每个 element 节点传递 buildScope 了呢？
+
+&emsp;然后就是当脏 element 列表中的 element 节点开始重建时的排序问题了，并且在每次 for 循环中都要注意前一个 element 节点的重建过程中又有新的 element 节点加入脏列表了，就需要重新排序，排序规则如下：
+
+1. depth 值小的 element 排在前面（即那些父级 element 排在子级 element 前面去）
+2. depth 相等时，dirty 的排在前面。 
+
+&emsp;然后要时刻谨记，每一个 Element 节点的重建就是当前这个 Element 节点的子树的重建。
 
 ## 参考链接
 **参考链接:🔗**
