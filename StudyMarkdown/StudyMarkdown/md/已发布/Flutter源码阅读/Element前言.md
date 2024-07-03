@@ -2,33 +2,35 @@
 
 &emsp;下面开始学习整个 Flutter framework 最核心的一个类：Element。
 
-&emsp;Element 可以看作树中特定位置的 Widget 的实例化。
+&emsp;Element 可以看作 Widget Tree 中特定位置的 Widget 的实例化。
 
-&emsp;Widget 描述如何配置子树，但同一个 widget 对象可以同时用于配置多个子树（注意是子树，不是 Element 子节点），因为 widget 对象是不可变的。一个 element 对象代表了在树中的特定位置配置 widget 的使用。随着时间的推移，与给定 element 对象相关联的 widget 对象可能会发生变化，例如，如果父 widget 重建并为此位置创建了一个新的 widget 对象。
+&emsp;Widget 描述如何配置 Element 子树（一个 Widget 对象可以代表一颗 Element 子树，一个 Element 节点也可以代表一颗 Element 子树），但同一个 widget 对象可以同时用于配置多个 Element 子树，因为 widget 对象是不可变的。一个 element 节点代表了在 Widget Tree 中的特定位置配置 widget 的使用。随着时间的推移，与给定 element 对象相关联的 widget 对象可能会发生变化，例如，如果父 widget 重建并为此位置创建了一个新的 widget 对象。
 
-&emsp;Element 组成一棵树。大多数 element 对象都有一个唯一的 child，但是一些 widget（例如 RenderObjectElement 的子类）可以有多个 child（children，如：Row、Column 等）。
+&emsp;Element 节点组成一棵 Element Tree。大多数 element 对象都有一个唯一的 child，但是一些 element（如 MultiChildRenderObjectElement 的子类）可以有多个 child（children，如：Row、Column 等）。
 
 &emsp;Element 的生命周期如下：
 
 + Flutter framework 通过调用 Widget.createElement 在将作为 element 对象初始配置的 widget 对象上来创建一个 element 对象。 (createElement 仅有的一次调用是在 Element 的 inflateWidget 中由 newWidget 调用：**final Element newChild = newWidget.createElement();**)
 
-+ Flutter framework 框架调用 mount 方法，将新创建的 element 对象添加到树中的给定父级的给定 slot 中。mount 方法负责 inflate 任何子 widget，并根据需要调用 attachRenderObject 方法将任何关联的 render object 附加到 render object tree 中。(当上面的 newWidget.createElement() 调用完成返回创建的 Element newChild 对象，然后就会直接调用：**newChild.mount(this, newSlot);**，上面说的给定父级的给定的 slot，就是指调用 mount 函数传的两个参数 parent 和 newSlot：**void mount(Element? parent, Object? newSlot)**。而后半句根据需要调用 attachRenderObject 就是指的：RenderObjectElement 的 attachRenderObject 方法，在 RenderObjectElement 的 mount 中，它会直接调用：**void attachRenderObject(Object? newSlot)** 方法把 renderObject 附加到 render object tree 上去。)
++ Flutter framework 框架调用 mount 方法，将新创建的 element 对象添加到树中的给定父级的给定 slot 中。mount 方法负责 inflate 任何子 widget，并根据需要调用 attachRenderObject 方法将任何关联的 render object 附加到 render object tree 中。(当上面的 newWidget.createElement() 调用完成返回创建的 Element newChild 对象，然后就会直接调用：**newChild.mount(this, newSlot);**，上面说的给定父级的给定的 slot，就是指调用 mount 函数传的两个参数 parent 和 newSlot：**void mount(Element? parent, Object? newSlot)**。而后半句根据需要调用 attachRenderObject 就是指的：RenderObjectElement 的 attachRenderObject 方法，在 RenderObjectElement 的 mount 中，它会直接调用：**void attachRenderObject(Object? newSlot)** 方法把 renderObject 附加到 RenderObject Tree 上去。)
 
-+ 在这种情况下，该 element 被视为 "active"，可能会出现在屏幕上。（可以理解为：RenderObjectElement 可以绘制在屏幕上，而 StatefulElement/StatelessElement 则主要用来阻止饿 Widget UI）
++ 在这种情况下，该 element 被视为 "active"，可能会出现在屏幕上。（可以理解为：RenderObjectElement 可以绘制在屏幕上，而 StatefulElement/StatelessElement 则主要用来组织 Widget UI）
 
 + 在某些情况下，父级 widget 可能会决定更改用于配置此 element 的 widget，例如因为父级 widget 使用新 state 重建了。当发生这种情况时，Flutter framework 将使用新 widget 调用 update 函数。新 widget 将始终具有与旧 widget 相同的 runtimeType 和 key。如果父级 widget 希望在树中的此位置更改 widget 的 runtimeType 或 key，可以通过卸载此 element 并在此位置 inflate new widget 来实现。(update 函数是 Element 的一个函数，而且它由一个 @mustCallSuper 注解，字面意思的就是所有的 element 子类重写 update 函数时，必须要调用 super.update(newWidget)，这个 update 函数，几乎所有的 Element 子类都重写了，基本实现内容就是拿这个传来的 new widget 执行重建（子树），调用整个 Element 最重要的：**Element? updateChild(Element? child, Widget? newWidget, Object? newSlot)** 函数，根据入参内部会进行：新建 Element/更新 Element/移除 Element)
 
-+ 在某些情况下，祖先 element(ancestor element)可能会决定将当前 element（或者中间祖先 element）从树上移除，祖先 element 通过调用 deactivateChild 函数来实现这个操作。当中间祖先 element 被移除时，该 element 的 render object 就会从 render tree 中移除，并将当前 element 添加到 owner 的不活跃元素列表(inactive elements)中，这会导致 Flutter framework 调用当前 element 的 deactivate 方法。
++ 在某些情况下，祖先 element(ancestor element)可能会决定将当前 element（或者中间祖先 element）从树上移除，祖先 element 通过调用 deactivateChild 函数来实现这个操作。当中间祖先 element 被移除时，该 element 的 RenderObject 就会从 RenderObject Tree 中移除，并将当前 element 添加到 owner 的非活动元素列表中，这会导致 Flutter framework 调用当前 element 的 deactivate 方法。
 
-+ 在这种情况下，element 被认为是 "inactive"，不会出现在屏幕上。一个 element 只能保持在 inactive 状态直到当前动画帧结束。在动画帧结束时，任何仍然处于 inactive 状态的 element 将会被卸载。(即当前帧结束了，收集的那些依然处于非活动状态的 element 对象就可以被 GC 回收了，这个是对移除的 element 的优化复用机制，主导思想就是：如果 element 能复用就不进行新建)  换句话说，如果一个 element 在当前帧没有在屏幕上展示出来，那么它将会被移除(unmounted)。
++ 在这种情况下，element 被认为是 "inactive"，不会出现在屏幕上。一个 element 只能保持在非活动状态直到当前帧结束，在当前帧结束时，任何仍然处于非活动状态的 element 对象将会被卸载。(即当前帧结束了，收集的那些依然处于非活动状态的 element 对象就可以被 unmount，这个是对移除的 element 的优化复用机制，主导思想就是：如果 element 能复用就不进行新建)  换句话说，如果一个 element 在当前帧没有在屏幕上展示出来，那么它将会被移除(unmounted)。
 
-+ 如果一个 element 被重新加入到树中（例如，因为它或它的祖先之一使用的 global key 被重用了），Flutter framework 会从 owner 的非活动元素列表(list of inactive elements)中移除该 element，调用该 element 的 activate 函数，然后将该 element 的 render object 重新附加到 render tree 中。（在这一点上，该 element 再次被认为是 "active"，可能会出现在屏幕上。）
++ 如果一个 element 被重新加入到树中（例如，因为它或它的祖先之一使用的 global key 被重用了），Flutter framework 会从 owner 的非活动元素列表中移除该 element，调用该 element 的 activate 函数，然后将该 element 的 RenderObject 重新附加到 RenderObject Tree 中。（在这一点上，该 element 再次被认为是 "active"，可能会出现在屏幕上。）
 
-+ 如果一个 element 在当前动画帧结束时没有重新加入到树中，那么 Flutter framework 会调用该 element 的 unmount 方法。
++ 如果一个 element 在当前帧结束时没有重新加入到树中，那么 Flutter framework 会调用该 element 的 unmount 方法。
 
 + 在这种情况下，这个 element 被认为是 "defunct"，并且将来不会被加入到树中。换句话说，这个 element 已经被标记为不再需要，不会被使用到。
 
-&mesp;OK，下面我们开始看 Element 的源码，说到底还是看代码的话，条理比较清晰，并且能从代码实现上证明上面提到的所有概念。但是在正式看 Element 之前，我们先通过一个简单的示例代码，并通过打断点，看下函数堆栈。（贸然去看 Element 代码的话，真的会很容易被里面的相互调用的函数以及父类子类同一函数的穿插调用搞懵。）
+&mesp;OK，下面我们开始看 Element 的源码，说到底还是看代码的话，条理比较清晰，最主要能从代码实现上证明上面提到的所有概念，以及上面不懂的概念，可以通过代码去看懂它们。
+
+&emsp;不过在正式看 Element 之前，我们还是先通过一个简单的示例代码，并通过打断点，看函数堆栈的情况去分析 Element 相关函数的执行流程。（贸然去看 Element 代码的话，真的会很容易被里面的相互调用的函数以及父类子类同一函数的穿插调用搞懵。）
 
 &emsp;我们准备了一个极简单的页面，主要帮助我们梳理两个过程：
 
@@ -71,16 +73,16 @@ class _OneWidgetState extends State<OneWidget> {
 }
 ```
 
-1. Widget 初次在页面上呈现的过程。
-2. 当调用 setState 后，Widget 的更新过程。
+1. Widget 对象创建到 Inflate 为 Element 对象并挂载在 Element Tree 上的过程。
+2. Element.markNeedsBuild 调用 Element 对象被标记为脏后，下一帧它如何进行重建。
 
 &emsp;这两个过程中涉及的函数调用栈是我们的关注重点，它们会把 Element 的各个函数串联起来。
 
 &emsp;虽然我们的示例代码只是看一个 Widget 层级较少的页面，但其实复杂 Widget 层级的构建流程是一样的，只是复杂 Widget 页面有更多的完全一样的重复构建过程而已，但其实只要我们能看懂一层的构建流程即可，再多的 Widget 层级每层的构建流程也都是一样的。
 
-&emsp;下面我们自己先轻捋一下 widget 对象和 element 对象构建，以及 element 对象被挂载，然后慢慢构建出 Element tree 的过程。
+&emsp;下面我们自己先轻捋一下 widget 对象和 element 对象构建，以及 Element 对象被挂载，然后慢慢构建出 Element tree 的过程。
 
-&emsp;首先，我们知道 Widget 子类需要实现 Widget 的抽象方法：Element createElement() 由此创建 Element 对象，从这可以看出：Widget 对象必要早于 Element 对象创建，有了 widget 对象，然后调用它的 createElement 方法便可创建一个 wlement 对象。回顾之前的 Widget 系列学习过程中已知，不同的 Widget 子类也会分别创建不同的 Element 子类。
+&emsp;首先，我们知道 Widget 子类需要实现 Widget 的抽象方法：Element createElement() 由此创建 Element 对象，从这可以看出：Widget 对象必要早于 Element 对象创建，有了 widget 对象，然后调用它的 createElement 方法便可创建一个 element 对象。回顾之前的 Widget 系列学习过程中已知，不同的 Widget 子类也会分别创建不同的 Element 子类。
 
 + StatelessWidget -> `StatelessElement createElement() => StatelessElement(this);`
 + StatefulWidget -> `StatefulElement createElement() => StatefulElement(this);`
@@ -91,9 +93,11 @@ class _OneWidgetState extends State<OneWidget> {
 + SingleChildRenderObjectWidget -> `SingleChildRenderObjectElement createElement() => SingleChildRenderObjectElement(this);`
 + MultiChildRenderObjectWidget -> `MultiChildRenderObjectElement createElement() => MultiChildRenderObjectElement(this);`
 
-&emsp;那么既然 widget 对象必是先于 element 对象（此 widget 对象对应的 element 对象）创建的，那我们必是要先有了 widget 对象才能调用它的 createElement 函数，创建一个 element 对象出来。那往前一点，APP 刚启动时，先有的第一个 Widget 对象是谁呢？如 ⬆️ 示例代码第一个 Widget 对象必是我们传递给 runApp 函数的 `const MyUpdateAppWidget()`！
+&emsp;那么既然 widget 对象必是先于 element 对象（此 widget 对象对应的 element 对象）创建的，那我们必是要先有了 widget 对象才能调用它的 createElement 函数，创建一个 element 对象出来。那往前一点，APP 刚启动时，先有的第一个 Widget 对象是谁呢？如 ⬆️ 示例代码第一个 Widget 对象是我们传递给 runApp 函数的 `const MyUpdateAppWidget()`！
 
-&emsp;首先虽然 RenderObjectWidget 子类和 ProxyWidget 子类有一些单向的 Widget 之间的父子关系，例如：ProxyWidget 有自己的子 widget：`final Widget child`， SingleChildRenderObjectWidget 也有自己的可 null 子 widget：`final Widget? child`，MultiChildRenderObjectWidget 有自己的子 widget 列表：`final List<Widget> children`，但是我们其实是并没有一棵完整的 Widget tree 的，因为如果上面的 `child` 字段指向的是：StatelessWidget 或者 StatefulWidget 子类的话，它们是没有 child 字段的，所以在代码层面我们无法继续沿着 widget 节点继续向下延伸构建 widget tree 了。
+&emsp;关于 Widget Tree:
+
+&emsp;虽然 RenderObjectWidget 子类和 ProxyWidget 子类有一些单向的 Widget 之间的父子关系，例如：ProxyWidget 有自己的子 widget：`final Widget child`， SingleChildRenderObjectWidget 也有自己的可 null 子 widget：`final Widget? child`，MultiChildRenderObjectWidget 有自己的子 widget 列表：`final List<Widget> children`，但是我们其实是并没有一棵完整的 Widget tree 的，因为如果上面的 `child` 字段指向的是：StatelessWidget 或者 StatefulWidget 子类的话，它们是没有 child 字段的，所以在代码层面我们是无法继续沿着 widget 节点继续向下延伸构建 widget tree 的。
 
 &emsp;但是 Element 则不同，首先 Element 基类有一个 `Element? _parent` 字段，可以直接指向当前这个 Element 的父 Element，然后其它 Element 子类如：ComponentElement、SingleChildRenderObjectElement 等都有自己的：`Element? _child` 字段，即指向它们的子 Element，所以基于这样的数据结构，我们是有一棵完整的类似双向链表的 Element tree 的。（由于每个 element 对象都会引用创建自己的 widget 对象，所以实际上其实沿着 Element tree，我们也是能构建出 widget tree 的呢，毕竟 element 对象和 widget 对象是一一对应的！）
 
@@ -109,7 +113,9 @@ class _OneWidgetState extends State<OneWidget> {
 
 &emsp;那么这个 Element tree 是如何构建起来的呢？下面我们直接在 MyUpdateAppWidget 的 build 函数处打一个断点，捋一捋它的函数调用堆栈，沿着调用链走下来，你会看到它们一直是在重复的调用相同的函数，直到 Element.updateChild 函数调用时 newWidget 参数为 null 了，updateChild 函数会 return null，即没有 Widget 对象要 inflate 了，整个循环便会结束，即表示当前帧的 element tree 构建完成了。（那么什么情况下：updateChild 函数调用时 newWidget 参数为 null 呢？SingleChildRenderObjectElement 的 widget 的 child 字段为 null 时。`(widget as SingleChildRenderObjectWidget).child` 为 null。）
 
-&emsp;虽然我们传递给 runApp 的第一个 Widget 对象是 MyUpdateAppWidget，但是直到 Flutter framework 开始着手构建 MyUpdateAppWidget 对象对应的 Element 节点时，已经到了：`_depth = 13` 的位置，Flutter framework 在前面已经插了 13 层的 Element，如果从 App 启动看到 MyUpdateAppWidget build 断点，调用堆栈过长，不利于我们理解，暂时我们就从要开始构建 MyUpdateAppWidget 对象对应的 Element 节点处开始看，首先我们先直接找到它的父级 Element 节点：`{_InheritedNotifierElement}_FocusInheritedScope` 节点，它是 InheritedElement 的子类，它的 `widget` 是 InheritedWidget 的子类，而此 `widget` 字段的 `child` 正是我们的 MyUpdateAppWidget 对象。
+&emsp;虽然我们传递给 runApp 的第一个 Widget 对象是 MyUpdateAppWidget，但是直到 Flutter framework 开始着手构建以 MyUpdateAppWidget 对象对应的 Element 节点为根的 Element 子树时，已经到了：`_depth = 13` 的位置，Flutter framework 在前面已经插了 13 层的 Element。
+
+&emsp;如果从 App 启动看到 MyUpdateAppWidget build 断点，调用堆栈过长，不利于我们理解，暂时我们就从要开始构建 MyUpdateAppWidget 对象对应的 Element 节点处开始看，首先我们先直接找到它的父级 Element 节点：`{_InheritedNotifierElement}_FocusInheritedScope` 节点，它是 InheritedElement 的子类，它的 `widget` 是 InheritedWidget 的子类，而此 `widget` 字段的 `child` 正是我们传给 runApp 的 MyUpdateAppWidget 对象。
 
 &emsp;下面我们把函数堆栈定位到：ComponentElement.performRebuild 处：
 
