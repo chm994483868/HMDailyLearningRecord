@@ -56,7 +56,7 @@ class BuildOwner {
 
 1. `_unmount`：递归调用指定 element 对象以及其所有 child 的 unmount 函数，即对 element 以及整个子树的 element 对象调用 unmount 方法，即不能被再次激活复用的 Element 对象只能等待被 GC 回收♻️。
 
-2. `_unmountAll`：则是对排序后的所有非活动 Element 对象执行 unmount。（当前帧内，当脏 element 列表刷新重建完毕后，还位于非活动列表的 element 对象，被通过 BuildOwner.finalizeTree 调用此 `_inactiveElements._unmountAll` 函数，卸载非活动 element 对象。）
+2. `_unmountAll`：则是对排序后的所有非活动 Element 对象执行 unmount，不过这里的排序可以注意一下，它的排序规则和脏 element 列表重建时的排序刚好相反，它是先把 depth 大的子级 element 节点 unmount，然后再 unmount depth 小的父级 element 节点。（当前帧内，当脏 element 列表刷新重建完毕后，还位于非活动列表的 element 对象，被通过 BuildOwner.finalizeTree 调用此 `_inactiveElements._unmountAll` 函数，卸载非活动 element 对象。）
 
 3. `_deactivateRecursively`：递归调用指定 element 对象以及其所有 child 的 deactivate 函数。即对 element 以及整个子树的 element 对象调用 deactivate 方法，是整个 element 子树失活。
 
@@ -175,7 +175,7 @@ class BuildOwner {
 
 &emsp;把一对 GlobalKey 和 Element 保存在 `_globalKeyRegistry` 中。
 
-&emsp;在 Element.mount 函数中，如果 element 对象对应的 Widget 有 GlobalKey，则通过 `owner!._registerGlobalKey(key, this)` 把它们添加到 `_globalKeyRegistry` 中。
+&emsp;⭐️在 Element.mount 函数中，如果 element 对象对应的 Widget 有 GlobalKey，则通过 `owner!._registerGlobalKey(key, this)` 把它们添加到 `_globalKeyRegistry` 中。
 
 ```dart
   void _registerGlobalKey(GlobalKey key, Element element) {
@@ -187,7 +187,7 @@ class BuildOwner {
 
 &emsp;把一对 GlobalKey 和 Element 从 `_globalKeyRegistry` 中移除。
 
-&emsp;在 Element.unmount 函数中，当 element 对象要卸载了，如果 element 对象对应的 Widget 有 GlobalKey，则通过 `owner!._unregisterGlobalKey(key, this)` 把它们从 `_globalKeyRegistry` 中移除。 
+&emsp;⭐️在 Element.unmount 函数中，当 element 对象要卸载了，如果 element 对象对应的 Widget 有 GlobalKey，则通过 `owner!._unregisterGlobalKey(key, this)` 把它们从 `_globalKeyRegistry` 中移除。 
 
 ```dart
   void _unregisterGlobalKey(GlobalKey key, Element element) {
