@@ -221,7 +221,8 @@ class IndexedSlot<T extends Element?> {
             oldKeyedChildren[oldChild.widget.key!] = oldChild;
             
           } else {
-            // 无 key 的 Element 对象用不到饿，可以进行失活了
+            // 无 key 的 Element 对象用不到饿，可以进行失活了，
+            // 把 oldChild 为根节点的整个子树从 Element Tree 上卸载下来。
             deactivateChild(oldChild);
           }
         }
@@ -325,7 +326,8 @@ class IndexedSlot<T extends Element?> {
       for (final Element oldChild in oldKeyedChildren.values) {
         if (forgottenChildren == null || !forgottenChildren.contains(oldChild)) {
           
-          // 对这些指定的旧 Element 对象进行失活
+          // 对这些指定的旧 Element 对象进行失活，
+          // 把 oldChild 为根节点的整个子树从 Element Tree 上卸载下来。
           deactivateChild(oldChild);
         }
       }

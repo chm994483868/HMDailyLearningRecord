@@ -1,6 +1,6 @@
 # Flutter 源码梳理系列（十三）：Element：constructor -> updateChild
 
-&emsp;看 Element 抽象类的声明，直接继承自 DiagnosticableTree 没啥特别的的，然后便是最重要的：Element 需要实现 BuildContext 抽象类中所有的抽象方法。而这个 BuildContext 就是我们在 StatelessWidget 的 build 和 State 的 build 函数中见了无数次的：BuildContext context 参数，其实 BuildContext 只是定了很多 getter 和抽象方法的一个抽象类，最终实现呢，全部落在了需要实现它的 Element 类身上，而实际在 Widget/State 的 build 函数中传递来的 context 参数便是它们对应的 Element 对象。
+&emsp;看 Element 抽象类的声明，直接继承自 DiagnosticableTree 没啥特别的，然后便是最重要的：Element 需要实现 BuildContext 抽象类中所有的抽象方法。而这个 BuildContext 就是我们在 StatelessWidget 的 build 和 State 的 build 函数中见了无数次的：BuildContext context 参数，其实 BuildContext 只是定了很多 getter 和抽象方法的一个抽象类，最终实现呢，全部落在了需要实现它的 Element 类身上，而实际在 Widget/State 的 build 函数中传递来的 context 参数便是它们对应的 Element 对象。
 
 &emsp;BuildContext 类中定义了较多 getter 和抽象函数，我们先不去看，暂时还先看 Element 类，毕竟 Element 会实现 BuildContext 抽象类的所有要求。
 
@@ -308,6 +308,7 @@ enum _ElementLifecycle {
         // 1️⃣1️⃣：child 不为 null，但是 widget 已经无了，所以也需要把这旧 element 失活了并等待内存回收♻️。
     
         // deactivateChild 函数所有的 Element 子类仅用 Element 类的这个，所有子类都没有重写它。
+        // deactivateChild 的功能就是把以入参为根的 Element 子树整个从 Element Tree 上卸载下来。
         
         // deactivateChild 把这个指定的 Element child 对象失活，主要做了三件事：
         // 1. 把 child 的 _parent 置为 null。⚠️（重要的点）
@@ -333,6 +334,7 @@ enum _ElementLifecycle {
         // 但是会断开 child 对其 parent 的引用，并把它加入到当前 BuildOwner 下全局的失活 Element 列表中，
         // 其它的话则是从 RenderObject Tree 上分离下所有 RenderObject，
         // 以及解开对 InheritedElement 的依赖。
+        // 把以 child 为根节点的 Element 子树从 Element Tree 中卸载下来。
         deactivateChild(child);
       }
       
@@ -390,6 +392,7 @@ enum _ElementLifecycle {
       } else {
         // 2️⃣3️⃣：针对 child 不能用 newWidget 进行更新的情况，只能新建 element （element 子树）了，
         // 要先把旧的 element 给它失活了。 
+        // 把以 child 为根节点的整个 Element 子树从 Element Tree 上卸载下来。
         deactivateChild(child);
         
         // 使用 newWidget 和 newSlot 开始构建 child 原有父级 element 下的完整的 element 子树，

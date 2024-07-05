@@ -20,7 +20,7 @@
 
 + 在某些情况下，父级 widget 可能会决定更改用于配置此 element 的 widget，例如因为父级 widget 使用新 state 重建了。当发生这种情况时，Flutter framework 将使用新 widget 调用 update 函数。新 widget 将始终具有与旧 widget 相同的 runtimeType 和 key。如果父级 widget 希望在树中的此位置更改 widget 的 runtimeType 或 key，可以通过卸载此 element 并在此位置 inflate new widget 来实现。(update 函数是 Element 的一个函数，而且它由一个 @mustCallSuper 注解，字面意思的就是所有的 element 子类重写 update 函数时，必须要调用 super.update(newWidget)，这个 update 函数，几乎所有的 Element 子类都重写了，基本实现内容就是拿这个传来的 new widget 执行重建（子树），调用整个 Element 最重要的：**Element? updateChild(Element? child, Widget? newWidget, Object? newSlot)** 函数，根据入参内部会进行：新建 Element/更新 Element/移除 Element)
 
-+ 在某些情况下，祖先 element(ancestor element)可能会决定将当前 element（或者中间祖先 element）从树上移除，祖先 element 通过调用 deactivateChild 函数来实现这个操作。当中间祖先 element 被移除时，该 element 的 RenderObject 就会从 RenderObject Tree 中移除，并将当前 element 添加到 owner 的非活动元素列表中，这会导致 Flutter framework 调用当前 element 的 deactivate 方法。
++ 在某些情况下，祖先 element(ancestor element)可能会决定将当前 element（或者中间祖先 element）从树上移除，祖先 element 通过调用 deactivateChild 函数来实现这个操作（deactivateChild 函数的功能：把以入参为根节点的 Element 子树整个的从 Element Tree 上给卸载下来。）。当中间祖先 element 被移除时，该 element 的 RenderObject 就会从 RenderObject Tree 中移除，并将当前 element 添加到 owner 的非活动元素列表中，这会导致 Flutter framework 调用当前 element 的 deactivate 方法。
 
 + 在这种情况下，element 被认为是 "inactive"，不会出现在屏幕上。一个 element 只能保持在非活动状态直到当前帧结束，在当前帧结束时，任何仍然处于非活动状态的 element 对象将会被卸载。(即当前帧结束了，收集的那些依然处于非活动状态的 element 对象就可以被 unmount，这个是对移除的 element 的优化复用机制，主导思想就是：如果 element 能复用就不进行新建)  换句话说，如果一个 element 在当前帧没有在屏幕上展示出来，那么它将会被移除(unmounted)。
 
