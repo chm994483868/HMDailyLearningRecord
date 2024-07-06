@@ -83,7 +83,7 @@
   }
 ```
 
-## `_inheritedElements`
+# `_inheritedElements`
 
 &emsp;记录从 Element Tree 根节点到当前 Element 节点的所有 InheritedElement 对象，起一个收集的作用，然后 Element Tree 上每个节点都会引用这个 PersistentHashMap，这样就方便了 InheritedElement 节点的子级找自己想要依赖的上级 InheritedElement 对象。
 
@@ -95,7 +95,7 @@
   PersistentHashMap<Type, InheritedElement>? _inheritedElements;
 ```
 
-## `_dependencies`
+# `_dependencies`
 
 &emsp;记录下当前 Element 对象依赖了哪些 InheritedElement 对象（它们都是自己的父父级 element 节点），当它依赖的 InheritedElement 更新重建时所有依赖此 InheritedElement 对象的 Element 对象都会进行标记重建。
 
@@ -103,7 +103,7 @@
   Set<InheritedElement>? _dependencies;
 ```
 
-## `_hadUnsatisfied`
+# `_hadUnsatisfied`
 
 &emsp;记录当前 Element 对象尝试找指定类型的 InheritedElement 时没有找到（有不满意的依赖关系）。
 
@@ -113,7 +113,7 @@
 
 &emsp;下面是一组跟 InheritedWidget/InheritedElement 相关的函数，如果搞清楚了它们，你就搞清楚了，InheritedWidget 的依赖更新机制。
 
-## doesDependOnInheritedElement
+# doesDependOnInheritedElement
 
 &emsp;如果之前使用入参 ancestor 调用过 dependOnInheritedElement 函数的话，会返回 true。（判断入参 ancestor 是否在自己的 `_dependencies` 集合中，自己依赖过哪些 InheritedElement 对象都会被记录在自己的 `_dependencies` 集合中。）
 
@@ -125,7 +125,7 @@
       _dependencies != null && _dependencies!.contains(ancestor);
 ```
 
-## dependOnInheritedElement
+# dependOnInheritedElement
 
 &emsp;将此 Element 节点（构建上下文，之所以被称为 构建上下文，是因为在 Widget 那一层，开发者自己手写的代码层，Element 是以 BuildContext context 的形式传过来的，其实它就是 widget 对象对应的 element 对象）注册到祖先（祖先指自己的父父级 element 节点，因为 InheritedElement 是沿着 Element Tree 往上查找到的）中，以便当祖先的 Widget 更改时，将重新构建此 Element 节点。
 
@@ -159,7 +159,7 @@
   }
 ```
 
-## dependOnInheritedWidgetOfExactType
+# dependOnInheritedWidgetOfExactType
 
 &emsp;dependOnInheritedWidgetOfExactType 函数我们应该挺熟悉的，在我们自定义 InheritedWidget 子类时，重写它的 of 函数时，内部必要用这个函数。下面看一下它的文档：
 
@@ -202,7 +202,7 @@
   }
 ```
 
-## getInheritedWidgetOfExactType
+# getInheritedWidgetOfExactType
 
 &emsp;对 getElementForInheritedWidgetOfExactType 的简单封装。
 
@@ -223,28 +223,26 @@
   }
 ```
 
-## getElementForInheritedWidgetOfExactType
+# getElementForInheritedWidgetOfExactType
 
-&emsp;看代码仿佛是只做了 dependOnInheritedWidgetOfExactType 函数一半的事情，从 `_inheritedElements` 读取一下数据就返回了，不包括任何依赖关系注册。
+&emsp;看代码仿佛是只做了 dependOnInheritedWidgetOfExactType 函数一半的事情，从 `_inheritedElements` 读取一下数据就返回了，不包括任何在依赖者和被依赖者中存储依赖关系。
 
-&emsp;返回与给定的 InheritedWidget 子类 T 的最近的 widget 相对应的 element 对象，该类型必须是一个具体的 InheritedWidget 子类。如果找不到这样的 element，则返回 null。
+&emsp;返回与给定的 InheritedWidget 子类 T 的最近的 widget 相对应的 element 对象，该类型必须是一个具体的 InheritedWidget 子类。如果找不到这样的 element，则返回 null。调用此方法的时间复杂度为 O(1)，且有一个很小的常量因子。（在 Element Tree 一层一层的构建过程中，已经把所有的 InheritedElement 存储在全局 inheritedElements 中了。）
 
-&emsp;调用此方法的时间复杂度为 O(1)，且有一个很小的常量因子。
-
-&emsp;这个方法不会像 dependOnInheritedWidgetOfExactType 一样在目标上建立依赖关系。
+&emsp;这个方法不会像 dependOnInheritedWidgetOfExactType 一样在依赖者和被依赖者上建立依赖关系。
 
 &emsp;这个方法不应该从 State.dispose 中调用，因为此时 Element Tree 已不稳定。要从这个方法引用祖先，需要在 State.didChangeDependencies 中调用 dependOnInheritedWidgetOfExactType 来保存对祖先的引用。可以在 State.deactivate 中使用这个方法，因为每当 Widget 从树中移除时会调用 State.deactivate。
 
 ```dart
   @override
   InheritedElement? getElementForInheritedWidgetOfExactType<T extends InheritedWidget>() {
-    assert(_debugCheckStateIsActiveForAncestorLookup());
     final InheritedElement? ancestor = _inheritedElements == null ? null : _inheritedElements![T];
+    
     return ancestor;
   }
 ```
 
-## attachNotificationTree
+# attachNotificationTree
 
 &emsp;在 Element.mount 和 Element.activate 中被调用，将当前 Element 对象注册到 Notification Tree 中。
 
@@ -252,7 +250,7 @@
 
 &emsp;另请参见：NotificationListener，一个允许监听通知的小部件。后续我们进入深入研究。（前面已经全面解析过 NotificationListener 的工作原理，可以翻回去看看。）
 
-&emsp;目前看只是简单的像其它字段一样，直接把父级的 `_notificationTree` 字段赋值给自己，当遇到 NotifiableElementMixin 节点时，会构建一个新的 Notification Tree 节点。
+&emsp;非 NotifiableElementMixin 节点时，直接把父级的 `_notificationTree` 字段赋值给自己，当遇到 NotifiableElementMixin 节点时，会以自己和父级构建一个新的 Notification Tree 节点。
 
 ```dart
   @protected
@@ -261,7 +259,7 @@
   }
 ```
 
-## `_updateInheritance`
+# `_updateInheritance`
 
 &emsp;在 Element.mount 和 Element.activate 中都会调用此函数。
 
@@ -274,15 +272,17 @@
   }
 ```
 
-&emsp;OK，下面是一组跟 "Ancestor" 相关的函数，首先我们可以先对 Ancestor 词有一个心理建设，它代表的意思其实很简单：就是当前 element 节点的上级，我们可以沿着 `_parent` 往链表上级走，也就是沿着 element 的双向链表往上走，往上的那些节点，便可以被称为 "祖先"。
+&emsp;OK，下面是一组跟 "Ancestor" 相关的函数，首先我们可以先对 Ancestor 词有一个心理建设，它代表的意思其实很简单：就是当前 element 节点的父级或父父级，我们可以沿着 `_parent` 往链表上级走，也就是沿着 element 的双向链表往上走，往上的那些节点，便可以被称为 "祖先"。
 
-&emsp;然后下面一组函数便是找祖先：找指定类型的 Widget、找指定类型的 State、找根 State、找指定类型的 RenderObject。
-
-## findAncestorWidgetOfExactType
+&emsp;然后下面一组函数便是找祖先：找指定类型的 Widget、找指定类型的 State、找根 State、找指定类型的 RenderObject。经历了前面 `_inheritedElements`、`_notificationTree` 的结构，虽然介绍它们时会说它们是向上沿着 Element 链查找的，但其实它们的结构都是精心设计过的，时间复杂度都很低，`_inheritedElements` 更是降到了 O(1)，而 `_notificationTree` 也是整个链上有几个 NotifiableElementMixin，时间复杂度就是 O(几)。而下面的一组查祖先的函数，则不是了哦，它们就是真的沿着 parent Element 链往上查的，最差的时间复杂度是：O(n)。 
+ 
+# findAncestorWidgetOfExactType
 
 &emsp;返回给定类型 T 的最近的祖先 Widget，该类型必须是一个具体的 Widget 子类的类型。代码也超级简单，沿着自己的 `_parent` 往上查找即可。
 
-&emsp;一般来说，dependOnInheritedWidgetOfExactType 更有用，因为 InheritedWidget 在更改时会触发依赖者重建。当用于交互事件处理程序（例如手势回调）或执行一次性任务（例如断言你是否具有特定类型的 widget 作为祖先）时，此方法是合适的。Widget 的 build 方法的返回值不应该依赖于此方法返回的值，因为如果此方法的返回值发生更改，那么构建上下文(Build Context)将不会重新构建。这可能导致 build 方法中使用的数据发生更改，但 widget 却没有重新构建(rebuild)。
+&emsp;一般来说，dependOnInheritedWidgetOfExactType 更有用，因为 InheritedWidget 在更改时会触发依赖者的重建。当用于交互事件处理程序（例如手势回调）或执行一次性任务（例如断言你是否具有特定类型的 widget 作为祖先）时，此方法是合适的。
+
+&emsp;Widget 的 build 方法的返回值不应该依赖于此方法返回的值，因为如果此方法的返回值发生更改，那么构建上下文(BuildContext context)将不会重新构建。这可能导致 build 方法中使用的数据发生更改，但 widget 却没有重新构建(rebuild)。
 
 &emsp;调用此方法比较昂贵（树深度为 O(N)）。只有在从此 Widget 到所需祖先之间的距离已知为较小且有界时才调用此方法。(毕竟它是沿着 element 链往上一个一个查的，复杂页面的 element 的 depth 都是很大的。)
 
@@ -295,7 +295,8 @@
   T? findAncestorWidgetOfExactType<T extends Widget>() {
     Element? ancestor = _parent;
     
-    // 如果 runtimeType 类型不匹配，则沿着 _parent 链继续往上找即可
+    // 如果 runtimeType 类型不匹配，则沿着 _parent 链继续往上找，
+    // 直到找到 ancestor 为 null 或 ancestor.widget.runtimeType == T 为止。
     while (ancestor != null && ancestor.widget.runtimeType != T) {
       ancestor = ancestor._parent;
     }
@@ -304,11 +305,11 @@
   }
 ```
 
-## findAncestorStateOfType
+# findAncestorStateOfType
 
-&emsp;返回给定类型为 T 实例的最近祖先 StatefulWidget widget 的 State 对象。
+&emsp;同上，但是这一次是查找指定类型的 State。返回给定类型为 T 实例的最近祖先 StatefulWidget 的 State 对象。
 
-&emsp;不应该在 build 方法中使用该方法，因为如果此方法返回的值发生更改，则构建上下文不会重新构建。通常情况下，对于这种情况，更适合使用 dependOnInheritedWidgetOfExactType。该方法对于以一次性方式更改祖先 widget 的状态很有用，例如，使祖先滚动列表滚动到此构建上下文的 widget 中，或者响应用户交互移动焦点。
+&emsp;不应该在 build 方法中使用该方法，因为如果此方法返回的值发生更改，则构建上下文(BuildContext context)不会重新构建。通常情况下，对于这种情况，更适合使用 dependOnInheritedWidgetOfExactType。该方法对于以一次性方式更改祖先 widget 的状态很有用，例如，使祖先滚动列表滚动到此构建上下文的 widget 中，或者响应用户交互移动焦点。
 
 &emsp;一般来说，考虑使用触发祖先中状态更改的回调，而不是使用本方法隐含的命令式风格。这通常会导致更易维护和可重用的代码，因为它将 widget 解耦。
 
@@ -332,17 +333,18 @@
     
     // 找到对应的 StatefulElement 节点了，返回它的 state 字段即可
     final StatefulElement? statefulAncestor = ancestor as StatefulElement?;
+    
     return statefulAncestor?.state as T?;
   }
 ```
 
-## findRootAncestorStateOfType
+# findRootAncestorStateOfType
 
-&emsp;返回在给定类型 T 的实例中，是 StatefulWidget widget 的最远祖先的 State 对象。
+&emsp;返回在给定类型 T 的实例中，是 StatefulWidget 的最远祖先的 State 对象。
 
 &emsp;与 findAncestorStateOfType 的功能相同，但会继续访问后续祖先，直到没有剩余类型为 T 实例的元素。然后返回找到的最后一个。
 
-&emsp;该操作的时间复杂度也是 O(N)，N 是整个 widget 树，而不是子树。
+&emsp;该操作的时间复杂度也是 O(N)，N 是整个 widget 树，而不是子树。它会一直遍历到当前 Element 的根节点才会结束。
 
 ```dart
   @override
@@ -359,6 +361,7 @@
         statefulAncestor = ancestor;
       }
       
+      // 更新上一层继续
       ancestor = ancestor._parent;
     }
     
@@ -366,7 +369,7 @@
   }
 ```
 
-## findAncestorRenderObjectOfType
+# findAncestorRenderObjectOfType
 
 &emsp;返回给定类型 T 的最近祖先 RenderObjectWidget widget 的 RenderObject 对象。
 
@@ -396,7 +399,7 @@
   }
 ```
 
-## visitAncestorElements
+# visitAncestorElements
 
 &emsp;从此构建上下文的 widget 的父级开始逐级遍历祖先，对每个祖先调用参数。
 
@@ -406,7 +409,7 @@
 
 &emsp;调用此方法相对较昂贵（在树的深度为 N 时为 O(N)）。
 
-&emsp;不应该在 State.deactivate 或 State.dispose 中调用此方法，因为在那时 element tree 已不再稳定。要在这些方法中引用祖先，可以通过在 State.didChangeDependencies 中调用 visitAncestorElements 保存对祖先的引用。
+&emsp;不应该在 State.deactivate 或 State.dispose 中调用此方法，因为在那时 Element Tree 已不再稳定。要在这些方法中引用祖先，可以通过在 State.didChangeDependencies 中调用 visitAncestorElements 保存对祖先的引用。
 
 ```dart
   typedef ConditionalElementVisitor = bool Function(Element element);
@@ -422,11 +425,17 @@
   }
 ```
 
-## didChangeDependencies
+&emsp;OK，上面一组跟 Ancestor 相关的函数就看完了，都很简单，就是沿着 parent 指针进行遍历。主要是在真实场景中使用它们时，注意时机，过早和过晚都不要。
 
-&emsp;当此 element 对象的一个依赖项（即此 element 对象依赖的 InheritedElement）发生变化时调用。
+&emsp;下面的 didChangeDependencies 函数则是重点，直接会告诉我们 InheritedElement 是如何让依赖者重建的，下面我们一起看一下。
+
+# didChangeDependencies
+
+&emsp;当此 Element 对象的一个依赖项（即此 element 对象依赖的 InheritedElement）发生变化时调用。
 
 &emsp;dependOnInheritedWidgetOfExactType 将此 element 对象注册为依赖于给定类型的 InheritedElement 对象。当树中的此位置的该类型信息发生变化时（例如，因为 InheritedElement 更新为新的 InheritedWidget 且 InheritedWidget.updateShouldNotify 返回 true），framework 会调用此函数来通知此 element 对象发生变化。
+
+&emsp;此函数最重要的调用位置在 InheritedElement 中，它会遍历所有依赖自己的依赖者的 didChangeDependencies 函数，告诉依赖者们依赖发生变化了，你们看着办吧！
 
 &emsp;实现内容也很简单，把当前 element 对象标记为重建即可。
 
@@ -437,11 +446,11 @@
   }
 ```
 
-## dirty
+# dirty
 
 &emsp;如果 element 对象已被标记为需要重建，则 dirty getter 返回 true。
 
-&emsp;当 element 对象首次创建以及在调用 markNeedsBuild 后，该标志为 true。该标志在 performRebuild 实现中被重置为 false。
+&emsp;当 element 对象首次创建以及在调用 markNeedsBuild 后，会把此标识设置为 true，该标识在 performRebuild 实现中会再被设置为 false，因为 performRebuild 表示就要真的进行重建了，所以此 Element 对象不再是脏的了。
 
 &emsp;注意在 element 对象首次创建后此 dirty 标识也会置为 true。当 element 对象调用 performRebuild 函数开始执行重建时会把此标识置为 false。
 
@@ -450,11 +459,11 @@
   bool _dirty = true;
 ```
 
-&emsp;OK，下面还有三个超重要的函数：markNeedsBuild、rebuild、performRebuild 三个超重要的函数，看完以后 Element 类就可以完结了，继续加油！
+&emsp;OK，下面还有三个超重要的函数：markNeedsBuild、rebuild、performRebuild 三个超重要的函数，根据它们函数的实际内容也可以理解为：标记重建 -> 发起重建 -> 执行重建，看完它们以后 Element 类就可以完结了，继续加油！
 
-## markNeedsBuild
+# markNeedsBuild
 
-&emsp;将该 element 对象标记为脏元素，并将其添加到下一帧中需要重建的全局 Widget 列表中。
+&emsp;将该 Element 对象标记为脏元素，并将其添加到下一帧中集体都会进行重建的 Widget 列表中。
 
 &emsp;由于在同一帧中两次构建一个 element 对象是低效的，因此应用程序和 Widget 应该被设计成只在帧开始之前的事件处理程序中标记 Widget 为脏状态，而不是在构建过程中标记。
 
@@ -470,26 +479,33 @@
     
     _dirty = true;
     
-    // 把当前 element 对象添加到全局的：final List<Element> _dirtyElements = <Element>[]; 脏元素列表中，等待下一帧一起重建
+    // 把当前 element 对象添加到全局的：final List<Element> _dirtyElements = <Element>[] 脏元素列表中，等待下一帧所有脏 Element 一起重建，
+    // 之前学习 BuildOwner 时有详细讲解过整个过程，可以翻回去看看。
     owner!.scheduleBuildFor(this);
   }
 ```
 
-## rebuild
+# rebuild
 
-&emsp;简单概括 rebuild 的话，进行一些判断然后实际调用 performRebuild 进行重建，并且 Element 的一众子类都没有重写这个 rebuild 函数，所以实际那些 element 对象还是都会调用到这里。
+```dart
+  void rebuild({bool force = false}) { // ... }
+```
 
-&emsp;rebuild 调用会使 widget 进行更新。在调试构建中，还会验证各种不变性。
+&emsp;简单概括 rebuild：先进行一些判断然后实际调用 performRebuild 进行重建工作，并且 Element 的一众子类都没有重写这个 rebuild 函数，所以那些 element 子类对象都会调用到这里。
 
-+ 当 BuildOwner.scheduleBuildFor 被调用标记此 element 对象为脏时，由 BuildOwner 调用此方法；
-+ 在第一次构建元素时由 mount 调用；
-+ 当小部件发生更改时由 update 调用；
+&emsp;官方对 rebuild 函数进行了详细注释，下面一起看一下：
 
-&emsp;该方法仅在 dirty 为 true 时进行重建。若要无论 dirty 标志如何都重新构建，请将 force 设置为 true。在 update 过程中，dirty 为 false 时强制重新构建会很方便。
+&emsp;rebuild 调用会使 widget 进行重建。在开发模式下中，还会验证各种不变性，生产环境的话其实内部仅有一行：performRebuild() 调用。下面是 rebuild 函数被调用的一些场景：
 
-### When rebuilds happen
++ 当 BuildOwner.scheduleBuildFor 被调用标记此 element 对象为脏时，在下一帧会由 BuildOwner 调用此方法；
++ 在 Element 初被创建出来时由 mount 调用；
++ 当 Widget 需要进行更新时由 update 调用；
 
-#### Terminology
+&emsp;Element 对象仅在 dirty 为 true 时才会进行重建。若要无论 dirty 标志如何都进行重建，请将入参 force 设置为 true。此 force 参数很有用，例如在 Element 的 widget update 过程中，此时 element 对象的 dirty 标识是 false，此时直接通过 rebuild(force: true) 调用强制进行重建会比较方便。
+
+## When rebuilds happen
+
+### Terminology
 
 &emsp;Widget 代表 Element 的配置。每个 Element 都有一个 Widget，存储在 Element.widget 字段中。术语 "widget" 通常在严格意义上更正确的时候使用，而应该使用 "element"。
 
@@ -497,7 +513,7 @@
 
 &emsp;在任何特定时间点，同一树中的多个 Element 可能具有相同的 Widget。例如，具有绿色的相同 ColoredBox 可能在 Widget 树中的多个位置同时使用，每个位置由不同的 Element 支持。
 
-#### Marking an element dirty
+### Marking an element dirty
 
 &emsp;在帧之间，一个 Element 可能会被标记为脏。这可能是由于各种原因造成的，包括以下情况：
 
@@ -505,7 +521,7 @@
 + 当 InheritedWidget 发生改变时，之前订阅它的 Element 会被标记为脏。
 + 在热重载期间，每个元素都会被标记为脏（使用 Element.reassemble）。
 
-#### Rebuilding
+### Rebuilding
 
 &emsp;在下一帧中重新构建脏 Element。这是如何做到的确取决于 Element 的类型。
 
@@ -515,7 +531,7 @@
 
 &emsp;在许多情况下，重建的最终结果是单个子 widget 或者（对于 MultiChildRenderObjectElements）一组子 widget。
 
-&emsp;这些子 widget 用于更新 Element 的子 element 的 widget 属性。如果新的 Widget 具有相同的类型和 key，则认为它对应于现有的 Element。（对于 MultiChildRenderObjectElements，即使顺序发生变化，也会努力跟踪 widget；请参阅 RenderObjectElement.updateChildren。）
+&emsp;这些子 widget 用于更新 Element 的子 element 的 widget 属性。如果新的 Widget 具有相同的类型和 key，则认为它对应于现有的 Element。（**对于 MultiChildRenderObjectElements，即使顺序发生变化，也会努力跟踪 widget；** 请参阅 RenderObjectElement.updateChildren。可翻回去看看之前的 updateChildren 解析，超详细。）
 
 &emsp;如果之前没有对应的子 element，那么将创建一个新的 Element（使用 Widget.createElement）；然后递归构建该 Element。(注意这里的递归，整个子树构建完成才会结束。)
 
@@ -523,15 +539,15 @@
 
 &emsp;然而，最常见的情况是有一个对应的先前子 element。这是通过要求子 element 使用新的子 widget 更新自己来处理的。对于 StatefulElement，这就是触发 State.didUpdateWidget 的情况。
 
-#### Not rebuilding
+### Not rebuilding
 
 &emsp;在 Element 被告知使用新的 Widget 更新自己之前，会使用 operator == 来比较新旧 Widget 对象。
 
 &emsp;通常情况下，这相当于使用 identical 进行比较，以查看这两个 Widget 对象是否确实是完全相同的实例。如果它们是相同的实例，并且 Element 并没有因为其他原因已被标记为需要更新，则 Element 将跳过更新自身，因为它可以确信更新自身或其子级将没有任何价值。(const 构造函数发挥作用的地方！)
 
-&emsp;强烈建议避免在 Widget 对象上覆盖 operator ==。虽然这样做可能会改善性能，但实际上，对于非叶子 Widget，这会导致 O(N²) 的行为。这是因为必要时比较将包括比较子 Widget，并且如果这些子 Widget 也实现了 operator ==，则最终将导致对 Widget 树的完全遍历……然后在树的每个级别上都重复这个操作。实践中，重新构建更加廉价。（此外，如果应用程序中使用的 Widget 的任何子类实现了 operator ==，那么编译器无法在任何地方内联比较，因为必须将调用视为虚拟的，以防实例碰巧是重写了 operator 的实例。）
+&emsp;强烈建议避免在 Widget 对象上覆盖 operator ==。虽然这样做可能会改善性能，但实际上，对于非叶子 Widget，这会导致 O(N²) 的行为。这是因为必要时比较将包括比较子 Widget，并且如果这些子 Widget 也实现了 operator ==，则最终将导致对 Widget 子树的完全遍历……然后在树的每个级别上都重复这个操作。然后在实践中发现，重新构建会更加廉价。此外，如果应用程序中使用的 Widget 的任何子类实现了 operator ==，那么编译器无法在任何地方内联比较，因为必须将调用视为虚拟的，以防实例碰巧是重写了 operator 的实例。（意思就是不要重写 Widget 的 operator ==，这可能导致沿着 Widget 子树一个一个的比较两个 Widget 的子 Widget 是否都相等。）
 
-&emsp;相反，避免不必要的重构的最佳方式是缓存从 State.build 返回的小部件，以便每帧使用相同的小部件，直到它们发生变化。存在多种机制来鼓励这样做：例如，const widgets 是一种形式的自动缓存（如果使用 const 关键字构造小部件，则每次使用相同参数构建时都返回同一实例）。
+&emsp;相反，避免不必要的重构的最佳方式是缓存从 State.build 返回的 Widget 对象，以便每帧使用相同的 Widget 对象，直到它们发生变化。存在多种机制来鼓励这样做：例如，const widgets 是一种形式的自动缓存（如果使用 const 常量表达式构造 Widget 对象，则每次使用相同参数构建时都返回同一个 Widget 对象实例）。
 
 &emsp;另一个例子是 AnimatedBuilder.child 属性，它允许子树中非动画部分保持静态，即使 AnimatedBuilder.builder 回调重新创建其他组件。(这个后续要深入研究一下)
 
@@ -540,23 +556,25 @@
   @pragma('vm:prefer-inline')
   @pragma('wasm:prefer-inline')
   void rebuild({bool force = false}) {
-    // 1. 如果当前 element 对象的状态不是 active 2. 或者非 _dirty 且 非 force
-    // 直接 return。
+    // 1. 如果当前 element 对象的状态不是 active
+    // 2. 或者非 dirty 且 force 参数为 false
+    // 则直接 return，不进行重建。
     if (_lifecycleState != _ElementLifecycle.active || (!_dirty && !force)) {
       return;
     }
     
     try {
-      // 最重要的内容，实际执行重建，调用：performRebuild 函数
+      // 最重要的内容，实际执行重建时，调用的是 performRebuild 函数哦
       performRebuild();
+      
     } finally {
     }
   }
 ```
 
-## performRebuild
+# performRebuild
 
-&emsp;在适当的检查之后，使 widget 更新自身。在 rebuild 被调用后调用。Element 基本实现只是清除了 dirty 标志。不同的 Element 子类都对其进行了重写。
+&emsp;在适当的检查之后，使 widget 更新自身。在 rebuild 被调用后调用。Element 类的基本实现只是清除了 Element 对象的 dirty 标志，而其它的 Element 子类都对其进行了重写。特别重要，后面学习 Element 子类时我们再一一展开。
 
 ```dart
   @protected
@@ -568,5 +586,17 @@
 
 # Element 总结
 
+&emsp;OK，到这里 Element 类的内容就看完了，一共分了 5 篇内容。Element 真的是一个超级大类，感觉它是 Flutter framework 第一重要的类应该是没有异议的。
+
 &emsp;
+
+
+
+## 参考链接
+**参考链接:🔗**
++ [Element class](https://api.flutter.dev/flutter/widgets/Element-class.html)
++ [kFlutterMemoryAllocationsEnabled top-level constant](https://api.flutter.dev/flutter/foundation/kFlutterMemoryAllocationsEnabled-constant.html)
++ [Flutter | Understanding the MemoryAllocations](https://medium.com/@maciejbrzezinski/flutter-what-is-memoryallocations-1ee2eb0a8670)
++ [Flutter | How to create a custom binding and inject your own BuildOwner](https://medium.com/@maciejbrzezinski/flutter-how-to-create-a-custom-binding-and-inject-your-own-buildowner-f60ef320537b)
++ [Support for WebAssembly (Wasm)](https://docs.flutter.dev/platform-integration/web/wasm)
 

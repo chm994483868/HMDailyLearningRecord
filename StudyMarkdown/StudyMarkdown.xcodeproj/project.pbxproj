@@ -266,6 +266,7 @@
 		D2FC92BB2C35047F00EF34D0 /* Flutter 源码梳理系列（十一）：NotificationListener<T extends Notification> class.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（十一）：NotificationListener<T extends Notification> class.md"; sourceTree = "<group>"; };
 		D2FC92BD2C36983300EF34D0 /* Flutter 源码梳理系列（十四）：Element：updateChildren.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（十四）：Element：updateChildren.md"; sourceTree = "<group>"; };
 		D2FC92BE2C37E7FE00EF34D0 /* Flutter 源码梳理系列（十六）：Element：unmount -> performRebuild.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（十六）：Element：unmount -> performRebuild.md"; sourceTree = "<group>"; };
+		D2FC92BF2C390E0000EF34D0 /* Flutter 源码梳理系列（十七）：ComponentElement.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（十七）：ComponentElement.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -936,6 +937,7 @@
 				D2FC92BD2C36983300EF34D0 /* Flutter 源码梳理系列（十四）：Element：updateChildren.md */,
 				D2FC92B32C315D2900EF34D0 /* Flutter 源码梳理系列（十五）：Element：mount -> deactivate.md */,
 				D2FC92BE2C37E7FE00EF34D0 /* Flutter 源码梳理系列（十六）：Element：unmount -> performRebuild.md */,
+				D2FC92BF2C390E0000EF34D0 /* Flutter 源码梳理系列（十七）：ComponentElement.md */,
 				D2FC92AF2C29B90B00EF34D0 /* PageStorageKey.md */,
 				D2FC92B42C3278C900EF34D0 /* InheritedModel.md */,
 				D2FC92B82C32A3D800EF34D0 /* AnimatedBuilder.md */,
