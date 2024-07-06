@@ -202,14 +202,43 @@ class StatelessElement extends ComponentElement {
 
 ## StatelessElement 总结
 
-&emsp;OK，StatelessElement 的内容就这么多，主要实现了 ComponentElement 的 build 函数，即直接调用自己的 `widget`(StatelessWidget) 的 build 函数，返回创建的 Widget 对象即可。然后是重写了 Element.update 函数：当 widget 属性更新完毕以后肯定要对此 StatelessElement 节点进行强制重建工作。
+&emsp;OK，StatelessElement 的内容就这么多，就这两个函数。主要实现了 ComponentElement 的 build 函数，即直接调用自己的 `widget`(StatelessWidget) 的 build 函数，返回创建的 Widget 对象即可。然后是重写了 Element.update 函数：当 widget 属性更新完毕以后肯定要对此 StatelessElement 节点进行强制重建工作。
 
 # StatefulElement 
+
+&emsp;StatefulElement：使用 StatefulWidget 作为配置的 Element。
+
++ Object -> DiagnosticableTree -> Element -> ComponentElement -> StatefulElement
+
+&emsp;StatefulElement 直接继承自 ComponentElement。
+
+## Constructors
+
+&emsp;创建一个 StatefulElement，使用给定的 StatefulWidget 作为其配置。
+
+&emsp;当创建一个 StatefulElement 对象时，同时直接调用 StatefulWidget 的 createState 函数为 StatefulElement 创建 State 对象，并直接赋值给 `_state` 属性，同时 state 对象的 `_element` 属性直接用 this(当前的 StatefulElement 对象赋值)，`_widget` 属性同时也用 StatefulWidget 赋值。至此：StatefulElement、State、StatefulWidget 三者的关系确定下来了：StatefulElement 和 State 之间相互引用，而它二者都引用同一个 StatefulWidget。
+
+&emsp;另外一点便是当 StatefulWidget 对象调用 createElement 创建 StatefulElement 对象时，同时对应的 State 对象也会被一起创建出来。另外，当 StatefulElement 对象更新自己的 StatefulWidget 时，State 的 widget 属性也会一起更新，并且它俩保持同步始终指向同一个 StatefulWidget 对象。另外就是 State 对象和 StatefulElement 对象它二者的生命周期是完全一样的。
+
+```dart
+class StatefulElement extends ComponentElement {
+  StatefulElement(StatefulWidget widget)
+      : _state = widget.createState(), super(widget) {
+    state._element = this;
+    state._widget = widget;
+  }
+  
+  // ...
+}
+```
+
+## build
 
 &emsp;
 
 ```dart
-
+  @override
+  Widget build() => state.build(this);
 ```
 
 
@@ -218,3 +247,4 @@ class StatelessElement extends ComponentElement {
 **参考链接:🔗**
 + [ComponentElement class](https://api.flutter.dev/flutter/widgets/ComponentElement-class.html)
 + [StatelessElement class](https://api.flutter.dev/flutter/widgets/StatelessElement-class.html)
++ [StatefulElement class](https://api.flutter.dev/flutter/widgets/StatefulElement-class.html)
