@@ -163,67 +163,232 @@ abstract class RenderObjectElement extends Element {
 
 ## `_findAncestorParentDataElements`
 
-&emsp;
+&emsp;沿着 parent 指针往上找一直到根 Element，把所有的类型是 ParentDataElement 的收集起来并返回。
 
 ```dart
   List<ParentDataElement<ParentData>> _findAncestorParentDataElements() {
     Element? ancestor = _parent;
     
     final List<ParentDataElement<ParentData>> result = <ParentDataElement<ParentData>>[];
-    final Set<Type> debugAncestorTypes = <Type>{};
-    final Set<Type> debugParentDataTypes = <Type>{};
-    final List<Type> debugAncestorCulprits = <Type>[];
 
-    // More than one ParentDataWidget can contribute ParentData, but there are
-    // some constraints.
-    // 1. ParentData can only be written by unique ParentDataWidget types.
-    //    For example, two KeepAlive ParentDataWidgets trying to write to the
-    //    same child is not allowed.
-    // 2. Each contributing ParentDataWidget must contribute to a unique
-    //    ParentData type, less ParentData be overwritten.
-    //    For example, there cannot be two ParentDataWidgets that both write
-    //    ParentData of type KeepAliveParentDataMixin, if the first check was
-    //    subverted by a subclassing of the KeepAlive ParentDataWidget.
-    // 3. The ParentData itself must be compatible with all ParentDataWidgets
-    //    writing to it.
-    //    For example, TwoDimensionalViewportParentData uses the
-    //    KeepAliveParentDataMixin, so it could be compatible with both
-    //    KeepAlive, and another ParentDataWidget with ParentData type
-    //    TwoDimensionalViewportParentData or a subclass thereof.
-    // The first and second cases are verified here. The third is verified in
-    // debugIsValidRenderObject.
+    // 多个 ParentDataWidget 可以贡献 ParentData，但有一些约束。
+    // 1. ParentData 只能由唯一的 ParentDataWidget 类型写入。例如，两个尝试写入相同子项的 KeepAlive ParentDataWidgets 是不允许的。
 
+    // 2. 每个贡献的 ParentDataWidget 必须贡献一个独特的 ParentData 类型，以免 ParentData 被覆盖。例如，如果第一个检查被 KeepAlive ParentDataWidget 的子类替代，那么就不能存在两个同时写入类型为 KeepAliveParentDataMixin 的 ParentDataWidgets。
+
+    // 3. ParentData 本身必须与所有写入它的 ParentDataWidgets 兼容。举例来说，TwoDimensionalViewportParentData 使用 KeepAliveParentDataMixin，因此它可以兼容 KeepAlive，以及另一个父级数据类型为 TwoDimensionalViewportParentData 或其子类的 ParentDataWidget。 第一和第二种情况在此处得到验证。第三种情况在 debugIsValidRenderObject 中得到验证。
+    
     while (ancestor != null && ancestor is! RenderObjectElement) {
       if (ancestor is ParentDataElement<ParentData>) {
-        assert((ParentDataElement<ParentData> ancestor) {
-          if (!debugAncestorTypes.add(ancestor.runtimeType) || !debugParentDataTypes.add(ancestor.debugParentDataType)) {
-            debugAncestorCulprits.add(ancestor.runtimeType);
-          }
-          return true;
-        }(ancestor));
         result.add(ancestor);
       }
+      
       ancestor = ancestor._parent;
     }
-    assert(() {
-      if (result.isEmpty || ancestor == null) {
-        return true;
-      }
-      // Validate points 1 and 2 from above.
-      _debugCheckCompetingAncestors(
-        result,
-        debugAncestorTypes,
-        debugParentDataTypes,
-        debugAncestorCulprits,
-      );
-      return true;
-    }());
+    
     return result;
   }
 ```
 
+## mount
 
+&emsp;重写 Element.mount 函数。主要针对 RenderObject 对象的构建和添加到 Render Tree 中。
 
+&emsp;可以看到之前的 Element 学习中，它们在 mount 后都是执行构建，而在 RenderObjectElement 这里，当把其挂载到 Element Tree 上以后，做的主要的事情就都聚焦到了 RenderObject 上，首先是调用 RenderObjectWidget 的 createRenderObject 函数创建 RenderObject 对象，并直接赋值给自己的 renderObject 属性上。然后便是把此 RenderObject 对象插入到 Render Tree 中。
+
+```dart
+  @override
+  void mount(Element? parent, Object? newSlot) {
+    super.mount(parent, newSlot);
+    
+    // 构建 RenderObject 对象，并把它添加到 Render Tree 中
+    _renderObject = (widget as RenderObjectWidget).createRenderObject(this);
+    attachRenderObject(newSlot);
+    
+    super.performRebuild(); // clears the "dirty" flag
+  }
+```
+
+## update
+
+&emsp;重写 Element.update 函数。同样是针对 RenderObject 的更新。
+
+```dart
+  @override
+  void update(covariant RenderObjectWidget newWidget) {
+    super.update(newWidget);
+    
+    _performRebuild(); // calls widget.updateRenderObject()
+  }
+```
+
+## performRebuild
+
+&emsp;重写 Element.performRebuild 函数。这里先忽略 Element 的 performRebuild，内部只管调用自己的私有函数 `_performRebuild`。
+
+```dart
+  @override
+  void performRebuild() { // ignore: must_call_super, _performRebuild calls super.
+    _performRebuild(); // calls widget.updateRenderObject()
+  }
+```
+
+## `_performRebuild`
+
+&emsp;主要目光在 RenderObject 更新。
+
+```dart
+  @pragma('dart2js:tryInline')
+  @pragma('vm:prefer-inline')
+  @pragma('wasm:prefer-inline')
+  void _performRebuild() {
+    // 主要目光依然是集中在 RenderObject 上，更新 RenderObject
+    (widget as RenderObjectWidget).updateRenderObject(this, renderObject);
+    
+    // 在这里再调用 Element.performRebuild 函数，
+    // 内部的话仅是把脏标记置为 false
+    super.performRebuild(); // clears the "dirty" flag
+  }
+```
+
+## deactivate
+
+&emsp;内部同样仅是调用 Element.deactivate。
+
+```dart
+  @override
+  void deactivate() {
+    super.deactivate();
+  }
+```
+
+## unmount
+
+&emsp;重写 Element.unmount 函数。主要目光在 RenderObject 上，因为 RenderObjectElement 对象再也没有机会在挂载到 Element Tree 上了，所以这里也需要对其 RenderObject 对象进行资源清理。这里有点类似 StatefulElement 卸载时对 State 对象的资源清理。
+
+```dart
+  @override
+  void unmount() {
+    final RenderObjectWidget oldWidget = widget as RenderObjectWidget;
+    super.unmount();
+    
+    // 调用 RenderObjectWidget 的 didUnmountRenderObject 函数
+    oldWidget.didUnmountRenderObject(renderObject);
+    
+    // renderObject 调用 dispose，并把 renderObject 属性置为 null
+    _renderObject!.dispose();
+    _renderObject = null;
+  }
+```
+
+## `_updateParentData`
+
+&emsp;更新 ParentData 数据。
+
+```dart
+  void _updateParentData(ParentDataWidget<ParentData> parentDataWidget) {
+    bool applyParentData = true;
+    
+    if (applyParentData) {
+      parentDataWidget.applyParentData(renderObject);
+    }
+  }
+```
+
+## updateSlot
+
+&emsp;更新当前 RenderObjectElement 在其祖先中的 Slot。
+
+```dart
+  @override
+  void updateSlot(Object? newSlot) {
+    // 临时变量 oldSlot 记录下之前的旧的 slot 数据
+    final Object? oldSlot = slot;
+    
+    super.updateSlot(newSlot);
+    
+    // 通过祖先 RenderObjectElement 调用 moveRenderObjectChild 函数，
+    // 把当前的 RenderObjectElement 对象移动到新的 newSlot 去。
+    _ancestorRenderObjectElement?.moveRenderObjectChild(renderObject, oldSlot, slot);
+  }
+```
+
+## attachRenderObject
+
+&emsp;将 renderObject 添加到由 newSlot 指定位置的 Render Tree 中。
+
+&emsp;此函数的默认实现会在每个子元素上递归调用 attachRenderObject。RenderObjectElement.attachRenderObject 覆写了实际将 renderObject 添加到渲染树中的工作。
+
+&emsp;newSlot 参数指定了该元素新的 slot 值。
+
+```dart
+  @override
+  void attachRenderObject(Object? newSlot) {
+    _slot = newSlot;
+    _ancestorRenderObjectElement = _findAncestorRenderObjectElement();
+    _ancestorRenderObjectElement?.insertRenderObjectChild(renderObject, newSlot);
+    
+    final List<ParentDataElement<ParentData>> parentDataElements = _findAncestorParentDataElements();
+    for (final ParentDataElement<ParentData> parentDataElement in parentDataElements) {
+      _updateParentData(parentDataElement.widget as ParentDataWidget<ParentData>);
+    }
+  }
+```
+
+## detachRenderObject
+
+&emsp;从 Render Tree 中移除 renderObject。
+
+&emsp;该函数的默认实现会递归调用每个子元素的 detachRenderObject。RenderObjectElement.detachRenderObject 会实际执行将 renderObject 从 Render Tree 中移除的工作。
+
+&emsp;此函数由 deactivateChild 调用。
+
+```dart
+  @override
+  void detachRenderObject() {
+    if (_ancestorRenderObjectElement != null) {
+      _ancestorRenderObjectElement!.removeRenderObjectChild(renderObject, slot);
+      _ancestorRenderObjectElement = null;
+    }
+    
+    _slot = null;
+  }
+```
+
+## insertRenderObjectChild
+
+&emsp;将给定的子元素插入到指定插槽的 renderObject 中。
+
+&emsp;插槽的语义由该元素确定。例如，如果该元素只有一个子元素，则插槽应始终为 null。如果该元素有一组子元素，则上一个兄弟元素包装在 IndexedSlot 中是插槽的一个方便值。
+
+```dart
+  @protected
+  void insertRenderObjectChild(covariant RenderObject child, covariant Object? slot);
+```
+
+## moveRenderObjectChild
+
+&emsp;将给定的子节点从给定的旧插槽移动到给定的新插槽。
+
+&emsp;保证给定的子节点的 renderObject 为其父级。
+
+&emsp;插槽的语义由此元素确定。例如，如果此元素有单个子节点，则插槽应始终为 null。如果此元素有子节点列表，则前一个同级元素被包装在 IndexedSlot 中是插槽的一个方便的值。
+
+&emsp;只有在 updateChild 可能会使用具有不同于先前给定的插槽的插槽与现有 Element 子节点一起被调用时，才会调用此方法。例如，MultiChildRenderObjectElement 这样做。SingleChildRenderObjectElement 不会这样做（因为插槽始终为 null）。具有每个子节点始终具有相同插槽的特定插槽集的元素（并且不会将位于不同插槽中的子节点相互比较，以更新另一个插槽中的元素）永远不会调用这种方法。
+
+```dart
+  @protected
+  void moveRenderObjectChild(covariant RenderObject child, covariant Object? oldSlot, covariant Object? newSlot);
+```
+
+## removeRenderObjectChild
+
+&emsp;从 renderObject 中移除给定的子项。确保给定的子项已经插入到给定的插槽中，并且其 renderObject 为其父级。
+
+```dart
+  @protected
+  void removeRenderObjectChild(covariant RenderObject child, covariant Object? slot);
+```
 
 
 
