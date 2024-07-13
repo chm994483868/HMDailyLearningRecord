@@ -4,23 +4,25 @@
 
 # Constraints
 
-&emsp;Constraints 用来表示一组抽象的布局约束。具体的布局模型（例如 box）会创建具体的子类来在父组件（RenderObject）和子组件（RenderObject）之间传递布局约束。
+&emsp;Constraints 用来表示一组抽象的布局约束。具体的布局模型（例如：基于 RenderBox 的 Box 布局模型）会创建具体的子类来在父级（RenderObject）和子级（RenderObject）之间传递布局约束。（注意这里给出了方向，父级传给子级的，再具体一点就是：父级强制加给子级的布局约束。）
 
 ## Writing a Constraints subclass
 
-&emsp;当创建一个带有新布局协议的新的 RenderObject 子类时，通常需要创建一个新的 Constraints 子类来表达布局算法的输入。
+&emsp;当创建一个带有新布局协议的新的 RenderObject 子类时，通常需要创建一个新的 Constraints 子类来表达布局算法的输入。（我们后面主要聚集在：RenderBox 和 BoxConstraints。）
 
 &emsp;Constraints 子类应该是不可变的（所有字段都是 final）。除了可能发现对特定布局协议有用的字段、构造函数和辅助方法之外，还需要实现几个成员：
 
-+ isTight getter 返回 true，如果对象表示 RenderObject 类在自身布局方面没有选择余地的情况。例如，当 BoxConstraints 的最小和最大宽度以及最小和最大高度都相等时，isTight 返回 true。
++ isTight getter 返回 true，如果对象表示 RenderObject 类在自身布局方面没有选择余地的情况。例如，当 BoxConstraints 的最小和最大宽度以及最小和最大高度都相等时，isTight 返回 true。（这里可以理解为当 BoxConstraints 直接把宽度和高度限制死，例如：宽度是 30，高度是 60，是一种严格限制。而不是宽松的限制，例如：高度在 30 和 60 之间，高度在 50 到 100 之间。）
 
-+ isNormalized 这个 getter 应该在对象以规范形式表示其数据时返回 true。有时，各个字段之间可能存在多余关联，导致几种不同的表示具有相同的含义。例如，一个 BoxConstraints 实例，其最小宽度大于最大宽度，等价于一个最大宽度设置为该最小宽度的实例 (`2<w<1` 等价于 `2<w<2`，因为最小限制具有优先级)。这个 getter 被 debugAssertIsValid 的默认实现使用。
++ isNormalized 这个 getter 应该在对象以规范形式表示其数据时返回 true。有时，各个字段之间可能存在冗余，导致几种不同的表示具有相同的含义。例如，一个 BoxConstraints 实例，其最小宽度大于最大宽度，等价于一个最大宽度设置为该最小宽度的实例 (`2<w<1` 等价于 `2<w<2`，因为最小约束具有优先级)。这个 getter 在 debugAssertIsValid 的默认实现中使用。（这里我们依然可以以 BoxConstraints 举例，当最小宽度小于等于最大宽度并且最小高度也小于等于最大高度时，isNormalized 这个 getter 就会返回 true，此时是一种标准化的约束。）
 
-+ debugAssertIsValid 方法用于断言 Constraints 对象是否存在任何问题。（我们使用这种方法而不是在构造函数中断言，这样我们的构造函数可以是 const，并且在构建有效约束时可以临时创建无效约束。）可以参考 BoxConstraints.debugAssertIsValid 的实现来查看可以进行的详细检查示例。
++ debugAssertIsValid 方法用于断言 Constraints 对象是否存在任何问题。（我们使用这种方法而不是在构造函数中断言，这样我们的构造函数可以是 const，并且在构建有效约束时可以临时创建无效约束。）可以参考 BoxConstraints.debugAssertIsValid 的实现来查看可以进行的详细检查示例。（即：minWidth、maxWidth、minHeight、maxHeigt 四个属性如果用了错误的值就表示是错误的 BoxConstraints，是无效的。）
 
-+ == 操作符和 hashCode getter，以便可以比较约束是否相等。如果 render object 被给予相等的约束，那么渲染库将避免再次布局对象，如果它不是脏的。
++ == 运算符和 hashCode getter，以便比较约束的相等性。如果一个渲染对象被给定相等的约束，那么渲染库将避免再次对对象进行布局，如果它没有被标记为 "dirty"。（例如：两个 BoxConstraints 对象，即使它们不是同一个对象，只要它们的四个属性是相等的，那么就认为两个 BoxConstraints 对象是相等。）
 
-+ toString 方法应该描述约束条件，使它们以有用的可读形式出现在 debugDumpRenderTree 的输出中。
++ toString 方法应该描述约束条件（例如：一个 BoxConstraints 对象调用 toString 函数时，会根据它的四个属性值的不同情况打印不同的描述字符串），使它们以有用的可读形式出现在 debugDumpRenderTree 的输出中。
+
+&emsp;下面简单快速看一下 Constructors 的代码。它的代码很少，首先是它的构造函数。
 
 ## Constructors
 
@@ -37,7 +39,7 @@ abstract class Constraints {
 
 ## isTight
 
-&emsp;在这些约束条件下是否有且仅有一个可能的尺寸。
+&emsp;在这些约束条件下是否有且仅有一个固定的尺寸。（如：最大最小宽度两个属性相等，最大最小高度两个属性相等。）
 
 ```dart
   bool get isTight;
@@ -45,7 +47,7 @@ abstract class Constraints {
 
 ## isNormalized
 
-&emsp;约束是否以一致的方式表达。
+&emsp;约束是否以一致的方式表式。（是否是一个标准化的约束。）
 
 ```dart
   bool get isNormalized;
@@ -55,7 +57,7 @@ abstract class Constraints {
 
 &emsp;断言 Constraints 是有效的。这可能涉及比 isNormalized 更详细的检查。
 
-&emsp;例如，BoxConstraints 子类会验证约束条件不是 double.nan。
+&emsp;例如，BoxConstraints 子类会验证约束条件不是 double.nan（`static const double nan = 0.0 / 0.0;`）。
 
 &emsp;如果 isAppliedConstraint 参数设置为 true，那么将施加更严格的规则。当在布局期间检查即将应用于 RenderObject 的约束条件时，会将此参数设置为 true，而不是对可能受其他约束条件进一步影响的约束条件。例如，用于验证 RenderConstrainedBox.additionalConstraints 有效性的断言不设置此参数，但用于验证传递给 RenderObject.layout 方法的参数的断言会设置。
 
@@ -214,6 +216,23 @@ class BoxConstraints extends Constraints {
 ```
 
 &emsp;然后下面是一组围绕以上四个属性值展开的判断/比较等相关的函数，没什么难度我们就不再看了。
+
+## isNormalized
+
+&emsp;返回对象的约束是否已经被标准化。 如果最小值小于或等于相应的最大值，则约束被认为是标准化的。
+
+&emsp;例如，一个 BoxConstraints 对象，其最小宽度为 100.0，最大宽度为 90.0，则该约束并非标准化。
+
+&emsp;大多数 BoxConstraints 上的 API 都希望约束是标准化的，并且在它们未被标准化时行为是未定义的。 在调试模式下，如果约束未被标准化，许多这些 API 将会断言。
+
+```dart
+  @override
+  bool get isNormalized {
+    return minWidth >= 0.0 &&
+           minWidth <= maxWidth &&
+           minHeight >= 0.0 &&
+           minHeight <= maxHeight;
+```
 
 ## Constraints 总结
 

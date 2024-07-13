@@ -383,3 +383,4 @@ class InheritedElement extends ProxyElement {
 **参考链接:🔗**
 + [ComponentElement class](https://api.flutter.dev/flutter/widgets/ComponentElement-class.html)
 + [ProxyElement class](https://api.flutter.dev/flutter/widgets/ProxyElement-class.html)
++ [InheritedElement class](https://api.flutter.dev/flutter/widgets/InheritedElement-class.html)

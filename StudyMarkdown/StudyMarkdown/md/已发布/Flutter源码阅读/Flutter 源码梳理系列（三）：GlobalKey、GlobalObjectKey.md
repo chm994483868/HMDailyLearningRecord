@@ -258,3 +258,8 @@ class GlobalObjectKey<T extends State<StatefulWidget>> extends GlobalKey<T> {
 **参考链接:🔗**
 + [`GlobalKey<T extends State<StatefulWidget>> class`](https://api.flutter.dev/flutter/widgets/GlobalKey-class.html)
 + [When to Use Keys - Flutter Widgets 101 Ep. 4](https://www.youtube.com/watch?v=kn0EOS-ZiIc)
++ [Key class](https://api.flutter.dev/flutter/dart-core/Object-class.html)
++ [Record class](https://api.flutter.dev/flutter/dart-core/Record-class.html)
++ [VM-Specific Pragma Annotations](https://github.com/dart-lang/sdk/blob/main/runtime/docs/pragmas.md)
++ [identical function](https://api.flutter.dev/flutter/dart-core/identical.html)
++ [LocalKey class](https://api.flutter.dev/flutter/foundation/LocalKey-class.html)

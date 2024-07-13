@@ -385,7 +385,7 @@ class MultiChildRenderObjectElement extends RenderObjectElement {
 
 &emsp;然后还有 MultiChildRenderObjectElement.update 中对一组旧 Element 对象的重建，用到了 Element.updateChildren 函数，然后其中的对同一个父级的一组 Element 对象有 key 时的复用逻辑，让人印象深刻，如果我们想要搞懂 LocalKey 相关的内容，Element.updateChildren 是必学的内容，前面有超详细的解析，可以翻回去看看。
 
-&emsp;然后还有 ContainerRenderObjectMixin 相关的 RenderObject 的 inser/move/remove 相关的内容，我们到 RenderObject 篇再进行详细解读。
+&emsp;然后还有 ContainerRenderObjectMixin 相关的 RenderObject 的 insert/move/remove 相关的内容，我们到 RenderObject 篇再进行详细解读。
 
 ## 参考链接
 **参考链接:🔗**

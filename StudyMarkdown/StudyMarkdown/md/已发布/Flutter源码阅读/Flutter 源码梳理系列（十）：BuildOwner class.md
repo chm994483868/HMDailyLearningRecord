@@ -266,5 +266,7 @@ class BuildOwner {
 
 ## 参考链接
 **参考链接:🔗**
++ [buildScope method](https://api.flutter.dev/flutter/widgets/BuildOwner/buildScope.html)
 + [Element class](https://api.flutter.dev/flutter/widgets/Element-class.html)
 + [Offstage class](https://api.flutter.dev/flutter/widgets/Offstage-class.html)
++ [BuildOwner class](https://api.flutter.dev/flutter/widgets/BuildOwner-class.html)
