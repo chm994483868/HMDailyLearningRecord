@@ -249,10 +249,12 @@
 		D25994392C3D4316003571E3 /* Flutter 源码梳理系列（二十）：Leaf & SingleChild & MultiChildRenderObjectElement.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十）：Leaf & SingleChild & MultiChildRenderObjectElement.md"; sourceTree = "<group>"; };
 		D259943A2C3DAEF9003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：RenderObject.md"; sourceTree = "<group>"; };
 		D259943B2C3EC1A6003571E3 /* Flutter 源码梳理系列（二十二）：Constraints、BoxConstraints.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十二）：Constraints、BoxConstraints.md"; sourceTree = "<group>"; };
-		D259943C2C3F9965003571E3 /* Flutter 源码梳理系列（二十五）：PipelineOwner.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十五）：PipelineOwner.md"; sourceTree = "<group>"; };
+		D259943C2C3F9965003571E3 /* Flutter 源码梳理系列（二十四）：PipelineOwner.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：PipelineOwner.md"; sourceTree = "<group>"; };
 		D259943D2C40088F003571E3 /* RendererBinding.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RendererBinding.md; sourceTree = "<group>"; };
 		D259943E2C421069003571E3 /* Flutter 源码梳理系列（二十三）：RenderObject：At first sight.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十三）：RenderObject：At first sight.md"; sourceTree = "<group>"; };
 		D259943F2C439AEF003571E3 /* Flutter 源码梳理系列（二十一）：OffsetBase、Size、Offset.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十一）：OffsetBase、Size、Offset.md"; sourceTree = "<group>"; };
+		D25994402C463B2A003571E3 /* Flutter 源码梳理系列（二十四）：RendererBinding.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：RendererBinding.md"; sourceTree = "<group>"; };
+		D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md"; sourceTree = "<group>"; };
 		D25AAFF22BEB4D690095511B /* Flutter 知识点：解析 Future 对象提供的异步操作.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 知识点：解析 Future 对象提供的异步操作.md"; sourceTree = "<group>"; };
 		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现.md"; sourceTree = "<group>"; };
 		D2FC92A82C231B1E00EF34D0 /* Flutter 源码梳理系列（四）：Widget、StatelessWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（四）：Widget、StatelessWidget.md"; sourceTree = "<group>"; };
@@ -953,8 +955,10 @@
 				D259943F2C439AEF003571E3 /* Flutter 源码梳理系列（二十一）：OffsetBase、Size、Offset.md */,
 				D259943B2C3EC1A6003571E3 /* Flutter 源码梳理系列（二十二）：Constraints、BoxConstraints.md */,
 				D259943E2C421069003571E3 /* Flutter 源码梳理系列（二十三）：RenderObject：At first sight.md */,
+				D259943C2C3F9965003571E3 /* Flutter 源码梳理系列（二十四）：PipelineOwner.md */,
+				D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md */,
+				D25994402C463B2A003571E3 /* Flutter 源码梳理系列（二十四）：RendererBinding.md */,
 				D259943A2C3DAEF9003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject.md */,
-				D259943C2C3F9965003571E3 /* Flutter 源码梳理系列（二十五）：PipelineOwner.md */,
 				D259943D2C40088F003571E3 /* RendererBinding.md */,
 				D2FC92AF2C29B90B00EF34D0 /* PageStorageKey.md */,
 				D2FC92B42C3278C900EF34D0 /* InheritedModel.md */,
