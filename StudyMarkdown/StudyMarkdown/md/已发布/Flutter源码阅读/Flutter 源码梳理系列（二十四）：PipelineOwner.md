@@ -260,6 +260,9 @@ class PipelineOwner with DiagnosticableTreeMixin {
           // 每次取出一个脏 RenderObject，对它进行重新布局
           final RenderObject node = dirtyNodes[i];
           
+          // 这里的 node._needsLayout 判断并不是多余，
+          // 防止子级已经跟随父级重新 layout 过了，这里再重复 layout，
+          // 因为当父级 layout 时，是会对它下面的 RenderObject 子树上的所有节点进行 layout 的。 
           if (node._needsLayout && node.owner == this) {
             // 执行 RenderObject._layoutWithoutResize 函数。
             // 执行 performLayout 执行布局，
@@ -307,6 +310,8 @@ class PipelineOwner with DiagnosticableTreeMixin {
     // 遍历对所有需要合成更新的 RenderObject 进行合成更新
     for (final RenderObject node in _nodesNeedingCompositingBitsUpdate) {
       
+      // 同上面，
+      // node._needsCompositingBitsUpdate 判断，防止子级被重复进行合成位更新操作。
       if (node._needsCompositingBitsUpdate && node.owner == this) {
         // 执行合成更新
         node._updateCompositingBits();
@@ -355,7 +360,10 @@ class PipelineOwner with DiagnosticableTreeMixin {
       // 注意，和👆上面的重新布局和合成更新的排序是刚好相反的！
       for (final RenderObject node in dirtyNodes..sort((RenderObject a, RenderObject b) => b.depth - a.depth)) {
       
-        // 需要重绘或者合成层需要更新的话，并且是位于当前 PipelineOwner 下
+        // 需要重绘或者合成层需要更新的话，并且是位于当前 PipelineOwner 下。
+        
+        // 同上面，node._needsPaint || node._needsCompositedLayerUpdate 判断，
+        // 防止子级被重复进行。
         if ((node._needsPaint || node._needsCompositedLayerUpdate) && node.owner == this) {
         
           // node._layerHandle.layer 是否已经被附加了
@@ -463,6 +471,8 @@ class PipelineOwner with DiagnosticableTreeMixin {
       
       // 循环对 nodesToProcess 中的 RenderObject 对象调用 _updateSemantics
       for (final RenderObject node in nodesToProcess) {
+      
+        // 同上面，node._needsSemanticsUpdate 防止子级被重复语义更新。
         if (node._needsSemanticsUpdate && node.owner == this) {
           node._updateSemantics();
         }
@@ -625,7 +635,7 @@ class PipelineOwner with DiagnosticableTreeMixin {
 
 &emsp;当前 Render Tree 上的所有 RenderObject 对象的 `PipelineOwner? _owner` 都指向 RendererBinding 的 pipelineOwner 属性。
 
-&emsp;然后在 RendererBinding.drawFrame 回调函数中，即在新的一帧中对前一帧分别收集到的上述四个属性中的 RenderObject 进行刷新（并会根据 depth 进行排序，父级靠前，子级靠后，防止子级 RenderObject 被重复操作，flushPaint 中则相反，子级靠前，父级靠后），依次是：
+&emsp;然后在 RendererBinding.drawFrame 回调函数中，即在新的一帧中对前一帧分别收集到的上述四个属性中的 RenderObject 进行刷新。并会根据 depth 进行升序排序，即父级靠前，子级靠后，防止子级 RenderObject 被重复操作，flushPaint 中则相反，会根据 depth 进行降序排序，即子级靠前，父级靠后，这是因为子级需要先 paint，因为父级要用它 paint 的结果。四个刷新操作依次是：
 
 1. `rootPipelineOwner.flushLayout();`
 2. `rootPipelineOwner.flushCompositingBits();`
