@@ -1,4 +1,4 @@
-# Flutter 源码梳理系列（二十六）：RenderObject：LAYOUT
+# Flutter 源码梳理系列（二十五）：RenderObject：LAYOUT
 
 # RenderObject
 
@@ -827,7 +827,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 &emsp;至此 RenderObject 类中 Layout 部分的全部内容就看完了，内容还是特别多的，特别是其中的重新布局边界理解起来还是有点难的。
 
-&emsp;那么到底什么是重新布局边界呢？其实也很简单，即如果一个 RenderObject 对象需要重新布局时，是否要连带自己的父级 RenderObject 对象也一起进行布局更新，如果不需要的话，那么此 RenderObject 对象自己就是重新布局边界，自己可以随便进行重新布局，而不会影响或者通知父级也进行重新布局。那如果要连带父级 RenderObject 也进行重新布局的话，则会往上找到一个最近的重新布局边界，然后对此边界以下的 Render 子树中的所有 RenderObject 进行重新布局，当然如果子级自己是布局边界并且父级传递来的约束没有变得话也会提前结束重新布局。
+&emsp;那么到底什么是重新布局边界呢？其实也很简单，即如果一个 RenderObject 对象需要重新布局时，是否要连带自己的父级 RenderObject 对象也一起进行布局更新，如果不需要的话，那么此 RenderObject 对象自己就是重新布局边界，自己可以随便进行重新布局，而不会影响或者通知父级也进行重新布局。那如果要连带父级 RenderObject 也进行重新布局的话，则会往上找到一个最近的重新布局边界，然后对此边界以下的 Render 子树中的所有 RenderObject 进行重新布局，当然如果父级传递来的约束没有变得话子级也会提前结束重新布局的，并不是遍历到叶子节点为止。
 
 &emsp;那么 RenderObject 对象如何判断自己是否是重新布局边界呢？如下标准，只要其中一个为 true 即可：
 
