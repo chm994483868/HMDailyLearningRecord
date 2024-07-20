@@ -200,3 +200,4 @@ typedef PictureEventCallback = void Function(Picture picture);
 + [Canvas class](https://api.flutter.dev/flutter/dart-ui/Canvas-class.html)
 + [PictureRecorder class](https://api.flutter.dev/flutter/dart-ui/PictureRecorder-class.html)
 + [Picture class](https://api.flutter.dev/flutter/dart-ui/Picture-class.html)
++ [Flutter 3.7 之快速理解 toImageSync 是什么？能做什么？](https://guoshuyu.cn/home/wx/Flutter-N18.html)
