@@ -6,15 +6,13 @@
 
 ## isRepaintBoundary
 
-&emsp;这个 RenderObject 对象是否独立于其父级重绘。
+&emsp;这个 RenderObject 对象是否独立于其父级绘制。
 
-&emsp;在子类中重写这个方法以指示子类的实例是否应该独立重绘。例如，经常需要重绘的 RenderObject 对象可能希望自己重绘，而不要求其父级重绘。
+&emsp;在 RenderObject 子类中重写这个方法以指示 RenderObject 子类的实例是否应该独立重绘。例如，经常需要重绘的 RenderObject 子类对象可能希望自己重绘，而不要求其父级也一起重绘。
 
-&emsp;如果这个 getter 返回 true，paintBounds（Rect get paintBounds;）应用于此对象和所有子级对象。framework 调用 RenderObject.updateCompositedLayer 创建一个 OffsetLayer 并将其分配给 layer 字段。声明自己为重绘边界的 RenderObject 对象不得替换 framework 创建的图层（layer）。
+&emsp;如果这个 getter 返回 true，paintBounds（Rect get paintBounds;）getter 应用于此 RenderObject 对象和它的所有子级对象。framework 调用 RenderObject.updateCompositedLayer 创建一个 OffsetLayer 并将其分配给 layer 字段。声明自己为重绘边界的 RenderObject 对象不得替换 framework 创建的图层（layer）。
 
-&emsp;如果这个 getter 的值发生变化，必须调用 markNeedsCompositingBitsUpdate。
-
-&emsp;请查看有关重绘边界功能的更多信息，请查看 RepaintBoundary。
+&emsp;如果这个 getter 的值发生变化，必须调用 markNeedsCompositingBitsUpdate。（即如果自己是重绘边界或者不是重绘边界发生了变化，则需要更新合成位 bits，它会影响图层 Layer 的合成。）
 
 ```dart
   bool get isRepaintBoundary => false;
@@ -24,7 +22,7 @@
 
 &emsp;这个 RenderObject 对象是否总是需要合成。
 
-&ems;在子类中重写此方法，以指示绘制函数总是会创建至少一个合成图层（composited layer）。例如，视频应该在使用硬件解码器时返回 true。
+&ems;在 RenderObject 子类中重写此方法，以指示绘制函数总是会创建至少一个合成图层（composited layer）。例如，视频应该在使用硬件解码器时返回 true。
 
 &emsp;如果此 getter 的值发生更改，必须调用 markNeedsCompositingBitsUpdate。（在调用 adoptChild 或 dropChild 时，会暗示此操作。）
 
@@ -35,7 +33,7 @@
 
 ## `_wasRepaintBoundary`
 
-&emsp;
+&emsp;这个属性比较特殊，它用来记录，当 RenderObject 本次进行重绘时，记录之前这个 RenderObject 是否是重绘边界（RepaintBoundary）。
 
 ```dart
   late bool _wasRepaintBoundary;
@@ -87,7 +85,7 @@
 
 ## `_layerHandle`
 
-&emsp;
+&emsp;LayerHandle 类的内容很简单，仅仅是一个有一个泛型 T 的 `_layer` 属性，T 需要是继承自 Layer，即 LayerHandle 是一个仅有一个 `Layer _layer` 属性的类。它主要用来为 RenderObject 对象提供一个 Layer 属性的句柄。每个 RenderObject 对象有一个 `_layerHandle` 属性，然后此 `_layerHandle` 属性持有一个可选的 `_layer` 属性。 
 
 ```dart
   final LayerHandle<ContainerLayer> _layerHandle = LayerHandle<ContainerLayer>();
@@ -95,7 +93,7 @@
 
 ## `_needsCompositingBitsUpdate`
 
-&emsp;当添加了一个子级时，将其设置为 true。
+&emsp;当添加了一个子级时，将其设置为 true。主要用来标识当前的 RenderOjbect 对象是否需要合成 Layer。在 paint 函数中会用到此标识。
 
 ```dart
   bool _needsCompositingBitsUpdate = false;
@@ -107,13 +105,13 @@
 
 &emsp;调用此方法表示在下一个 PipelineOwner.flushCompositingBits 引擎阶段需要重新计算 needsCompositing 的值。
 
-&emsp;当子树发生变化时，我们需要重新计算我们的 needsCompositing 位，并且一些祖先节点也需要做相同的事情（以防我们的位因某种更改而导致它们的更改）。为此，adoptChild 和 dropChild 方法调用此方法，并在必要时调用父级的此方法，等等，沿着树向上遍历标记所有需要更新的节点。
+&emsp;当子树发生变化时，我们需要重新计算我们的 needsCompositing 位，并且一些祖先节点也需要做相同的事情（以防我们的位因某种更改而导致它们的更改）。为此，adoptChild 和 dropChild 方法调用此方法，并在必要时调用父级的此方法，等等，沿着 Render Tree 向上遍历标记所有需要更新的节点。
 
-&emsp;该方法不会调度渲染帧，因为只有合成位发生变化是不可能的，必定会有其他原因调度一个帧。(即不同于 markNeedsLayout 或者 markNeedsPaint 它们在结尾处都会调用：`owner!.requestVisualUpdate();` 请求新的帧，markNeedsCompositingBitsUpdate 则是蹭的它们的。)
+&emsp;该方法不会去请求新的帧，因为只有合成位发生变化是不可能的，必定会有其他原因一起执行。(即不同于 markNeedsLayout 或者 markNeedsPaint 函数，它们在结尾处都会调用：`owner!.requestVisualUpdate();` 请求新的帧，而 markNeedsCompositingBitsUpdate 函数则是蹭的它们的。)
 
 ```dart
   void markNeedsCompositingBitsUpdate() {
-    // 如果 需要合成位更新标识 已经为 true 了，返回即可。
+    // 如果 "需要合成位更新标识" 已经为 true 了，直接返回即可。
     if (_needsCompositingBitsUpdate) {
       return;
     }
@@ -157,7 +155,7 @@
 
 &emsp;无论我们还是我们的后代是否有一个合成层。
 
-&emsp;如果该节点需要合成，如此比特所示，那么所有祖先节点也将需要合成。只有在 PipelineOwner.flushLayout 和 PipelineOwner.flushCompositingBits 被调用后才合法调用。
+&emsp;如果该节点需要合成，如此 Bits 所示，那么所有祖先节点也将需要合成。只有在 PipelineOwner.flushLayout 和 PipelineOwner.flushCompositingBits 被调用后才合法调用。
 
 ```dart
   late bool _needsCompositing;
@@ -169,7 +167,7 @@
 
 ## `_updateCompositingBits`
 
-&emsp;
+&emsp;执行 CompositingBits 合成位更新。
 
 ```dart
   void _updateCompositingBits() {
@@ -213,13 +211,17 @@
   }
 ```
 
-##
+## `_needsPaint`
+
+&emsp;是否需要绘制的标识。
 
 ```dart
   bool _needsPaint = true;
 ```
 
-## 
+## `_needsCompositedLayerUpdate`
+
+&emsp;是否需要合成层的更新。
 
 ```dart
   bool _needsCompositedLayerUpdate = false;
@@ -227,13 +229,11 @@
 
 ## markNeedsPaint
 
-&emsp;将此 RenderObject 对象标记为已更改其视觉外观。
+&emsp;将此 RenderObject 对象标记为已更改其视觉外观。（即需要在下一帧进行重新绘制了，因为其外观已经发生变化。）
 
 &emsp;与立即对此 RenderObject 对象的显示列表（display list）进行更新以响应写入不同，我们改为将 RenderObject 对象标记为需要绘制，从而安排了一个视觉更新（`owner!.requestVisualUpdate();`）。作为视觉更新的一部分，渲染管线将为此 RenderObject 对象提供更新其显示列表的机会。
 
 &emsp;这种机制批量处理绘制工作，使多个连续的写入被合并，消除了冗余计算。
-
-&emsp;一旦在 RenderObject 渲染对象上调用了 markNeedsPaint，debugNeedsPaint 将会对该 RenderObject 对象返回 true，直到 pipelinw owner 在 RenderObject 对象上调用 paint 后。
 
 &emsp;另请参阅：
 
@@ -399,7 +399,7 @@
 
 ## `_paintWithContext`
 
-&emsp;
+&emsp;使用传递来的 PaintingContext context 对象，可以进行绘制了。
 
 ```dart
   void _paintWithContext(PaintingContext context, Offset offset) {
