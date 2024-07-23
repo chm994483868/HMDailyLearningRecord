@@ -264,6 +264,7 @@
 		D25994482C4CCF01003571E3 /* Flutter未解之谜.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter未解之谜.md"; sourceTree = "<group>"; };
 		D25994492C4CD75C003571E3 /* Flutter 源码梳理系列（二十八）：Canvas.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十八）：Canvas.md"; sourceTree = "<group>"; };
 		D259944A2C4CD86F003571E3 /* Flutter 源码梳理系列（二十八.一）：Paint.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十八.一）：Paint.md"; sourceTree = "<group>"; };
+		D259944B2C4FB9DE003571E3 /* Flutter 源码梳理系列（二十九）：Layer.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十九）：Layer.md"; sourceTree = "<group>"; };
 		D25AAFF22BEB4D690095511B /* Flutter 知识点：解析 Future 对象提供的异步操作.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 知识点：解析 Future 对象提供的异步操作.md"; sourceTree = "<group>"; };
 		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现.md"; sourceTree = "<group>"; };
 		D2FC92A82C231B1E00EF34D0 /* Flutter 源码梳理系列（四）：Widget、StatelessWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（四）：Widget、StatelessWidget.md"; sourceTree = "<group>"; };
@@ -972,6 +973,7 @@
 				D25994442C4916AE003571E3 /* Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md */,
 				D25994452C4AB7DB003571E3 /* Flutter 源码梳理系列（二十八）：PaintingContext.md */,
 				D25994492C4CD75C003571E3 /* Flutter 源码梳理系列（二十八）：Canvas.md */,
+				D259944B2C4FB9DE003571E3 /* Flutter 源码梳理系列（二十九）：Layer.md */,
 				D259944A2C4CD86F003571E3 /* Flutter 源码梳理系列（二十八.一）：Paint.md */,
 				D25994432C48330D003571E3 /* Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md */,
 				D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md */,

@@ -2,8 +2,12 @@
 
 # Path
 
-&emsp;Path：一个复杂的、二维平面上的一维子集。
+&emsp;本篇来学习在 PaintingContext、Canvas、SceneBuilder 中都会用到的 Path。Path 和 Canvas 一样，也是 Flutter engine 层到 Flutter framework 层的桥接，Path 提供的 API 的真正实现在 engine 层，而在 framework 层中我们可以像其它普通的 framework 层的类一样使用 Path 的 API。且 Path 也是完全同 Canvas 一样的套路，在 Path 的同名工厂构造函数中直接返回 `_NativePath`，我们以为自己使用的是 Flutter framework 中一个 Path 类，其实它已经跑到了 engine 层。
 
+&emsp;和学习 Canvas 时一样，我们也暂时不用纠结于 engine 是如何实现 Path 的一众 API 的，我们只要把目光聚焦在 Path API 提供了什么即可。看到 Path 我们大脑中估计会立即浮现出：这就是一个描述路径的类吧，估计也是像其它平台一样，提供直线、曲线、虚线以及闭合路径 等功能，也确实是这样的。在 Flutter 中 Path 最主要的作用就是当我们在 Canvas 中绘制自定义路径时，可以直接用 Path 进行描述，然后另外一个就是当我们对 Canvas 进行区域裁剪时，我们也可以使用 Path 参数来指定裁剪的区域。
+
+&emsp;Path 中的内容整体还是比较简单的，我们快速浏览即可。下面过一遍 Path 的源码，首先是看它的介绍文档。
+ 
 &emsp;Path 由多个子路径（sub-paths）和一个当前点（current point）组成。
 
 &emsp;子路径（sub-paths）由各种类型的段组成，如直线（lines）、弧线（arcs）或贝塞尔曲线（beziers）。子路径（sub-paths）可以是开放的也可以是闭合的，并且可以相互交叉。
@@ -14,11 +18,11 @@
 
 &emsp;Path 可以使用 Canvas.drawPath 绘制在画布（canvases）上，也可以使用于 Canvas.clipPath 中创建裁剪区域（clip regions）。
 
-&emsp;OK，下面看一下 Path 的源码。
+&emsp;下面看一下 Path 的源码。
 
 ## Constructors
 
-&emsp;`_NativePath` 是一个针对于当前平台的 base class（`base class _NativePath extends NativeFieldWrapperClass1 implements Path { // ... }`），用来实现抽象类 Path 的工厂构造函数。在这里，`_NativePath` 类实现了 Path 抽象类中的工厂构造函数，来完成 Path 类的实例化。（NativeFieldWrapperClass1：就是它的逻辑是由不同平台的 Engine 区分实现。） 
+&emsp;`_NativePath` 是一个针对于当前平台的 base class（`base class _NativePath extends NativeFieldWrapperClass1 implements Path { // ... }`），`_NativePath` 类实现了 Path 抽象类中的所有抽象函数，并且在 Path 的同名工厂构造函数中直接返回。
 
 ```dart
 abstract class Path {
@@ -49,9 +53,11 @@ abstract class Path {
   set fillType(PathFillType value);
 ```
 
+&emsp;PathFillType 是一个枚举，用来指示 Path 的填充类型，下面看下此枚举都有哪些值：
+
 ### PathFillType
 
-&emsp;确定决定如何计算 Path 内部的环绕规则。这个枚举被 Path.fillType 属性使用。
+&emsp;确定如何计算 Path 内部的环绕规则。这个枚举被 Path.fillType 属性使用。
 
 + Object -> Enum -> PathFillType
 
@@ -63,29 +69,24 @@ abstract class Path {
 
 &emsp;内部是由奇数边交叉定义的。对于给定点，如果从该点到无限远处画出的一条线穿过一条奇数条线，则将该点视为在路径的内部。[Even-odd_rule](https://en.wikipedia.org/wiki/Even-odd_rule)
 
-#### index
-
-&emsp;一个枚举值的数字标识符。单个枚举的值从零到值的数量减一按顺序编号。这也是枚举类型静态值列表中该值的索引。
-
-&emsp;`List<PathFillType> const values`：一个按声明顺序排列的这个枚举中值的常量列表。
-
-```dart
-  int get index;
-```
+&emsp;我们可以直接看参考链接，体会下 PathFillType.nonZero 和 PathFillType.evenOdd 的区别。下面继续看 Path 的内容。
 
 ## moveTo & relativeMoveTo & lineTo & relativeLineTo
 
 ```dart
-  // 在给定坐标处开始一个新的子路径（sub-path）。（可以理解为设定当前点：（x，y），从此处开始画 Path。）
+  // 在给定坐标处开始一个新的子路径（sub-path）。
+  //（可以理解为设定（x, y）为当前点，后续便从这新当前点开始画路径。）
   void moveTo(double x, double y);
 
   // 从当前点开始，在给定的偏移量处开始一个新的子路径（sub-path）。
+  //（可以理解为更新当前点为：旧的当前点 + (dx, dy)，后续便从这新当前点开始画路径。）
   void relativeMoveTo(double dx, double dy);
 
-  // 向当前点添加一条直线线段，连接到指定点。
+  // 向当前点添加一条以当前点为起点，以这入参指定点 (x, y) 为终点的线段。
   void lineTo(double x, double y);
 
   // 从当前点开始，添加一条直线段到距当前点给定偏移量的点。
+  // (可以理解为以当前点为起点，然后以 "当前点 + (dx, dy)" 为终点的线段。)
   void relativeLineTo(double dx, double dy);
 ```
 
@@ -99,7 +100,7 @@ abstract class Path {
   void quadraticBezierTo(double x1, double y1, double x2, double y2);
 ```
 
-&emsp;relativeQuadraticBezierTo：添加一个二次贝塞尔曲线段，这个曲线从当前点到从当前点偏移 (x2, y2) 的点之间的路径，控制点位于从当前点偏移 (x1, y1) 的位置。
+&emsp;relativeQuadraticBezierTo：添加一个二次贝塞尔曲线段，这个曲线从当前点到从当前点偏移 (x2, y2) 的点（"当前点 + (x2, y2)"）之间的路径，控制点位于从当前点偏移 (x1, y1) 的位置。
 
 ```dart
   void relativeQuadraticBezierTo(double x1, double y1, double x2, double y2);
@@ -115,7 +116,7 @@ abstract class Path {
   void cubicTo(double x1, double y1, double x2, double y2, double x3, double y3);
 ```
 
-&emsp;relativeCubicTo：添加一个三次贝塞尔曲线段，该曲线从当前点到距当前点偏移量为 (x3,y3) 的点，使用从当前点偏移量为 (x1,y1) 和 (x2,y2) 的控制点。
+&emsp;relativeCubicTo：添加一个三次贝塞尔曲线段，该曲线从当前点到距当前点偏移为 (x3, y3) 的点，使用从当前点偏移为 (x1,y1) 和 (x2,y2) 的控制点。
 
 ```dart
   void relativeCubicTo(double x1, double y1, double x2, double y2, double x3, double y3);
@@ -315,6 +316,10 @@ abstract class Path {
 &emsp;OK，Path 的内容到这里就看完了，首先是 Path 是一个抽象类，然后它内部的所有函数都是抽象函数，甚至于它的同名构造函数都是返回一个 NativePath（`factory Path() = _NativePath;`），至于 NativePath 是谁？它定义是这样的：`base class _NativePath extends NativeFieldWrapperClass1 implements Path { // ...}`，可以看到它是完全实现了 Path 抽象函数的一个继承自 NativeFieldWrapperClass1 的类，它的内容主要通过 Flutter engine 在 native 层实现。那里面牵涉的内容比较多，我们后续再学习。目前的话只要我们理解 Path 的功能以及它的一些常见函数，然后后面学习 RenderObject 的绘制时，看到 Path 参数不晕即可。
 
 &emsp;Path 相关的 API 都比较好理解，快速浏览即可。 
+
+
+
+
 
 ## 参考链接
 **参考链接:🔗**
