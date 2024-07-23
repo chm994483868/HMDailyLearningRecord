@@ -34,7 +34,153 @@ abstract class Canvas {
 }
 ```
 
-&emsp;注意到了吗？Canvas 的同名工厂构造函数返回的是 `_NativeCanvas`，它的定义如下：`base class _NativeCanvas extends NativeFieldWrapperClass1 implements Canvas { // ... }`，它同样是一个实现了 Canvas 所有抽象函数并继承自 NativeFieldWrapperClass1 的 base class，它的实现全部由 native 实现。所以，我们暂时不分心去看它的内容，我们只要专注于 Canvas 都提供了哪些功能即可。（Canvas 抽象类中所有的函数都是抽象函数。）
+&emsp;注意到了吗？Canvas 的同名工厂构造函数返回的是 `_NativeCanvas`，它的定义如下：`base class _NativeCanvas extends NativeFieldWrapperClass1 implements Canvas { // ... }`。`_NativeCanvas` 同样是一个实现了 Canvas 所有抽象函数并继承自 NativeFieldWrapperClass1 的 base class，它的实现全部由 Flutter engine 实现。所以 Canvas 其实是 Flutter engine 层到 Flutter framework 层的桥接，Canvas 提供的 API 的真正实现在 engine 层，而在 framework 层中我们可以像其它普通的 framework 层的类一样使用 Canvas 的 API。 所以，我们暂时不分心去看它如何实现，我们只要专注于 Canvas 都提供了哪些功能 API 即可。
+
+&emsp;其实同 Canvas 一样的还有：
+
++ Picture：`base class _NativePicture extends NativeFieldWrapperClass1 implements Picture { // ... }`
++ PictureRecorder：`base class _NativePictureRecorder extends NativeFieldWrapperClass1 implements PictureRecorder { // ... }`
++ Path：`base class _NativePath extends NativeFieldWrapperClass1 implements Path { //... }`
++ EngineLayer：`base class _NativeEngineLayer extends NativeFieldWrapperClass1 implements EngineLayer { // ... }`
++ Scene：`base class _NativeScene extends NativeFieldWrapperClass1 implements Scene { // ... }`
++ SceneBuilder：`base class _NativeSceneBuilder extends NativeFieldWrapperClass1 implements SceneBuilder { // ... }`
+
+&emsp;看到了吗？它们都是属于 Flutter engine 层到 Flutter framework 层的桥接，它们在 framework 层为我们提供了可以无缝在其它 dart 类中可以使用的 API，但是它们的实现部分其实都在 engine 层。而且它们都是与绘制相关的内容，毕竟 Flutter 作为一个 UI 框架，它的绘制能力还是要来自当前所处的 Native 平台的。后续我们再对这些内容学习，目前的话我们专注于这些 API，看看它们都提供了哪些功能。
+
+&emsp;OK，我们继续回到 Canvas 的源码。在开始之前呢，我们先看一个示例，来理解一下：Canvas 的 save 和 restore 的作用，关于它们的内容不太好理解。
+
+&emsp;首先我们对它俩的内容解释一下，然后再看下面的示例代码。
+
+&emsp;当我们使用 CustomPainter 绘制自定义图形时，我们可以使用 Canvas 的 save 和 restore 方法来保存和恢复绘制状态，并且 save 和 restore 必须是成对出现的，否则 IDE 会保存提醒我们。（save 和 restore 我们可以理解为是把当前绘制状态进行入栈和出栈，栈则是绘制栈。）
+
+&emsp;save 方法会保存当前 Canvas 的矩阵状态、剪裁区域、图层以及绘制效果等信息。通过 save 方法保存状态后，我们可以进行一系列绘制操作，然后通过 restore 方法将 Canvas 恢复到距离此 restore 最近的 save 保存的状态，这样就可以避免影响到后续绘制操作。
+
+&emsp;直白一点理解，就是当我们分阶段绘制我们的内容时，我们把每个阶段的绘制内容用 save 和 restore 给它包裹起来，那么各个绘制阶段就不会相互影响了，伪代码如下：
+
+```dart
+class MyPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    
+    canvas.save();
+    // 在此处进行第 1️⃣ 阶段的绘制
+    
+    // 例如这里是在第 1️⃣ 阶段绘制内部，
+    // 下面这个 translate 调用直接把 canvas 的绘制状态向下平移了 100，
+    // 但是由于这里被完整的 save 和 restore 包围着呢，
+    // 那么到了下面的第 2️⃣ 阶段时，它不会受此向下偏移 100 的影响，
+    // 第 2️⃣ 阶段还是会从 (0, 0) 原点处开始绘制。
+    
+    canvas.translate(0, 100);
+    
+    // 而在这个第 1️⃣ 阶段 translate 下面的绘制内容，
+    // 则都会因为这个 translate 而整体向下平移 100。
+    
+    canvas.restore(); // 把第一阶段的绘制状态 pop 出了绘制堆栈，这样就不影响后续的绘制了。
+    
+    // 下面我们可以从 canvas 的最初态继续我们的绘制了。
+    
+    canvas.save();
+    
+    // 在此处进行第 2️⃣ 阶段的绘制
+    
+    canvas.restore();
+    
+    // 如果后续没有分阶段的绘制了，
+    // 我们也可以省略 save 和 restore，
+    // 直接在此进行第 3️⃣ 阶段的绘制
+  }
+}
+```
+
+&emsp;当然如果我们没有那么多绘制阶段，只想一次给它绘制完毕的话，那么直接省略 save 和 restore 也是可以的。但是如果在绘制时没有正确使用 save 和 restore 方法来保存和恢复 Canvas 的绘制状态，可能会导致绘制效果出现意外的结果，或者影响到后续的绘制操作。没有正确保存和恢复 Canvas 绘制状态可能会导致以下问题：
+
+1. 绘制效果叠加：如果在绘制过程中改变了 Canvas 的状态（如平移、旋转、缩放、图层等），而没有在后续绘制完成后恢复状态，可能导致后续的绘制操作受到之前的状态影响，从而出现意外的绘制效果。
+
+2. 剪裁区域错误：如果在绘制过程中修改了 Canvas 的剪裁区域，但没有恢复，可能会导致后续的绘制操作受到错误的剪裁，从而绘制内容被裁剪。
+
+3. 性能问题：频繁修改 Canvas 状态而没有正确保存和恢复可能会影响性能，不必要的状态变化增加了绘制的开销。
+
+&emsp;因此，为了确保绘制的正确性和性能，建议在需要修改 Canvas 的绘制状态时使用 save 方法保存绘制状态在绘制栈中，在绘制完成后使用 restore 方法恢复绘制状态，从而保持绘制的独立性、隔离性和正确性。
+
+&emsp;如下是一个完整的示例，我们可以一键粘贴到我们的 IDE 里面运行调试一下：
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
+void main() {
+  runApp(const MyCustomPainterApp());
+}
+
+class MyCustomPainterApp extends StatelessWidget {
+  const MyCustomPainterApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text('CustomPainter Example')),
+        body: Center(
+          child: CustomPaint(size: MediaQuery.of(context).size, painter: MyPainter()),
+        ),
+      ),
+    );
+  }
+}
+
+class MyPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    debugPrint('      初始状态:${canvas.getSaveCount()} ${canvas.getTransform()}');
+
+    // 第 1️⃣ 阶段绘制，保存 Canvas 的状态。
+    canvas.save();
+    debugPrint('第一次 save 后:${canvas.getSaveCount()} ${canvas.getTransform()}');
+
+    // 把 canvas 向下平移 100
+    canvas.translate(0, 100);
+    debugPrint(' translate 后:${canvas.getSaveCount()} ${canvas.getTransform()}');
+
+    // 首先绘制一个：位于原点，宽高分别是 100 的红色正方形。
+    // 但是由于上面👆canvas 向下平移了 100，所以红色正方形的位置在 (0, 100) 处
+    canvas.drawRect(
+        const Rect.fromLTWH(0, 0, 100, 100), Paint()..color = Colors.red);
+
+    // 第 1️⃣ 阶段绘制结束了，恢复 Canvas 的状态。
+    canvas.restore();
+    debugPrint('阶段一 restore:${canvas.getSaveCount()} ${canvas.getTransform()}');
+
+    // 第 2️⃣ 阶段绘制
+    canvas.save();
+
+    // 这里回到了 canvas 的初始态了，可以继续进行其他绘制操作，不受之前的绘制影响
+    // 绘制一个圆心在 (150, 150)，直径是 100 的颜色是蓝色的圆
+    canvas.drawCircle(const Offset(150, 150), 50, Paint()..color = Colors.blue);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// log 输出如下：
+// 初始态，然后下面第一个 restore 调用后，会恢复到此状态。看到初始 saveCount 绘制栈是 2。
+flutter:       初始状态:2 [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 115.0, 0.0, 1.0]
+
+flutter: 第一次 save 后:3 [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 115.0, 0.0, 1.0]
+flutter:  translate 后:3 [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 215.0, 0.0, 1.0]
+
+// 可看到此处 canvas 又恢复了初始态。
+flutter: 阶段一 restore:2 [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 115.0, 0.0, 1.0]
+```
+
+<center class="half">
+  <img src="https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/e5571c680c1d4724b96433ead37b5e9c~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721794209&x-orig-sign=dbC7zmH%2FlEPp3PsZFARNax7ymek%3D" width="200"/><img src="https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/20a50894d4564aec8d2d14e12bbf295d~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721794311&x-orig-sign=tjPTEEDR853EOv6NDCFa%2FTy%2B9pI%3D" width="200"/>
+</center>
+
+&emsp;OK，接下来我们继续看 Canvas 的源码。
 
 ## save
 
@@ -74,6 +220,7 @@ void paint(Canvas canvas, Size size) {
   
   canvas.drawPaint(Paint()..color = Colors.red);
   canvas.drawPaint(Paint()..color = Colors.white);
+  
   canvas.restore();
   canvas.restore();
 }
@@ -87,10 +234,11 @@ void paint(Canvas canvas, Size size) {
   Rect rect = Offset.zero & size;
   
   canvas.save();
-  canvas.clipRRect(RRect.fromRectXY(rect, 100.0, 100.0));
   
+  canvas.clipRRect(RRect.fromRectXY(rect, 100.0, 100.0));
   canvas.drawPaint(Paint()..color = Colors.red);
   canvas.drawPaint(Paint()..color = Colors.white);
+  
   canvas.restore();
 }
 ```
@@ -100,14 +248,11 @@ void paint(Canvas canvas, Size size) {
 ```dart
 void paint(Canvas canvas, Size size) {
   canvas.save();
-  
   canvas.clipRRect(RRect.fromRectXY(Offset.zero & (size / 2.0), 50.0, 50.0));
   canvas.drawPaint(Paint()..color = Colors.white);
-  
   canvas.restore();
   
   canvas.save();
-  
   canvas.clipRRect(RRect.fromRectXY(size.center(Offset.zero) & (size / 2.0), 50.0, 50.0));
   canvas.drawPaint(Paint()..color = Colors.white);
   canvas.restore();
@@ -127,6 +272,8 @@ void paint(Canvas canvas, Size size) {
 + save，用于保存当前状态，但不为后续命令创建新图层。
 + BlendMode，讨论了使用 Paint.blendMode 与 saveLayer 的情况。
 
+&emsp;目前看下来，只能注意到 savaLayer 相对于 save 而言多了 Layer 的新建。saveLayer 会创建新的 Layer，而 save 则是还在当前 Layer 下进行绘制。然后还有一个抗锯齿的处理的不同。
+
 ```dart
   void saveLayer(Rect? bounds, Paint paint);
 ```
@@ -135,7 +282,7 @@ void paint(Canvas canvas, Size size) {
 
 &emsp;如果有内容要弹出，则弹出当前保存栈（save stack）。否则，不执行任何操作。
 
-&emsp;使用 save 和 saveLayer 将 state push 到栈上。如果 state 是使用 saveLayer pushed 的，则此调用还将导致新图层（new layer）合成到上一个图层中。
+&emsp;使用 save 和 saveLayer 将 canvas 状态 push 到栈上。如果 state 是使用 saveLayer pushed 的，则此调用还将导致新图层（new layer）合成到上一个图层中。
 
 ```dart
   void restore();
@@ -145,9 +292,9 @@ void paint(Canvas canvas, Size size) {
 
 &emsp;将保存栈（save stack）还原到之前的层级，就像从 getSaveCount 获取到的那样。如果 count 小于 1，则栈将被还原到初始状态。如果 count 大于当前的 getSaveCount，则不会发生任何操作。
 
-&emsp;使用 save 和 saveLayer 将状态推入栈中。
+&emsp;使用 save 和 saveLayer 将 canvas 状态推入栈中。
 
-&emsp;如果通过此调用恢复的状态堆栈级别中有任何是通过 saveLayer 推送的，则此调用还将导致这些层被合成到它们以前的层中。
+&emsp;如果通过此调用恢复的 canvas 状态堆栈级别中有任何是通过 saveLayer 推送的，则此调用还将导致这些层被合成到它们以前的层中。
 
 ```dart
   void restoreToCount(int count);
@@ -155,7 +302,7 @@ void paint(Canvas canvas, Size size) {
 
 ## getSaveCount
 
-&emsp;返回保存栈上的项目数量，包括初始状态。这意味着对于一个干净的 canvas，它返回 1，每个 save 和 saveLayer 调用都会递增它，并且每个匹配的 restore 调用都会递减它。
+&emsp;返回保存栈内的项目数量，包括初始状态。这意味着对于一个干净的 canvas，它返回 1，每个 save 和 saveLayer 调用都会递增它，并且每个匹配的 restore 调用都会递减它。
 
 &emsp;这个数字不会低于1。
 
@@ -163,15 +310,17 @@ void paint(Canvas canvas, Size size) {
   int getSaveCount();
 ```
 
+&emsp;OK，上面就是跟 Canvas 相关的绘制状态堆栈保存的全部函数了，下面则是 Canvas 提供的一系列绘制 API 了，如绘制路径、文本、图像等等来实现自定义的绘制，以及平移、旋转、缩放等等变换效果。
+
 ## translate & scale & rotate & skew & transform
 
-&emsp;下面一组函数，即对当前的 Canvas 整体进行：平移、缩放、旋转等操作。
+&emsp;下面一组函数，即对本绘制阶段内后续的绘制内容整体进行：平移、缩放、旋转等操作。（注意是对后续的绘制操作产生影响，比如我们绘制了一个正方形，我们想要它旋转 30 度，那么我们就需要先调用：canvas.rotate(30)，然后在绘制正方形。还有它是对后续整体的绘制内容进行处理，例如本次绘制阶段我们画了一个正方向和一个圆形，那么平移操作就是让它们整体进行平移，而不是单独对正方形或者圆形平移，如果平移操作需要单独处理的话，则需要把它们拆分到不同的绘制阶段。）
 
 &emsp;translate：将 current transform 添加到 translation 中，通过第一个参数 dx 水平移动坐标空间，通过第二个参数 dy 垂直移动坐标空间。（即在 x 轴和 y 轴平移。）
 
 &emsp;scale：将一个与坐标轴对齐的缩放添加到 current transform 中，水平方向按第一个参数缩放，垂直方向按第二个参数缩放。如果未指定 sy，则 sx 将用于在两个方向上进行缩放。（即在 x 轴和 y 轴变大或者缩小。）
 
-&emsp;rotate：将 current transform 添加旋转。参数为顺时针弧度。（即旋转 Canvas。）
+&emsp;rotate：将 current transform 添加旋转。参数为顺时针弧度。
 
 &emsp;skew：在 current transform 中添加一个轴对齐的错切，第一个参数是水平方向上以距离单位顺时针围绕原点的倾斜，第二个参数是垂直方向上以距离单位顺时针围绕原点的倾斜。
 
@@ -195,13 +344,15 @@ void paint(Canvas canvas, Size size) {
   Float64List getTransform();
 ```
 
+&emsp;OK，Canvas 中与变换相关的 API 看完了，下面则是一系列与裁剪相关的 API。
+
 ## clipRect
 
 &emsp;将 clip region 减少到当前 clip region 和给定矩形（Rect rect）的交集部分。
 
 ![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/80a7fcac29744edf85498b028898c3c7~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721702423&x-orig-sign=wW2ZuED7VoP1iU6ItbWaDLORKc0%3D)
 
-&emsp;如果 doAntiAlias 为 true，则裁剪将会进行抗锯齿处理。
+&emsp;如果 doAntiAlias 为 true，则裁剪边界将会进行抗锯齿处理。
 
 &emsp;如果多个绘制命令与裁剪边界相交，这可能会导致在裁剪边界处发生错误的混合。
 
@@ -220,11 +371,11 @@ void paint(Canvas canvas, Size size) {
 
 ## clipRRect
 
-&emsp;将 clip region 减少为当前 clip region 与给定圆角矩形的交集。
+&emsp;将 clip region 减少到当前 clip region 与给定圆角矩形（RRect rrect）的交集部分。
 
 ![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/fddd5bfe1db2406481c4b192012c6881~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721702722&x-orig-sign=HFUs86zLGVE8p5%2FImWs6Jfefcdk%3D)
 
-&emsp;如果 doAntiAlias 为 true，则裁剪将会进行抗锯齿处理。
+&emsp;如果 doAntiAlias 为 true，则裁剪边界将会进行抗锯齿处理。
 
 &emsp;如果多个绘制命令与裁剪边界相交，这可能会导致在裁剪边界处发生错误的混合。
 
@@ -234,11 +385,11 @@ void paint(Canvas canvas, Size size) {
 
 ## clipPath
 
-&emsp;将 clip region 减小为当前 clip region 与给定路径的交集。
+&emsp;将 clip region 减小到当前 clip region 与给定路径（Path path）的交集部分。
 
 ![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/985f0fd12c64428f968a2f42c2f2b568~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721703020&x-orig-sign=ZSAbPU2O0K9%2BGVYXHBXV8G3%2Fyes%3D)
 
-&emsp;如果 doAntiAlias 为 true，则裁剪将会进行抗锯齿处理。
+&emsp;如果 doAntiAlias 为 true，则裁剪边界将会进行抗锯齿处理。
 
 ```dart
   void clipPath(Path path, {bool doAntiAlias = true});
@@ -246,11 +397,11 @@ void paint(Canvas canvas, Size size) {
 
 ## getLocalClipBounds
 
-&emsp;返回在当前 Canvas 对象的保存栈内执行的所有剪切方法组合结果的保存边界，以本地坐标空间计量，即在当前进行渲染操作的本地坐标空间下。
+&emsp;返回在当前 Canvas 对象的保存栈内执行的所有裁剪方法组合结果的保存边界，以本地坐标空间计量，即在当前进行渲染操作的本地坐标空间下。
 
-&emsp;组合的剪切结果在转回本地坐标空间之前会被舍入到整数像素边界，这考虑了渲染操作中的像素舍入，尤其是在抗锯齿时。因为 Picture 最终可能会被渲染到转换小部件或层上下文中的场景中，因此由于过早的舍入，结果可能会过于保守。结合使用 getDestinationClipBounds 方法、外部转换和真实设备坐标系中的舍入，将产生更准确的结果，但此值可能提供一个更便利的近似值，用于比较渲染操作与已建立的剪切操作。
+&emsp;组合的裁剪结果在转回本地坐标空间之前会被舍入到整数像素边界，这考虑了渲染操作中的像素舍入，尤其是在抗锯齿时。因为 Picture 最终可能会被渲染到 transforming widgets 或 layers 上下文中的场景中，因此由于过早的舍入，结果可能会过于保守。结合使用 getDestinationClipBounds 方法、外部转换和真实设备坐标系中的舍入，将产生更准确的结果，但此值可能提供一个更便利的近似值，用于比较渲染操作与已建立的裁剪操作。
 
-&emsp;边界的保守估计是基于执行 ClipOp.intersect 与每个剪切方法的边界相交，可能会忽略使用 ClipOp.difference 执行的任何剪切方法。ClipOp 参数仅在 clipRect 方法上存在。
+&emsp;边界的保守估计是基于执行 ClipOp.intersect 与每个裁剪方法的边界相交，可能会忽略使用 ClipOp.difference 执行的任何裁剪方法。ClipOp 参数仅在 clipRect 方法上存在。
 
 &emsp;为了理解边界估计如何保守，请考虑以下两个剪切方法调用：
 
@@ -279,11 +430,13 @@ void draw(Canvas canvas) {
 
 ## getDestinationClipBounds
 
-&emsp;
+&emsp;返回在当前 Canvas 对象的保存栈内执行的所有 clip 方法组合结果的保守边界，以目标坐标空间中的度量为准，该坐标空间将渲染 Picture。
 
 ```dart
   Rect getDestinationClipBounds();
 ```
+
+&emsp;Ok，Canvas 裁剪相关的 API 结束了，下面是一组绘制功能的 API。
 
 ## drawColor
 
@@ -295,7 +448,7 @@ void draw(Canvas canvas) {
 
 ## drawLine
 
-&emsp;使用给定的 Paint paint 在给定的点（Offset p1 和 Offset p2）之间绘制一条线。该线是 stroked 的，对于这次调用，忽略 Paint.style 的值。p1 和 p2 参数被解释为相对于原点的偏移量。
+&emsp;使用给定的 Paint paint 在给定的点（Offset p1 和 Offset p2）之间绘制一条线。该线是 stroked 的，对于这次调用，忽略 Paint.style 的值。Offset p1 和 Offset p2 参数被解释为相对于原点的偏移量。
 
 ![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/1722ac22ca784972b45db368b37af77f~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721703947&x-orig-sign=Ef9hakoJ%2Bsm1bkozxwD9MmGY014%3D)
 
@@ -362,6 +515,8 @@ void draw(Canvas canvas) {
 ```dart
   void drawPath(Path path, Paint paint);
 ```
+
+&emsp;下面则是一组把图片绘制到 canvas 中的 API。
 
 ## drawImage & drawImageRect & drawImageNine
 
@@ -490,16 +645,44 @@ void draw(Canvas canvas) {
   void drawShadow(Path path, Color color, double elevation, bool transparentOccluder);
 ```
 
+## Canvas 总结
 
+&emsp;OK，Canvas 的内容看完了，首先是它的初始化需要传入一个 PictureRecorder 用于记录在此 Canvas 中进行的绘制操作，并在绘制结束时可通过 PictureRecorder.endRecording 取得 Picture。取得 Picture 对象后可通过 SceneBuilder.addPicture 把此 Picture 添加到 Scene 中。其后通过 window.render 将 Scene 送入 Engine 层，最终经 GPU 光栅化后显示在屏幕上。
 
+&emsp;Canvas 的绘制结果想要显示到屏幕上后续还有很多路要走。后面我们会逐步学习。当前的话我们的主要目标是理解 Canvas 的功能定位（在渲染管线上处于哪个环节。），以及提供了哪些基础的绘制接口。
 
+&emsp;关于 Canvas 的工厂构造函数中出现的 `_NativeCanvas`：`base class _NativeCanvas extends NativeFieldWrapperClass1 implements Canvas { // ... }`，它才是完成 Canvas 绘制操作的实现者，它位于 engine 层，它是由 C++ 实现的，都是比较复杂的，但是呢在 framework 层 Canvas 为我们提供了良好的绘制操作的接口，让我们得以在 framework 层可以轻松的使用自定义绘制功能，后续学习 RenderObject 的绘制流程时我们更能体现到 Canvas 良好接口设计的价值。
 
+&emsp;那么 Canvas 的绘制接口则可以细分为如下几个部分：
 
+1. save/saveLayer/restore：确保绘制的正确性和性能，在需要修改 Canvas 的绘制状态时使用 save 方法保存绘制状态在绘制栈中，在绘制完成后使用 restore 方法恢复绘制状态，从而保持绘制的独立性、隔离性和正确性。
+2. translate/scale/rotate/skew/transform：支持矩阵变换（transformation matrix）：平移/缩放/旋转/倾斜，它们将作用于其后在该 Canvas 上进行的绘制操作。
+3. clipRect/clipRRect/clipPath：支持区域裁剪(clip region)，它们将作用于其后在该 Canvas 上进行的绘制操作。
+4. 下面则是一系列的绘制函数：
 
++ drawColor: 在 Canvas 上填充指定颜色。
++ drawPaint: 在 Canvas 上绘制 Paint 对象。
++ drawLine: 在 Canvas 上绘制直线。
++ drawRect: 在 Canvas 上绘制矩形。
++ drawRRect: 在 Canvas 上绘制圆角矩形。
++ drawDRRect: 在 Canvas 上绘制双圆角矩形。
++ drawOval: 在 Canvas 上绘制椭圆形。
++ drawCircle: 在 Canvas 上绘制圆形。
++ drawArc: 在 Canvas 上绘制弧线。
++ drawPath: 在 Canvas 上绘制路径。
++ drawImage: 在 Canvas 上绘制指定图片。
++ drawImageRect: 在 Canvas 上绘制指定图片的指定区域。
++ drawImageNine: 在 Canvas 上绘制九宫格方式拉伸图片。
++ drawPicture: 在 Canvas 上绘制 Picture 对象。
++ drawParagraph: 在 Canvas 上绘制文本段落。
++ drawPoints: 在 Canvas 上绘制点集。
++ drawRawPoints: 在 Canvas 上绘制原始点集。
++ drawVertices: 在 Canvas 上绘制顶点集合。
++ drawAtlas: 在 Canvas 上绘制图集（纹理集合）中的图像。
++ drawRawAtlas: 在 Canvas 上绘制原始图集中的图像。
++ drawShadow: 在 Canvas 上绘制阴影效果。
 
-
-
-
+&emsp;Canvas 的内容学习到这里，我们下篇继续。
 
 ## 参考链接
 **参考链接:🔗**
