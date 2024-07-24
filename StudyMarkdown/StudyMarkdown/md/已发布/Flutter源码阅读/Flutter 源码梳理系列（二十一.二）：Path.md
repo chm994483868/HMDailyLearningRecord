@@ -73,6 +73,8 @@ abstract class Path {
 
 ## moveTo & relativeMoveTo & lineTo & relativeLineTo
 
+&emsp;relativeXXX 与无 relative 的函数基本都是成对出现的，相比于无 relative 的函数版本，relativeXXX 就是在目标点上添加一个指定偏移，其它都是一样的。
+
 ```dart
   // 在给定坐标处开始一个新的子路径（sub-path）。
   //（可以理解为设定（x, y）为当前点，后续便从这新当前点开始画路径。）
@@ -94,13 +96,14 @@ abstract class Path {
 
 &emsp;quadraticBezierTo：添加一个二次贝塞尔曲线段，从当前点曲线到给定点（x2,y2），使用控制点（x1,y1）。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/8affe12d1dcb4633a67ab9e947d202c0~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721578789&x-orig-sign=Xfvwrn%2FbyX8XC4%2FEcWcRm2wF0ik%3D)
-
+![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/693f73dd0cd3477585eb70caa21a5284~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721868366&x-orig-sign=i2%2F1ftLsirrGBCgal2c%2Bh9beyv0%3D)
 ```dart
   void quadraticBezierTo(double x1, double y1, double x2, double y2);
 ```
 
 &emsp;relativeQuadraticBezierTo：添加一个二次贝塞尔曲线段，这个曲线从当前点到从当前点偏移 (x2, y2) 的点（"当前点 + (x2, y2)"）之间的路径，控制点位于从当前点偏移 (x1, y1) 的位置。
+
+&emsp;如果当前点是原点，则二者效果相同。
 
 ```dart
   void relativeQuadraticBezierTo(double x1, double y1, double x2, double y2);
@@ -126,7 +129,7 @@ abstract class Path {
 
 &emsp;conicTo：添加一个贝塞尔曲线段，从当前点曲线到给定点 (x2, y2)，使用控制点 (x1, y1) 和权重 w。如果权重大于 1，则曲线是一个双曲线；如果权重等于 1，则是一个抛物线；如果小于 1，则是一个椭圆。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/cb8623dc7f4d43e9a4fc88bd1335f79a~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721579988&x-orig-sign=r3UTd2XE6650EKuSWJxY8Z9dGKk%3D)
+![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/e7436394e00a49fc86682bd20ee9eb6e~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721869611&x-orig-sign=Djqtno%2FydnSpVY1cslN2RnmUiPk%3D)
 
 ```dart
   void conicTo(double x1, double y1, double x2, double y2, double w);
@@ -202,7 +205,7 @@ abstract class Path {
 
 &emsp;添加一个新的子路径（sub-path），其中包含一个弧段，该弧段由限定的矩形边界内椭圆的边缘形成，从弧度 startAngle 开始围绕椭圆到弧度 startAngle + sweepAngle 结束，其中 0 弧度是横穿矩形中心的水平线的椭圆右侧点，正角度顺时针围绕椭圆。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/b153313c769c42599d59ffbcb1acd2bf~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721581806&x-orig-sign=aX9ZD7v0IMroeRepiBQOyq93C5E%3D)
+![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/11fd1a2903ff4cb080020bfbde5a5e0c~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721868486&x-orig-sign=v5JnBngQuMjnC6LzV3vDRUwJn8g%3D)
 
 ![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/a2a5494fdd1f41a49120c145ab7398c9~tplv-73owjymdk6-watermark.image?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1721581829&x-orig-sign=HOk9TX%2BpUsHHlYiM8g9RinyMKFM%3D)
 
@@ -306,10 +309,58 @@ abstract class Path {
   }
 ```
 
-## computeMetrics
+&emsp;Ok，API 看完了，有哪些不理解的，或者不熟悉的可套用下面的示例代码操作一番：
 
-&emsp;
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
+void main() {
+  runApp(const MyCustomPainterApp());
+}
+
+class MyCustomPainterApp extends StatelessWidget {
+  const MyCustomPainterApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('CustomPainter Example'),
+        ),
+        body: Center(
+          child: CustomPaint(
+            size: MediaQuery.of(context).size,
+            painter: MyPainter(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MyPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Path path = Path();
+    path.moveTo(50, 50);
+
+    path.lineTo(150, 150);
+    // path.relativeLineTo(100, 100);
+
+    final Paint paint = Paint();
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 5;
+    paint.color = Colors.redAccent;
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+```
 
 ## Path 总结
 
@@ -317,9 +368,21 @@ abstract class Path {
 
 &emsp;Path 相关的 API 都比较好理解，快速浏览即可。 
 
-
-
-
++ moveTo: 移动 Path 起始点的位置到指定的坐标点。
++ relativeMoveTo: 相对移动 Path 起始点的位置到指定的坐标点。
++ lineTo: 连接当前 Path 结束点和指定坐标点，绘制直线段。
++ relativeLineTo: 相对于当前 Path 结束点的位置，绘制直线段。
++ quadraticBezierTo: 绘制二阶贝塞尔曲线。
++ relativeQuadraticBezierTo: 绘制相对位置的二阶贝塞尔曲线。
++ cubicTo: 绘制三阶贝塞尔曲线。
++ relativeCubicTo: 绘制相对位置的三阶贝塞尔曲线。
++ conicTo: 绘制圆锥曲线，需要指定 weight 参数。
++ arcTo: 通过指定矩形框和起始角度、扫描角度，绘制弧线。
++ arcToPoint: 通过指定矩形框的某一点，绘制连接当前点和目标点的弧线。
++ addRect: 向 Path 添加一个矩形。
++ addOval: 向 Path 添加一个椭圆形。
++ addArc: 向 Path 添加一个圆弧。
++ addPolygon: 向 Path 添加多边形。
 
 ## 参考链接
 **参考链接:🔗**
