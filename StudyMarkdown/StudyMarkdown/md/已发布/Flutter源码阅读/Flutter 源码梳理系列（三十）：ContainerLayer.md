@@ -1,0 +1,187 @@
+# Flutter 源码梳理系列（三十）：ContainerLayer
+
+&emsp;ContainerLayer 作为 PaintingContext 构造函数的必传参数，我们来学习一下。
+
+# ContainerLayer
+
+&emsp;ContainerLayer 是一个具有子节点列表的复合图层。ContainerLayer 实例仅接受一个子节点列表，并按顺序将它们插入到复合渲染中。有一些 ContainerLayer 的子类在此过程中应用更复杂的效果。
+
+## Constructors
+
+&emsp;ContainerLayer 直接继承自 Layer，并且作为 PaintingContext 的必传参数，所以它是我们在上层开发中会真实使用的类，下面一起来看一下它其它内容。
+
+```dart
+class ContainerLayer extends Layer {
+  // ...
+}
+```
+
+## `_fireCompositionCallbacks`
+
+&emsp;
+
+```dart
+  @override
+  void _fireCompositionCallbacks({required bool includeChildren}) {
+    super._fireCompositionCallbacks(includeChildren: includeChildren);
+    
+    if (!includeChildren) {
+      return;
+    }
+    
+    // 遍历自己的子级 Layer，调用它们的 _fireCompositionCallbacks 回调。
+    Layer? child = firstChild;
+    while (child != null) {
+      child._fireCompositionCallbacks(includeChildren: includeChildren);
+      child = child.nextSibling;
+    }
+  }
+```
+
+## firstChild & lastChild & hasChildren
+
+&emsp;firstChild 是此 ContainerLayer 子级列表中的第一个合成图层。lastChild 是此 ContainerLayer 子级列表中的最后一个合成图层。是的，没错，ContainerLayer 的子级列表其实是以一个双向链表的形式存在的。
+
+&emsp;hasChildren：只要 `_firstChild` 不为 null，说明此 ContainerLayer 至少有一个子图层。 
+
+```dart
+  Layer? get firstChild => _firstChild;
+  Layer? _firstChild;
+
+  Layer? get lastChild => _lastChild;
+  Layer? _lastChild;
+
+  // 即只要 _firstChild 不为 null，说明此 ContainerLayer 至少有一个子图层。 
+  bool get hasChildren => _firstChild != null;
+```
+
+## supportsRasterization
+
+&emsp;需要此 ContainerLayer 的所有子图层都支持 光栅化，那么此 ContainerLayer 才支持光栅化。
+
+```dart
+  @override
+  bool supportsRasterization() {
+    
+    // 从 lastChild 往前遍历，只要有一个子图层不支持光栅化，那么此 ContainerLayer 就不支持光栅化。 
+    for (Layer? child = lastChild; child != null; child = child.previousSibling) { 
+      if (!child.supportsRasterization()) {
+        return false;
+      }
+    }
+    
+    // 都支持的话，那么此 ContainerLayer 也支持光栅化。
+    return true;
+  }
+```
+
+## buildScene
+
+&emsp;把这个层当作根层，在引擎中构建一个场景（即一棵层树）。
+
+&emsp;这个方法位于 ContainerLayer 类中，而不是 PipelineOwner 或其他单例级别，是因为这个方法既可以用于渲染整个图层树（例如普通应用程序帧），也可以用于渲染子树（例如 OffsetLayer.toImage）。
+
+```dart
+  ui.Scene buildScene(ui.SceneBuilder builder) {
+    updateSubtreeNeedsAddToScene();
+    
+    addToScene(builder);
+    
+    if (subtreeHasCompositionCallbacks) {
+      _fireCompositionCallbacks(includeChildren: true);
+    }
+    
+    // Clearing the flag _after_ calling `addToScene`, not _before_. This is
+    // because `addToScene` calls children's `addToScene` methods, which may
+    // mark this layer as dirty.
+    
+    // 在调用 addToScene 之后清除标记，而不是在调用之前。
+    // 这是因为 addToScene 会调用子节点的 addToScene 方法，这可能会将该层标记为脏。
+    
+    _needsAddToScene = false;
+    final ui.Scene scene = builder.build();
+    return scene;
+  }
+```
+
+## dispose
+
+&emsp;
+
+```dart
+  @override
+  void dispose() {
+    removeAllChildren();
+    
+    _callbacks.clear();
+    
+    super.dispose();
+  }
+```
+
+## updateSubtreeNeedsAddToScene
+
+&emsp;从这个图层开始遍历图层子树，并确定是否需要 addToScene。
+
+如果满足以下任一条件，则图层需要 addToScene：
+
++ alwaysNeedsAddToScene 为 true。
++ 已调用 markNeedsAddToScene。
++ 任何后代图层需要 addToScene。
+
+&emsp;ContainerLayer 覆盖此方法以递归地在其子图层上调用它。
+
+```dart
+  @override
+  void updateSubtreeNeedsAddToScene() {
+    super.updateSubtreeNeedsAddToScene();
+    
+    // 遍历所有的子级图层，
+    Layer? child = firstChild; 
+    while (child != null) {
+      child.updateSubtreeNeedsAddToScene();
+      
+      _needsAddToScene = _needsAddToScene || child._needsAddToScene;
+      
+      child = child.nextSibling;
+    }
+  }
+```
+
+## addChildrenToScene
+
+&emsp;将该层的所有子项上传到引擎。
+
+&emsp;通常，此方法由 addToScene 使用，以将子项插入到场景中。ContainerLayer 的子类通常会重写 addToScene 方法，利用 SceneBuilder API 对场景应用效果，然后使用 addChildrenToScene 将它们的子项插入到场景中，在从 addToScene 返回之前撤销上述效果。
+
+```dart
+  void addChildrenToScene(ui.SceneBuilder builder) {
+    Layer? child = firstChild;
+    while (child != null) {
+      child._addToSceneWithRetainedRendering(builder);
+      child = child.nextSibling;
+    }
+  }
+```
+
+## applyTransform
+
+&emsp;应用将应用于给定矩阵的子层的变换。
+
+&emsp;具体来说，这应该应用于子层原点的变换。当使用一系列层级调用 applyTransform 时，除非链中最深的层将 layerOffset 折叠到零，即向其子层传递 Offset.zero，并将任何传入的 layerOffset 作为 transform（例如）混合到 SceneBuilder 中（然后还包含在 applyTransform 应用的变换中），否则结果将不可靠。
+
+例如，如果 addToScene 应用 layerOffset，然后将 Offset.zero 传递给子层，则它应包含在此处应用的变换中；而如果 addToScene 只是将 layerOffset 传递给子层，则不应包含在此处应用的变换中。
+
+此方法仅在调用 addToScene 之后即刻有效，在更改任何属性之前。
+
+默认实现什么也不做，因为默认情况下 ContainerLayer 在 ContainerLayer 本身的原点处合成其子层。
+
+child 参数通常不应为 null，因为原则上每个层都可以独立地转换每个子层。但是，某些层可能显式地允许 null 作为值，例如如果它们知道它们将所有子层都以相同方式转换。
+
+供 FollowerLayer 使用，将其子层转换为 LeaderLayer 所在位置。
+
+```dart
+  void applyTransform(Layer? child, Matrix4 transform) {
+    assert(child != null);
+  }
+```

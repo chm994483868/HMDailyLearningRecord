@@ -10,23 +10,25 @@
 
 &emsp;然而，RenderObject 类：
 
-+ 没有定义子级模型（例如，一个节点是否有零个、一个或多个子级）。（但是提供了几个 RenderObject Mixin。）
++ 没有定义子级模型（例如，一个节点是否有零个、一个或多个子级）。（但是 Framework 提供了几个 RenderObject Mixin。）
 + 它也没有定义坐标系（例如，子级是在笛卡尔坐标中定位，还是在极坐标中定位等）。
 + 也没有特定的布局协议（例如，布局是宽度输入高度输出，约束输入尺寸输出，还是父级在子级布局之前或之后设置大小和位置等；或者子级是否允许读取其父级的 parentData slot）。
 
-&emsp;RenderBox 子类布局系统使用了笛卡尔坐标系（同 iOS，屏幕左上角是原点，X 轴向右增大，Y 轴向下增大）。RenderBox 是一个直接继承自 RenderObject 的抽象类。大部分的 Widget 都会使用 RenderBox 作为它们的 render object，而不是直接使用 RenderObject。（`abstract class RenderBox extends RenderObject { // ... }`）
+&emsp;RenderBox 作为 RenderObject 的直接子类其布局系统使用了笛卡尔坐标系（同 iOS，屏幕左上角是原点，X 轴向右增大，Y 轴向下增大）。
 
-&emsp;大概意思就是：RenderObject 是一个特别底层的类，只提供了一些最基础功能，然后以它为父类创建子类，例如 RenderBox，它可以更方便的帮助我们在 Flutter 中进行布局和绘制。（后面我们会对 RenderBox 进行详细学习）
+&emsp;RenderBox 是一个直接继承自 RenderObject 的抽象类。大部分的 RenderObjectWidget 都会使用 RenderBox 的子类作为它们的 RednerObjectWidget.createRenderObject 函数返回的 RenderObject，而不是直接使用 RenderObject 的子类。
+
+&emsp;大概意思就是：RenderObject 是一个特别底层的类，只提供了一些最基础功能，然后以它为父类创建子类，例如 RenderBox，它可以更方便的帮助我们在 Flutter 中进行布局和绘制以及 hit testing。
 
 ## Lifecycle
 
 &emsp;当不再需要 RenderObject 时，必须进行销毁。对象的创建者负责对其进行销毁。通常情况下，创建者是 RenderObjectElement，当它被卸载（unmout）时，该 Element 会销毁它创建的 RenderObject。（这里则可以在 RenderObjectElement.unmout 中找到对应的代码：当 RenderObjectElement 卸载时，它首先记录下自己的旧 widget，然后调用 Element.unmount 函数进行 Element 被卸载时的基本逻辑：1. 如果有 GlobalKey 的话，从 globalKeyRegistry 中把自己移除，2. 把自己的 widget 置为 null，3. 把自己的 dependencies 置为 null，4. 把自己的生命周期状态置为 defunct。然后回到 RenderObjectElement.mount，拿着前面记录的旧 widget，调用：oldWidget.didUnmountRenderObject(renderObject)，即向外传递 renderObject 被卸载了，这是 RenderObjectWidget 独有的，让上层有必要时也可以进行一些清理逻辑，然后调用 renderObject 属性的 dispose 函数，然后把自己的 renderObject 属性置为 null。）
 
-&emsp;RenderObject 在调用 dispose 方法时负责清理所持有的任何昂贵资源，比如 Picture 或 Image 对象。这还包括 render object 直接创建的任何 Layer。dispose 的基本实现将会将 layer 属性设为 null（在 RenderObject.dispose 函数中可见）。RenderObject 子类还必须将直接创建的任何其他 layer 也设置为 null。（同样遵循谁创建了资源，那么当自己要被销毁时也要记得释放自己的创建的资源，谁创建谁释放，看到这里，我们可以发现：StatefulElement 对象和 State 对象它们是一一对应，一同创建一同销毁，而到了 RenderObjedtElement 这里，同样的：RenderObjectElement 会持有自己的 RenderObject，它们也是一一对应的，一同创建（稍晚一点点，当 RenderObjectElement 挂载到 Element Tree 上后，会立即创建 RenderObject 对象，然后也是立即把整个 RenderObject 对象附加到 Render Tree 上去。）一同销毁，在 RenderObjectElement 的生命周期中 renderObject 属性一直都是同一个 RenderObject 对象，不会发生变化。）
+&emsp;RenderObject 在调用 dispose 方法时负责清理所持有的任何昂贵资源，比如 Picture 或 Image 对象。这还包括 RenderObject 直接创建的任何 Layer。dispose 的基本实现将会将 layer 属性设为 null（在 RenderObject.dispose 函数中可见）。RenderObject 子类还必须将直接创建的任何其他 layer 也设置为 null。（同样遵循谁创建了资源，那么当自己要被销毁时也要记得释放自己的创建的资源，谁创建谁释放，看到这里，我们可以发现：StatefulElement 对象和 State 对象它们是一一对应，一同创建一同销毁，而到了 RenderObjedtElement 这里，同样的：RenderObjectElement 会持有自己的 RenderObject，它们也是一一对应的，一同创建（稍晚一点点，当 RenderObjectElement 挂载到 Element Tree 上后，会立即创建 RenderObject 对象，然后也是立即把整个 RenderObject 对象附加到 Render Tree 上去。）一同销毁，在 RenderObjectElement 的生命周期中 renderObject 属性一直都是同一个 RenderObject 对象，不会发生变化。）
                                      
 ## Writing a RenderObject subclass
 
-&emsp;在大多数情况下，直接从 RenderObject 进行子类化是过度的，直接从 RenderBox 开始会是一个更好的起点。然而，如果一个 render object 不想使用笛卡尔坐标系，那么它确实应该直接继承自 RenderObject。这允许它通过使用 Constraints 的一个新子类来定义自己的布局协议，而不是使用 BoxConstraints，并且可能使用一个全新的对象和值来表示输出结果，而不仅仅是一个 Size。这种增强的灵活性是以无法依赖 RenderBox 的特性为代价的。例如，RenderBox 实现了一个固有大小的协议，允许你测量子项而不完全布局，这样，如果子项的大小发生变化，父项将重新布局（以考虑子项的新尺寸）。这是一项微妙且容易出错的功能。
+&emsp;在大多数情况下，直接从 RenderObject 进行子类化是过度的，直接从 RenderBox 开始会是一个更好的起点。然而，如果一个 RenderObject 不想使用笛卡尔坐标系，那么它确实应该直接继承自 RenderObject。这允许它通过使用 Constraints 的一个新子类来定义自己的布局协议，而不是使用 BoxConstraints，并且可能使用一个全新的对象和值来表示输出结果，而不仅仅是一个 Size。这种增强的灵活性是以无法依赖 RenderBox 的特性为代价的。例如，RenderBox 实现了一个固有大小的协议，允许你测量子项而不完全布局，这样，如果子项的大小发生变化，父项将重新布局（以考虑子项的新尺寸）。这是一项微妙且容易出错的功能。
 
 &emsp;编写 RenderBox 的大部分内容同样适用于编写 RenderObject，因此建议阅读 RenderBox 中的讨论以进行背景了解。主要的差异在于布局和点击测试，因为这些是 RenderBox 主要专门处理的方面。（如在 RenderObject 中 HitTestTarget.handleEvent 的实现内容是空的！）
 
@@ -40,9 +42,9 @@
 
 ### Hit Testing
 
-&emsp;Hit testing 比布局更加灵活。没有可重写的方法，你需要自己提供一个。
+&emsp;Hit testing 比布局更加灵活。没有可重写的方法，需要我们自己提供一个。
 
-&emsp;你的 hit testing 方法的一般行为应该类似于为 RenderBox 描述的行为。主要区别在于输入不一定是 Offset（可以理解为 iOS 中的 CGPoint，只有 double x 和 double y 两个字段，表示坐标系中的一个点。）。当向 HitTestResult 添加条目时，你也可以使用不同的 HitTestEntry 子类。当调用 handleEvent 方法时，将传入与添加到 HitTestResult 中的相同对象，因此可以用于跟踪诸如点击的精确坐标等信息，无论新布局协议使用的坐标系是什么。
+&emsp;我们的 hit testing 方法的一般行为应该类似于为 RenderBox 描述的行为。主要区别在于输入不一定是 Offset。当向 HitTestResult 添加条目时，你也可以使用不同的 HitTestEntry 子类。当调用 handleEvent 方法时，将传入与添加到 HitTestResult 中的相同对象，因此可以用于跟踪诸如点击的精确坐标等信息，无论新布局协议使用的坐标系是什么。
 
 ### Adapting from one protocol to another
 
@@ -76,7 +78,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
     // _needsCompositing 表示当前 RenderObject 是否需要进行层合成。
     _needsCompositing = isRepaintBoundary || alwaysNeedsCompositing;
     
-    // 默认是 false，表示当前 RenderObject 是否是绘制边界。
+    // 默认是 false，表示当前的 RenderObject 对象，之前是否是绘制边界。
     _wasRepaintBoundary = isRepaintBoundary;
   }
 ```
@@ -119,7 +121,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
     // 添加到 owner!._nodesNeedingSemantics 中，标记进行语义化更新
     markNeedsSemanticsUpdate();
     
-    // 递归在整个 Render 子树上所有 RenderObject 对象执行 reassemble。
+    // 递归在以当前 RenderObject 为根的整个 Render 子树上所有 RenderObject 对象执行 reassemble。
     visitChildren((RenderObject child) {
       child.reassemble();
     });
@@ -157,7 +159,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 + Parent data 可以在将子级 RenderObject 添加到父级 RenderObject 之前设置，方法是在未来的父级 RenderObject 上调用 setupParentData。
 + 使用 parent data 的约定取决于父级和子级之间使用的布局协议。例如，在 box 布局中，parent data 是完全不透明的，但在 sector（扇区）布局中，子级被允许读取 parent data 的一些字段。
 
-&emsp;这里有点绕哦，还记得 RenderObjectElement.attachRenderObject 函数吗？当把 RenderObject 对象附加到 Render Tree 以后，会查找当前 Element 到祖先中最近的 RenderObjectElement 之间的 ParentDataElement 节点，把它们收集起来，然后循环对当前 RenderObject 对象执行更新 parentData 操作。即调用 ParentDataWidget 的 `void applyParentData(RenderObject renderObject);` 函数，内容就是更新 RenderObject 对象的 parentData 属性。
+&emsp;这里有点绕哦，还记得 RenderObjectElement.attachRenderObject 函数吗？当把 RenderObject 对象附加到 Render Tree 以后，会查找当前 RenderObjectElement 到祖先中最近的 RenderObjectElement 之间的 ParentDataElement 节点，把它们收集起来，然后循环对当前 RenderObject 对象执行更新 parentData 操作。即调用 ParentDataWidget 的 `void applyParentData(RenderObject renderObject);` 函数，内容就是更新 RenderObject 对象的 parentData 属性。
  
 ```dart
   ParentData? parentData;
@@ -165,7 +167,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 ### setupParentData
 
-&emsp;重写此方法可以正确设置子级的 parentData 属性（的类型）。你可以调用此函数来在子级（child RenderObject）附加到父级的子级列表之前设置这个子级的 parentData 属性的默认值或者说是设置默认类型，例如在 RenderBox 中设置的是：`child.parentData = BoxParentData();`，它是 BoxParentData 类型的。而这里是在 RenderObject 基类中，parentData 默认是 ParentData 类型的。ParentData 类是所有 parent data 的基类。（在 BoxParentData 中有一个 Offset offset 属性，被用在子级在父级中的布局偏移值。）
+&emsp;重写此方法可以正确设置子级的 parentData 属性（的类型）。你可以调用此函数来在子级（child RenderObject）附加到父级的子级列表之前设置这个子级的 parentData 属性的默认值或者说是设置默认类型，例如在 RenderBox 中设置的是：`child.parentData = BoxParentData();`，它是 BoxParentData 类型的。而这里是在 RenderObject 基类中，parentData 默认是 ParentData 类型的。ParentData 类是所有 parent data 的基类。（如 BoxParentData 中有一个 Offset offset 属性，被用在子级在父级中的布局偏移值。如 Positioned 中使用的 StackParentData，它则有 top/right/bottom/left/width/height 属性来具体描述子级 RenderObject 在父级 RenderObject 中的位置。）
 
 &emsp;当子级 RenderObject 将要附加到父级 RenderObject 时给这个子级 RenderObject 的 parentData 属性设置默认值。ParentData 是所有 parent data 的基类。
 
@@ -220,7 +222,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 ## parent
 
-&emsp;在 Render Tree 中，此 render object 的直接父级。Render Tree 中根节点的 parent 指向是 null。
+&emsp;在 Render Tree 中，此 RenderObject 的直接父级。Render Tree 中根节点的 parent 指向是 null。
 
 &emsp;前向指针。
 
@@ -231,7 +233,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 ## adoptChild
 
-&emsp;当一个 RenderObject 子类对象决定将一个 RenderObject 作为子级时调用。仅供 RenderObject 子类对象在更改其子级列表（也包括单个 子级的情况）时使用（注意这是修改 RenderObject 对象的子级时使用的函数，例如 SingleChildRenderObjectElement 的 renderObject 类型是：RenderObjectWithChildMixin，它只有一个子级：`ChildType? _child` 子级指针，在它的 Setter 函数中就用到这个 adoptChild 函数，而我们的 MultiChildRenderObjectElement 的 renderObject 类型是：ContainerRenderObjectMixin，它呢有子级列表：`ChildType? _firstChild;` 和 `ChildType? _lastChild;` 组成的链表，当向它的子级列表中加入新的子级时会直接调用这个 adoptChild 函数）。在其他情况下调用此方法将导致不一致的树形结构，并可能导致崩溃。
+&emsp;当一个 RenderObject （子类）实例对象决定将一个 RenderObject 对象作为自己的子级时调用。仅供 RenderObject 子类对象在更改其子级列表（也包括单个 子级的情况）时使用（注意这是修改 RenderObject 对象的子级时使用的函数，例如 SingleChildRenderObjectElement 的 renderObject 类型是：RenderObjectWithChildMixin，它只有一个子级：`ChildType? _child` 子级指针，在它的 Setter 函数中就用到这个 adoptChild 函数，而我们的 MultiChildRenderObjectElement 的 renderObject 类型是：ContainerRenderObjectMixin，它呢有子级列表：`ChildType? _firstChild;` 和 `ChildType? _lastChild;` 组成的链表，当向它的子级列表中加入新的子级时会直接调用这个 adoptChild 函数）。在其他情况下调用此方法将导致不一致的树形结构，并可能导致崩溃。
 
 &emsp;这里我们根据一个 MultiChildRenderObjectElement 节点且其父级也是 MultiChildRenderObjectElement 为例，当把此 RenderObjectElement 节点被挂载到 Element Tree 上时，这个 adoptChild 函数被调用的时机：
 
@@ -271,6 +273,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
     // 则把入参 child 的 _owner 也指向和父级 RenderObject 同样的 _owner 对象。
     // 这里 child.attach 内部，除了给 child._owner 赋值外，也会发起一轮类似上面的👆标记事件，
     // 会进行四组的判断是否把 child 标记：重新布局/合成位更新/重新绘制/语义化更新。
+    //（上面是对 child 的直接父级进行的标记，这里则是对 child 的标记。合理！）
     if (attached) {
       child.attach(_owner!);
     }
@@ -282,7 +285,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 ## dropChild
 
-&emsp;当一个 RenderObject 子类对象决定一个 RenderObject 不再是自己的子级时调用。仅供 RenderObject 子类对象在更改其子级列表时使用。在其他情况下调用此方法将导致不一致的树形结构，并可能导致崩溃。
+&emsp;当一个 RenderObject （子类）实例对象决定另一个 RenderObject 对象不再是自己的子级时调用。仅供 RenderObject 子类对象在更改其子级列表时使用。在其他情况下调用此方法将导致不一致的树形结构，并可能导致崩溃。
 
 &emsp;同上面的 adoptChild 函数，dropChild 是分离 RenderObject 对象的现有子级 RenderObject 对象时调用。
 
@@ -290,7 +293,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
   @mustCallSuper
   @protected
   void dropChild(RenderObject child) {
-    // 递归把 child 自己和所有 child 子级的 _relayoutBoundary 置为 null 
+    // 递归把 child 自己和所有 child 子级的 _relayoutBoundary 标识置为 null 
     child._cleanRelayoutBoundary();
     
     // 回调 child 的 parentData 的 detach 函数，
@@ -467,7 +470,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
       return;
     }
     
-    // 如果重新布局边界为 null，则继续往上标记父级重新布局，
+    // 如果 _relayoutBoundary 为 null，则继续往上标记父级重新布局。
     // 即如果自己不是重新布局的边界，则继续往上找，直到向上找到最近的重新布局的边界。
     
     if (_relayoutBoundary == null) {
@@ -476,6 +479,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
       if (parent != null) {
         // _relayoutBoundary 在 RenderObject.layout 中被其祖先清除。
         // 保守地标记所有内容为脏，直到其达到最近的已知重新布局的边界。
+        
         markParentNeedsLayout();
       }
       
@@ -484,10 +488,12 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
     
     // 如果重新布局边界不等于等于当前的 RenderObject 对象，则也往父级中去找。
     if (_relayoutBoundary != this) {
+    
       // 从父级中去找重新布局边界，即调用父级的 markNeedsLayout 函数。
       markParentNeedsLayout();
+      
     } else {
-      // 如果走到这里的话，即自己就是自己的重新布局边界
+      // 如果走到这里的话，即自己就是自己的重新布局边界。
     
       _needsLayout = true;
       
@@ -522,13 +528,13 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 &emsp;有些 RenderObject 的子类，特别是 RenderBox，有其他情况下需要通知父级子级的状态已经变脏（例如，子级的 固有尺寸（intrinsic dimensions）和基线几何信息（baseline geometry）发生变化的情况）。这些子类会重写 markNeedsLayout 方法，通常在正常情况下会调用 super.markNeedsLayout()，或者在需要对父级和子级都进行布局的情况下调用 markParentNeedsLayout 方法。
 
-&emsp;如果 sizedByParent 已经改变，会调用 markNeedsLayoutForSizedByParentChange 方法，而不是调用 markNeedsLayout 方法。
+&emsp;如果 sizedByParent 已经改变，会调用 markNeedsLayoutForSizedByParentChange 方法，而不是调用 markNeedsLayout 方法。（在 markNeedsLayoutForSizedByParentChange 方法中也会直接标记父级需要更新布局，因为 sizedByParent 改变了，意味着之前的子级和父级的布局依赖关系要被改变了，所以需要子级和父级都根据现有的情况进行重新布局。）
 
 ## markParentNeedsLayout
 
-&emsp;将当前 RenderObject 的布局信息标记为脏，并延迟到父级 RenderObject 处理。（父级重新布局会连带所有的子级也重新布局，当然也会有节流，比如两次调用传来的 Constraints 是一样的，则不需要重新布局。）
+&emsp;将当前 RenderObject 的布局信息标记为脏，并延迟到父级 RenderObject 处理。（父级重新布局会连带所有的子级也重新布局，当然也会有节流，比如两次调用传来的 Constraints 是一样的，则此子级不需要重新布局。）
 
-&emsp;此函数只应该从 markNeedsLayout 或者 markNeedsLayoutForSizedByParentChange 的子类实现中调用，这些子类引入了更多原因以延迟处理脏布局到父级。
+&emsp;此函数只应该从 markNeedsLayout 或者 markNeedsLayoutForSizedByParentChange 的子类实现中调用，这些子类引入了更多原因以延迟处理脏布局到父级。（当自己不是重新布局边界的话，意味着父级和子级的之间有布局依赖，例如父级需要子级的 size、或者子级的 sizeByParent 属性发生了变化，此时都需要父级也进行重新布局。）
 
 &emsp;只有在父级 RenderObject 不为 null 时才调用此函数。
 
@@ -607,9 +613,6 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 ```dart
   void _setRelayoutBoundary(RenderObject value) {
-    // This may temporarily break the _relayoutBoundary invariant at children;
-    // the visitChildren restores the invariant.
-    
     // 设置 _relayoutBoundary 属性值为入参 value
     _relayoutBoundary = value;
     
@@ -637,6 +640,8 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 ## `_layoutWithoutResize`
 
 &emsp;直接执行重新布局，并且标记需要语义化更新和需要重新绘制（在下一帧进行，当前帧进行重新布局）。
+
+&emsp;`_layoutWithoutResize` 作为一个私有函数，全局唯一的被调用位置就是在 PipelineOwner.flushLayout 函数内。即当新帧到来，PipelineOwner 会刷新所有在上一帧收集的脏的需要重新布局的 RenderOjbect，然后就会遍历自己的 `_nodesNeedingLayout` 列表中的 RenderObject 对象调用它们的 `_layoutWithoutResize` 函数，执行 RenderObject 的布局函数：performLayout。
 
 ```dart
   @pragma('vm:notify-debugger-on-exception')
@@ -666,9 +671,11 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 &emsp;这个方法是父级 RenderObject 请求其子级（child）更新布局信息的主要入口点。父级传递一个约束对象 constraints，告知子级哪些布局方式是可接受的。子级必须遵守给定的约束。
 
-&emsp;注意此函数是在父级 RenderObject 中调用的，例如：ConstrainedBox Widget 中，它的对应的 RenderObject 类型是：RenderConstrainedBox。当 RenderConstrainedBox 类调用 performLayout 函数时，它内部会调用：`child!.layout(_additionalConstraints.enforce(constraints), parentUsesSize: true);`，即在父级中调用子级的 layout 函数。
+&emsp;注意此函数是在父级 RenderObject 中调用的，例如：在 ConstrainedBox Widget 中，它创建的 RenderObject 是 RenderConstrainedBox 类型。在 RenderConstrainedBox.performLayout 函数内，它内部会调用：`child!.layout(_additionalConstraints.enforce(constraints), parentUsesSize: true);`，即在父级 RenderObject 的 performLayout 函数中调用 child 的 layout 函数。并且在所有的 RenderObject 的 performLayout 函数中都是这样处理的。
 
-&emsp;如果父级在子级的布局期间读取信息，父级必须为 parentUsesSize 参数传递 true。在这种情况下，每当子级被标记为需要布局时，父级也会被标记为需要布局，因为父级的布局信息取决于子级的布局信息。如果父级使用默认值（false）作为 parentUsesSize 参数的值，则子级可以更改其布局信息（在给定约束条件 constraints 下）而不通知父级。（代码部分则是用 `_relayoutBoundary` 标识来完成这个逻辑，正如前面的 markNeedsLayout 函数内，会通过 `_relayoutBoundary` 的值进行判断，是否向上传递 parent 需要进行重新布局，通过 markParentNeedsLayout 函数进行。）
+&emsp;所以当 RenderObject 对象进行布局时会调用自己的 performLayout 函数，然后 performLayout 内部则是这个父级 RenderObject 调用其子级的 layout 并传入约束参数 constraints 和自己是否要使用子级的 size 参数 parentUsesSize，而在子级的 layout 函数内，又会调用自己的 performLayout 函数，实际最后就是：layout 会一级一级的向自己的子级中递归调用（一级一级的向子级中传递约束 constraints），然后在子级的 layout 函数调用完成后，父级自己决定自己是否要用子级的 size，而这就是我们经常在其它文章中见到的：父级向子级中传递约束，子级向父级中传递 Size。
+
+&emsp;如果父级在子级的布局期间读取信息，父级必须为 parentUsesSize 参数传递 true。在这种情况下，每当子级被标记为需要布局时，父级也会被标记为需要布局，因为父级的布局信息取决于子级的布局信息。如果父级使用默认值（false）作为 parentUsesSize 参数的值，则子级可以更改其布局信息（在给定约束条件 constraints 下）而不通知父级。（代码部分则是用 `_relayoutBoundary` 标识来完成这个逻辑，正如前面的 markNeedsLayout 函数内，会通过 `_relayoutBoundary` 的值进行判断，是否向上传递 parent 需要进行重新布局，当需要时会调用 markParentNeedsLayout 函数进行。）
 
 &emsp;RenderObject 子类不应直接重写 layout 方法。相反，它们应该重写 performResize 和 performLayout。layout 方法将实际工作委托给 performResize 和 performLayout。
 
@@ -682,14 +689,16 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
     // 注意下面这些都是用 || 连接的，即只要有一个条件为真，那么就会返回真。
     
     // 1. parentUsesSize 为 false，即父级不使用子级的 size。
-    // 2. sizedByParent 为 true，即子级使用父级传递来的 size。
+    // 2. sizedByParent 为 true，即子级使用父级传递来的约束 constraints 计算自己的 size。
     // 3. constraints 参数的最大最小宽相等且最大最小高也相等，即约束 size 大小固定时。
-    // 4. parent 不是 RenderObject 时。
+    // 4. parent 不是 RenderObject 时。（Render Tree 根节点）
     
     final bool isRelayoutBoundary = !parentUsesSize || sizedByParent || constraints.isTight || parent is! RenderObject;
     
-    // 如果重新布局的边界是自己的话，RenderObject 的 _relayoutBoundary 属性就是自己，
-    // 如果不是的话，_relayoutBoundary 就是父级的 _relayoutBoundary 属性直接传递过来。
+    // 根据上面的 4 个条件确定当前 RenderObject 的重新布局边界是谁！ 
+    
+    // 如果重新布局边界是自己的话，RenderObject 的 _relayoutBoundary 属性就是自己，
+    // 如果不是的话，_relayoutBoundary 就用父级的 _relayoutBoundary。
     final RenderObject relayoutBoundary = isRelayoutBoundary ? this : parent!._relayoutBoundary!;
 
     // 如果重新布局标识为 false 并且约束没变的话，就不需要重新布局，直接返回即可。
@@ -704,12 +713,13 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
         _setRelayoutBoundary(relayoutBoundary);
       }
       
-      // 布局标识为 false 并且新旧 constraints 相同，则直接 return 即可。
+      // 重新布局标识为 false 并且新旧 constraints 相同，则直接 return 即可。
       return;
     }
     
+    // 其它则是需要更新布局的情况！
     
-    // 更新当前的 _constraints 属性的值，记录下当前由父级传递来的约束
+    // 更新当前的 _constraints 属性的值，记录下当前由父级传递来的约束。
     _constraints = constraints;
     
     // 如果之前的 _relayoutBoundary 属性不为 null，并且当前计算出来的重新布局边界和之前的不相等，
@@ -719,7 +729,7 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
       // 然后则把自当前 RenderObject 对象起，
       // 依次向下子级中的 _relayoutBoundary 不是自己的子级的 _relayoutBoundary 属性置为 null。
       
-      // 局部的 重新布局边界 已经改变，必须通知子级，以防它们也需要更新。
+      // 局部的 "重新布局边界" 已经改变，必须通知子级，以防它们也需要更新。
       // 否则，它们将会对后续的实际重新布局边界感到困惑。
       visitChildren(_cleanChildRelayoutBoundary);
     }
@@ -730,8 +740,12 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
     // 如果当前 RenderObject 的 size 是由父级决定的，则执行 size 更新。
     if (sizedByParent) {
       try {
+      
         // RenderObject 对此函数为空实现，需要子类重写。
+        // 子类的 performResize 实现内容则是根据其父级传递来的约束 _constraints 计算自己的大小，
+        // 并保存在自己的 size 属性中。
         performResize();
+        
       } catch (e, stack) {
         _reportException('performResize', e, stack);
       }
@@ -772,9 +786,9 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 
 ## performResize 
 
-&emsp;仅使用约束（`_constraints`）更新 RenderObject 对象的 size。
+&emsp;仅使用约束（`_constraints`）更新 RenderObject 对象的 size 属性。
 
-&emsp;请不要直接调用此函数，应调用 layout 函数，此函数被 layout 函数调用。当在布局期间（layout 函数调用）确实需要由此 RenderObject 完成工作时，layout 函数才会调用此函数。父级提供的布局约束可以通过 constraints getter 获得。
+&emsp;请不要直接调用此函数，应调用 layout 函数，此函数被 layout 函数调用。当在布局期间（layout 函数被调用时）确实需要由此 RenderObject 完成工作时，layout 函数才会调用此函数。父级提供的布局约束可以通过 constraints getter 获得。
 
 &emsp;仅当 sizedByParent 为 true 时才会调用此函数。
 
@@ -840,6 +854,12 @@ final bool isRelayoutBoundary = !parentUsesSize || sizedByParent || constraints.
 3. 父级调用 layout 函数时传递来的 constraints 约束是一个 Tight 约束，如果是 BoxConstraints 约束的话即最大最小宽度、最大最小高度固定，即父级直接指定了子级的 size。
 4. 当前子级的 parent 不是 RenderObject。（大概只有 Render Tree 的根节点吗？）
 
+&emsp;所以整体看下来，我们可以总结到：只要子级 RenderObject 的 size 改变不会影响父级 RenderObject 的话，那么这个子级 RenderObject 对象就可以做自己的重新布局边界。
+
+&emsp;然后还有另外一个知识点，较难理解，就是我们在其它文章中会见到的：父级向子级中传递约束，子级向父级中传递大小。这个知识点则体现在 performLayout 和 layout 两个函数的相互调用中：
+
+&emsp;当 RenderObject 对象进行布局时会调用自己的 performLayout 函数，然后 performLayout 内部则是这个父级 RenderObject 调用其子级的 layout 函数并传入约束参数 constraints 和自己是否要使用子级的 size 参数 parentUsesSize，而在子级的 layout 函数内，又会调用自己的 performLayout 函数，实际最后就是：layout 会一级一级的向自己的子级中递归调用（一级一级的向子级中传递约束 constraints），然后在子级的 layout 函数调用完成后，父级自己决定自己是否要用子级的 size，而这就是我们经常在其它文章中见到的：父级向子级中传递约束，子级向父级中传递大小。
+  
 &emsp;然后其它内容的话都比较简单，快速浏览即可。下一节我们看 RenderObject 的 PAINTING 部分。⛽️
 
 ## 参考链接
