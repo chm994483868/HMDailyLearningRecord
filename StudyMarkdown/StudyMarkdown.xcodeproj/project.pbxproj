@@ -254,7 +254,7 @@
 		D259943E2C421069003571E3 /* Flutter 源码梳理系列（二十三）：RenderObject：At first sight.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十三）：RenderObject：At first sight.md"; sourceTree = "<group>"; };
 		D259943F2C439AEF003571E3 /* Flutter 源码梳理系列（二十一）：OffsetBase、Size、Offset.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十一）：OffsetBase、Size、Offset.md"; sourceTree = "<group>"; };
 		D25994402C463B2A003571E3 /* Flutter 源码梳理系列（二十四）：RendererBinding.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：RendererBinding.md"; sourceTree = "<group>"; };
-		D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md"; sourceTree = "<group>"; };
+		D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十九）：RenderObject：Upon closer inspection.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十九）：RenderObject：Upon closer inspection.md"; sourceTree = "<group>"; };
 		D25994422C477E53003571E3 /* Flutter 源码梳理系列（二十六）：PipelineManifold.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十六）：PipelineManifold.md"; sourceTree = "<group>"; };
 		D25994432C48330D003571E3 /* Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md"; sourceTree = "<group>"; };
 		D25994442C4916AE003571E3 /* Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md"; sourceTree = "<group>"; };
@@ -972,7 +972,7 @@
 				D259943C2C3F9965003571E3 /* Flutter 源码梳理系列（二十四）：PipelineOwner.md */,
 				D259943A2C3DAEF9003571E3 /* Flutter 源码梳理系列（二十五）：RenderObject：LAYOUT.md */,
 				D25994432C48330D003571E3 /* Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md */,
-				D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十四）：RenderObject：Upon closer inspection.md */,
+				D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十九）：RenderObject：Upon closer inspection.md */,
 				D25994422C477E53003571E3 /* Flutter 源码梳理系列（二十六）：PipelineManifold.md */,
 				D25994442C4916AE003571E3 /* Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md */,
 				D25994492C4CD75C003571E3 /* Flutter 源码梳理系列（二十八）：Canvas.md */,
