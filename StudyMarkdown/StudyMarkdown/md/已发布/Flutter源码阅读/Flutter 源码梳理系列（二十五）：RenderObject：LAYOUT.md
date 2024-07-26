@@ -1,6 +1,6 @@
 # Flutter 源码梳理系列（二十五）：RenderObject：LAYOUT
 
-# RenderObject
+# RenderObject：LAYOUT section
 
 &emsp;RenderObject 是 Render Tree 中的一个对象（或一个节点）。
 
@@ -638,6 +638,8 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 ```
 
 ## `_layoutWithoutResize`
+
+&emsp;`_layoutWithoutResize`：正如其名，不调整大小的布局，能调用此函数的 RenderObject 对象都是自己是自己的 `_relayoutBoundary`。是的，没错，毕竟每个能加入到 PipelineOwner 的 `_nodesNeedingLayout` 列表中的 RenderObject 对象都是自己就是自己的重新布局边界。
 
 &emsp;直接执行重新布局，并且标记需要语义化更新和需要重新绘制（在下一帧进行，当前帧进行重新布局）。
 

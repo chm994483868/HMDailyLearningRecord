@@ -2,17 +2,19 @@
 
 # RenderObject：PAINTING section
 
-&emsp;超级重要的和绘制相关的内容。
+&emsp;RenderObject 中超级重要的和绘制相关的内容，本篇相比 LAYOUT 部分来的有点晚了，并不是因为别的，因为这一部分太难理解了，所以我把和 RenderObject 绘制相关的其它类的内容都看了一遍，才勉强理解 PAINTING 这部分的源码。
 
 ## isRepaintBoundary
 
-&emsp;这个 RenderObject 对象是否独立于其父级绘制。
+&emsp;isRepaintBoundary 表示这个 RenderObject 对象是否独立于其父级绘制。默认为 false。此值和我们前面学习 Layout 部分时，判断当前 RenderObject 对象是否是重新布局边界时是完全不一样的。一个 RenderObject 对象是否是重新布局边界和是否是重新绘制边界是完全不一样的。这里的是否是重绘边界是 RenderObject 对象本身固有的一个属性。在默认情况下 RenderObject 给此值是 false，然后在不同的 RenderObject 子类中，它们会重新此属性，把它标记为 True。 
 
-&emsp;在 RenderObject 子类中重写这个方法以指示 RenderObject 子类的实例是否应该独立重绘。例如，经常需要重绘的 RenderObject 子类对象可能希望自己重绘，而不要求其父级也一起重绘。
+&emsp;在 RenderObject 子类中重写这个 getter 以指示 RenderObject 子类的实例是否应该独立重绘。例如，经常需要重绘的 RenderObject 子类对象可能希望自己重绘，而不要求其父级也一起重绘。
 
-&emsp;如果这个 getter 返回 true，paintBounds（Rect get paintBounds;）getter 应用于此 RenderObject 对象和它的所有子级对象。framework 调用 RenderObject.updateCompositedLayer 创建一个 OffsetLayer 并将其分配给 layer 字段。声明自己为重绘边界的 RenderObject 对象不得替换 framework 创建的图层（layer）。
+&emsp;如果这个 getter 返回 true，则 paintBounds getter 应用于此 RenderObject 对象和它的所有子级对象。framework 调用 RenderObject.updateCompositedLayer 创建一个 OffsetLayer 并将其分配给 layer 字段。声明自己为重绘边界的 RenderObject 对象不得替换 framework 创建的图层（layer）。
 
-&emsp;如果这个 getter 的值发生变化，必须调用 markNeedsCompositingBitsUpdate。（即如果自己是重绘边界或者不是重绘边界发生了变化，则需要更新合成位 bits，它会影响图层 Layer 的合成。）
+&emsp;OffsetLayer 对于高效的重绘至关重要，因为它们是由 RenderObject Tree 中的重绘边界（即 RenderObject.isRepaintBoundary 为 true 的 RenderObject 对象）创建的。当要求作为重绘边界的 RenderObject 对象在 PaintingContext 中的特定偏移处进行绘制时，该 RenderObject 对象首先检查自身是否需要重绘。如果不需要，它通过改变其偏移属性（offset）来重用现有的 OffsetLayer（以及整个子树），从而削减了绘制步骤。
+
+&emsp;如果这个 getter 的值发生变化，必须调用 markNeedsCompositingBitsUpdate。（即如果自己是重绘边界或者不是重绘边界的标识发生了变化，则需要更新合成位 bits，它会影响 Layer 的合成。）
 
 ```dart
   bool get isRepaintBoundary => false;
@@ -45,7 +47,7 @@
 
 &emsp;当 isRepaintBoundary 为 true 时，framework 会调用此方法。
 
-&emsp;如果 oldLayer 为 null，则此方法必须返回一个新的 OffsetLayer（或其子类型）。如果 oldLayer 不为 null，则此方法必须重用所提供的图层实例 - 在此实例中创建新图层是错误的。当 RenderObject 对象被销毁或不再是重绘边界时，framework 将处理该图层的销毁。
+&emsp;如果 oldLayer 为 null，则此方法必须返回一个新的 OffsetLayer（或其子类型）。如果 oldLayer 不为 null，则此方法必须重用所提供的 Layer 实例 - 在此实例中创建新 Layer 是错误的。当 RenderObject 对象被销毁或不再是重绘边界时，framework 将处理该 Layer 的销毁。
 
 &emsp;OffsetLayer.offset 属性将由 framework 管理，不能由此方法更新。
 
@@ -78,7 +80,7 @@
   @protected
   set layer(ContainerLayer? newLayer) {
   
-    // 尝试将一个图层设为重绘边界渲染对象。框架会自动创建并分配一个 OffsetLayer 给重绘边界。
+    // 尝试将一个图层设为重绘边界渲染对象。framework 会自动创建并分配一个 OffsetLayer 给重绘边界。
     _layerHandle.layer = newLayer;
   }
 ```

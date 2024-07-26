@@ -65,3 +65,4 @@
 + [Flutter启动流程和渲染管线](https://book.flutterchina.club/chapter14/flutter_app_startup.html#_14-3-1-应用启动)
 + [FlutterView class](https://api.flutter.dev/flutter/dart-ui/FlutterView-class.html)
 + [RendererBinding mixin](https://api.flutter.dev/flutter/rendering/RendererBinding-mixin.html)
+debugPrintStack

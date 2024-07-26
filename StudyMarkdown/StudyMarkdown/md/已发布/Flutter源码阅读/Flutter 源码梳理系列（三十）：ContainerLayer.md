@@ -185,3 +185,11 @@ child 参数通常不应为 null，因为原则上每个层都可以独立地转
     assert(child != null);
   }
 ```
+
+
+
+# OffsetLayer
+
+&emsp;一个相对于其父图层显示的偏移图层。
+
+&emsp;偏移图层对于高效的重绘至关重要，因为它们是由 RenderObject 树中的重绘边界（参见 RenderObject.isRepaintBoundary）创建的。当要求作为重绘边界的渲染对象在绘制上下文中的特定偏移处进行绘制时，该渲染对象首先检查自身是否需要重绘。如果不需要，它通过改变其偏移属性来重用现有的 OffsetLayer（以及整个子树），从而削减了绘制步骤。
