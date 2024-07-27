@@ -267,6 +267,7 @@
 		D259944B2C4FB9DE003571E3 /* Flutter 源码梳理系列（二十九）：Layer.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十九）：Layer.md"; sourceTree = "<group>"; };
 		D259944C2C50B143003571E3 /* Flutter 源码梳理系列（三十）：ContainerLayer.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十）：ContainerLayer.md"; sourceTree = "<group>"; };
 		D259944D2C534D83003571E3 /* Flutter 源码梳理系列（二十四）：debugPrintStack.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：debugPrintStack.md"; sourceTree = "<group>"; };
+		D259944E2C54B918003571E3 /* Flutter 源码梳理系列（二十九.一）：RenderObject：Upon closer inspection.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十九.一）：RenderObject：Upon closer inspection.md"; sourceTree = "<group>"; };
 		D25AAFF22BEB4D690095511B /* Flutter 知识点：解析 Future 对象提供的异步操作.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 知识点：解析 Future 对象提供的异步操作.md"; sourceTree = "<group>"; };
 		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现.md"; sourceTree = "<group>"; };
 		D2FC92A82C231B1E00EF34D0 /* Flutter 源码梳理系列（四）：Widget、StatelessWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（四）：Widget、StatelessWidget.md"; sourceTree = "<group>"; };
@@ -973,6 +974,7 @@
 				D259943A2C3DAEF9003571E3 /* Flutter 源码梳理系列（二十五）：RenderObject：LAYOUT.md */,
 				D25994432C48330D003571E3 /* Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md */,
 				D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十九）：RenderObject：Upon closer inspection.md */,
+				D259944E2C54B918003571E3 /* Flutter 源码梳理系列（二十九.一）：RenderObject：Upon closer inspection.md */,
 				D25994422C477E53003571E3 /* Flutter 源码梳理系列（二十六）：PipelineManifold.md */,
 				D25994442C4916AE003571E3 /* Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md */,
 				D25994492C4CD75C003571E3 /* Flutter 源码梳理系列（二十八）：Canvas.md */,

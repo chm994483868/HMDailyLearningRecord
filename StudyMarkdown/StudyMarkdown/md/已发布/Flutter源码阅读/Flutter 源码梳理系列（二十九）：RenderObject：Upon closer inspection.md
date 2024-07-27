@@ -4,6 +4,8 @@
 
 &emsp;通过前文的学习我们已经知道 Widget Tree 和 Element Tree 是从根节点开始一层一层同步构建的，Widget 和 Element 一一对应，然后呢如果 一个 Element 对象是 RenderObjectElement 的话，它会在自己挂载到父 Element 后，创建一个 RenderObject 对象并把它附加到 Render Tree 上去，即随着 Element Tree 的构建，当遇到 RenderObjectElement 时也同步扩建 Render Tree，不同于所有的 Element 节点都会参与 Element Tree 的构建，仅有遇到 RenderObjectElement 时才会创建 RenderObject 对象并让它参与 Render Tree 的构建。
 
+# 再探 adoptChild
+ 
 &emsp;那么我们继续从 RenderObjectElement.mount 挂载函数开始看起。已知 RenderObjectElement 创建了自己的 RenderObject 后会把它附加到 Render Tree 中，而附加任务的末尾必定是执行 RenderObject.adoptChild 函数。在 adoptChild 内部呢则是我们熟悉的 mark 系列函数：
 
 ```dart
@@ -35,6 +37,8 @@
 &emsp;另外关于仅有是 **重新绘制边界** 的 RenderObject 对象才能加入到 PipelineOwner 的 `_nodesNeedingXXX` 列表中的也是类似的逻辑。
 
 &emsp;关于 markNeedsCompositingBitsUpdate 的话，因为它是与 Paint 紧密相连的，但是我们还没有学习 Paint 部分，所以这里我们先拓展一下。markNeedsCompositingBitsUpdate 所做的事情是标记需要对 RenderObject 的合成位进行更新，而合成位是谁呢？其实就是指的 RenderObject 的 `late bool _needsCompositing` 的属性，这个属性特别重要，后续我们学习 Layer 时会对它进行详细的解读，当前的话，我们先对它有个粗略的了解。
+
+# 拓展 `_needsCompositing`
 
 &emsp;`_needsCompositing` 是一个 RenderObject 的标识位，用于表示当前的 RenderObject 是否需要进行合成操作（compositing）。当 RenderObject 拥有子级并且子级拥有透明度、变换、剪裁等属性时，父级就需要进行合成。在 Flutter 中，合成操作会将多个透明、旋转、裁剪等操作合并成一个单一的纹理，以提高渲染性能。从这里我们就可以看到一些细节了，并且是对比 "重新布局边界" 的细节。
 
@@ -82,6 +86,8 @@ void paint(PaintingContext context, Offset offset) {
 
 &emsp;OK，我们下面继续以 Element Tree 和 Render Tree 初次构建为线索，分析其中涉及到的 Layout、CompositingBitsUpdate、Paint 事件。
 
+# 猜想三阶段
+
 &emsp;我们再次回顾一下上面提到的 RenderObject 节点附加到 Render Tree 所使用的 adoptChild 函数：
 
 &emsp;adoptChild 函数提示我们的最最重要的大概是：当一个新的 RenderObject 对象被附加到 Render Tree 后都需要被标记为需要 Layout、CompositingBitsUpdate，然后呢，在新的一帧内，我们在真正执行 Layout 和 CompositingBitsUpdate 操作后，才会标记 RenderObject 需要 Paint。所以大概可以理解为：当前帧进行 Element Tree 和 Render Tree 的构建，然后 Tree 构建完成后，才会在新的帧回调中对构建 Render Tree 过程中收集到的是边界的 RenderObject 进行布局和把它的合成位：`_needsCompositing` 置为 true 或 false，而在这个过程中会调用 RenderObject.markNeedsPaint，同样在 markNeedsPaint 函数内部也是只对是重新绘制边界的 RenerObjedt 才会被收集在 PipelineOwner 的 `_nodesNeedingXXX` 列表中，然后等待进入新的一帧后才会对这些被收集的 RenderObject 进行绘制。
@@ -116,6 +122,8 @@ void paint(PaintingContext context, Offset offset) {
 + `bool _needsPaint = true;` ⬅️🔔
 
 &emsp;上面的属性和 getter 有点多，我们一次记住的话有点困难，不过我们可以反向来记忆，即除了 `_needsLayout` 和 `_needsPaint` 为 true 外，其它的都是 false。即新建的 RenderObject 需要进行 Layout 布局和 Paint 绘制，然后其它的都是 false。
+
+## 强化 Mark 系列函数
 
 &emsp;然后再次一行一行捋一下 RenderObject.markNeedsLayout、RenderObject.markNeedsCompositingBitsUpdate、RenderObject.markNeedsPaint 三个函数：
 
@@ -256,6 +264,8 @@ void paint(PaintingContext context, Offset offset) {
 ```
 
 &emsp;综上 markNeedsLayout 和 markNeedsCompositingBitsUpdate 两个函数，可以发现，新建的 RenderObject 对象是不可能被 PipelineOwner 收集起来的，但是有一个要除外，那就是 Render Tree 的根节点！
+
+# 由 Render Tree 根节点引出 Layer Tree 根节点 
 
 &emsp;这里我们直接在 RendererBinding.drawFrame 函数处打一个断点，已知的 `owner?.requestVisualUpdate();` 请求视觉更新的回调就是这里。
 
