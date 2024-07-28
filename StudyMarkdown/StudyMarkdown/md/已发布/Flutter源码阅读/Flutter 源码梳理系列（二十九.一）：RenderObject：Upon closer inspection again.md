@@ -183,11 +183,11 @@ void runApp(Widget app) {
 
 &emsp;因为 `_updateChild()` 函数是沿着 Widget 链一直往下构建的，直到遇到叶子节点为止。
 
-## RenderView.prepareInitialFrame
+# RenderView.prepareInitialFrame
 
 &emsp;然后就是我们的 `renderObject.prepareInitialFrame();` 函数执行了，它通过准备第一帧来引导渲染管道。
 
-&emsp;首先我们先看一下这个函数的内容：
+&emsp;首先我们先看一下这个函数的内容，实际它的内容超简单，就是把 RendererBinding.renderView 添加到 RendererBinding.pipelineOwner 的 `_nodesNeedingLayout` 和 `_nodesNeedingPaint` 列表中。把 RendererBinding.renderView 的 `_relayoutBoundary` 属性置为自己。给 RendererBinding.renderView 的 `_layerHandle.layer` 指定一个 TransformLayer 对象。
 
 ```dart
   // RenderView 内部：
@@ -197,9 +197,11 @@ void runApp(Widget app) {
     scheduleInitialPaint(_updateMatricesAndCreateNewRootLayer());
   }
 
+  // 根据当前的配置创建一个 TransformLayer 实例对象，作为 Layer Tree 的根节点。
   TransformLayer _updateMatricesAndCreateNewRootLayer() {
     _rootTransform = configuration.toMatrix();
     
+    // 直接创建一个 TransformLayer 实例对象
     final TransformLayer rootLayer = TransformLayer(transform: _rootTransform);
     rootLayer.attach(this);
     
@@ -207,10 +209,27 @@ void runApp(Widget app) {
   }
 ```
 
+```dart
+  // RenderObject 内部： 
+  
+  void scheduleInitialLayout() {
+    // 根节点的重新布局边界还是自己
+    _relayoutBoundary = this;
+    
+    // 把自己添加到 需要布局列表 中，等待在新的一帧中执行布局。
+    owner!._nodesNeedingLayout.add(this);
+  }
+  
+  void scheduleInitialPaint(ContainerLayer rootLayer) {
+    // 为其提供一个 Layer 
+    _layerHandle.layer = rootLayer;
+    
+    // 把自己添加到 需要绘制列表 中，等待在新的一帧中执行绘制。
+    owner!._nodesNeedingPaint.add(this);
+  }
+```
 
-
-
-
+&emsp;到这里看似确实是一切准备就绪了，就等着 RendererBinding.drawFrame 执行了！
 
 ## 参考链接
 **参考链接:🔗**
