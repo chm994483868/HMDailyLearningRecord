@@ -75,9 +75,9 @@ abstract class Layer with DiagnosticableTreeMixin {
 
 ## subtreeHasCompositionCallbacks
 
-&emsp;这个节点根节点下的子树是否有任何组合回调观察者。
+&emsp;以这个 Layer 作为根节点下的 Layer 子树是否有任何组合（Composition）回调观察者。
 
-&emsp;只有当这个节点根节点下的子树有观察者时，这个值才会为真。例如，如果父节点有观察者但子节点没有，那么可能在父节点上会得到 true，而在子节点上会得到 false。
+&emsp;只有当以这个节点为根节点下的子树有观察者时，这个值才会为真。例如，如果父节点有观察者但子节点没有，那么可能在父节点上会得到 true，而在子节点上会得到 false。
 
 ```dart
   final Map<int, VoidCallback> _callbacks = <int, VoidCallback>{};
