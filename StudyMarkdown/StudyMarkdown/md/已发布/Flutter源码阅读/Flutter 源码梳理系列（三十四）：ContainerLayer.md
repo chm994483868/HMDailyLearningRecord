@@ -4,7 +4,7 @@
 
 # ContainerLayer
 
-&emsp;ContainerLayer 是一个具有子节点列表的 Layer 子类（这里注意一下，子 Layer 列表的组织形式不像是 MultiChildRenderObjectElement 的子级 Element 列表是一个 List 属性：`late List<Element> _children`，ContainerLayer 的子 Layer 列表是一个双向链表的结构，而这个双向链表的代码实现就是通过 Layer 的 previousSibling 和 nextSibling 两个属性来实现的）。ContainerLayer 实例仅接受一个子 Layer 列表，并按顺序将它们插入到复合渲染中。有一些 ContainerLayer 的子类在此过程中应用更复杂的效果。
+&emsp;ContainerLayer 是一个具有子节点列表的 Layer 子类（这里注意一下，子 Layer 列表的组织形式不像是 MultiChildRenderObjectElement 的子级 Element 列表是一个 List 类型的属性：`late List<Element> _children`，ContainerLayer 的子 Layer 列表是一个双向链表的结构，而这个双向链表的结构的代码实现就是通过 Layer 的 previousSibling 和 nextSibling 两个属性来实现的）。ContainerLayer 实例仅接受一个子 Layer 列表，并按顺序将它们插入到复合渲染中。有一些 ContainerLayer 的子类在此过程中应用更复杂的效果。
 
 ## Constructors
 
@@ -18,23 +18,27 @@ class ContainerLayer extends Layer {
 
 ## `_fireCompositionCallbacks`
 
-&emsp;在 ContainerLayer 的 buildScene 和 detach 函数中会执行此函数，即当进行 Layer 的合成时进行回调，此函数是重写的 Layer 的，到了 ContainerLayer 这里，则还需要沿着自己的子级链进行遍历，执行它们的 `_fireCompositionCallbacks` 函数。
+&emsp;在 ContainerLayer 的 buildScene 和 detach 函数中会执行此函数，即当进行 Layer 的合成时进行回调，此函数是重写的 Layer 类的，到了 ContainerLayer 这里，则还需要沿着自己的子级链对所有子级进行遍历，执行它们的 `_fireCompositionCallbacks` 函数。
 
 ```dart
   @override
   void _fireCompositionCallbacks({required bool includeChildren}) {
     super._fireCompositionCallbacks(includeChildren: includeChildren);
     
-    // 如果 includeChildren 参数为 true，即不包含自己的子级的话，直接 return。
+    // 如果入参 includeChildren 为 true，即不包含自己的子级的话，直接 return。
     if (!includeChildren) {
       return;
     }
     
     // 遍历自己的子级 Layer，调用它们的 _fireCompositionCallbacks 函数，
-    // 即 沿着子级链表进行。
+    // 即沿着子级链表进行。
     Layer? child = firstChild;
+    
     while (child != null) {
+      // 执行子级的 _fireCompositionCallbacks 函数
       child._fireCompositionCallbacks(includeChildren: includeChildren);
+      
+      // 继续遍历下一个子级
       child = child.nextSibling;
     }
   }
@@ -42,9 +46,9 @@ class ContainerLayer extends Layer {
 
 ## firstChild & lastChild & hasChildren
 
-&emsp;firstChild 是此 ContainerLayer 子级列表中的第一个 Layer。lastChild 是此 ContainerLayer 子级列表中的最后一个 Layer。是的，没错，ContainerLayer 的子级列表其实是以一个双向链表的形式存在的。
+&emsp;firstChild 是此 ContainerLayer 子级列表中的第一个 Layer。lastChild 是此 ContainerLayer 子级列表中的最后一个 Layer。ContainerLayer 的子级列表其实是以一个双向链表的形式存在的，并且这里还用两个指针分别执行链表头和链表尾，后面看 append 函数时，会详细看到此双向链表的构建过程。
 
-&emsp;hasChildren：只要 `_firstChild` 不为 null，说明此 ContainerLayer 至少有一个子级 Layer。 
+&emsp;hasChildren getter，只要 `_firstChild` 不为 null，说明此 ContainerLayer 至少有一个子级 Layer。 
 
 ```dart
   Layer? get firstChild => _firstChild;
@@ -63,14 +67,16 @@ class ContainerLayer extends Layer {
 
 &emsp;这个 Layer 或任何子 Layer 是否可以使用 Scene.toImage 或 Scene.toImageSync 进行栅格化（栅格化的意思是是否可以转换为位图）。如果为 false，则调用上述方法可能会产生不完整的图像。
 
-&emsp;这个值可能会在对象的生命周期中发生变化，因为子 Layer 本身会被添加或移除。
+&emsp;这个值可能会在 ContainerLayer 对象的生命周期中发生变化，因为它的子 Layer 本身会被添加或移除。
 
 ```dart
   @override
   bool supportsRasterization() {
     
     // 从 lastChild 往前遍历，只要有一个子图层不支持光栅化，那么此 ContainerLayer 就不支持光栅化。 
-    for (Layer? child = lastChild; child != null; child = child.previousSibling) { 
+    for (Layer? child = lastChild; child != null; child = child.previousSibling) {
+      
+      // 只要 ContainerLayer 有一个 child 不支持光栅化，则直接返回 false。 
       if (!child.supportsRasterization()) {
         return false;
       }
@@ -83,32 +89,31 @@ class ContainerLayer extends Layer {
 
 ## buildScene
 
-&emsp;把这个 ContainerLayer 当作根层，在引擎中构建一个 Scene（即一棵 Layer Tree）。
+&emsp;把这个 ContainerLayer 当作根层，在 engine 中构建一个 Scene。
 
-&emsp;这个方法位于 ContainerLayer 类中，而不是 PipelineOwner 或其他单例级别，是因为这个方法既可以用于渲染整个图层树（例如普通应用程序帧），也可以用于渲染子树（例如 OffsetLayer.toImage）。
+&emsp;这个方法位于 ContainerLayer 类中，而不是 PipelineOwner 或其他单例级别，是因为这个方法既可以用于渲染整个 Layer Tree（例如普通应用程序帧），也可以用于渲染 Layer SubTree（例如 OffsetLayer.toImage）。
 
 ```dart
   ui.Scene buildScene(ui.SceneBuilder builder) {
-    // 更新以当前 CoontainerLayer 为根的整棵 Layer 子树的 _needsAddToScene 属性，
-    // 且同我们之前学习的 RenderObject 的 needsCompositing 属性，当子级为 true 时，父级也要为 true。
-    // 这里则是子级 Layer 的 _needsAddToScene 为 true 时，父级 Layer 的 _needsAddToScene 也必为 true。 
+    // 更新以当前 ContainerLayer 为根的整棵 Layer 子树的 _needsAddToScene 属性，
+    // 且同我们之前学习的 RenderObject 的 needsCompositing 的更新方式类似，当子级为 true 时，父级也要为 true。
+    // 这里则是子级 Layer 的 needsAddToScene 为 true 时，父级 Layer 的 needsAddToScene 也必为 true。 
     updateSubtreeNeedsAddToScene();
     
-    // 在 Layer 中 addToScene 为一个抽象函数，需要它的子类来实现。这里 ContainerLayer 对它进行了自己的实现。
+    // addToScene 是 Layer 的一个抽象函数，需要它的子类来实现。
+    // 这里 ContainerLayer 对它进行了自己的实现，即执行所有子级的 addToScene 函数。
     addToScene(builder);
     
+    // 如果有的话，执行所有子级的合成回调。
     if (subtreeHasCompositionCallbacks) {
       _fireCompositionCallbacks(includeChildren: true);
     }
     
-    // Clearing the flag _after_ calling `addToScene`, not _before_. This is
-    // because `addToScene` calls children's `addToScene` methods, which may
-    // mark this layer as dirty.
-    
-    // 在调用 addToScene 之后清除标记，而不是在调用之前。
-    // 这是因为 addToScene 会调用子节点的 addToScene 方法，这可能会将该层标记为脏。
-    
+    // 在调用 addToScene 之后再清除 needsAddToScene 标记，而不是在调用之前。
+    // 这是因为 addToScene 会调用子节点的 addToScene 方法，这可能会将该 CoontainerLayer 的 needsAddToScene 标记为 true。
     _needsAddToScene = false;
+    
+    // 生成一个 scene
     final ui.Scene scene = builder.build();
     return scene;
   }
@@ -116,7 +121,7 @@ class ContainerLayer extends Layer {
 
 ## dispose
 
-&emsp;当 ContainerLayer 执行 dispose 时，需要先移除自己的所有子级 Layer。然后清理自己的 `_callbacks`。
+&emsp;当 ContainerLayer 执行 dispose 时，需要先移除自己的所有子级 Layer，然后再清理自己的 callbacks。
 
 ```dart
   @override
@@ -138,21 +143,22 @@ class ContainerLayer extends Layer {
 + 已调用 markNeedsAddToScene。
 + 任何后代图层需要 addToScene。
 
-&emsp;ContainerLayer 覆盖此方法以递归地在其子级 Layer 上调用它。
+&emsp;ContainerLayer 重写此方法以递归地在其子级 Layer 上调用它。
 
 ```dart
   @override
   void updateSubtreeNeedsAddToScene() {
     super.updateSubtreeNeedsAddToScene();
     
-    // 遍历所有的子级图层，并且如下子级 _needsAddToScene 为 true，
-    // 则父级也必为 true。
+    // 遍历所有的子级 Layer，并且如下子级 needsAddToScene 为 true，则父级也必为 true。
     Layer? child = firstChild; 
+    
     while (child != null) {
       child.updateSubtreeNeedsAddToScene();
       
-      // 子级 _needsAddToScene 为 true，则
+      // 子级 _needsAddToScene 为 true，则自己的 _needsAddToScene 也必为 true
       _needsAddToScene = _needsAddToScene || child._needsAddToScene;
+      
       child = child.nextSibling;
     }
   }
@@ -160,17 +166,82 @@ class ContainerLayer extends Layer {
 
 ## addChildrenToScene
 
-&emsp;将该层的所有子项上传到引擎。
+&emsp;将该 ContainerLayer 的所有子级 Layer 上传到 engine。
 
-&emsp;通常，此方法由 addToScene 使用，以将子项插入到场景中。ContainerLayer 的子类通常会重写 addToScene 方法，利用 SceneBuilder API 对场景应用效果，然后使用 addChildrenToScene 将它们的子项插入到场景中，在从 addToScene 返回之前撤销上述效果。
+&emsp;通常，此方法由 addToScene 使用，以将子级 Layer 插入到 Scene 中。ContainerLayer 的子类通常会重写 addToScene 方法，利用 SceneBuilder API 对 Scene 应用效果，然后使用 addChildrenToScene 将它们的 子级 Layer  插入到 Scene 中，在从 addToScene 返回之前撤销上述效果。
 
 ```dart
   void addChildrenToScene(ui.SceneBuilder builder) {
     Layer? child = firstChild;
+    
+    // 沿着 firstChild 遍历所有的子级，调用它们的 _addToSceneWithRetainedRendering 函数。
     while (child != null) {
       child._addToSceneWithRetainedRendering(builder);
+      
       child = child.nextSibling;
     }
+  }
+```
+
+## attach
+
+&emsp;将这个 ContainerLayer 标记为已附加到给定的 owner。
+
+&emsp;具有子级的 Layer 子类应该重写此方法，在调用继承的方法之后，通过 super.attach(owner) 来将所有子节点都附加到同一个 owner 上。
+
+```dart
+  @override
+  void attach(Object owner) {
+    super.attach(owner);
+    
+    Layer? child = firstChild;
+    // 遍历整个 child 链递归调用。
+    while (child != null) {
+      child.attach(owner);
+      
+      child = child.nextSibling;
+    }
+  }
+```
+
+## detach
+
+&emsp;将该 ContainerLayer 标记为与其 owner 脱离关系。
+
+&emsp;具有子级的 Layer 子类应该重写此方法，在调用继承的方法之后将所有子节点脱离，如 super.detach()。
+
+```dart
+  @override
+  void detach() {
+    super.detach();
+    
+    // 沿着 child 链递归调用子级的 detach 函数
+    Layer? child = firstChild;
+    while (child != null) {
+      child.detach();
+      child = child.nextSibling;
+    }
+    
+    _fireCompositionCallbacks(includeChildren: false);
+  }
+```
+
+## append
+
+&emsp;
+
+```dart
+  void append(Layer child) {
+    _adoptChild(child);
+    
+    child._previousSibling = lastChild;
+    if (lastChild != null) {
+      lastChild!._nextSibling = child;
+    }
+    
+    _lastChild = child;
+    _firstChild ??= child;
+    child._parentHandle.layer = child;
   }
 ```
 
