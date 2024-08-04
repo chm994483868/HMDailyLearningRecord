@@ -335,9 +335,9 @@ abstract class Layer with DiagnosticableTreeMixin {
 
 + alwaysNeedsAddToScene 为 true。
 + 已调用 markNeedsAddToScene。
-+ 任何后代都需要 addToScene。
++ 任何子级都需要 addToScene。
 
-&emsp;ContainerLayer 覆盖了此方法，以便递归调用其子级。
+&emsp;ContainerLayer 重写了此方法，以便递归调用其子级。
 
 ```dart
   @protected
@@ -512,13 +512,13 @@ abstract class Layer with DiagnosticableTreeMixin {
     if (!_needsAddToScene && _engineLayer != null) {
     
       // 当不需要 _needsAddToScene 且 _engineLayer 不为 null 时，
-      // 直接复用当前的 _engineLayer
+      // 直接复用当前的 _engineLayer。
       builder.addRetained(_engineLayer!);
       
       return;
     }
     
-    // 重新生成 _engineLayer 渲染结果
+    // 重新生成 _engineLayer 渲染结果。
     addToScene(builder);
     
     // 在调用 addToScene 之后清除标志位，而不是在调用之前。
@@ -529,7 +529,7 @@ abstract class Layer with DiagnosticableTreeMixin {
 
 ## Layer 总结
 
-&emsp;每个 Layer 都有个指向父级 Layer 的 parent 指针，以及表示自己深度信息的 depth 属性，同 Element、RenderObject 保持一致。Layer 作为不同功能的 Layer 子类的基类，只提供了最基础的功能。其中最主要的 parent 指针的指向、EngineLayer 的生成与复用、markNeedsAddToScene 的调用时机、attach & detach 的调用时机、owner 属性的作用、nextSibling & previousSibling 的指向赋值、addToScene 的调用时机、needsAddToScene 和 alwaysNeedsAddToScene 属性的使用，等等问题还没有明确的答案，需要我们继续去 Layer 的子类中去发掘。 
+&emsp;每个 Layer 都有个指向父级 Layer 的 parent 指针，以及表示自己深度信息的 depth 属性，同 Element、RenderObject 保持一致。Layer 作为不同功能的 Layer 子类的基类，只提供了最基础的功能。其中最主要的 parent 指针的指向、EngineLayer 的生成与复用、markNeedsAddToScene 的调用时机、attach & detach 的调用时机、owner 属性的作用、nextSibling & previousSibling 的指向赋值、addToScene 的调用时机、needsAddToScene 和 alwaysNeedsAddToScene 属性的使用，等等问题还没有明确的答案，需要我们继续去 Layer 的子类中去发掘。我们下篇继续。 
 
 ## 参考链接
 **参考链接:🔗**
