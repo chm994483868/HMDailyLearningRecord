@@ -256,7 +256,7 @@
 		D25994402C463B2A003571E3 /* Flutter 源码梳理系列（二十四）：RendererBinding.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十四）：RendererBinding.md"; sourceTree = "<group>"; };
 		D25994412C464F8E003571E3 /* Flutter 源码梳理系列（二十九）：RenderObject：Upon closer inspection.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十九）：RenderObject：Upon closer inspection.md"; sourceTree = "<group>"; };
 		D25994422C477E53003571E3 /* Flutter 源码梳理系列（二十六）：PipelineManifold.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十六）：PipelineManifold.md"; sourceTree = "<group>"; };
-		D25994432C48330D003571E3 /* Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md"; sourceTree = "<group>"; };
+		D25994432C48330D003571E3 /* Flutter 源码梳理系列（三十六）：RenderObject：PAINTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十六）：RenderObject：PAINTING.md"; sourceTree = "<group>"; };
 		D25994442C4916AE003571E3 /* Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十七）：ChangeNotifier、ValueNotifier.md"; sourceTree = "<group>"; };
 		D25994452C4AB7DB003571E3 /* Flutter 源码梳理系列（三十一）：PaintingContext.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十一）：PaintingContext.md"; sourceTree = "<group>"; };
 		D25994462C4B4F70003571E3 /* Flutter 源码梳理系列（二十一.一）：Rect.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（二十一.一）：Rect.md"; sourceTree = "<group>"; };
@@ -988,8 +988,8 @@
 				D259944B2C4FB9DE003571E3 /* Flutter 源码梳理系列（三十三）：Layer.md */,
 				D259944C2C50B143003571E3 /* Flutter 源码梳理系列（三十四）：ContainerLayer.md */,
 				D25994532C5E4D08003571E3 /* Flutter 源码梳理系列（三十五）：Scene、SceneBuilder.md */,
+				D25994432C48330D003571E3 /* Flutter 源码梳理系列（三十六）：RenderObject：PAINTING.md */,
 				D25994542C5F4710003571E3 /* Flutter 源码梳理系列（三十六）：OffsetLayer.md */,
-				D25994432C48330D003571E3 /* Flutter 源码梳理系列（二十七）：RenderObject：PAINTING.md */,
 				D25994402C463B2A003571E3 /* Flutter 源码梳理系列（二十四）：RendererBinding.md */,
 				D259944D2C534D83003571E3 /* Flutter 源码梳理系列（二十四）：debugPrintStack.md */,
 				D25994482C4CCF01003571E3 /* Flutter未解之谜.md */,

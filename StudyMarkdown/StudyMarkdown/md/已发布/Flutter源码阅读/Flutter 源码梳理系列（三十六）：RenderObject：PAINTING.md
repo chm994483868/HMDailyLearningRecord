@@ -1,20 +1,24 @@
-# Flutter 源码梳理系列（二十七）：RenderObject：PAINTING
+# Flutter 源码梳理系列（三十六）：RenderObject：PAINTING
 
 # RenderObject：PAINTING section
 
-&emsp;RenderObject 中超级重要的和绘制相关的内容，本篇相比 LAYOUT 部分来的有点晚了，并不是因为别的，因为这一部分太难理解了，所以我把和 RenderObject 绘制相关的其它类的内容都看了一遍，才勉强理解 PAINTING 这部分的源码。
+&emsp;RenderObject 中超级重要的和绘制相关的内容，本篇相比 LAYOUT 部分来的有点晚了，并不是因为别的，因为这一部分太难理解了，所以我把和 RenderObject 绘制相关的以及 Layer Tree 构建相关的内容都看完了，再看 PAINTING 这部分的源码。
 
 ## isRepaintBoundary
 
-&emsp;isRepaintBoundary 表示这个 RenderObject 对象是否独立于其父级绘制。默认为 false。此值和我们前面学习 Layout 部分时，判断当前 RenderObject 对象是否是重新布局边界时是完全不一样的。一个 RenderObject 对象是否是重新布局边界和是否是重新绘制边界是完全不一样的。这里的是否是重绘边界是 RenderObject 对象本身固有的一个属性。在默认情况下 RenderObject 给此值是 false，然后在不同的 RenderObject 子类中，它们会重新此属性，把它标记为 True。 
+&emsp;isRepaintBoundary 表示这个 RenderObject 对象是否独立于其父级绘制。默认为 false。此值和我们前面学习 Layout 部分时，判断当前 RenderObject 对象是否是重新布局边界（isRelayoutBoundary）时是不一样的。
 
-&emsp;在 RenderObject 子类中重写这个 getter 以指示 RenderObject 子类的实例是否应该独立重绘。例如，经常需要重绘的 RenderObject 子类对象可能希望自己重绘，而不要求其父级也一起重绘。
+&emsp;一个 RenderObject 对象是否是重新布局边界和是否是重新绘制边界是有很大不同的，这里的是否是重绘边界是 RenderObject 对象本身固有的一个属性。在默认情况下 RenderObject 给此值是 false，然后在不同的 RenderObject 子类中，它们会重新此属性，把它标记为 True。
 
-&emsp;如果这个 getter 返回 true，则 paintBounds getter 应用于此 RenderObject 对象和它的所有子级对象。framework 调用 RenderObject.updateCompositedLayer 创建一个 OffsetLayer 并将其分配给 layer 字段。声明自己为重绘边界的 RenderObject 对象不得替换 framework 创建的图层（layer）。
+&emsp;在 RenderObject 子类中重写这个 getter 以指示 RenderObject 子类对象是否应该独立绘制。例如，经常需要重绘的 RenderObject 子类对象可能希望自己重绘，而不要求其父级也一起重绘。
 
-&emsp;OffsetLayer 对于高效的重绘至关重要，因为它们是由 RenderObject Tree 中的重绘边界（即 RenderObject.isRepaintBoundary 为 true 的 RenderObject 对象）创建的。当要求作为重绘边界的 RenderObject 对象在 PaintingContext 中的特定偏移处进行绘制时，该 RenderObject 对象首先检查自身是否需要重绘。如果不需要，它通过改变其偏移属性（offset）来重用现有的 OffsetLayer（以及整个子树），从而削减了绘制步骤。
+&emsp;如果这个 getter 返回 true，则 paintBounds getter 应用于此 RenderObject 对象和它的所有子级对象。Flutter framework 调用 RenderObject 的 updateCompositedLayer 函数创建一个 OffsetLayer 并将其分配给 layer 字段。声明自己为重绘边界的 RenderObject 对象不得替换 framework 创建的图层（Layer）。
 
-&emsp;如果这个 getter 的值发生变化，必须调用 markNeedsCompositingBitsUpdate。（即如果自己是重绘边界或者不是重绘边界的标识发生了变化，则需要更新合成位 bits，它会影响 Layer 的合成。）
+&emsp;OffsetLayer 对于高效的重绘至关重要，因为它们是由 Render Tree 中的重绘边界（即 RenderObject.isRepaintBoundary 为 true 的 RenderObject 对象）创建的。当要求作为重绘边界的 RenderObject 对象在 PaintingContext 中的特定偏移处进行绘制时，该 RenderObject 对象首先检查自身是否需要重绘，如果不需要，它通过改变其偏移属性（offset）来重用现有的 OffsetLayer（以及整个子树），从而削减了绘制步骤。
+
+&emsp;如果这个 getter 的值发生变化，必须调用 markNeedsCompositingBitsUpdate。（即如果自己是重绘边界或者不是重绘边界的标识发生了变化，则需要更新合成位，它会影响 Layer 的合成。）
+
+&emsp;是重绘边界的 RenderObject 对象的 layer 属性都是一个 OffsetLayer 对象。
 
 ```dart
   bool get isRepaintBoundary => false;
@@ -26,7 +30,7 @@
 
 &ems;在 RenderObject 子类中重写此方法，以指示绘制函数总是会创建至少一个合成图层（composited layer）。例如，视频应该在使用硬件解码器时返回 true。
 
-&emsp;如果此 getter 的值发生更改，必须调用 markNeedsCompositingBitsUpdate。（在调用 adoptChild 或 dropChild 时，会暗示此操作。）
+&emsp;如果此 getter 的值发生更改，必须调用 markNeedsCompositingBitsUpdate。
 
 ```dart
   @protected
@@ -43,15 +47,15 @@
 
 ## updateCompositedLayer
 
-&emsp;更新此 RenderObject 对象拥有的合成层（composited layer）。
+&emsp;更新此 RenderObject 对象拥有的合成层（composited layer）。（可以理解为是更新此 RenderObject 的 layer 属性的 layer 对象的属性。）
 
-&emsp;当 isRepaintBoundary 为 true 时，framework 会调用此方法。
+&emsp;当 isRepaintBoundary 为 true 时，Flutter framework 会调用此方法。
 
-&emsp;如果 oldLayer 为 null，则此方法必须返回一个新的 OffsetLayer（或其子类型）。如果 oldLayer 不为 null，则此方法必须重用所提供的 Layer 实例 - 在此实例中创建新 Layer 是错误的。当 RenderObject 对象被销毁或不再是重绘边界时，framework 将处理该 Layer 的销毁。
+&emsp;如果 oldLayer 为 null，则此方法必须返回一个新的 OffsetLayer（或其子类型）。如果 oldLayer 不为 null，则此方法必须重用所提供的 oldLayer 参数 - 在此实例中创建新 Layer 是错误的。当 RenderObject 对象被销毁或不再是重绘边界时，framework 将处理该 Layer 的销毁。
 
 &emsp;OffsetLayer.offset 属性将由 framework 管理，不能由此方法更新。
 
-&emsp;如果需要更新合成层的属性，则 RenderObject 对象必须调用 markNeedsCompositedLayerUpdate 方法，该方法将安排调用此方法而无需重绘子级。如果此 Widget 被标记为需要绘制并需要合成层更新，则只会调用此方法一次。
+&emsp;如果需要更新 layer 的属性，则 RenderObject 对象必须调用 markNeedsCompositedLayerUpdate 方法，该方法将安排调用此方法而无需重绘子级。如果此 Widget 被标记为需要绘制并需要合成层更新，则只会调用此方法一次。
 
 ```dart
   OffsetLayer updateCompositedLayer({required covariant OffsetLayer? oldLayer}) {
@@ -63,17 +67,15 @@
 
 &emsp;此 RenderObject 对象用于重绘的合成层。
 
-&emsp;如果此 RenderObject 对象不是重绘边界，则由 paint 方法负责填充此字段。如果 needsCompositing 为 true，则此字段可能会填充 RenderObject 对象实现中使用的最顶层层。在重绘时，RenderObject 对象可以更新此字段中存储的层，而不是创建新的层，以获得更好的性能。也可以将此字段保留为 null，并在每次重绘时创建新的层，但不会获得性能优势。如果 needsCompositing 为 false，则此字段必须设为 null，要么通过从未填充此字段来实现，要么在 needsCompositing 从 true 更改为 false 时将其设置为 null。
+&emsp;如果此 RenderObject 对象不是重绘边界，则由 paint 方法负责填充此字段。如果 needsCompositing 为 true，则此字段可能会填充 RenderObject 对象实现中使用的最顶层图层。在重绘时，RenderObject 对象可以更新此字段中存储的层，而不是创建新的层，以获得更好的性能。也可以将此字段保留为 null，并在每次重绘时创建新的层，但不会获得性能优势。如果 needsCompositing 为 false，则此字段必须设为 null，要么通过从未填充此字段来实现，要么在 needsCompositing 从 true 更改为 false 时将其设置为 null。
 
-&emsp;如果创建了新的层并存储在 RenderObject 对象的其他字段中，则 RenderObject 对象必须使用 LayerHandle 来存储它。LayerHandle 将防止在 RenderObject 对象完成使用之前丢弃层，并确保在 RenderObject 对象创建替代层或将其值设为 null 时适当地处理该层。RenderObject 对象必须在其 dispose 方法中将 LayerHandle.layer 设为 null。
+&emsp;如果创建了新的层并存储在 RenderObject 对象的其他字段中，则 RenderObject 对象必须使用 LayerHandle 来存储它。LayerHandle 将防止在 RenderObject 对象完成使用之前丢弃层，并确保在 RenderObject 对象创建替代层或将其值设为 null 时适当地处理该层。RenderObject 对象必须在其 dispose 方法中将 LayerHandle.layer 设为 null。（LayerHandle 中代码有对此段文档的完美诠释！）
 
-&emsp;如果此 RenderObject 对象是一个重绘边界，则在调用 paint 方法之前，framework 会自动创建一个 OffsetLayer 并填充此字段。paint 方法不得更改此字段的值。
+&emsp;如果此 RenderObject 对象是一个重绘边界，则在调用 paint 方法之前，Flutter framework 会自动创建一个 OffsetLayer 并填充此字段。paint 方法不得更改此字段的值。
 
 ```dart
   @protected
   ContainerLayer? get layer {
-    assert(!isRepaintBoundary || _layerHandle.layer == null || _layerHandle.layer is OffsetLayer);
-    
     return _layerHandle.layer;
   }
   
@@ -103,9 +105,9 @@
 
 ## markNeedsCompositingBitsUpdate
 
-&emsp;将此 RenderObject 对象的合成状态（`_needsCompositingBitsUpdate`）标记为脏。
+&emsp;将此 RenderObject 对象的合成位（`_needsCompositingBitsUpdate`）标记为脏。
 
-&emsp;调用此方法表示在下一个 PipelineOwner.flushCompositingBits 引擎阶段需要重新计算 needsCompositing 的值。
+&emsp;调用此方法表示在下一个 PipelineOwner.flushCompositingBits engine 阶段需要重新计算 needsCompositing 的值。
 
 &emsp;当子树发生变化时，我们需要重新计算我们的 needsCompositing 位，并且一些祖先节点也需要做相同的事情（以防我们的位因某种更改而导致它们的更改）。为此，adoptChild 和 dropChild 方法调用此方法，并在必要时调用父级的此方法，等等，沿着 Render Tree 向上遍历标记所有需要更新的节点。
 
@@ -113,14 +115,15 @@
 
 ```dart
   void markNeedsCompositingBitsUpdate() {
-    // 如果 "需要合成位更新标识" 已经为 true 了，直接返回即可。
+    // 如果当前 RenderObject 对象的 "需要合成位更新标识" 已经为 true 了，直接返回即可。
     if (_needsCompositingBitsUpdate) {
       return;
     }
     
-    // 标识置为 true
+    // 把当前 RenderObject 对象的 "需要合成位更新标识" 置为 true。
     _needsCompositingBitsUpdate = true;
     
+    // 这里的 parent is RenderObject，理论下只有 Render Tree 根节点才会返回 false，因为它的 parent 是 null。
     if (parent is RenderObject) {
     
       // 如果当前 RenderObject 对象的父级也被标记需要更新的话，
@@ -130,22 +133,20 @@
         return;
       }
 
-      // 如果自己不是重绘边界，并且直接父级也不是重绘边界，则继续往上传递，需要合成位更新，
-      // 直到一个重绘边界为止。
+      // 如果自己不是重绘边界，并且直接父级也不是重绘边界，则继续往上传递需要合成位更新，直到找到一个重绘边界为止。
       if ((!_wasRepaintBoundary || !isRepaintBoundary) && !parent.isRepaintBoundary) {
-        // 继续往父级传递，需要合成位更新
+      
+        // 继续往父级传递，需要合成位更新。
         parent.markNeedsCompositingBitsUpdate();
         
         return;
       }
     }
     
-    // 如果自己就是重绘边界的话，把自己添加到需要合成位更新的列表中即可。父级不需要一起更新。
-    
-    // parent is fine (or there isn't one), but we are dirty
+    // 如果自己就是重绘边界的话，把自己添加到需要合成位更新的列表中即可。父级不需要一起进行合成位的更新。
     if (owner != null) {
-      // 然后把当前 RenderObject 对象添加到 owner 的 _nodesNeedingCompositingBitsUpdate 列表中去。
-      // 等待下一帧被更新。
+    
+      // 然后把当前 RenderObject 对象添加到 owner 的 _nodesNeedingCompositingBitsUpdate 列表中去，等待下一帧执行更新事件。
       owner!._nodesNeedingCompositingBitsUpdate.add(this);
     }
   }
@@ -153,11 +154,9 @@
 
 ## `_needsCompositing`
 
-&emsp;在构造函数中初始化。
+&emsp;`_needsCompositing` 会在 RenderObject 的构造函数中进行初始化。无论我们还是我们的后代是否有一个合成层。
 
-&emsp;无论我们还是我们的后代是否有一个合成层。
-
-&emsp;如果该节点需要合成，如此 Bits 所示，那么所有祖先节点也将需要合成。只有在 PipelineOwner.flushLayout 和 PipelineOwner.flushCompositingBits 被调用后才合法调用。
+&emsp;如果该 RenderObject 节点需要合成，如此 Bits 所示，那么所有祖先节点也将需要合成。只有在 PipelineOwner.flushLayout 和 PipelineOwner.flushCompositingBits 被调用后才合法调用。
 
 ```dart
   late bool _needsCompositing;
@@ -173,41 +172,51 @@
 
 ```dart
   void _updateCompositingBits() {
+    
+    // 如果已经不需要更新了，则直接 return 即可。
     if (!_needsCompositingBitsUpdate) {
       return;
     }
     
+    // 记录 _needsCompositing 的旧值。
     final bool oldNeedsCompositing = _needsCompositing;
+    
+    // 首先给它一个 false 值，标识为不需要合成，下面会有两种情况被置回 true。
     _needsCompositing = false;
     
+    // 在子级中递归调用 _updateCompositingBits 函数。
     visitChildren((RenderObject child) {
       child._updateCompositingBits();
       
+      // 如果子级的需要合成，则父级也需要合成。
       if (child.needsCompositing) {
         _needsCompositing = true;
       }
     });
     
+    // 如果是绘制边界，或者 alwaysNeedsCompositing 为 true，则也需要合成。
     if (isRepaintBoundary || alwaysNeedsCompositing) {
       _needsCompositing = true;
     }
     
-    // 如果一个节点之前是一个重绘边界，但现在不是了，
-    // 那么无论其合成状态如何，我们都需要找到一个新的父节点进行绘制。
+    // 如果一个节点之前是一个重绘边界，但现在不是了，那么无论其合成状态如何，我们都需要找到一个新的父节点进行绘制。
     // 为了做到这一点，我们重新标记该节点为干净状态，这样在 markNeedsPaint 中的遍历就不会被提前终止。
     // 它将从 _nodesNeedingPaint 中移除，这样我们在找到父节点之后就不会再尝试从它进行绘制。
     if (!isRepaintBoundary && _wasRepaintBoundary) {
       _needsPaint = false;
       _needsCompositedLayerUpdate = false;
-      
       owner?._nodesNeedingPaint.remove(this);
-      
       _needsCompositingBitsUpdate = false;
+      
+      // 标记为需要重新绘制。
       markNeedsPaint();
     } else if (oldNeedsCompositing != _needsCompositing) {
       _needsCompositingBitsUpdate = false;
+      
+      // 如果是合成位发生了变化，则也需要进行重新绘制。
       markNeedsPaint();
     } else {
+      // 合成位更新完毕了，且不需要进行重新绘制，仅把需要进行合成位更新标识置为 false 即可。
       _needsCompositingBitsUpdate = false;
     }
   }
@@ -223,7 +232,7 @@
 
 ## `_needsCompositedLayerUpdate`
 
-&emsp;是否需要合成层的更新。
+&emsp;是否需要合成层的更新。（即是否需要进行 layer 的更新。）
 
 ```dart
   bool _needsCompositedLayerUpdate = false;
@@ -251,29 +260,26 @@
     // _needsPaint 标识置为 true
     _needsPaint = true;
     
-    // 如果此 RenderObject 之前不是一个重绘边界的话，那么它不会有一个我们可以从中绘制的图层。
+    // 如果此 RenderObject 之前不是一个重绘边界的话，那么它不会有一个独立的我们可以从中绘制的 Layer。它会和其父级绘制到同一个 Layer 上。
     
     if (isRepaintBoundary && _wasRepaintBoundary) {
       
-      // 如果我们始终有自己的图层，那么我们可以在不涉及任何其他节点的情况下重绘自己。
-      // 即不需要向父级传递。
+      // 如果 RenderObject 始终有自己的 Layer，那么我们可以在不涉及任何其他 RenderObject 节点的情况下重绘自己。即不需要向父级传递。
       if (owner != null) {
         
         // 1️⃣ 把当前 RenderObject 对象添加到 owner 的 _nodesNeedingPaint 列表中去，
-        // 然后请求新的帧，在下一帧对所有需要重绘的节点进行批处理。
+        // 然后请求新的帧，在下一帧对所有需要重绘的 RenderObject 进行批处理。
         owner!._nodesNeedingPaint.add(this);
         owner!.requestVisualUpdate();
       }
     } else if (parent != null) {
     
-      // 2️⃣ 如果自己不是重绘边界的话并且之前也不是重绘边界的话，
-      // 则把重绘的需求向上传递到父级去。
+      // 2️⃣ 如果自己不是重绘边界的话并且之前也不是重绘边界的话，则把重绘的需求向上传递到父级中去。
       parent!.markNeedsPaint();
-      
     } else {
       // 3️⃣ 没有父级的 RenderObject 节点，那只有 Render Tree 的根节点是这样。
       
-      // 如果我们是渲染树的根且不是重绘边界，那么我们必须把自己绘制出来，因为没有其他人可以绘制我们。
+      // 如果我们是 Render Tree 的根且不是重绘边界，那么我们必须把自己绘制出来，因为没有其他人可以绘制我们。
       // 在这种情况下，我们不会将自己添加到 _nodesNeedingPaint 中，因为根节点总是被告知进行绘制操作。
       
       // 根节点为 RenderView 的树不会经过此代码路径，因为 RenderView 是重绘边界。
@@ -297,16 +303,20 @@
 
 ```dart
   void markNeedsCompositedLayerUpdate() {
+    // 如果已经被标记需要 layer 的属性进行更新或者被标记需要进行绘制，则直接 return 即可。
     if (_needsCompositedLayerUpdate || _needsPaint) {
       return;
     }
     
+    // 把需要 layer 属性进行更新的标识置为 true。
     _needsCompositedLayerUpdate = true;
     
-    // If this was not previously a repaint boundary it will not have a layer we can paint from.
+    // 如果这之前不是一个重绘边界，它将没有一个我们可以绘制的图层。
+    
     if (isRepaintBoundary && _wasRepaintBoundary) {
-      // If we always have our own layer, then we can just repaint ourselves without involving any other nodes.
-      assert(_layerHandle.layer != null);
+    
+      // 如果我们总是有自己的图层，那么我们可以只重新绘制自己，而不涉及任何其他节点。
+      //（即，正常情况下，所有的重新绘制边界都有自己的 layer。）
       
       if (owner != null) {
         owner!._nodesNeedingPaint.add(this);
@@ -320,26 +330,19 @@
 
 ## `_skippedPaintingOnLayer`
 
-&emsp;当 flushPaint() 尝试让我们绘制但是我们的图层已分离时调用。为确保当它最终重新附加时我们的子树被重绘，即使在某个祖先图层本身从未标记为脏的情况下，我们必须标记整个分离的子树为脏，需要被重绘。这样，我们最终会被重绘。
+&emsp;当 flushPaint 尝试让我们绘制但是我们的图层已分离时调用。为确保当它最终重新附加时我们的子树被重绘，即使在某个祖先图层本身从未标记为脏的情况下，我们必须标记整个分离的子树为脏，需要被重绘。这样，我们最终会被重绘。
 
 ```dart
   void _skippedPaintingOnLayer() {
-    assert(attached);
-    assert(isRepaintBoundary);
-    assert(_needsPaint || _needsCompositedLayerUpdate);
-    assert(_layerHandle.layer != null);
-    assert(!_layerHandle.layer!.attached);
-    
     RenderObject? node = parent;
+    
     while (node is RenderObject) {
       if (node.isRepaintBoundary) {
         if (node._layerHandle.layer == null) {
-          // Looks like the subtree here has never been painted. Let it handle itself.
           break;
         }
         
         if (node._layerHandle.layer!.attached) {
-          // It's the one that detached us, so it's the one that will decide to repaint us.
           break;
         }
         
@@ -353,55 +356,41 @@
 
 ## scheduleInitialPaint
 
-&emsp;通过安排第一次绘制来引导渲染流水线。
+&emsp;通过安排第一次绘制来引导渲染流水线。需要这个 RenderObject 对象已经附加到 Render Tree 的根，并且具有一个复合图层。查看 RenderView 以了解此函数的使用示例。
 
-&emsp;需要这个 RenderObject 对象已经附加到 Render Tree 的根，并且具有一个复合图层。
-
-&emsp;查看 RenderView 以了解此函数的使用示例。
+&emsp;当 Render Tree 构建完成，Render Tree 的根节点 RenderView 会发起以自己为起点的整个 Render Tree 的绘制。
 
 ```dart
   void scheduleInitialPaint(ContainerLayer rootLayer) {
-    assert(rootLayer.attached);
-    assert(attached);
-    assert(parent is! RenderObject);
-    assert(!owner!._debugDoingPaint);
-    assert(isRepaintBoundary);
-    assert(_layerHandle.layer == null);
-    
+    // Layer Tree 的根节点
     _layerHandle.layer = rootLayer;
     
-    assert(_needsPaint);
-    
+    // 把 Render Tree 的根节点添加到 PipelineOwner 的需要绘制列表中。
     owner!._nodesNeedingPaint.add(this);
   }
 ```
 
 ## replaceRootLayer
 
-&emsp;替换图层。这仅适用于 RenderObject 对象子树的根（无论 scheduleInitialPaint 调用对象是什么）。
+&emsp;替换图层。这仅适用于 RenderObject 子树的根（无论 scheduleInitialPaint 调用对象是什么）。
 
 &emsp;例如，如果设备像素比率更改，则可能会调用此操作。
 
 ```dart
   void replaceRootLayer(OffsetLayer rootLayer) {
-    assert(!_debugDisposed);
-    assert(rootLayer.attached);
-    assert(attached);
-    assert(parent is! RenderObject);
-    assert(!owner!._debugDoingPaint);
-    assert(isRepaintBoundary);
-    assert(_layerHandle.layer != null); // use scheduleInitialPaint the first time
-    
+    // 旧的 Layer 分离。 
     _layerHandle.layer!.detach();
+    // 更新 layer 值。
     _layerHandle.layer = rootLayer;
     
+    // 标记需要进行重新绘制。
     markNeedsPaint();
   }
 ```
 
 ## `_paintWithContext`
 
-&emsp;使用传递来的 PaintingContext context 对象，可以进行绘制了。
+&emsp;使用传递来的 PaintingContext 对象，可以进行绘制了。
 
 ```dart
   void _paintWithContext(PaintingContext context, Offset offset) {
@@ -419,8 +408,12 @@
     _wasRepaintBoundary = isRepaintBoundary;
     
     try {
+    
+      // 执行 paint 函数，RenderObject 子类都会重写此函数，进行属于自己的绘制。
       paint(context, offset);
     } catch (e, stack) {
+    
+      // 如果发生错误的话，报个错。
       _reportException('paint', e, stack);
     }
   }
@@ -452,7 +445,7 @@
 
 ## applyPaintTransform
 
-&emsp;将应用于正在绘制的给定子级（child）的转换应用到给定的矩阵中。
+&emsp;将应用于正在绘制的给定子级（child）的 transform 应用到给定的矩阵中。
 
 &emsp;用于坐标转换函数，将一个 RenderObject 对象局部的坐标转换为另一个 RenderObject 对象的本地坐标。
 
@@ -474,106 +467,21 @@
 
 ```dart
   bool paintsChild(covariant RenderObject child) {
-    assert(child.parent == this);
-    
     return true;
   }
 ```
 
-## getTransformTo
+## RenderObject PAINTING 总结
 
-&emsp;将绘制变换应用于祖先节点。
+&emsp;至此 RenderObject 类中 Paint 部分的内容就全部看完了，说实话，其实在十几天前当时看完 Layout 部分后，就尝试看这些 Paint 内容了，结果当时是完全看不懂，后续就开始陆续看了 《Flutter 源码梳理系列（二十五）：RenderObject：LAYOUT》之后的内容到现在，才算是把 RenderObject 的 Paint 部分的内容看懂。
 
-&emsp;返回一个矩阵，将本地绘制坐标系映射到祖先节点的坐标系。
+&emsp;isRepaintBoundary getter 直接返回 true 或 false，它是 RenderObject 的固有属性，可以全局搜索 bool get isRepaintBoundary =，可以看到不同的 RenderObject 子类返回不同的值。
 
-&emsp;如果祖先节点为 null，则此方法返回一个矩阵，将本地绘制坐标系映射到 PipelineOwner.rootNode 的坐标系。
+&emsp;needsCompositing 是否需要合成，当值为 true 时，同是 isRepaintBoundary 为 true 一样会创建单独的 Layer 进行绘制。 
 
-&emsp;对于由 RendererBinding 拥有的 Render Tree（即在设备上显示的主渲染树），这意味着该方法映射到逻辑像素中的全局坐标系。要获取物理像素，请使用 RenderView 的 applyPaintTransform 进一步变换坐标。
+&emsp;然后是 mark 系列函数：markNeedsCompositingBitsUpdate、markNeedsPaint、markNeedsCompositedLayerUpdate 如果 RenderObject 是非绘制边界的话 mark 需要向父级中传递。
 
-```dart
-  Matrix4 getTransformTo(RenderObject? target) {
-    // 从 fromRenderObject 到 toRenderObject 以及它们共同的祖先的路径。
-    // 如果不为 null，则每个列表的长度大于 1。
-    // 返回值为 `this`、`commonAncestorRenderObject` 或者 null，如果 `this` 是公共祖先的话。
-    
-    List<RenderObject>? fromPath;
-    
-    // `target` 是公共祖先渲染对象之前的一组对象，或者如果 `target` 本身就是公共祖先，则为 null。
-    List<RenderObject>? toPath;
-
-    RenderObject from = this;
-    RenderObject to = target ?? owner!.rootNode!;
-
-    while (!identical(from, to)) {
-      final int fromDepth = from.depth;
-      final int toDepth = to.depth;
-
-      if (fromDepth >= toDepth) {
-        final RenderObject fromParent = from.parent ?? (throw FlutterError('$target and $this are not in the same render tree.'));
-        (fromPath ??= <RenderObject>[this]).add(fromParent);
-        from = fromParent;
-      }
-      
-      if (fromDepth <= toDepth) {
-        final RenderObject toParent = to.parent ?? (throw FlutterError('$target and $this are not in the same render tree.'));
-        (toPath ??= <RenderObject>[target!]).add(toParent);
-        
-        to = toParent;
-      }
-    }
-
-    Matrix4? fromTransform;
-    if (fromPath != null) {
-      fromTransform = Matrix4.identity();
-      
-      final int lastIndex = target == null ? fromPath.length - 2 : fromPath.length - 1;
-      
-      for (int index = lastIndex; index > 0; index -= 1) {
-        fromPath[index].applyPaintTransform(fromPath[index - 1], fromTransform);
-      }
-    }
-    
-    if (toPath == null) {
-      return fromTransform ?? Matrix4.identity();
-    }
-
-    final Matrix4 toTransform = Matrix4.identity();
-    for (int index = toPath.length - 1; index > 0; index -= 1) {
-      toPath[index].applyPaintTransform(toPath[index - 1], toTransform);
-    }
-    
-    // 如果矩阵是单数，那么 `invert()` 方法不会执行任何操作。
-    if (toTransform.invert() == 0) {
-      return Matrix4.zero();
-    }
-    
-    return (fromTransform?..multiply(toTransform)) ?? toTransform;
-  }
-```
-
-## describeApproximatePaintClip
-
-&emsp;返回在此对象的坐标系中描述给定子元素在绘制阶段期间所应用的剪裁矩形的近似边界框的矩形。
-
-&emsp;如果子元素不会被剪裁，则返回 null。
-
-&emsp;这在语义阶段中用于避免包括那些在屏幕上不可见的子元素。
-
-&emsp;在绘制时遵守剪裁行为的 RenderObjects 必须在描述此值时也要遵守相同的行为。例如，如果将 Clip.none 作为 clipBehavior 传递给 PaintingContext.pushClipRect，则此方法的实现必须返回 null。
-
-```dart
-  Rect? describeApproximatePaintClip(covariant RenderObject child) => null;
-```
-
-
-
-
-
-
-
-
-
-
+&emsp;然后是 RenderObject 中空实现的：void paint(PaintingContext context, Offset offset) {} 函数，可以全局搜一下，看下其他不同的 RenderObject 子类重写的 panint 函数，执行了哪些不同的绘制内容。
 
 ## 参考链接
 **参考链接:🔗**
