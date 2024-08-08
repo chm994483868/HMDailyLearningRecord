@@ -89,99 +89,98 @@ class OffsetLayer extends ContainerLayer {
   }
 ```
 
+## `_createSceneForImage`
 
-
-
-
+&emsp;私有函数，为下面的 toImage、toImageSnc 创建 Scene 使用，可看到主要集中在 offset 属性中，直接在当前的 SceneBuilder 中推入经过 translate Offset 的 Transform。
 
 ```dart
-// 1️⃣ Layer 中和 Scene 相关的代码。
-  bool _needsAddToScene = true;
-
-  @protected
-  @visibleForTesting
-  void markNeedsAddToScene() {
-    if (_needsAddToScene) {
-      return;
-    }
-
-    _needsAddToScene = true;
-  }
-
-  @protected
-  bool get alwaysNeedsAddToScene => false;
-  
-    @protected
-  @visibleForTesting
-  void updateSubtreeNeedsAddToScene() {
-    _needsAddToScene = _needsAddToScene || alwaysNeedsAddToScene;
-  }
-  
-  @protected
-  void addToScene(ui.SceneBuilder builder);
-
-  void _addToSceneWithRetainedRendering(ui.SceneBuilder builder) {
-    // 如果不需要 add to Scene 并且 _engineLayer 不为 null，
-    // 则直接拿当前的 _engineLayer 进行复用。
-    if (!_needsAddToScene && _engineLayer != null) {
+  ui.Scene _createSceneForImage(Rect bounds, { double pixelRatio = 1.0 }) {
+    final ui.SceneBuilder builder = ui.SceneBuilder();
     
-      // 需要专注看一下 builder.addRetained 的内容。
-      builder.addRetained(_engineLayer!);
+    // 可看到主要集中在 offset 属性中，直接在当前的 SceneBuilder 中推入经过 translate Offset 的 Transform。
+    final Matrix4 transform = Matrix4.diagonal3Values(pixelRatio, pixelRatio, 1);
+    transform.translate(-(bounds.left + offset.dx), -(bounds.top + offset.dy));
+    
+    builder.pushTransform(transform.storage);
+    
+    return buildScene(builder);
+  }
+```
+
+## toImage
+
+&emsp;捕获当前 OffsetLayer 及其子级的状态的图像。
+
+&emsp;返回的 ui.Image 具有未压缩的原始 RGBA 字节，将由边界的左上角偏移，并具有尺寸等于边界尺寸乘以像素比(pixelRatio)的大小。
+
+&emsp;像素比(pixelRatio)描述了逻辑像素与输出图像尺寸之间的比例。它与设备的 dart:ui.FlutterView.devicePixelRatio 独立，因此指定为 1.0（默认值）将为你提供逻辑像素和图像中输出像素之间的 1:1 映射。
+
+&emsp;此 API 的功能类似于 toImageSync，但只在光栅化完成后返回。
+
+&emsp;另请参见：
+
++ RenderRepaintBoundary.toImage 用于在渲染对象级别获取类似的 API。
++ dart:ui.Scene.toImage 获取有关返回图像的更多信息。
+
+```dart
+  Future<ui.Image> toImage(Rect bounds, { double pixelRatio = 1.0 }) async {
+    final ui.Scene scene = _createSceneForImage(bounds, pixelRatio: pixelRatio);
+
+    try {
+    
+      // 大小四舍五入一下。
+      return await scene.toImage(
+        (pixelRatio * bounds.width).ceil(),
+        (pixelRatio * bounds.height).ceil(),
+      );
       
-      return;
-    }
-    
-    // 正常进行 addToScene 的调用。
-    addToScene(builder);
-    
-    _needsAddToScene = false;
-  }
-  
-// 2️⃣ ContainerLayer 中和 Scene 相关的代码。
-  ui.Scene buildScene(ui.SceneBuilder builder) {
-    updateSubtreeNeedsAddToScene();
-    
-    addToScene(builder);
-    
-    if (subtreeHasCompositionCallbacks) {
-      _fireCompositionCallbacks(includeChildren: true);
-    }
-
-    _needsAddToScene = false;
-    
-    // 生成 Scene
-    final ui.Scene scene = builder.build();
-    
-    return scene;
-  }
-
-  @override
-  void updateSubtreeNeedsAddToScene() {
-    super.updateSubtreeNeedsAddToScene();
-    
-    Layer? child = firstChild;
-    while (child != null) {
-      child.updateSubtreeNeedsAddToScene();
-      
-      _needsAddToScene = _needsAddToScene || child._needsAddToScene;
-      
-      child = child.nextSibling;
-    }
-  }
-  
-  @override
-  void addToScene(ui.SceneBuilder builder) {
-    addChildrenToScene(builder);
-  }
-
-  void addChildrenToScene(ui.SceneBuilder builder) {
-    Layer? child = firstChild;
-    
-    while (child != null) {
-      // 直接使用 Layer 的 _addToSceneWithRetainedRendering 函数
-      child._addToSceneWithRetainedRendering(builder);
-      
-      child = child.nextSibling;
+    } finally {
+      scene.dispose();
     }
   }
 ```
+
+## toImageSync
+
+&emsp;捕获当前 OffsetLayer 及其子级的状态的图像。
+
+&emsp;返回的 ui.Image 具有未压缩的原始 RGBA 字节，将由边界的左上角偏移，并具有尺寸等于边界尺寸乘以像素比(pixelRatio)的大小。
+
+&emsp;像素比(pixelRatio)描述了逻辑像素与输出图像尺寸之间的比例。它与设备的 dart:ui.FlutterView.devicePixelRatio 独立，因此指定为 1.0（默认值）将为你提供逻辑像素和图像中输出像素之间的 1:1 映射。
+
+&emsp;这个 API 的功能类似于 toImage，只不过它会立即在光栅线程上急切地开始光栅化，然后在这之前返回图像。
+
+&emsp;另请参见：
+
++ RenderRepaintBoundary.toImage 用于在渲染对象级别获取类似的 API。
++ dart:ui.Scene.toImage 获取有关返回图像的更多信息。
+
+```dart
+  ui.Image toImageSync(Rect bounds, { double pixelRatio = 1.0 }) {
+    final ui.Scene scene = _createSceneForImage(bounds, pixelRatio: pixelRatio);
+
+    try {
+    
+      // 大小四舍五入一下。
+      return scene.toImageSync(
+        (pixelRatio * bounds.width).ceil(),
+        (pixelRatio * bounds.height).ceil(),
+      );
+      
+    } finally {
+      scene.dispose();
+    }
+  }
+```
+
+## OffsetLayer 总结
+
+&emsp;OffsetLayer 作为是重新绘制边界的 RenderObject 对象进行绘制时默认提供的 Layer 类型，但其实它的内容并不多，主要集中在其 addToScene 函数的重写中。当需要把以当前 OffsetLayer 为根节点的 Layer 子树添加进场景时，首先会在当前 SceneBuilder 的操作堆栈中推入 offset 偏移，然后再把其子级添加到场景中，然后再执行个 SceneBuilder 的 pop 操作，防止影响后续的 Layer 添加到场景时的效果。
+
+&emsp;OffsetLayer 相对于其直接父类 ContainerLayer 而言，主要多了一个 offset 属性，然后是重写的一些父类函数，多围着 offset 属性进行。
+
+&emsp;然后另外一点时，PipelineOwner 的 flushPaint 函数中，当是重绘边界的 RenderObject 仅需要 Layer 更新时，会调用的 PaintingContext 的 updateLayerProperties 函数，仅更新 RenderObject 的 layer 的 offset 即可，可以直接复用此 layer 属性。
+
+## 参考链接
+**参考链接:🔗**
++ [OffsetLayer class](https://api.flutter.dev/flutter/rendering/OffsetLayer-class.html)
