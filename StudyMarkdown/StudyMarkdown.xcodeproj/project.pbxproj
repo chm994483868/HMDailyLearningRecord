@@ -272,6 +272,10 @@
 		D25994502C57F400003571E3 /* Flutter 源码梳理系列（三十二）：PictureRecorder、Picture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十二）：PictureRecorder、Picture.md"; sourceTree = "<group>"; };
 		D25994532C5E4D08003571E3 /* Flutter 源码梳理系列（三十五）：Scene、SceneBuilder.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十五）：Scene、SceneBuilder.md"; sourceTree = "<group>"; };
 		D25994542C5F4710003571E3 /* Flutter 源码梳理系列（三十七）：OffsetLayer.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十七）：OffsetLayer.md"; sourceTree = "<group>"; };
+		D25994572C671905003571E3 /* 点击事件响应链.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "点击事件响应链.md"; sourceTree = "<group>"; };
+		D25994582C671916003571E3 /* 布局模型：盒模型.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "布局模型：盒模型.md"; sourceTree = "<group>"; };
+		D25994592C67C324003571E3 /* Flutter 源码梳理系列（三十八）：Other Layer.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（三十八）：Other Layer.md"; sourceTree = "<group>"; };
+		D259945A2C6869E2003571E3 /* 导航堆栈.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "导航堆栈.md"; sourceTree = "<group>"; };
 		D25AAFF22BEB4D690095511B /* Flutter 知识点：解析 Future 对象提供的异步操作.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 知识点：解析 Future 对象提供的异步操作.md"; sourceTree = "<group>"; };
 		D2D76D342BEF9E5200037022 /* Flutter 面试题：Flutter 中流式请求怎么实现.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 面试题：Flutter 中流式请求怎么实现.md"; sourceTree = "<group>"; };
 		D2FC92A82C231B1E00EF34D0 /* Flutter 源码梳理系列（四）：Widget、StatelessWidget.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Flutter 源码梳理系列（四）：Widget、StatelessWidget.md"; sourceTree = "<group>"; };
@@ -990,7 +994,11 @@
 				D25994532C5E4D08003571E3 /* Flutter 源码梳理系列（三十五）：Scene、SceneBuilder.md */,
 				D25994432C48330D003571E3 /* Flutter 源码梳理系列（三十六）：RenderObject：PAINTING.md */,
 				D25994542C5F4710003571E3 /* Flutter 源码梳理系列（三十七）：OffsetLayer.md */,
+				D25994592C67C324003571E3 /* Flutter 源码梳理系列（三十八）：Other Layer.md */,
 				D25994402C463B2A003571E3 /* Flutter 源码梳理系列（二十四）：RendererBinding.md */,
+				D25994572C671905003571E3 /* 点击事件响应链.md */,
+				D25994582C671916003571E3 /* 布局模型：盒模型.md */,
+				D259945A2C6869E2003571E3 /* 导航堆栈.md */,
 				D259944D2C534D83003571E3 /* Flutter 源码梳理系列（二十四）：debugPrintStack.md */,
 				D25994482C4CCF01003571E3 /* Flutter未解之谜.md */,
 				D259943D2C40088F003571E3 /* RendererBinding.md */,

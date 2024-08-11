@@ -1,4 +1,4 @@
-# Flutter 源码梳理系列（三十五）：OffsetLayer
+# Flutter 源码梳理系列（三十五）：Scene、SceneBuilder
 
 # 前言
 
@@ -99,7 +99,18 @@ abstract class Scene { //... }
 
 &emsp;EngineLayer：Flutter framework 用来在帧之间持有和保留 EngineLayer 的一个句柄。（每个 Layer 都有一个 engineLayer 属性，可以直接把 EngineLayer engineLayer 理解为保存当前 Layer 对象渲染结果的，特别是在 Layer 的 addToSceneWithRetainedRendering 函数内，如果 Layer 的 needsAddToScene 为 false 且 engineLayer 属性非 null 时，SceneBuilder 会通过 addRetained 持有 engineLayer，直接复用之前的渲染结果。）
 
-&emsp;然后针对不同的渲染结果 EngineLayer 有一众子类：BackdropFilterEngineLayer、ClipPathEngineLayer、ClipRectEngineLayer、ClipRRectEngineLayer、ColorFilterEngineLayer、ImageFilterEngineLayer、OffsetEngineLayer、OpacityEngineLayer、ShaderMaskEngineLayer、TransformEngineLayer。
+&emsp;然后针对不同的渲染结果 EngineLayer 有一众子类：
+
++ BackdropFilterEngineLayer、
++ ClipPathEngineLayer、
++ ClipRectEngineLayer、
++ ClipRRectEngineLayer、
++ ColorFilterEngineLayer、
++ ImageFilterEngineLayer、
++ OffsetEngineLayer、
++ OpacityEngineLayer、
++ ShaderMaskEngineLayer、
++ TransformEngineLayer。
 
 &emsp;EngineLayer 本身仅有一个 dispose 的抽象函数。
 
@@ -157,9 +168,9 @@ base class _NativeSceneBuilder extends NativeFieldWrapperClass1 implements Scene
 
 &emsp;将一个 transform 操作推送到操作堆栈中（operation stack）。
 
-&emsp;在栅格化之前，给定的矩阵（matrix4）将会对对象进行 transform。
+&emsp;在栅格化之前，给定的矩阵（matrix4）将会对 Layer 对象进行 transform。
 
-&emsp;如果 oldLayer 不为 null，则 engine 在渲染新 Layer 时会尝试重用为旧 Layer 分配的资源。这仅仅是一种优化，对渲染的准确性没有影响。
+&emsp;如果 oldLayer 不为 null，则 Engine 在渲染新 Layer 时会尝试重用为旧 Layer 分配的资源。这仅仅是一种优化，对渲染的准确性没有影响。
 
 &emsp;将一个 EngineLayer 传递给 addRetained 方法或作为 push 方法的 oldLayer 参数都算作使用。一个 EngineLayer 在一个 Scene 中只能使用一次。例如，它不能同时传递给两个 push 方法，或者传递给一个 push 方法和 addRetained 方法。
 
@@ -314,6 +325,8 @@ base class _NativeSceneBuilder extends NativeFieldWrapperClass1 implements Scene
 
 &emsp;"UI 线程" 是包括 main Dart isolate 中所有执行（能够调用 FlutterView.render 的 isolate）的线程。UI 线程帧时间是执行 PlatformDispatcher.onBeginFrame 回调所花费的总时间。"光栅线程（raster thread）" 是（在 CPU 上运行的）线程，随后处理 Dart 代码提供的 Scene，将其转换为 GPU 命令并将其发送到 GPU。
 
+&emsp;在 PerformanceOverlayLayer 的 addScene 函数中中会直接调用这个 addPerformanceOverlay 函数。
+
 ```dart
   void addPerformanceOverlay(int enabledOptions, Rect bounds);
 ```
@@ -390,9 +403,9 @@ base class _NativeSceneBuilder extends NativeFieldWrapperClass1 implements Scene
 
 &emsp;等等，还有下面的 ContainerLayer 子类中对 SceneBuilder 的 pushXXX 系列函数的使用，它们较 Layer 子类中的 SceneBuilder 的 addXXX 函数的使用复杂一些，ContainerLayer 子类调用 pushXXX 函数后，会用自己的 engineLayer 属性接收着 pushXXX 的返回值，然后递归在自己的子级 Layer 中调用 addToScene 函数，然后最后再执行 SceneBuilder 的 pop 函数。 
 
-+ OffsetLayer 重写的 ContainerLayer 的 addToScene 函数中直接调用 SceneBuilder 的 pushOffset，把自己的 offset 属性以及 engineLayer 添加到场景构建中，并且使用自己的 engineLayer 属性接收 pushOffset 函数的返回值，然后调用 addChildrenToScene 函数把自己的子级 Layer 添加到场景构建中，并在末尾调用 SceneBuilder 的 pop 函数，进行操作效果的复原，不会影响接下来的其它 pushXXX 效果的添加。
-+ 类似 OffsetLayer 的 ClipRectLayer 的 addToScene 函数中对 SceneBuilder 的 pushClipRect 函数的使用。
-+ 类似 OffsetLayer 的 ColorFilterLayer 的 addToScene 函数中对 SceneBuilder 的 pushColorFilter 函数的使用。
++ OffsetLayer 重写的 ContainerLayer 的 addToScene 函数中直接调用 SceneBuilder 的 pushOffset。OffsetLayer 把自己的 offset 属性以及可能有值的 engineLayer 属性（达到一个复用的效果）添加到场景构建中，并且使用自己的 engineLayer 属性接收 pushOffset 函数的返回值，然后调用 addChildrenToScene 函数把自己的子级 Layer 添加到场景构建中，并在末尾调用 SceneBuilder 的 pop 函数，进行最初通过 SceneBuilder 的 pushOffset 添加的偏移操作效果的复原，不会影响接下来的其它兄弟 Layer 节点中 pushXXX 效果的添加。
++ 类似于 OffsetLayer 的 ClipRectLayer。ClipRectLayer 的 addToScene 函数中是对 SceneBuilder 的 pushClipRect 函数的使用。
++ 类似于 OffsetLayer 的 ColorFilterLayer。ColorFilterLayer 的 addToScene 函数中是对 SceneBuilder 的 pushColorFilter 函数的使用。
 
 &emsp;等等，即 SceneBuilder 的 pushXXX 和 addXXX 函数正是把不同的 Layer 子类节点添加到 Scene 构建中。
 
