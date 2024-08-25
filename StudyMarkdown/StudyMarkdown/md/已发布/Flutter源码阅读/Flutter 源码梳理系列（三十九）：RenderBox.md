@@ -258,7 +258,7 @@ Size computeDryLayout(BoxConstraints constraints) {
 
 &emsp;对于每个子级 RenderBox，应该使用相同的 HitTestResult 参数调用子级上的 hitTest 方法，并将点转换为子级的坐标空间（以与 applyPaintTransform 方法相同的方式）。默认实现委托给 hitTestChildren 来调用子级。RenderBoxContainerDefaultsMixin 提供了 RenderBoxContainerDefaultsMixin.defaultHitTestChildren 方法，假设子对象是轴对齐的、未被转换（transformed）并且根据 parentData 的 BoxParentData.offset 属性进行定位；更复杂的 Box 可以相应地重写 hitTestChildren。
 
-&emsp;如果对象被点击，则还应将自身添加到作为 hitTest 方法参数给出的 HitTestResult 对象中，使用 HitTestResult.add 方法。默认实现委托给 hitTestSelf 来确定 RenderBox 是否被点击。如果对象在子对象之前添加自身，则会导致它被视为在子对象上方。如果它在子对象之后添加自身，则会被视为在子对象下方。添加到 HitTestResult 对象的条目应该使用 BoxHitTestEntry 类。这些条目随后会按添加顺序被系统遍历，对于每个条目，将调用目标的 handleEvent 方法，传递 HitTestEntry 对象。
+&emsp;如果对象被点击，则还应将自身添加到作为 hitTest 方法参数给出的 HitTestResult 对象中，使用 HitTestResult.add 方法。默认实现委托给 hitTestSelf 来确定 RenderBox 是否被点击。如果对象在子对象之前添加自身，则会导致它被视为在子对象上方。如果它在子对象之后添加自身，则会被视为在子对象下方。添加到 HitTestResult 对象的 Entry 应该使用 BoxHitTestEntry 类。这些 Entry 随后会按添加顺序被系统遍历，对于每个 Entry，将调用 target 的 handleEvent 方法，传递 HitTestEntry 对象。
 
 &emsp;Hit testing 不能依赖于绘画是否已发生。
 

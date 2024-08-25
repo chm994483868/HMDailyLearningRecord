@@ -1,0 +1,329 @@
+# Flutter 源码梳理系列（四十）：HitTesting
+
+# HitTestTarget
+
+&emsp;HitTestTarget：表示一个可以处理 PointerEvent 事件的抽象类，仅有一个 handleEvent 抽象函数需要实现。如 RenderObject 及其所有子类都是 HitTestTarget，它们都根据自身情况实现了 handleEvent 抽象函数，即它们都能处理 PointerEvent 事件。其实在 Flutter framework 中也仅有 RenderObject 及其子类可以处理 PointerEvent 事件。
+
+```dart
+abstract interface class HitTestTarget {
+  /// 重写此方法以接收事件。
+  void handleEvent(PointerEvent event, HitTestEntry<HitTestTarget> entry);
+}
+```
+
+&emsp;RenderObject 抽象类实现了 HitTestTarget 的 handleEvent 函数，但是仅是一个空实现。
+
+```dart
+// RenderObject.handleEvent：
+
+abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarget {
+  // ...
+  
+  /// 重写此方法以处理击中此 RenderObject 时的 PointerEvent 事件
+  @override
+  void handleEvent(PointerEvent event, covariant HitTestEntry entry) { }
+  
+  // ...
+}
+```
+
+&emsp;那么到了 RenderBox 这里呢？它重写 handleEvent 函数也仅是调用了 super 的 handleEvent 函数，也可以直接理解为是一个空实现，其它的 RenderBox 的子类则会实际根据自己的需要而重写 handleEvent 函数。
+
+```dart
+abstract class RenderBox extends RenderObject {
+  // ...
+  
+  @override
+  void handleEvent(PointerEvent event, BoxHitTestEntry entry) {
+    // 这里 RenderBox 仅是调用 super.handleEvent 函数，即 RenderObject 的 handleEvent 函数
+    super.handleEvent(event, entry);
+  }
+  
+  // ...
+}
+```
+
+&emsp;目前我们先不去看其它 RenderBox 子类的 handleEvent 函数的实现，接下来把目光放在 handleEvent 函数的两个参数：PointerEvent 和 HitTestEntry 上。
+
+# HitTestEntry
+
+&emsp;首先 HitTestEntry 是一个泛型类，而它的泛型 T 则被要求是继承自 HitTestTarget 抽象类，在上面我们已经看到了 RenderObject 实现 HitTestTarget 的抽象函数，所以 HitTestEntry 的泛型 T 可以是 RenderObject、RenderBox 及其子类。或者可以直白一点的说所有的 RenderObject 都是可以作为 HitTestEntry 的泛型 T 的，同时这里也相当于是说明了：所有 RenderObject 都能作为 HitTest 的目标，所有的 RenderObject 都能进行 hitTest。
+
+&emsp;HitTestEntry：在有关特定 HitTestTarget 的 hit test 期间收集的数据。子类化 HitTestEntry 以从 hit test 阶段传递额外信息到事件（PointerEvent）传播阶段。 
+
+## Constructors
+
+&emsp;创建一个 HitTestEntry，可以看到当创建一个 HitTestEntry 对象时必须要传入 target 参数，而 target 参数的类型被要求是一个 HitTestTarget，即可以是一个 RenderObject、RenderBox 及其子类。
+
+```dart
+@optionalTypeArgs
+class HitTestEntry<T extends HitTestTarget> {
+  /// 创建一个 HitTestEntry，需要传入 target 参数。
+  HitTestEntry(this.target);
+  // ...
+}
+```
+
+## target
+
+&emsp;target 表示 hit test 命中测试过程中遇到的 HitTestTarget（即遇到的 RenderObject 对象）。
+
+```dart
+  final T target;
+
+  @override
+  String toString() => '${describeIdentity(this)}($target)';
+```
+
+## transform
+
+&emsp;返回一个矩阵，描述了应该如何将传递给 HitTestEntry 的 PointerEvents 从屏幕的全局坐标空间转换为 target 的本地坐标空间。
+
+```dart
+  Matrix4? get transform => _transform;
+  Matrix4? _transform;
+```
+
+## HitTestEntry 总结
+
+&emsp;下面看第一个 HitTestEntry 的子类，也是最重要的一个子类。
+
+# BoxHitTestEntry
+
+&emsp;BoxHitTestEntry 是 RenderBox 所使用的一个 HitTestEntry。
+
+## Constructors
+
+&emsp;可以看到 BoxHitTestEntry 的泛型 T 被要求是 RenderBox 或其子类，并且它的构造函数在原仅有 target 参数的基础上添加了另外一个 localPosition 参数。
+
+```dart
+class BoxHitTestEntry extends HitTestEntry<RenderBox> {
+  /// 创建一个 BoxHitTestEntry 对象，并需要传入 target 和 localPosition 参数
+  BoxHitTestEntry(super.target, this.localPosition);
+  // ...
+}
+```
+
+## localPosition
+
+&emsp;localPosition 表示在 target 的本地坐标系中进行 hit test 时的 Offset。
+
+```dart
+  final Offset localPosition;
+```
+
+## BoxHitTestEntry 总结
+
+&emsp; // .......
+
+# HitTestResult
+
+&emsp;HitTestResult：表示执行 hit test 的结果。
+
+## Constructors
+
+&emsp;创建一个空的 HitTestResult，这里之所以说它是空的，是因为在此构造函数的初始化列表中 HitTestResult 仅对它的三个 List 类型的属性设置一个空的 List。
+
++ `_path = <HitTestEntry>[]`
++ `_transforms = <Matrix4>[Matrix4.identity()],`
++ `_localTransforms = <_TransformPart>[]`
+
+```dart
+class HitTestResult {
+  /// 创建一个空的 HitTestResult 对象
+  HitTestResult()
+     : _path = <HitTestEntry>[],
+       _transforms = <Matrix4>[Matrix4.identity()],
+       _localTransforms = <_TransformPart>[];
+  // ...
+}
+```
+
+## HitTestResult.wrap
+
+&emsp;将结果（通常是 HitTestResult 的子类型）进行封装，以创建一个通用的 HitTestResult。添加到返回的 HitTestResult 的 HitTestEntry 也会添加到封装的结果中（它们共享同一底层数据结构来存储 HitTestEntry）。
+
+```dart
+  HitTestResult.wrap(HitTestResult result)
+     : _path = result._path,
+       _transforms = result._transforms,
+       _localTransforms = result._localTransforms;
+```
+
+## path
+
+&emsp;注意 path 是一个 `List<HitTestEntry>` 类型的 final 属性，它是在 hit test 期间记录 HitTestEntry 对象的不可修改列表。path 中的第一个条目是最具体的，通常是正在进行 hit test 的 Render Tree 上的叶子节点对应的 HitTestEntry。事件传播从最具体的（即第一个）HitTestEntry 开始，并按顺序通过 path 进行。
+
+```dart
+  Iterable<HitTestEntry> get path => _path;
+  final List<HitTestEntry> _path;
+```
+
+## `_transforms` & `_localTransforms`
+
+&emsp;一个 `_TransformPart` 的堆栈。
+
+&emsp;从全局到当前对象的 `_TransformPart` 堆栈分为两部分存储：
+
++ `_transforms` 是全局 `_TransformPart`，意味着它们已经乘以了祖先矩阵，因此相对于全局坐标空间。
++ `_localTransforms` 是本地 `_TransformPart`，相对于父级的坐标空间。
+
+&emsp;当新的 `_TransformPart` 被添加时，它们会被追加到 `_localTransforms` 中，只有当它们被使用时，才会被转换为全局 `_TransformPart` 并移动到 `_transforms` 中。
+
+```dart
+  final List<Matrix4> _transforms;
+  final List<_TransformPart> _localTransforms;
+```
+
+## `_globalizeTransforms`
+
+&emsp;将 `_localTransforms` 中的所有 `_TransformPart` 全局化，并将它们移动到 `_transforms` 中。
+
+```dart
+  void _globalizeTransforms() {
+    // 如果当前 _localTransforms list 为空，则直接 return
+    if (_localTransforms.isEmpty) {
+      return;
+    }
+    
+    // 取出 _transforms 的最后一个矩阵
+    Matrix4 last = _transforms.last;
+    
+    // for in 循环，遍历 _localTransforms list 中的所有 _TransformPart 与 last 进行相乘
+    for (final _TransformPart part in _localTransforms) {
+      last = part.multiply(last);
+      
+      // 然后把相乘结果存入 _transforms 中去
+      _transforms.add(last);
+    }
+    
+    // 由于已经把 _localTransforms 中的 _TransformPart 全部转换到 _transforms 中去了，所以把 _localTransforms 直接清空即可
+    _localTransforms.clear();
+  }
+  
+  
+  Matrix4 get _lastTransform {
+    _globalizeTransforms();
+    return _transforms.last;
+  }
+```
+
+## add 
+
+&emsp;将一个 HitTestEntry 添加到 `_path` 中。新的 HitTestEntry 会被添加到 `_path` 的末尾，这意味着 HitTestEntry 应该按照从最具体到最不具体的顺序进行添加，通常是在进行 hit test 的树结构向上遍历的过程中。
+
+```dart
+  void add(HitTestEntry entry) {
+    entry._transform = _lastTransform;
+    
+    _path.add(entry);
+  }
+```
+
+## pushTransform
+
+&emsp;推送一个新的 transform matrix，该 matrix 将被应用于通过 `add` 方法添加的所有未来的 HitTestEntry，直到通过 `popTransform` 方法将其移除为止。
+
+&emsp;这个方法仅供子类使用，子类必须为它们的用户提供特定于坐标空间的公共包装器来调用这个方法（请参考 BoxHitTestResult.addWithPaintTransform 来查看一个示例）。
+
+&emsp;提供的转换矩阵应描述如何将指针事件从方法调用者的坐标空间转换到其子元素的坐标空间。在大多数情况下，转换是从运行 RenderObject.applyPaintTransform 的反转结果中衍生出来，通过 PointerEvent.removePerspectiveTransform 来移除透视组件。
+
+&emsp;如果提供的变换是一个平移矩阵，使用带有相应偏移的 pushOffset 会更快。
+
+&emsp;在对一个子部件进行命中测试之前，HitTestables 需要通过在子类上定义的一个便利方法间接地调用这个方法。在命中测试完子部件后，需要调用 popTransform 来移除子部件特定的变换。
+
+&emsp;另请参阅:
+
++ pushOffset，类似于 pushTransform，但仅限于平移，在这种情况下更快。
++ BoxHitTestResult.addWithPaintTransform，这是对 RenderBox 进行命中测试的公共包装器。
+
+
+```dart
+  @protected
+  void pushTransform(Matrix4 transform) {
+    _localTransforms.add(_MatrixTransformPart(transform));
+  }
+```
+
+## pushOffset
+
+&emsp;将一个新的翻译偏移量推送到所有通过 add 添加的未来的 HitTestEntrys上，直到通过 popTransform 删除为止。
+
+&emsp;这个方法只能被子类使用，子类必须为它们的用户提供特定于坐标空间的公共包装器来调用此函数（例如，见 BoxHitTestResult.addWithPaintOffset）。
+
+所提供的偏移量应描述如何将 PointerEvents 从方法调用者的坐标空间转换到其子代的坐标空间。通常，偏移量是子代相对于父代的偏移量的反转。
+
+HitTestables 需要通过子类上定义的便捷方法间接调用此方法，然后再对不具有与父代相同起始点的子代进行命中测试。在命中测试子代后，必须调用 popTransform 来移除子代特定的变换。
+
+另请参阅：
+
+pushTransform，类似于 pushOffset，但允许除了平移之外的一般变换。
+BoxHitTestResult.addWithPaintOffset，RenderBox上用于命中测试的此函数的公共包装器。
+SliverHitTestResult.addWithAxisOffset，RenderSliver上用于命中测试的此函数的公共包装器。
+
+```dart
+  @protected
+  void pushOffset(Offset offset) {
+    _localTransforms.add(_OffsetTransformPart(offset));
+  }
+```
+
+## popTransform
+
+&emsp;移除通过 pushTransform 或 pushOffset 添加的最后一个转换。
+
+&emsp;这个方法只能被子类使用，子类必须提供围绕此函数的坐标空间特定的公共包装器供其用户使用（例如，BoxHitTestResult.addWithPaintTransform 就是一个例子）。
+
+&emsp;这个方法必须在对需要调用 pushTransform 或 pushOffset 的子级进行命中测试后调用。
+
+另请参见：
+
+pushTransform 和 pushOffset，其中更详细地描述了这个函数对的用例。
+
+```dart
+  @protected
+  void popTransform() {
+    if (_localTransforms.isNotEmpty) {
+      _localTransforms.removeLast();
+    } else {
+      _transforms.removeLast();
+    }
+  }
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# BoxHitTestResult
+
+&emsp;
+
+
+
+
+
+
+
+
+## 参考链接
+**参考链接:🔗**
++ [HitTestTarget class](https://api.flutter.dev/flutter/gestures/HitTestTarget-class.html)
++ [HitTestResult class](https://api.flutter.dev/flutter/gestures/HitTestResult-class.html)
++ [BoxHitTestResult class](https://api.flutter.dev/flutter/rendering/BoxHitTestResult-class.html)
++ [`HitTestEntry<T extends HitTestTarget> class`](https://api.flutter.dev/flutter/gestures/HitTestEntry-class.html)
++ [BoxHitTestEntry class](https://api.flutter.dev/flutter/rendering/BoxHitTestEntry-class.html)
++ [HitTestResult class](https://api.flutter.dev/flutter/gestures/HitTestResult-class.html)
