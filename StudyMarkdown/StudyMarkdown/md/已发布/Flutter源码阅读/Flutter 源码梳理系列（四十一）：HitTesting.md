@@ -1,8 +1,14 @@
-# Flutter 源码梳理系列（四十）：HitTesting
+# Flutter 源码梳理系列（四十一）：HitTesting
+
+# 前言
+
+&emsp;上一篇我们分析了 hit test 过程中所涉及的函数调用流程，其中涉及到的类定义还是很多的，本篇我们对其中涉及到的类的内容做一个快速浏览，看看它们的定义中都有哪些内容。
+
+&emsp;这次我们也反向来看。在上篇中我们知道最后在 GestureBinding.dispatchEvent 函数中会依次遍历 hitTestResult.path 中的 HitTestEntry，执行 entry.target 的 handleEvent 函数，而 entry.target 便是 HitTestTarget 类，所以下面我们先看一下 HitTestTarget。
 
 # HitTestTarget
 
-&emsp;HitTestTarget：表示一个可以处理 PointerEvent 事件的抽象类，仅有一个 handleEvent 抽象函数需要实现。如 RenderObject 及其所有子类都是 HitTestTarget，它们都根据自身情况实现了 handleEvent 抽象函数，即它们都能处理 PointerEvent 事件。其实在 Flutter framework 中也仅有 RenderObject 及其子类可以处理 PointerEvent 事件。
+&emsp;HitTestTarget：表示可以处理 PointerEvent 的抽象接口类，仅有一个 handleEvent 抽象函数需要实现。如 RenderObject 及其所有子类都是 HitTestTarget，它们可根据自身情况实现 handleEvent 抽象函数，即它们都能处理 PointerEvent 事件。在 Flutter framework 中也仅有 RenderObject 及其子类可以处理 PointerEvent 事件。
 
 ```dart
 abstract interface class HitTestTarget {
@@ -11,7 +17,7 @@ abstract interface class HitTestTarget {
 }
 ```
 
-&emsp;RenderObject 抽象类实现了 HitTestTarget 的 handleEvent 函数，但是仅是一个空实现。
+&emsp;RenderObject 抽象类实现了 HitTestTarget 的 handleEvent 函数，不过仅是一个空的实现。
 
 ```dart
 // RenderObject.handleEvent：
@@ -45,9 +51,13 @@ abstract class RenderBox extends RenderObject {
 
 &emsp;目前我们先不去看其它 RenderBox 子类的 handleEvent 函数的实现，接下来把目光放在 handleEvent 函数的两个参数：PointerEvent 和 HitTestEntry 上。
 
+&emsp;首先是 BoxHitTestEntry entry 参数，其实就是执行 handleEvent 函数的 entry.target 的 entry：`entry.target.handleEvent(event.transformed(entry.transform), entry)`，在 GestureBinding 的 dispatchEvent 函数中，看到遍历 hitTestResult.path 时是直接把 HitTestEntry entry 作为了 entry.target.handleEvent 函数调用的 BoxHitTestEntry entry 参数，而 PointerEvent event 参数呢，则是本次要处理的事件，且在整个 hitTestResult.path 的遍历过程中调用每个 entry.target 的 handleEvent 事件所用的 PointerEvent event 参数都是同一个。
+
+&emsp;下面看一下 HitTestEntry entry 以及它的 target 属性是什么。 
+
 # HitTestEntry
 
-&emsp;首先 HitTestEntry 是一个泛型类，而它的泛型 T 则被要求是继承自 HitTestTarget 抽象类，在上面我们已经看到了 RenderObject 实现 HitTestTarget 的抽象函数，所以 HitTestEntry 的泛型 T 可以是 RenderObject、RenderBox 及其子类。或者可以直白一点的说所有的 RenderObject 都是可以作为 HitTestEntry 的泛型 T 的，同时这里也相当于是说明了：所有 RenderObject 都能作为 HitTest 的目标，所有的 RenderObject 都能进行 hitTest。
+&emsp;首先 HitTestEntry 是一个泛型类，而它的泛型 T 则被要求是继承自 HitTestTarget 的抽象类，在上面我们已经看到了 RenderObject 实现 HitTestTarget 的抽象函数，所以 HitTestEntry 的泛型 T 可以是 RenderObject、RenderBox 及其子类。或者可以直白一点的说所有的 RenderObject 都是可以作为 HitTestEntry 的泛型 T 的，同时这里也相当于是说明了：所有 RenderObject 都能作为 HitTest 的目标，所有的 RenderObject 都能进行 hit test，或者说是在 Flutter framework 中 hit test 是仅仅针对 RenderObject 进行的一个过程，其它类则不能进行 hit test。
 
 &emsp;HitTestEntry：在有关特定 HitTestTarget 的 hit test 期间收集的数据。子类化 HitTestEntry 以从 hit test 阶段传递额外信息到事件（PointerEvent）传播阶段。 
 
@@ -84,9 +94,7 @@ class HitTestEntry<T extends HitTestTarget> {
   Matrix4? _transform;
 ```
 
-## HitTestEntry 总结
-
-&emsp;下面看第一个 HitTestEntry 的子类，也是最重要的一个子类。
+&emsp;HitTestEntry 的内容就这么多，下面看第一个 HitTestEntry 的子类，也是最重要的一个子类。
 
 # BoxHitTestEntry
 
@@ -112,9 +120,19 @@ class BoxHitTestEntry extends HitTestEntry<RenderBox> {
   final Offset localPosition;
 ```
 
-## BoxHitTestEntry 总结
+&emsp;BoxHitTestEntry 的内容就这么多。
 
-&emsp; // .......
+&emsp;下面我们看最重要的 HitTestResult 类，它的首次使用出现在 GestureBinding 的 `_handlePointerEventImmediately` 函数中，当自 Render tree 的根节点开始进行 hit test 之前，就需要创建一个 HitTestResult 对象，用它来记录本次 hit test 的结果。
+
+```dart
+HitTestResult? hitTestResult;
+// ...
+hitTestResult = HitTestResult();
+hitTestInView(hitTestResult, event.position, event.viewId);
+// ...
+```
+
+&emsp;可看到直接以 hitTestResult 为参数调用 hitTestInView 函数，开始本次的 hit test 过程。
 
 # HitTestResult
 
@@ -122,7 +140,7 @@ class BoxHitTestEntry extends HitTestEntry<RenderBox> {
 
 ## Constructors
 
-&emsp;创建一个空的 HitTestResult，这里之所以说它是空的，是因为在此构造函数的初始化列表中 HitTestResult 仅对它的三个 List 类型的属性设置一个空的 List。
+&emsp;创建一个空的 HitTestResult，这里之所以说它是空的，是因为在此构造函数的初始化列表中 HitTestResult 会对它的三个 List 类型的属性设置一个空的 List。
 
 + `_path = <HitTestEntry>[]`
 + `_transforms = <Matrix4>[Matrix4.identity()],`
@@ -152,7 +170,9 @@ class HitTestResult {
 
 ## path
 
-&emsp;注意 path 是一个 `List<HitTestEntry>` 类型的 final 属性，它是在 hit test 期间记录 HitTestEntry 对象的不可修改列表。path 中的第一个条目是最具体的，通常是正在进行 hit test 的 Render Tree 上的叶子节点对应的 HitTestEntry。事件传播从最具体的（即第一个）HitTestEntry 开始，并按顺序通过 path 进行。
+&emsp;注意 path 是一个 `List<HitTestEntry>` 类型的 final 属性，它是在 hit test 期间记录 HitTestEntry 对象的不可修改列表。path 中的第一个条目是最具体的，通常是正在进行 hit test 的 Render Tree 上的叶子节点对应的 HitTestEntry。事件传播则从最具体的（即第一个）HitTestEntry 开始，并按顺序通过 path 进行。
+
+&emsp;如上篇示例代码中第一个被加入到 hitTestResult.path 的便是我们的 'click me' 对应的 TextSpan，而最后一个则是我们的 Render Tree 的根节点，即可以把 hit test 理解为是深度优先遍历的，第一个加入 HitTestResult 的是 depth 最深的。
 
 ```dart
   Iterable<HitTestEntry> get path => _path;
