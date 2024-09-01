@@ -6,7 +6,9 @@
 
 &emsp;那这个 "处理事件" 是指什么事件呢？其实就是 handleEvent 抽象函数的 event 参数所限定的 PointerEvent 事件，而在 Flutter framework 中 PointerEvent 是作为 **触摸、触控笔或鼠标事件的基类** 而存在的，对应到移动端平台便是手指的触摸事件了，即 "处理事件" 便是处理我们的手指在触摸屏上的触摸事件，点击、滑动等等操作。
 
-&emsp;所以看到这里我们便可以直白的理解：实现了 HitTestTarget 抽象接口类的类便具备了处理触摸事件的能力，而我们学了很久的 RenderObject 类便是一个这样的存在，它可以处理事件（或者说是可以响应事件）。然后在 Flutter framework 中进行全局搜索可发现仅有：RenderObject 和 TextSpan 实现了 HitTestTarget 抽象接口类。
+&emsp;所以看到这里我们便可以直白的理解：实现了 HitTestTarget 抽象接口类的类便具备了处理触摸事件的能力，而我们学了很久的 RenderObject 类便是一个这样的存在，它可以处理事件（或者说是可以响应事件）。
+
+&emsp;在 Flutter framework 中进行全局搜索可发现仅有：RenderObject 和 TextSpan 实现了 HitTestTarget 抽象接口类。
 
 &emsp;大前端中最重要的两件事：界面渲染和事件响应，关于界面渲染，我们前面的文章几乎都在讲这件事，然后后续再把布局模型相关的内容看完，几乎就把与界面渲染相关的内容都看一遍了，继续加油！而本篇呢我们则聚焦：事件响应，把 hit test 和 handle event 看个通透。
 
@@ -32,7 +34,7 @@ abstract interface class HitTestTarget {
         // 当然 RenderBox 的子类可以根据自己的情况，而重写 hitTestChildren 和 hitTestSelf 函数。
         result.add(BoxHitTestEntry(this, position));
         
-        // 即如果自己的任意一个子级 RenderBox 可以命中的话，则当前 RenderBox 也是可以命中！
+        // 即如果自己的任意一个子级 RenderBox 可以命中的话（hitTest 函数返回 true），则当前 RenderBox 也是可以命中（hitTest 函数返回 true）！
         return true;
       }
     }
@@ -46,7 +48,7 @@ abstract interface class HitTestTarget {
 
 &emsp;首先 RenderBox 的 hitTestSelf 和 hitTestChildren 默认都是返回 false，则表示了会继续向当前 RenderBox 后方的兄弟级 RenderBox 中进行 hit test。
 
-&emsp;RenderBox 的 hit testing 是通过 hitTest 方法进行的，而这个方法的默认实现委托给了 hitTestSelf 和 hitTestChildren，而 RenderBox 的这两个函数默认都是返回 false，所以在 RenderBoxd 的子类实现 hit testing 时，可以选择重写这两个方法，或者忽略它们，直接重写 hitTest 方法。
+&emsp;RenderBox 的 hit testing 是通过 hitTest 方法进行的，而这个方法的默认实现委托给了 hitTestSelf 和 hitTestChildren，而 RenderBox 的这两个函数默认都是返回 false，所以在 RenderBoxd 的子类中实现 hit testing 时，可以选择重写这两个方法，或者忽略它们，直接重写 hitTest 方法。
 
 &emsp;hitTest 方法本身接收一个 Offset position 参数，如果当前 RenderBox 或其子级 RenderBox 中的一个可以命中（阻止了当前 RenderBox 后方的兄弟级 RenderBox 对象被点击），则必须返回 true；如果点击可以继续传递到这个 RenderBox 后方的其他 RenderBox 对象，则必须返回 false。
 
@@ -54,11 +56,11 @@ abstract interface class HitTestTarget {
 
 &emsp;RenderBoxContainerDefaultsMixin 提供了 RenderBoxContainerDefaultsMixin.defaultHitTestChildren 方法，假设子级 RenderBox 是轴对齐的、未被转换（transformed）并且根据 parentData 的 BoxParentData.offset 属性进行定位；更复杂的 RenderBox 子类可以相应地重写自己的 hitTestChildren 方法。
 
-&emsp;如果 RenderBox 对象被点击（即自己的 hitTest 函数返回 true 的话），则还应将自身添加到 hitTest 方法的 BoxHitTestResult result 参数中，使用 HitTestResult 的 add 方法进行添加。
+&emsp;如果 RenderBox 对象被点击（即自己的 hitTest 函数返回 true 的话），则还应将自身添加到 hitTest 方法的 BoxHitTestResult result 参数中，使用 HitTestResult 类的 add 方法进行添加。
 
 &emsp;默认实现委托给 hitTestSelf 来确定 RenderBox 是否被点击。如果 RenderBox 对象在子级 RenderBox 对象之前添加自身，则会导致它被视为在子级 RenderBox 上方。如果它在子级 RenderBox 之后添加自身，则会被视为在子级 RenderBox 下方。
 
-&emsp;添加到 HitTestResult 对象中的 Entry 应该使用 BoxHitTestEntry 类，这些 Entry 随后会按添加顺序被系统遍历，对于每个 Entry，将调用它的 target 的 handleEvent 方法，并在 handleEvent 被调用时传递 HitTestEntry 对象。
+&emsp;添加到 HitTestResult 对象中的 Entry 应该使用 BoxHitTestEntry 类，这些 Entry 随后会按添加顺序被系统遍历，对于每个 Entry，将调用它的 target 的 handleEvent 方法，并在 handleEvent 被调用时传递 HitTestEntry 对象（以 handleEvent 函数参数的形式。）。
 
 &emsp;下面在深入学习 hit testing 相关的类之前，我们首先捋捋 hit test 相关的函数调用堆栈，对此过程在实际的代码的执行上有一个脸熟。
 
@@ -67,7 +69,7 @@ abstract interface class HitTestTarget {
 1. 遍历 Render Tree 找到可以响应 hit 的 RenderBox，并以它为参数构建一个 BoxHitTestEntry，并收集到 HitTestResult 的 path 属性中。（可谓之 hit test 阶段）
 2. 从前往后遍历被收集到的 BoxHitTestEntry，执行它们的 target（即 RenderBox 对象）的 handleEvent 函数。（可谓之 handle event 阶段）
 
-# hit test
+# hit test 阶段
 
 &emsp;下面我们以 Listener Widget 为例子，来研究一下上面两个阶段所涉及的函数调用堆栈。我们使用如下超简单的示例代码，当点击 'click me' 时，会在控制台打印：'onPointerDown 执行'。
 
@@ -81,17 +83,13 @@ class MyHitTestAppWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Hit Test Demo'),
-        ),
+        appBar: AppBar(title: const Text('Hit Test Demo'),),
         body: Center(
           child: Column(
             children: [
               Listener(
                 child: const Text('click me'),
-                onPointerDown: (p) {
-                  debugPrint('onPointerDown 执行');
-                },
+                onPointerDown: (p) { debugPrint('onPointerDown 执行'); },
               ),
             ],
           ),
@@ -102,7 +100,9 @@ class MyHitTestAppWidget extends StatelessWidget {
 }
 ```
 
-&emsp;我们以 debug 模式调试此示例代码，并在 RenderProxyBoxWithHitTestBehavior 的 hitTest 函数处打一个断点，这里之所以在 RenderProxyBoxWithHitTestBehavior 处，是因为 Listener 的 createRenderObject 函数返回的 RenderPointerListener 正是继承自 RenderProxyBoxWithHitTestBehavior。然后我们点击 click me，断点会被正常命中，然后可以看到如下函数堆栈：
+&emsp;我们以 debug 模式调试此示例代码，并在 RenderProxyBoxWithHitTestBehavior 的 hitTest 函数处打一个断点，这里之所以在 RenderProxyBoxWithHitTestBehavior 处打断点，是因为 Listener 的 createRenderObject 函数返回的 RenderObject 是 RenderPointerListener，而它内部仅是重写了 handleEvent 函数，而它的 hitTest 过程则是由自己的父类 RenderProxyBoxWithHitTestBehavior 来实现。RenderProxyBoxWithHitTestBehavior 继承自 RenderProxyBox 并重写了 hitTest 和 hitTestSelf 函数，来自定义自己的 hit testing 过程。
+
+&emsp;以 debug 模式运行我们的示例代码，我们点击 click me，断点会被正常命中，然后可以看到如下函数堆栈：
 
 ![截屏2024-08-26 00.49.10.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/b5dc8762f61e481ab1ad1f6313f8a127~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1724691091&x-orig-sign=xvAanVlvFGSUvsv1qbvwu6UTj9Q%3D)
 
@@ -140,7 +140,9 @@ mixin RendererBinding on BindingBase, ServicesBinding, SchedulerBinding, Gesture
     }
     
     // ⬆️ 上面的 child!.hitTest 执行会一路在子级 RenderObject 中递归执行，
-    // 当上面我们的断点被命中时，函数堆栈正是还在这个 if 函数内部。
+    // 当上面我们的断点被命中时，函数堆栈正是还在这个 if 函数内部，
+    // 当一层一层的在子级 RenderObject 中出递归后，才会执行到下面的 result.add(HitTestEntry(this)); 行，
+    // 这个很重要，体现了 hitTest 的深度优先的执行过程。
     
     // 以当前 Render Tree 根节点为参数构建一个 HitTestEntry 对象添加到 result 中
     result.add(HitTestEntry(this));
@@ -161,6 +163,94 @@ mixin RendererBinding on BindingBase, ServicesBinding, SchedulerBinding, Gesture
 &emsp;可看到在这个 hit test 过程中，共收集了 30 个 Entry（即 30 个 RenderObject），其中第一个是我们的 'click me' 对应的 TextSpan，而最后一个则是我们的 Render Tree 的根节点，即可以把 hit test 理解为是深度优先遍历的，第一个加入 HitTestResult 的是 depth 最深的。
 
 &emsp;然后我们继续回到 GestureBinding 的 `_handlePointerEventImmediately` 函数，可以看到函数的末尾会调用：`dispatchEvent(event, hitTestResult);`，而这便是上面分析的第二阶段：handle event 阶段的开始。
+
+# handle event 阶段
+
+&emsp;看一下 `_handlePointerEventImmediately` 函数的代码实现：
+
+```dart
+  void _handlePointerEventImmediately(PointerEvent event) {
+    HitTestResult? hitTestResult;
+    
+    if (event is PointerDownEvent ||
+        event is PointerSignalEvent ||
+        event is PointerHoverEvent ||
+        event is PointerPanZoomStartEvent) {
+      
+      // 从 Render Tree 的根节点开始进行 hit test 过程，
+      // 并把结果收集在 hitTestResult 中。
+      hitTestResult = HitTestResult();
+      hitTestInView(hitTestResult, event.position, event.viewId);
+      
+      if (event is PointerDownEvent ||
+          event is PointerPanZoomStartEvent) {
+        
+        // 这里是把本次 hit test 的结果缓存下来
+        _hitTests[event.pointer] = hitTestResult;
+      }
+      
+    } else if (event is PointerUpEvent ||
+               event is PointerCancelEvent ||
+               event is PointerPanZoomEndEvent) {
+      
+      // 因为与 pointer down 一起发生的事件（例如 [PointerMoveEvent]）应该被分发到其初始 PointerDownEvent 的相同位置，
+      // 我们希望重复使用当 pointer down 时找到的 path，而不是每次获取此类事件时进行命中检测。
+      hitTestResult = _hitTests.remove(event.pointer);
+      
+    } else if (event.down || event is PointerPanZoomUpdateEvent) {
+      hitTestResult = _hitTests[event.pointer];
+    }
+    
+    if (hitTestResult != null ||
+        event is PointerAddedEvent ||
+        event is PointerRemovedEvent) {
+      
+      // 来了来了，处理 事件 和收集到的 hitTestResult
+      dispatchEvent(event, hitTestResult);
+    }
+  }
+```
+
+&emsp;可以看到 `_handlePointerEventImmediately` 函数内，从 Render Tree 的根节点开始进行 hit test 过程，并把结果收集在 hitTestResult 中，并会根据 event 的类型进行 hitTestResult 的缓存，以便进行重复使用，而不是再此进行 hit test 检测过程（因为涉及到对几乎整个 Render Tree 的遍历，想想还是挺繁重的任务。），然后最后便是执行：`dispatchEvent(event, hitTestResult);` 对 event 和收集到的 hitTestResult 进行事件调度。下面我们看一看 GestureBinding.dispatchEvent 函数中的内容：
+
+```dart
+  @override // from HitTestDispatcher
+  @pragma('vm:notify-debugger-on-exception')
+  void dispatchEvent(PointerEvent event, HitTestResult? hitTestResult) {
+    // 没有 hit test 信息意味着这是一个 [PointerAddedEvent] 或 [PointerRemovedEvent]。
+    // 这些事件会被专门路由到这里；其他事件将通过下面的 `handleEvent` 路由。
+    if (hitTestResult == null) {
+      try {
+        pointerRouter.route(event);
+      } catch (exception, stack) {
+        FlutterError.reportError( // ... );
+      }
+      return;
+    }
+    
+    // 遍历 hitTestResult.path 中的 HitTestEntry（或者是遍历 entry.target，即遍历 RenderBox）
+    for (final HitTestEntry entry in hitTestResult.path) {
+      try {
+        
+        // 执行我们前面说了无数次的 RenderObject 的 handleEvent 函数
+        entry.target.handleEvent(event.transformed(entry.transform), entry);
+        
+      } catch (exception, stack) {
+        FlutterError.reportError( // ... );
+      }
+    }
+  }
+```
+
+&emsp;可看到 dispatchEvent 函数内部也是很简单的，最终是深度优先执行，优先执行我们的 'click me' 对应的 TextSpan 的 handleEvent 函数，即我们示例代码中 Listener 的 onPointerDown 回调：
+
+![截屏2024-09-01 11.29.07.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/39a71cb58e3a406ea50df70782f65235~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1725247929&x-orig-sign=0ljIXdtZlrK3JcSKqy2YwkFlczk%3D)
+
+&emsp;执行到我们示例代码中 Listener 的 onPointerDown 回调：
+
+![截屏2024-09-01 11.36.06.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/3720c2115ef54418be5bf71ef3a5ab72~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1725248496&x-orig-sign=wC7Asynf43E5agWF1hfyxO0Esug%3D)
+
+&emsp;至此一个完整的 hit test 和 handle event 过程就看完了，相信大家对它们的整体的一个流程有一个简单的认知了，OK，下篇我们继续深入到它们的内部，去学习一些 hit test 的细节。
 
 ## 参考链接
 **参考链接:🔗**
