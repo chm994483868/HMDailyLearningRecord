@@ -1,4 +1,4 @@
-# Flutter 源码梳理系列（四十一）：HitTesting
+# Flutter 源码梳理系列（四十一）：HitTesting：Correlation class definition
 
 # 前言
 
@@ -87,7 +87,7 @@ class HitTestEntry<T extends HitTestTarget> {
 
 ## transform
 
-&emsp;返回一个矩阵，描述了应该如何将传递给 HitTestEntry 的 PointerEvents 从屏幕的全局坐标空间转换为 target 的本地坐标空间。
+&emsp;返回一个 Matrix4，描述了应该如何将传递给 HitTestEntry 的 PointerEvents 从屏幕的全局坐标空间转换为 target 的本地坐标空间。
 
 ```dart
   Matrix4? get transform => _transform;
@@ -234,6 +234,7 @@ class HitTestResult {
 
 ```dart
   void add(HitTestEntry entry) {
+    // 并且把 _transforms 列表中的最后一个 Matrix4 赋值给 entry 的 _transform
     entry._transform = _lastTransform;
     
     _path.add(entry);
@@ -242,63 +243,48 @@ class HitTestResult {
 
 ## pushTransform
 
-&emsp;推送一个新的 transform matrix，该 matrix 将被应用于通过 `add` 方法添加的所有未来的 HitTestEntry，直到通过 `popTransform` 方法将其移除为止。
+&emsp;将一个新的 Matrix4 transform 添加到 `_localTransforms` 列表中，该 Matrix4 transform 将被应用到所有后续通过 add 添加的 HitTestEntry 中，直到通过 popTransform 移除此 Matrix4 transform 为止。
 
-&emsp;这个方法仅供子类使用，子类必须为它们的用户提供特定于坐标空间的公共包装器来调用这个方法（请参考 BoxHitTestResult.addWithPaintTransform 来查看一个示例）。
+&emsp;这个方法只能被 HitTestResult 子类使用，HitTestResult 子类必须为它们的用户提供特定于坐标空间的公共包装器来调用此功能（可参考 BoxHitTestResult.addWithPaintTransform 方法作为一个例子）。
 
-&emsp;提供的转换矩阵应描述如何将指针事件从方法调用者的坐标空间转换到其子元素的坐标空间。在大多数情况下，转换是从运行 RenderObject.applyPaintTransform 的反转结果中衍生出来，通过 PointerEvent.removePerspectiveTransform 来移除透视组件。
+&emsp;提供的 Matrix4 transform 应描述如何将 PointerEvents 从调用方法的坐标空间转换到其子级 RenderObject 的坐标空间。在大多数情况下，transform 是从应用 RenderObject.applyPaintTransform 的反转结果中移除 perspective component 而得到的。
 
-&emsp;如果提供的变换是一个平移矩阵，使用带有相应偏移的 pushOffset 会更快。
+&emsp;如果提供的 Matrix4 transform 是一个平移矩阵（translation matrix），那么使用具有平移偏移量（translation offset）的 pushOffset 方法要快得多。
 
-&emsp;在对一个子部件进行命中测试之前，HitTestables 需要通过在子类上定义的一个便利方法间接地调用这个方法。在命中测试完子部件后，需要调用 popTransform 来移除子部件特定的变换。
+&emsp;在对子级 RenderObject 进行 hit test 之前，HitTestables 需要通过子类定义的便利方法间接调用此方法，以移除与父级 RenderObject 不同源点的子级 RenderObject 的 transform。hit testing 完子级 RenderObject 后，需要调用 popTransform 来移除特定于子级 RenderObject 的 transform。
 
 &emsp;另请参阅:
 
 + pushOffset，类似于 pushTransform，但仅限于平移，在这种情况下更快。
-+ BoxHitTestResult.addWithPaintTransform，这是对 RenderBox 进行命中测试的公共包装器。
-
++ BoxHitTestResult.addWithPaintTransform，这是对 RenderBox 进行 hit test 的公共包装器。
 
 ```dart
   @protected
   void pushTransform(Matrix4 transform) {
+    // 仅仅是把 Matrix4 transform 通过 _MatrixTransformPart 转换为一个 _TransformPart，并添加到 _localTransforms 列表中
     _localTransforms.add(_MatrixTransformPart(transform));
   }
 ```
 
 ## pushOffset
 
-&emsp;将一个新的翻译偏移量推送到所有通过 add 添加的未来的 HitTestEntrys上，直到通过 popTransform 删除为止。
-
-&emsp;这个方法只能被子类使用，子类必须为它们的用户提供特定于坐标空间的公共包装器来调用此函数（例如，见 BoxHitTestResult.addWithPaintOffset）。
-
-所提供的偏移量应描述如何将 PointerEvents 从方法调用者的坐标空间转换到其子代的坐标空间。通常，偏移量是子代相对于父代的偏移量的反转。
-
-HitTestables 需要通过子类上定义的便捷方法间接调用此方法，然后再对不具有与父代相同起始点的子代进行命中测试。在命中测试子代后，必须调用 popTransform 来移除子代特定的变换。
-
-另请参阅：
-
-pushTransform，类似于 pushOffset，但允许除了平移之外的一般变换。
-BoxHitTestResult.addWithPaintOffset，RenderBox上用于命中测试的此函数的公共包装器。
-SliverHitTestResult.addWithAxisOffset，RenderSliver上用于命中测试的此函数的公共包装器。
+&emsp;添加一个新的 translation offset，通过 `_OffsetTransformPart` 函数把入参 Offset offset 转换为 `_TransformPart` 并添加到 `_localTransforms` 列表中。该 Offset offset 将被应用到所有后续通过 add 添加的 HitTestEntry 中，直到通过 popTransform 将其移除为止。
 
 ```dart
   @protected
   void pushOffset(Offset offset) {
+    // 同上面的 pushTransform 函数，向 _localTransforms 列表中添加一个 _TransformPart
     _localTransforms.add(_OffsetTransformPart(offset));
   }
 ```
 
 ## popTransform
 
-&emsp;移除通过 pushTransform 或 pushOffset 添加的最后一个转换。
+&emsp;移除通过 pushTransform 或 pushOffset 添加到 `_localTransforms` 列表中的最后一个 `_TransformPart`。
 
-&emsp;这个方法只能被子类使用，子类必须提供围绕此函数的坐标空间特定的公共包装器供其用户使用（例如，BoxHitTestResult.addWithPaintTransform 就是一个例子）。
+&emsp;这个方法只能由 HitTestResult 子类使用，HitTestResult 子类必须为他们的用户提供特定于坐标空间的公共包装函数，这些函数围绕这个功能进行封装（例如，可以参考 BoxHitTestResult.addWithPaintTransform）。
 
-&emsp;这个方法必须在对需要调用 pushTransform 或 pushOffset 的子级进行命中测试后调用。
-
-另请参见：
-
-pushTransform 和 pushOffset，其中更详细地描述了这个函数对的用例。
+&emsp;这个方法必须在对需要调用 pushTransform 或 pushOffset 的子级 RenderObject 进行 hit test 之后调用。
 
 ```dart
   @protected
@@ -311,33 +297,7 @@ pushTransform 和 pushOffset，其中更详细地描述了这个函数对的用�
   }
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# BoxHitTestResult
-
-&emsp;
-
-
-
-
-
-
-
+&emsp;OK，HitTestResult 就这么多内容。本篇我们看了三个 hit test 过程中最基础的数据结构：HitTestTarget、HitTestEntry、HitTestResult。下篇我们继续，则把重点放在 PointerEvent 是如何从屏幕的全局坐标空间转换为 target 的本地坐标空间。
 
 ## 参考链接
 **参考链接:🔗**
