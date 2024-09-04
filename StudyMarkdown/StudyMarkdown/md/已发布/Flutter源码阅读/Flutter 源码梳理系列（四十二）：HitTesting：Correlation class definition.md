@@ -101,12 +101,212 @@ class BoxHitTestResult extends HitTestResult {
 
 &emsp;此方法由调整 RenderBox-world 和非 RenderBox-world 之间的 RenderObjects 使用，将 (subtype of) HitTestResult 转换为 BoxHitTestResult 进行在 RenderBoxes 上进行 hit testing。
 
-添加到返回的 BoxHitTestResult 中的 HitTestEntry 实例也会被添加到包装的结果中（两者共享相同的底层数据结构来存储 HitTestEntry 实例）。
+&emsp;添加到返回的 BoxHitTestResult 中的 HitTestEntry 实例也会被添加到 wrap 的结果中（两者共享相同的底层数据结构来存储 HitTestEntry 实例）。
+
+&esmp;当在 RenderObject 和 RenderBox 之间进行 hit testing 时，由于它们之间要完全共享同一个 HitTestResult，所以才有了此 wrap 函数，可以直白的把它理解为抹平 RenderObject 和 RenderBox 之间的 hit test result 差异。
 
 ```dart
   BoxHitTestResult.wrap(super.result) : super.wrap();
 ```
 
+## addWithPaintTransform
+
+&emsp;将 position 转换为子级 RenderObject 的本地坐标系，以便为子级 RenderObject 进行 hit testing。
+
+&emsp;子级 RenderObject 的实际 hit testing 需要在提供的 hitTest 回调中实现，该回调会使用转换后的 position 作为参数进行调用。
+
+&emsp;提供的 paint transform（描述了从子级到父级的三维变换）通过 PointerEvent.removePerspectiveTransform 处理，以移除 perspective component 并在用于将 position 从父级的坐标系转换为子级的坐标系之前进行反转。
+
+&emsp;如果 transform 为 null，则将其视为 identity transform，并将 position 不加修改地提供给 hitTest 回调。如果无法反转 transform，则不会调用 hitTest 回调，并返回 false。否则，返回 hitTest 回调的返回值。
+
+&emsp;position 参数可能为 null，将按原样转发给 hitTest 回调。如果子级与父级使用不同的 hit test protocol，且在该 protocol 中实际 hit testing 不需要 position，则将 position 设置为 null 可能很有用。
+
+&emsp;该函数返回 hitTest 回调函数的返回值。
+
+&emsp;当子节点和父节点的起始点不相同时，这种方法会在 RenderBox.hitTestChildren 中被使用。
+
+```dart
+abstract class RenderFoo extends RenderBox {
+  final Matrix4 _effectiveTransform = Matrix4.rotationZ(50);
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    transform.multiply(_effectiveTransform);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, { required Offset position }) {
+    return result.addWithPaintTransform(
+      transform: _effectiveTransform,
+      position: position,
+      hitTest: (BoxHitTestResult result, Offset position) {
+        return super.hitTestChildren(result, position: position);
+      },
+    );
+  }
+}
+```
+
+&emsp;下面👇是 addWithPaintTransform 函数本体：
+
+```dart
+  // 用于对 RenderBox 进行 hit testing 的方法签名。
+  // 被 BoxHitTestResult.addWithPaintTransform 使用以对 RenderBox 的子级进行 hit test。
+  typedef BoxHitTest = bool Function(BoxHitTestResult result, Offset position);
+
+  bool addWithPaintTransform({
+    required Matrix4? transform,
+    required Offset position,
+    required BoxHitTest hitTest,
+  }) {
+    if (transform != null) {
+      transform = Matrix4.tryInvert(PointerEvent.removePerspectiveTransform(transform));
+      
+      if (transform == null) {
+        // Objects are not visible on screen and cannot be hit-tested.
+        // 对象在屏幕上是不可见的，不能进行 hit-tested
+        return false;
+      }
+    }
+    
+    return addWithRawTransform(
+      transform: transform,
+      position: position,
+      hitTest: hitTest,
+    );
+  }
+```
+
+## addWithPaintOffset
+
+&emsp;用于对子级进行 hit testing 的便捷方法，这些子级由 Offset? offset 参数转换。
+
+&emsp;子级的实际 hit testing 需要在提供的 BoxHitTest hitTest 回调中实现，该回调会以转换后的 Offset position 作为参数被调用。
+
+&emsp;如果父级在 Offset? offset 处绘制子级，可以使用这个方法作为对 addWithPaintTransform 的方便替代。
+
+&emsp;对于 Offset? offset 参数为 null 的情况，offset 会被视为提供了 Offset.zero 值。
+
+&emsp;该函数返回 hitTest 回调的返回值。
+
+&emsp;另可参阅：
+
++ addWithPaintTransform，该方法采用通用的绘画变换矩阵（a generic paint transform matrix），并更详细地记录了此 API 的预期用法。
+
+```dart
+  bool addWithPaintOffset({
+    required Offset? offset,
+    required Offset position,
+    required BoxHitTest hitTest,
+  }) {
+    final Offset transformedPosition = offset == null ? position : position - offset;
+    
+    // 与下面👇的 popTransform 对应 
+    if (offset != null) {
+      pushOffset(-offset);
+    }
+    
+    final bool isHit = hitTest(this, transformedPosition);
+    
+    // 与上面👆的 pushOffset 对应
+    if (offset != null) {
+      popTransform();
+    }
+    
+    return isHit;
+  }
+```
+
+## addWithRawTransform
+
+&emsp;将 Offset position 转换为子级的本地坐标系，用于对子级进行 hit testing。
+
+&emsp;子级的实际 hit testing 需要在提供的 BoxHitTest hitTest 回调中实现，该回调使用转换后的 Offset position 作为参数调用。
+
+&emsp;与 addWithPaintTransform 不同，提供的 Matrix4? transform 直接用于转换 Offset position，没有任何预处理。
+
+&emsp;如果 transform 为 null，则会将其视为 identity transform，并将 Offset position 不加以处理直接提供给 BoxHitTest hitTest 回调。
+
+&emsp;该函数返回 BoxHitTest hitTest 回调的返回值。
+
+&emsp;另可参阅：
+
++ addWithPaintTransform，它实现了相同的功能，但采用绘制变换矩阵（paint transform matrix）。
+
+```dart
+  bool addWithRawTransform({
+    required Matrix4? transform,
+    required Offset position,
+    required BoxHitTest hitTest,
+  }) {
+    // 
+    final Offset transformedPosition = transform == null ?
+        position : MatrixUtils.transformPoint(transform, position);
+    
+    // 与下面👇的 popTransform 对应 
+    if (transform != null) {
+      pushTransform(transform);
+    }
+    
+    final bool isHit = hitTest(this, transformedPosition);
+    
+    // 与上面👆的 pushTransform 对应
+    if (transform != null) {
+      popTransform();
+    }
+    
+    return isHit;
+  }
+```
+
+## addWithOutOfBandPosition
+
+&emsp;手动管理 position 变换逻辑时添加 hit testing 的传递方法。
+
+&emsp;子级的实际 hit testing 需要在提供的 BoxHitTestWithOutOfBandPosition hitTest 回调中实现。position 的处理需要由调用者处理。
+
+&emsp;该函数返回 BoxHitTestWithOutOfBandPosition hitTest 回调的返回值。
+
+&emsp;应该将 paintOffset、paintTransform 或 rawTransform 传递给该方法以更新 hit testing 堆栈。
+
++ paintOffset 具有传递给 addWithPaintOffset 的 offset 语义。
++ paintTransform 具有传递给 addWithPaintTransform 的 transform 语义，除了它必须可逆；确保这一点是调用者的责任。
++ rawTransform 具有传递给 addWithRawTransform 的 transform 语义。其中必须有且仅有一个是非空的。
+
+&emsp;另请参阅：
+
++ addWithPaintTransform，它接受一个通用的 paint transform matrix，并详细记录了此 API 的预期使用情况。
+
+```dart
+  bool addWithOutOfBandPosition({
+    Offset? paintOffset,
+    Matrix4? paintTransform,
+    Matrix4? rawTransform,
+    required BoxHitTestWithOutOfBandPosition hitTest,
+  }) {    
+    if (paintOffset != null) {
+    
+      // 与下面👇的 popTransform 对应
+      pushOffset(-paintOffset);
+    } else if (rawTransform != null) {
+      
+      // 与下面👇的 popTransform 对应
+      pushTransform(rawTransform);
+    } else {
+      paintTransform = Matrix4.tryInvert(PointerEvent.removePerspectiveTransform(paintTransform!));
+      
+      // 与下面👇的 popTransform 对应 
+      pushTransform(paintTransform!);
+    }
+    
+    final bool isHit = hitTest(this);
+    
+    // 与上面👆的 popTransform 对应
+    popTransform();
+    
+    return isHit;
+  }
+```
 
 
 
