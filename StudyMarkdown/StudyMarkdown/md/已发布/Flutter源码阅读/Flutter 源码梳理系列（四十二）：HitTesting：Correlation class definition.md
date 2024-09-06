@@ -2,7 +2,9 @@
 
 # `_TransformPart`
 
-&emsp;`_TransformPart` 是一种可以通过 left-multiplication（左乘）矩阵应用的数据类型。
+&emsp;`_TransformPart` 是一种可以通过 left-multiplication（左乘）矩阵应用的数据类型。（left-multiplication 在代码方面则是表现为 `_TransformPart` 提供了一个 multiply 函数，入参是一个 Matrix4 rhs，并返回一个 Matrix4。）
+
+&emsp;`_TransformPart` 是一个不可变的抽象类。
 
 ```dart
 @immutable
@@ -13,6 +15,8 @@ abstract class _TransformPart {
 }
 ```
 
+&emsp;然后下面是 `_TransformPart` 仅有的一个抽象函数 multiply，即为 `_TransformPart` 提供了一个左乘的概念。
+
 ## multiply
 
 &emsp;将这个 `_TransformPart` 从左侧应用到 `rhs` 上（当前 `_TransformPart` 在左边，入参 Matrix4 rhs 在右边）。这样应该工作得就好像这个 `_TransformPart` 首先被转换为一个矩阵，然后左乘到入参 `Matrix4 rhs` 上。举个例子，如果这个 `_TransformPart` 是一个向量 `v1`，它对应的矩阵是 `m1 = Matrix4.translation(v1)`，那么 `_VectorTransformPart(v1).multiply(rhs)` 的结果应该等于 `m1 * rhs`。
@@ -21,9 +25,11 @@ abstract class _TransformPart {
   Matrix4 multiply(Matrix4 rhs);
 ```
 
+&emsp;OK，`_TransformPart` 的内容就这么多，它作为一个抽象类是无法直接使用的，下面则是它的两个子类：`_MatrixTransformPart` 和 `_OffsetTransformPart`，分别添加了 final Matrix4 matrix 属性和 final Offset offset 属性。
+
 # `_MatrixTransformPart`
 
-&emsp;
+&emsp;`_MatrixTransformPart` 直接继承自 `_TransformPart` 并添加了一个 final Matrix4 matrix 属性，作为一个 final 修饰的属性，它只在 `_MatrixTransformPart` 的构造函数调用时，即创建 `_MatrixTransformPart` 对象时进行赋值，并且后续不可再改变了。另一个角度看的话则是：创建 `_MatrixTransformPart` 对象时必须传入一个 Matrix4 matrix 参数。
 
 ```dart
 class _MatrixTransformPart extends _TransformPart {
@@ -37,7 +43,7 @@ class _MatrixTransformPart extends _TransformPart {
 
 ## multiply
 
-&emsp;
+&emsp;`_MatrixTransformPart` 实现了 `_TransformPart` 的抽象函数 multiply，内部则是直接调用 Matrix4 的 multiplied 函数，并把其返回值作为 multiply 函数的返回值。简单理解的话即是：两个 Matrix4 进行乘法运算。
 
 ```dart
   @override
@@ -46,9 +52,11 @@ class _MatrixTransformPart extends _TransformPart {
   }
 ```
 
+&emsp;然后下面是 `_TransformPart` 的另一个子类：`_OffsetTransformPart`。
+
 # `_OffsetTransformPart`
 
-&emsp;
+&emsp;不同于 `_MatrixTransformPart`，`_OffsetTransformPart` 类则是添加了一个 final Offset offset 属性。同样亦是创建 `_OffsetTransformPart` 对象时必须传入一个 Offset offset 参数。
 
 ```dart
 class _OffsetTransformPart extends _TransformPart {
@@ -62,7 +70,7 @@ class _OffsetTransformPart extends _TransformPart {
 
 ## multiply
 
-&emsp;
+&emsp;`_OffsetTransformPart` 实现了 `_TransformPart` 的抽象函数 multiply，内部实现也很简单，首先克隆一份入参 Matrix4 rhs，然后调用 Matrix4 的 leftTranslate 函数，把入参 Matrix4 rhs 的克隆体偏移 final Offset offset。
 
 ```dart
   @override
@@ -70,6 +78,13 @@ class _OffsetTransformPart extends _TransformPart {
     return rhs.clone()..leftTranslate(offset.dx, offset.dy);
   }
 ```
+
+&emsp;通过上面的 `_MatrixTransformPart` 和 `_OffsetTransformPart` 类实现 `_TransformPart` 的抽象函数：multiply，可以看到内部主要是用到了 Matrix4 的 multiplied 函数和 leftTranslate 函数。
+
+&emsp;Matrix4 的 multiplied 函数内部则是调用 Matrix4 的 multiply 函数，它是最简单的矩阵乘法，还记得初中数学中学的矩阵的乘法吗？是的，没错就是我们当时在数学上学的矩阵的乘法的概念在代码上的实现而已。 
+
+&emsp;Matrix4 的 leftTranslate 则是矩阵的偏移。
+
 
 &emsp;PointerEvent：触摸、触控笔或鼠标事件的基类。
 
