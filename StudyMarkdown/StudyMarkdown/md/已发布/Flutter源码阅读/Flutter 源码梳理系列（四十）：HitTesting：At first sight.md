@@ -2,7 +2,7 @@
 
 # 前言
 
-&emsp;在很久之前我们学习 RenderObject 时，已经看到过 RenderObject 需要实现 HitTestTarget 抽象接口类，而 HitTestTarget 抽象接口类仅有一个抽象函数：handleEvent，即每个实现 HitTestTarget 的类都需要实现自己的 handleEvent 抽象函数，而当事件到来时便会调用此 handleEvent 函数来处理这个事件。
+&emsp;在很久之前我们学习 RenderObject 时，已经看到过 RenderObject 需要实现 HitTestTarget 抽象接口类，而 HitTestTarget 抽象接口类仅有一个抽象函数：handleEvent，即每个实现 HitTestTarget 的类都需要实现自己的 handleEvent 函数，而当 hit 事件（PointerEvent）到来时便会调用此 handleEvent 函数来处理这个事件。
 
 &emsp;那这个 "处理事件" 是指什么事件呢？其实就是 handleEvent 抽象函数的 event 参数所限定的 PointerEvent 事件，而在 Flutter framework 中 PointerEvent 是作为 **触摸、触控笔或鼠标事件的基类** 而存在的，对应到移动端平台便是手指的触摸事件了，即 "处理事件" 便是处理我们的手指在触摸屏上的触摸事件，点击、滑动等等操作。
 

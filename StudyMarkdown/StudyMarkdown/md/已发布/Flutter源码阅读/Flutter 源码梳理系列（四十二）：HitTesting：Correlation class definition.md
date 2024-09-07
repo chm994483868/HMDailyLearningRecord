@@ -83,16 +83,19 @@ class _OffsetTransformPart extends _TransformPart {
 
 &emsp;Matrix4 的 multiplied 函数内部则是调用 Matrix4 的 multiply 函数，它是最简单的矩阵乘法，还记得初中数学中学的矩阵的乘法吗？是的，没错就是我们当时在数学上学的矩阵的乘法的概念在代码上的实现而已。 
 
-&emsp;Matrix4 的 leftTranslate 则是矩阵的偏移。
+&emsp;Matrix4 的 leftTranslate 函数则是矩阵乘以左边的偏移量。leftTranslate 函数有三个参数：x/y/z，x 类型是 dynamic，y/z 类型是 double，因为是动态类型，所以 x 可以接收：3 种类型的值：Vector4/Vector3/double，然后则是参数分别乘以矩阵数组的 3/7/11/15 下标的值为整个矩阵数组更新值。
 
+&emsp;目前先看到这里，后面我们会深入分析 Matrix4 矩阵相关的数据存储方式以及矩阵的各个运算的含义。
 
-&emsp;PointerEvent：触摸、触控笔或鼠标事件的基类。
+&emsp;上一篇呢我们看了 HitTestResult 的内容，它是用来记录 hit testing 结果的，它的 `_path` 属性会把一路上的 hitTest 返回 true 的 RenderObject 
 
-&emsp;Pointer events 在屏幕坐标空间中运作，按逻辑像素（logical pixels）进行缩放。逻辑像素大致近似于每厘米 38 个像素，或每英寸 96 个像素。
-
-&emsp;这样可以独立于设备的精确硬件特性来识别手势。特别是，可以根据大致的物理长度定义诸如触摸误差（参见 kTouchSlop）之类的功能，以便用户可以在高密度显示屏上以相同的距离移动手指，就像在低分辨率设备上移动手指一样。
-
-&emsp;出于类似的原因，pointer events 不受渲染层中的任何 transforms 的影响。这意味着在应用于渲染内部移动之前，可能需要对增量进行缩放。例如，如果一个滚动列表显示为 2x 缩放，那么指针增量将需要按照相反的倍数进行缩放，以便列表在用户的手指上滚动时显示出来。
+<!--&emsp;PointerEvent：触摸、触控笔或鼠标事件的基类。-->
+<!---->
+<!--&emsp;Pointer events 在屏幕坐标空间中运作，按逻辑像素（logical pixels）进行缩放。逻辑像素大致近似于每厘米 38 个像素，或每英寸 96 个像素。-->
+<!---->
+<!--&emsp;这样可以独立于设备的精确硬件特性来识别手势。特别是，可以根据大致的物理长度定义诸如触摸误差（参见 kTouchSlop）之类的功能，以便用户可以在高密度显示屏上以相同的距离移动手指，就像在低分辨率设备上移动手指一样。-->
+<!---->
+<!--&emsp;出于类似的原因，pointer events 不受渲染层中的任何 transforms 的影响。这意味着在应用于渲染内部移动之前，可能需要对增量进行缩放。例如，如果一个滚动列表显示为 2x 缩放，那么指针增量将需要按照相反的倍数进行缩放，以便列表在用户的手指上滚动时显示出来。-->
 
 # BoxHitTestResult
 
