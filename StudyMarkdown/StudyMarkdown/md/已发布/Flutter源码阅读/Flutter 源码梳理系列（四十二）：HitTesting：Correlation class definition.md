@@ -1,8 +1,12 @@
 # Flutter 源码梳理系列（四十二）：HitTesting：Correlation class definition
 
+# 前言
+
+&emsp;上一篇我们看了 HitTestTarget、HitTestEntry、BoxHitTestEntry、HitTestResult 四个类，本篇我们继续看与 hit test 相关的一些类。
+
 # `_TransformPart`
 
-&emsp;`_TransformPart` 是一种可以通过 left-multiplication（左乘）矩阵应用的数据类型。（left-multiplication 在代码方面则是表现为 `_TransformPart` 提供了一个 multiply 函数，入参是一个 Matrix4 rhs，并返回一个 Matrix4。）
+&emsp;`_TransformPart` 是一种可以通过 left-multiplication（左乘）Matrix4 应用的数据类型。（left-multiplication 在代码方面则是表现为 `_TransformPart` 提供了一个 multiply 函数，入参是一个 Matrix4 rhs，并返回一个 Matrix4。）
 
 &emsp;`_TransformPart` 是一个不可变的抽象类。
 
@@ -29,7 +33,7 @@ abstract class _TransformPart {
 
 # `_MatrixTransformPart`
 
-&emsp;`_MatrixTransformPart` 直接继承自 `_TransformPart` 并添加了一个 final Matrix4 matrix 属性，作为一个 final 修饰的属性，它只在 `_MatrixTransformPart` 的构造函数调用时，即创建 `_MatrixTransformPart` 对象时进行赋值，并且后续不可再改变了。另一个角度看的话则是：创建 `_MatrixTransformPart` 对象时必须传入一个 Matrix4 matrix 参数。
+&emsp;`_MatrixTransformPart` 直接继承自 `_TransformPart` 并添加了一个 final Matrix4 matrix 属性，作为一个 final 修饰的属性，它只在 `_MatrixTransformPart` 的构造函数调用时、创建 `_MatrixTransformPart` 对象时进行赋值，并且后续不可再改变了。另一个角度看的话则是：创建 `_MatrixTransformPart` 对象时必须传入一个 Matrix4 matrix 参数。
 
 ```dart
 class _MatrixTransformPart extends _TransformPart {
@@ -70,7 +74,7 @@ class _OffsetTransformPart extends _TransformPart {
 
 ## multiply
 
-&emsp;`_OffsetTransformPart` 实现了 `_TransformPart` 的抽象函数 multiply，内部实现也很简单，首先克隆一份入参 Matrix4 rhs，然后调用 Matrix4 的 leftTranslate 函数，把入参 Matrix4 rhs 的克隆体偏移 final Offset offset。
+&emsp;`_OffsetTransformPart` 实现了 `_TransformPart` 的抽象函数 multiply，其内部实现也很简单。首先克隆一份入参 Matrix4 rhs，然后调用 Matrix4 的 leftTranslate 函数，把入参 Matrix4 rhs 的克隆体左偏移 final Offset offset。
 
 ```dart
   @override
@@ -79,34 +83,26 @@ class _OffsetTransformPart extends _TransformPart {
   }
 ```
 
-&emsp;通过上面的 `_MatrixTransformPart` 和 `_OffsetTransformPart` 类实现 `_TransformPart` 的抽象函数：multiply，可以看到内部主要是用到了 Matrix4 的 multiplied 函数和 leftTranslate 函数。
+&emsp;通过上面的 `_MatrixTransformPart` 和 `_OffsetTransformPart` 类实现 `_TransformPart` 的抽象函数：multiply，可以看到它们内部主要是用到了 Matrix4 的 multiplied 函数和 leftTranslate 函数。
 
 &emsp;Matrix4 的 multiplied 函数内部则是调用 Matrix4 的 multiply 函数，它是最简单的矩阵乘法，还记得初中数学中学的矩阵的乘法吗？是的，没错就是我们当时在数学上学的矩阵的乘法的概念在代码上的实现而已。 
 
-&emsp;Matrix4 的 leftTranslate 函数则是矩阵乘以左边的偏移量。leftTranslate 函数有三个参数：x/y/z，x 类型是 dynamic，y/z 类型是 double，因为是动态类型，所以 x 可以接收：3 种类型的值：Vector4/Vector3/double，然后则是参数分别乘以矩阵数组的 3/7/11/15 下标的值为整个矩阵数组更新值。
+&emsp;Matrix4 的 leftTranslate 函数则是矩阵乘以左边的偏移量。leftTranslate 函数有三个参数：x/y/z，x 参数类型是 dynamic，y/z 参数类型是 double，因为 x 是动态类型，所以 x 可以接收：3 种类型的值：Vector4/Vector3/double，然后则是参数分别乘以矩阵数组的 3/7/11/15 下标的值后为整个矩阵数组更新值。
 
 &emsp;目前先看到这里，后面我们会深入分析 Matrix4 矩阵相关的数据存储方式以及矩阵的各个运算的含义。
 
-&emsp;上一篇呢我们看了 HitTestResult 的内容，它是用来记录 hit testing 结果的，它的 `_path` 属性会把一路上的 hitTest 返回 true 的 RenderObject 
-
-<!--&emsp;PointerEvent：触摸、触控笔或鼠标事件的基类。-->
-<!---->
-<!--&emsp;Pointer events 在屏幕坐标空间中运作，按逻辑像素（logical pixels）进行缩放。逻辑像素大致近似于每厘米 38 个像素，或每英寸 96 个像素。-->
-<!---->
-<!--&emsp;这样可以独立于设备的精确硬件特性来识别手势。特别是，可以根据大致的物理长度定义诸如触摸误差（参见 kTouchSlop）之类的功能，以便用户可以在高密度显示屏上以相同的距离移动手指，就像在低分辨率设备上移动手指一样。-->
-<!---->
-<!--&emsp;出于类似的原因，pointer events 不受渲染层中的任何 transforms 的影响。这意味着在应用于渲染内部移动之前，可能需要对增量进行缩放。例如，如果一个滚动列表显示为 2x 缩放，那么指针增量将需要按照相反的倍数进行缩放，以便列表在用户的手指上滚动时显示出来。-->
+&emsp;上一篇呢我们看了 HitTestResult 的内容，它是用来记录 hit testing 结果的，它的 `_path` 属性会把一路上的 hitTest 返回 true 的 RenderObject 以 HitTestEntry 的形式记录下来，而在实际的场景中，则多是使用 HitTestResult 的子类 BoxHitTestResult，之前学习 RenderBox 时我们也知道，Render Tree 上多是 RenderBox 节点，当它们的 hit test 进行时，则是需要使用 BoxHitTestResult 来记录结果。
 
 # BoxHitTestResult
 
-&emsp;BoxHitTestResult：对 RenderBoxe 执行 hit test 的结果。该类的一个实例被提供给 RenderBox.hitTest，用于记录 hit test 的结果。
+&emsp;BoxHitTestResult：表示对 RenderBox 执行 hit test 的结果。该类的一个实例被提供给 RenderBox.hitTest，用于记录 hit test 的结果。
 
 + Object -> HitTestResult -> BoxHitTestResult
 
 ```dart
 class BoxHitTestResult extends HitTestResult {
   // 创建一个用于在 [RenderBox] 上进行 hit testing 的空 hit test 结果。
-  // (这里空的意思即是 HitTestResult 的 _path、_transforms、_localTransforms 三个属性被初始化为空列表。)
+  // (这里空的意思同父类 HitTestResult，即是 HitTestResult 的 _path、_transforms、_localTransforms 三个属性被初始化为空列表。)
   BoxHitTestResult() : super();
   
   // ...
@@ -129,7 +125,7 @@ class BoxHitTestResult extends HitTestResult {
 
 ## addWithPaintTransform
 
-&emsp;将 position 转换为子级 RenderObject 的本地坐标系，以便为子级 RenderObject 进行 hit testing。
+&emsp;将 Offset position 转换为子级 RenderObject 的本地坐标系，以便为子级 RenderObject 进行 hit testing。
 
 &emsp;子级 RenderObject 的实际 hit testing 需要在提供的 hitTest 回调中实现，该回调会使用转换后的 position 作为参数进行调用。
 
@@ -141,7 +137,7 @@ class BoxHitTestResult extends HitTestResult {
 
 &emsp;该函数返回 hitTest 回调函数的返回值。
 
-&emsp;当子节点和父节点的起始点不相同时，这种方法会在 RenderBox.hitTestChildren 中被使用。
+&emsp;当子节点和父节点的源不相同时，这种方法会在 RenderBox.hitTestChildren 中被使用。
 
 ```dart
 abstract class RenderFoo extends RenderBox {
@@ -149,15 +145,19 @@ abstract class RenderFoo extends RenderBox {
 
   @override
   void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    
+    // 调用 Matrix4 的 multiply 函数
     transform.multiply(_effectiveTransform);
   }
 
   @override
   bool hitTestChildren(BoxHitTestResult result, { required Offset position }) {
+  
     return result.addWithPaintTransform(
       transform: _effectiveTransform,
       position: position,
       hitTest: (BoxHitTestResult result, Offset position) {
+        // hitTest 内部则是直接调用父类的 hitTestChildren 函数
         return super.hitTestChildren(result, position: position);
       },
     );
@@ -183,6 +183,7 @@ abstract class RenderFoo extends RenderBox {
       if (transform == null) {
         // Objects are not visible on screen and cannot be hit-tested.
         // 对象在屏幕上是不可见的，不能进行 hit-tested
+        
         return false;
       }
     }
@@ -224,6 +225,7 @@ abstract class RenderFoo extends RenderBox {
       pushOffset(-offset);
     }
     
+    // 进行 hit test
     final bool isHit = hitTest(this, transformedPosition);
     
     // 与上面👆的 pushOffset 对应
@@ -257,7 +259,6 @@ abstract class RenderFoo extends RenderBox {
     required Offset position,
     required BoxHitTest hitTest,
   }) {
-    // 
     final Offset transformedPosition = transform == null ?
         position : MatrixUtils.transformPoint(transform, position);
     
@@ -326,9 +327,9 @@ abstract class RenderFoo extends RenderBox {
   }
 ```
 
+## BoxHitTestResult 总结
 
-
-
+&emsp;至此，BoxHitTestResult 的内容就看完了，首先鉴于 HitTestResult 是一个非抽象类，所以它的所有函数都有自己的实现，并不需要子类实现父类的抽象函数之类的概念。BoxHitTestResult 类的内容集中在了： addWithPaintTransform/addWithPaintOffset/addWithRawTransform/addWithOutOfBandPosition 四个函数中，它们的主要作用是在进行 hit test 之前，调用父类 HitTestResult 的 pushTransform/pushOffset 函数推入 Transform/Offset，并把它们应用到后续的子级 RenderObject hit test 中，如果想要深入理解这一点的话，其实需要补充 Matrix4 相关的内容，特别是牵涉到 PointerEvent 是如何从屏幕的全局坐标空间转换为 target 的本地坐标空间的，我们下一篇继续。
 
 ## 参考链接
 **参考链接:🔗**

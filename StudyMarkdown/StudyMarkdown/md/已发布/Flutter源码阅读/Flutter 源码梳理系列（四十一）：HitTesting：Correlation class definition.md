@@ -170,7 +170,7 @@ class HitTestResult {
 
 ## path
 
-&emsp;注意 path 是一个 `List<HitTestEntry>` 类型的 final 属性，它是在 hit test 期间记录 HitTestEntry 对象的不可修改列表。path 中的第一个条目是最具体的，通常是正在进行 hit test 的 Render Tree 上的叶子节点对应的 HitTestEntry。事件传播则从最具体的（即第一个）HitTestEntry 开始，并按顺序通过 path 进行。
+&emsp;注意 path 是一个 `List<HitTestEntry>` 类型的 final 属性，它是在 hit test 期间记录 HitTestEntry 对象的不可修改列表。path 中的第一个 HitTestEntry 是最具体的，通常是正在进行 hit test 的 Render Tree 上的叶子节点对应的 HitTestEntry。事件传播则从最具体的（即第一个）HitTestEntry 开始，并按顺序通过 path 进行。
 
 &emsp;如上篇示例代码中第一个被加入到 hitTestResult.path 的便是我们的 'click me' 对应的 TextSpan，而最后一个则是我们的 Render Tree 的根节点，即可以把 hit test 理解为是深度优先遍历的，第一个加入 HitTestResult 的是 depth 最深的。
 
@@ -183,12 +183,12 @@ class HitTestResult {
 
 &emsp;一个 `_TransformPart` 的堆栈。
 
-&emsp;从全局到当前对象的 `_TransformPart` 堆栈分为两部分存储：
+&emsp;从全局到当前 RenderObject 对象的 `_TransformPart` 堆栈分为两部分存储：
 
 + `_transforms` 是全局 `_TransformPart`，意味着它们已经乘以了祖先矩阵，因此相对于全局坐标空间。
 + `_localTransforms` 是本地 `_TransformPart`，相对于父级的坐标空间。
 
-&emsp;当新的 `_TransformPart` 被添加时，它们会被追加到 `_localTransforms` 中，只有当它们被使用时，才会被转换为全局 `_TransformPart` 并移动到 `_transforms` 中。
+&emsp;当新的 `_TransformPart` 被添加时，它们会被追加到 `_localTransforms` 中，只有当它们被使用时，才会被转换为全局 `Matrix4` 并移动到 `_transforms` 中。
 
 ```dart
   final List<Matrix4> _transforms;
@@ -217,24 +217,32 @@ class HitTestResult {
       _transforms.add(last);
     }
     
-    // 由于已经把 _localTransforms 中的 _TransformPart 全部转换到 _transforms 中去了，所以把 _localTransforms 直接清空即可
+    // 由于已经把 _localTransforms 中的 _TransformPart 全部转换到 _transforms 中去了，
+    // 所以把 _localTransforms 列表直接清空即可。
     _localTransforms.clear();
   }
-  
-  
+```
+
+## `_lastTransform`
+
+&emsp;一个 getter 用来快速获取 `_transforms` 列表中的最后一个 Matrix4。
+
+&emsp;首先调用 `_globalizeTransforms` 函数把 `_localTransforms` 列表中的所有 `_TransformPart` 全局化后添加到 `_transforms` 列表中，然后返回 `_transforms` 列表中的最后一个 Matrix4。
+
+```dart
   Matrix4 get _lastTransform {
     _globalizeTransforms();
     return _transforms.last;
   }
 ```
 
-## add 
+## add
 
-&emsp;将一个 HitTestEntry 添加到 `_path` 中。新的 HitTestEntry 会被添加到 `_path` 的末尾，这意味着 HitTestEntry 应该按照从最具体到最不具体的顺序进行添加，通常是在进行 hit test 的树结构向上遍历的过程中。
+&emsp;将一个 HitTestEntry 添加到 `_path` 列表中。新的 HitTestEntry 会被添加到 `_path` 列表的末尾，这意味着 HitTestEntry 应该按照从最具体到最不具体的顺序进行添加，通常是在进行 hit test 的树结构向上遍历的过程中。
 
 ```dart
   void add(HitTestEntry entry) {
-    // 并且把 _transforms 列表中的最后一个 Matrix4 赋值给 entry 的 _transform
+    // 并且把 _transforms 列表中的最后一个 Matrix4 赋值给 entry 的 _transform 属性
     entry._transform = _lastTransform;
     
     _path.add(entry);
@@ -261,7 +269,8 @@ class HitTestResult {
 ```dart
   @protected
   void pushTransform(Matrix4 transform) {
-    // 仅仅是把 Matrix4 transform 通过 _MatrixTransformPart 转换为一个 _TransformPart，并添加到 _localTransforms 列表中
+    // 仅仅是把 Matrix4 transform 通过 _MatrixTransformPart 转换为一个 _TransformPart，
+    // 并添加到 _localTransforms 列表中
     _localTransforms.add(_MatrixTransformPart(transform));
   }
 ```
@@ -284,20 +293,22 @@ class HitTestResult {
 
 &emsp;这个方法只能由 HitTestResult 子类使用，HitTestResult 子类必须为他们的用户提供特定于坐标空间的公共包装函数，这些函数围绕这个功能进行封装（例如，可以参考 BoxHitTestResult.addWithPaintTransform）。
 
-&emsp;这个方法必须在对需要调用 pushTransform 或 pushOffset 的子级 RenderObject 进行 hit test 之后调用。
+&emsp;这个方法必须在对需要调用 pushTransform 或 pushOffset 的子级 RenderObject 进行 hit test 之后调用。即 popTransform 函数和 pushTransform/pushOffset 函数是成对调用的。
 
 ```dart
   @protected
   void popTransform() {
     if (_localTransforms.isNotEmpty) {
+      // 移除 _localTransforms 列表中的最后一个 _TransformPart
       _localTransforms.removeLast();
     } else {
+      // 移除 _transforms 列表中的最后一个 Matrix4
       _transforms.removeLast();
     }
   }
 ```
 
-&emsp;OK，HitTestResult 就这么多内容。本篇我们看了三个 hit test 过程中最基础的数据结构：HitTestTarget、HitTestEntry、HitTestResult。下篇我们继续，则把重点放在 PointerEvent 是如何从屏幕的全局坐标空间转换为 target 的本地坐标空间。
+&emsp;OK，HitTestResult 就这么多内容。本篇我们看了四个 hit test 过程中最基础的数据结构：HitTestTarget、HitTestEntry、BoxHitTestEntry、HitTestResult 下篇我们继续。把重点放在 PointerEvent 是如何从屏幕的全局坐标空间转换为 target 的本地坐标空间的。
 
 ## 参考链接
 **参考链接:🔗**
