@@ -168,7 +168,7 @@ abstract class RenderFoo extends RenderBox {
 &emsp;下面👇是 addWithPaintTransform 函数本体：
 
 ```dart
-  // 用于对 RenderBox 进行 hit testing 的方法签名。
+  // BoxHitTest 用于对 RenderBox 进行 hit testing 的方法签名。
   // 被 BoxHitTestResult.addWithPaintTransform 使用以对 RenderBox 的子级进行 hit test。
   typedef BoxHitTest = bool Function(BoxHitTestResult result, Offset position);
 
@@ -329,7 +329,7 @@ abstract class RenderFoo extends RenderBox {
 
 ## BoxHitTestResult 总结
 
-&emsp;至此，BoxHitTestResult 的内容就看完了，首先鉴于 HitTestResult 是一个非抽象类，所以它的所有函数都有自己的实现，并不需要子类实现父类的抽象函数之类的概念。BoxHitTestResult 类的内容集中在了： addWithPaintTransform/addWithPaintOffset/addWithRawTransform/addWithOutOfBandPosition 四个函数中，它们的主要作用是在进行 hit test 之前，调用父类 HitTestResult 的 pushTransform/pushOffset 函数推入 Transform/Offset，并把它们应用到后续的子级 RenderObject hit test 中，如果想要深入理解这一点的话，其实需要补充 Matrix4 相关的内容，特别是牵涉到 PointerEvent 是如何从屏幕的全局坐标空间转换为 target 的本地坐标空间的，我们下一篇继续。
+&emsp;至此，BoxHitTestResult 的内容就看完了，首先鉴于 HitTestResult 是一个非抽象类，所以它的所有函数都有自己的实现，并不需要子类实现父类的抽象函数之类的概念。BoxHitTestResult 类的内容集中在了： addWithPaintTransform/addWithPaintOffset/addWithRawTransform/addWithOutOfBandPosition 四个函数中，它们的主要作用是在进行 hit test 之前，调用父类 HitTestResult 的 pushTransform/pushOffset 函数推入 Transform/Offset，并把它们应用到后续的子级 RenderObject hit test 中，如果想要深入理解这一点的话，其实需要补充 Matrix4 相关的内容，特别是牵涉到 PointerEvent 是如何从屏幕的全局坐标系转换为 target 的 local 坐标系的，我们下一篇继续。
 
 ## 参考链接
 **参考链接:🔗**
@@ -339,3 +339,4 @@ abstract class RenderFoo extends RenderBox {
 + [`HitTestEntry<T extends HitTestTarget> class`](https://api.flutter.dev/flutter/gestures/HitTestEntry-class.html)
 + [BoxHitTestEntry class](https://api.flutter.dev/flutter/rendering/BoxHitTestEntry-class.html)
 + [HitTestResult class](https://api.flutter.dev/flutter/gestures/HitTestResult-class.html)
+ 

@@ -4,7 +4,7 @@
 
 &emsp;上一篇我们分析了 hit test 过程中所涉及的函数调用流程，其中涉及到的类定义还是很多的，本篇我们对其中涉及到的类的内容做一个快速浏览，看看它们的定义中都有哪些内容。
 
-&emsp;这次我们也反向来看。在上篇中我们知道最后在 GestureBinding.dispatchEvent 函数中会依次遍历 hitTestResult.path 中的 HitTestEntry，执行 entry.target 的 handleEvent 函数，而 entry.target 便是 HitTestTarget 类，所以下面我们先看一下 HitTestTarget。
+&emsp;这次我们也反向来看。在上篇中我们知道最后在 GestureBinding.dispatchEvent 函数中会依次遍历 hitTestResult.path 列表中的 HitTestEntry，执行 entry.target 的 handleEvent 函数，而 entry.target 便是 HitTestTarget 抽象类（所有的 RenderObject 都实现了它。），所以下面我们先看一下 HitTestTarget。
 
 # HitTestTarget
 
@@ -41,7 +41,7 @@ abstract class RenderBox extends RenderObject {
   
   @override
   void handleEvent(PointerEvent event, BoxHitTestEntry entry) {
-    // 这里 RenderBox 仅是调用 super.handleEvent 函数，即 RenderObject 的 handleEvent 函数
+    // 这里 RenderBox 仅是调用 super.handleEvent 函数，即 RenderObject 的 handleEvent 函数。
     super.handleEvent(event, entry);
   }
   
@@ -51,7 +51,7 @@ abstract class RenderBox extends RenderObject {
 
 &emsp;目前我们先不去看其它 RenderBox 子类的 handleEvent 函数的实现，接下来把目光放在 handleEvent 函数的两个参数：PointerEvent 和 HitTestEntry 上。
 
-&emsp;首先是 BoxHitTestEntry entry 参数，其实就是执行 handleEvent 函数的 entry.target 的 entry：`entry.target.handleEvent(event.transformed(entry.transform), entry)`，在 GestureBinding 的 dispatchEvent 函数中，看到遍历 hitTestResult.path 时是直接把 HitTestEntry entry 作为了 entry.target.handleEvent 函数调用的 BoxHitTestEntry entry 参数，而 PointerEvent event 参数呢，则是本次要处理的事件，且在整个 hitTestResult.path 的遍历过程中调用每个 entry.target 的 handleEvent 事件所用的 PointerEvent event 参数都是同一个。
+&emsp;首先是 BoxHitTestEntry entry 参数，其实就是执行 handleEvent 函数的 entry.target 的 entry：`entry.target.handleEvent(event.transformed(entry.transform), entry)`，在 GestureBinding 的 dispatchEvent 函数中，看到遍历 hitTestResult.path 时是直接把 HitTestEntry entry 作为了 entry.target.handleEvent 函数调用的 BoxHitTestEntry entry 参数，而 PointerEvent event 参数呢，则是本次要处理的事件，且在整个 hitTestResult.path 的遍历过程中调用每个 entry.target 的 handleEvent 事件所用的 PointerEvent event 参数都是用的同一个。
 
 &emsp;下面看一下 HitTestEntry entry 以及它的 target 属性是什么。 
 
@@ -106,7 +106,7 @@ class HitTestEntry<T extends HitTestTarget> {
 
 ```dart
 class BoxHitTestEntry extends HitTestEntry<RenderBox> {
-  /// 创建一个 BoxHitTestEntry 对象，并需要传入 target 和 localPosition 参数
+  // 创建一个 BoxHitTestEntry 对象，并需要传入 target 和 localPosition 参数
   BoxHitTestEntry(super.target, this.localPosition);
   // ...
 }
