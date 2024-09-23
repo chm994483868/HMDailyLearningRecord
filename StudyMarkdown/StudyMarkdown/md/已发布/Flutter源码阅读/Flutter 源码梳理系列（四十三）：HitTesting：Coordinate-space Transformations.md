@@ -27,15 +27,15 @@
 
 &emsp;首先我们给 Listener Widget 的 child 替换为一个宽高是 100 的 Container，这利于我们追踪坐标转换。我们刻意去点击 Container 的中心点，大概是 (50, 50) 的位置，然后由此 Flutter framework 接收到一个点击事件后，看下它是如何把点击事件的坐标从屏幕的全局坐标系转换到 Container 的中心点大概 (50, 50) 的位置的。
 
-&emsp;下面我们依然在 RenderProxyBoxWithHitTestBehavior.hitTest 函数处打一个断点，然后以 debug 模式调试示例代码，项目启动以后我们尽量点击到 Container 的中心点，此时断点便会第一次命中，但是看到的 position 的参数的值是：Offset(192.7, 162.7) this 指针指向的 RenderPointerListener 的 depth 是 10，即 hit testing 还没有到我们的 Container 对应的 RenderProxyBoxWithHitTestBehavior，我们连续点击 Resume Program 按钮多次重复命中断点，直到 position 参数到值是：Offset(47.8, 48.0) （接近 50 左右），this 指针指向的 RenderObject 是 `_RenderColoredBox`，depth 是 31。（即直到再次点击 Resume Program 按钮的话程序就正常执行。）
+&emsp;下面我们依然在 RenderProxyBoxWithHitTestBehavior.hitTest 函数处打一个断点，然后以 debug 模式调试示例代码，项目启动以后我们尽量点击到 Container 的中心点，此时断点便会第一次命中，但是看到的 position 的参数的值是：Offset(194.7, 163.7) this 指针指向的 RenderPointerListener 的 depth 是 10，即 hit testing 还没有到我们的 Container 对应的 RenderProxyBoxWithHitTestBehavior，我们连续点击 Resume Program 按钮多次重复命中断点，直到 position 参数到值是：Offset(48.2, 48.7) （接近 50 左右），this 指针指向的 RenderObject 是 `_RenderColoredBox`，depth 是 31。（即直到再次点击 Resume Program 按钮的话程序就正常执行。）
 
-![截屏2024-09-21 08.59.48.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/792032fd32bb42f7ab7ff491ea7f4158~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726967124&x-orig-sign=Nueb28rWXd234bUr%2FklKadkBBKo%3D)
+![截屏2024-09-24 00.37.54.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/ba50920e48ef4f74b46dc96fd25b0cf0~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727195967&x-orig-sign=37J1ZsL2qHBPAgPthwng%2FFGLLIY%3D)
 
 &emsp;这张图蕴含的信息巨大：
 
 + `_RenderColorBox` 是 RenderProxyBoxWithHitTestBehavior 的子类，也是直接参与 hit testing 的。
-+ `RenderView.hitTest` 函数开始处的值为 `Offset(193.8, 163.0)` 的 `Offset position` 参数目前已经被转换为 RenderProxyBoxWithHitTestBehavior.hitTest 函数处的值为 `Offset(47.8, 48.0)` 的 `Offset position` 参数。
-+ result 的 `_localTransforms` 的属性中 3 和 4 的 `_OffsetTransformPart` 值分别是：Offset(-0.0, -115.0) 和 Offset(-146.0, -0.0)，而 47.8 + 146.0 和 48 + 115.0 的值正是（193.8，163），而我们示例代码中，Container 的左上角在当前屏幕坐标空间中的位置正是：`Offset(146，115)`。 
++ `RenderView.hitTest` 函数开始处的值为 `Offset(194.7, 163.7)` 的 `Offset position` 参数目前已经被转换为 RenderProxyBoxWithHitTestBehavior.hitTest 函数处的值为 `Offset(48.2, 48.7)` 的 `Offset position` 参数。
++ result 的 `_localTransforms` 的属性中 3 和 4 的 `_OffsetTransformPart` 值分别是：Offset(-0.0, -115.0) 和 Offset(-146.5, -0.0)，而 48.2 + 146.5 和 48.7 + 115.0 的值正是（194.7, 163.7），而我们示例代码中，Container 的左上角在当前屏幕坐标空间中的位置正是：`Offset(146.5, 115)`。 
 
 # PlatformDispatcher.instance._dispatchPointerDataPacket(packet)
 
@@ -166,28 +166,96 @@ class PointerDataPacket {
 
 # `_invoke1`
 
-&emsp;`_invoke1` 也是 hooks.dart 中定义的一个全局函数。在给定的 `Zone zone` 中调用 `void Function(A a)? callback`，并传入参数 `A arg`。`_invoke1` 名称中的 1 指的是回调函数所期望的参数数量（因此除了回调本身和回调执行的区域外，还会将参数传递给该函数）。
+&emsp;`_invoke1` 也是 hooks.dart 中定义的一个全局函数。在给定的 `Zone zone` 中调用 `void Function(A a)? callback`，并传入参数 `A arg`，如果传入的 `Zone zone` 和当前执行 `_invoke1` 函数不是同一个 Zone 的话，会通过调用 `zone.runUnaryGuarded` 函数在给定的 `zone` 中调用 `void Function(A a)? callback`。
+
+&emsp;`_invoke1` 名称中的 1 指的是入参 `void Function(A a)? callback` 回调函数所期望的参数数量（因此除了回调本身和回调执行的区域外，还会将参数传递给该函数）。其它还提供了 `_invoke2`、`_invoke3` 等。
 
 ```dart
 void _invoke1<A>(void Function(A a)? callback, Zone zone, A arg) {
+  // 如果入参 callback 为 null，则直接 return。
   if (callback == null) {
     return;
   }
   
+  // 如果入参 zone 和当前代码执行所在的不是一个 zone，则通过调用 Zone 的 runUnaryGuarded 函数，把 callback 在入参 zone 中执行。
   if (identical(zone, Zone.current)) {
+  
+    // identical 执行严格的判等操作。
     callback(arg);
   } else {
+    
+    // runUnaryGuarded 在当前指定的 Zone 中执行给定的 [action]，并捕获同步错误。
     zone.runUnaryGuarded<A>(callback, arg);
   }
 }
 ```
 
+&emsp;所以 `_invoke1` 出现在 hit testing 开始处，则表示了 hit testing 的整个过程需要在指定的 Zone 中进行。看上面👆的 `_invoke1` 调用时传入的 Zone 参数是 PlatformDispatcher 的 `_onPointerDataPacketZone` 属性，而 `_onPointerDataPacketZone` 属性正是在 GestureBinding 的 initInstances 函数执行时被赋值为 Zone.current 的，即执行 GestureBinding 的 initInstances 函数时所在的 Zone 被记录了下来，用于后续的 hit testing 时，也在此 Zone 中进行。
 
+&emsp;通过 Threads & Variables 选项卡，看到当前传入 `_invoke1` 函数的 Zone 参数是：`{_RootZone}`。
 
-  
+&emsp;下面我们继续向下，已知 `_invoke1` 调用时入参 callback 是 `GestureBinding._handlePointerDataPacket`。
 
+# `GestureBinding._handlePointerDataPacket`
 
+&emsp;整体而言，`_handlePointerDataPacket` 也可以作为一个中间函数看待，它做的事情比上面👆的 `_unpackPointerDataPacket` 更进一步。
 
+&emsp;上面👆的 `_unpackPointerDataPacket` 静态函数是把最原始的 `ByteData packet` 数据转化为内部是 `final List<PointerData> data` 列表的 `PointerDataPacket` 数据，而且当时我们也提到 PointerData 中的物理像素为单位的 physicalX 和 physicalY 分别除以 3 可到逻辑像素为单位的 x 和 y 坐标，而到了 `_handlePointerDataPacket` 这里，我们则可以从代码中看到切实的物理像素到逻辑像素到转换。
+
+&emsp;我们看到 `_handlePointerDataPacket` 函数最开始是一个：`_pendingPointerEvents.addAll(PointerEventConverter.expand(packet.data, _devicePixelRatioForView));` 调用，而它的入参部分：`PointerEventConverter.expand(packet.data, _devicePixelRatioForView)` 则是我们首要关注的，它做的事件就是更进一步，把 PointerData 数据转化为 PointerEvent 数据。所以整体的数据转换流程是：`ByteData -> PointerData -> PointerEvent`。
+
+```dart
+  void _handlePointerDataPacket(ui.PointerDataPacket packet) {
+    // We convert pointer data to logical pixels so that e.g. the touch slop can be defined in a device-independent manner.
+    // 我们将 PointerData 转换为逻辑像素，以便触摸斜率可以以与设备无关的方式定义。
+    try {
+      _pendingPointerEvents.addAll(PointerEventConverter.expand(packet.data, _devicePixelRatioForView));
+      
+      if (!locked) {
+        // 由 ByteData -> PointerData -> PointerEvent 转化完成后，就开始切实处理本次的 pointer 事件啦！
+        _flushPointerEventQueue();
+      }
+    } catch (error, stack) {
+    
+      // catch 补错。
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'gestures library',
+        context: ErrorDescription('while handling a pointer data packet'),
+      ));
+    }
+  }
+```
+
+## `PointerEventConverter.expand(packet.data, _devicePixelRatioForView)`
+
+&emsp;首先是一个辅助函数 `_devicePixelRatioForView`，它是用来获取当前设备屏幕上每个逻辑像素的设备像素数量，如 iOS 设备的 2X 和 3X。
+
+```dart
+  double? _devicePixelRatioForView(int viewId) {
+    return platformDispatcher.view(id: viewId)?.devicePixelRatio;
+  }
+```
+
+&emsp;如上👆 `devicePixelRatio` 表示 FlutterView 显示在设备屏幕上每个逻辑像素的设备像素数量。这个数字可能不是 2 的幂。事实上，它甚至可能不是整数。例如，Nexus 6 的设备像素比为 3.5。设备像素（device pixels）也被称为物理像素（physical pixels）。逻辑像素（logical pixels）也被称为无关分辨率或无关像素。根据定义，每厘米大约有 38 个逻辑像素，或者每英寸的物理显示器上大约有 96 个逻辑像素。`devicePixelRatio` 返回的值最终来自硬件本身、设备驱动程序或存储在操作系统或固件中的硬编码值，有时可能是不准确的，有时误差可能很大。
+
+&emsp;**如在我们当前测试用的 15 pro 模拟器上，获取的 devicePixelRatio 值是：3。**
+
+&emsp;然后是 PointerEventConverter 中定义的静态函数：expand，它的代码较多，所以这里我们就不贴出来了。它的主要功能就是遍历入参 `ui.PointerDataPacket packet` 的 `final List<PointerData> data` 属性中的 PointerData，根据每个 PointerData 的 change 属性的值，来创建 PointerAddedEvent/PointerDownEvent，如我们的实例中，就是创建一个 PointerAddedEvent 和一个 PointerDownEvent。而我们最关注的物理像素向逻辑像素转换便是：
+
+```dart
+final Offset position = Offset(datum.physicalX, datum.physicalY) / devicePixelRatio;
+final Offset delta = Offset(datum.physicalDeltaX, datum.physicalDeltaY) / devicePixelRatio;
+```
+
+&emsp;即直接由 PointerData 的 physicalX 和 physicalY 属性除以 devicePixelRatio 得到一个 Offset position 值，并会直接把它赋值给 PointerEvent 对象的 position 属性。
+
+&emsp;然后在我们的实例代码中，PointerEventConverter.expand 调用最终是返回一个 `Iterable<PointerEvent>` 实例对象，其中是一个 PointerAddedEvent 实例对象和一个 PointerDownEvent 实例对象。然后这个 `Iterable<PointerEvent>` 实例对象被添加到了：`final Queue<PointerEvent> _pendingPointerEvents = Queue<PointerEvent>();` 中，它是 GestureBinding 的一个属性，专门用来记录 PointerEvent 的。
+
+![截屏2024-09-24 00.24.05.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/70b726a16fe5489182e1a4f7dbb22321~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727195704&x-orig-sign=eEDGhlcUwwy7A5sZqr740VbhRhg%3D)
+
+![截屏2024-09-24 00.23.34.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/d146111a669c446ba7f0938b192fea5b~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727195715&x-orig-sign=F8ApHJ19DTaBJu34vp7hCaiF0UY%3D)
 
 
 
