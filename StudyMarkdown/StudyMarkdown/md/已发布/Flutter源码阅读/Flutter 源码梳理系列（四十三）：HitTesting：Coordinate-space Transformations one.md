@@ -1,4 +1,4 @@
-# Flutter 源码梳理系列（四十三）：HitTesting：Coordinate-space Transformations
+# Flutter 源码梳理系列（四十三）：HitTesting：Coordinate-space Transformations one
 
 # 前言
 
@@ -242,7 +242,7 @@ void _invoke1<A>(void Function(A a)? callback, Zone zone, A arg) {
 
 &emsp;**如在我们当前测试用的 15 pro 模拟器上，获取的 devicePixelRatio 值是：3。**
 
-&emsp;然后是 PointerEventConverter 中定义的静态函数：expand，它的代码较多，所以这里我们就不贴出来了。它的主要功能就是遍历入参 `ui.PointerDataPacket packet` 的 `final List<PointerData> data` 属性中的 PointerData，根据每个 PointerData 的 change 属性的值，来创建 PointerAddedEvent/PointerDownEvent，如我们的实例中，就是创建一个 PointerAddedEvent 和一个 PointerDownEvent。而我们最关注的物理像素向逻辑像素转换便是：
+&emsp;然后是 PointerEventConverter 中定义的静态函数：expand，它的代码较多，所以这里我们就不贴出来了。它的主要功能就是遍历入参 `ui.PointerDataPacket packet` 的 `final List<PointerData> data` 属性中的 PointerData，根据每个 PointerData 的 change 属性的值，来创建 PointerAddedEvent/PointerDownEvent，如我们的实例中，就是创建一个 PointerAddedEvent 和一个 PointerDownEvent。而我们最关注的物理像素向逻辑像素转换便是在如下两行代码：
 
 ```dart
 final Offset position = Offset(datum.physicalX, datum.physicalY) / devicePixelRatio;
@@ -251,48 +251,17 @@ final Offset delta = Offset(datum.physicalDeltaX, datum.physicalDeltaY) / device
 
 &emsp;即直接由 PointerData 的 physicalX 和 physicalY 属性除以 devicePixelRatio 得到一个 Offset position 值，并会直接把它赋值给 PointerEvent 对象的 position 属性。
 
-&emsp;然后在我们的实例代码中，PointerEventConverter.expand 调用最终是返回一个 `Iterable<PointerEvent>` 实例对象，其中是一个 PointerAddedEvent 实例对象和一个 PointerDownEvent 实例对象。然后这个 `Iterable<PointerEvent>` 实例对象被添加到了：`final Queue<PointerEvent> _pendingPointerEvents = Queue<PointerEvent>();` 中，它是 GestureBinding 的一个属性，专门用来记录 PointerEvent 的。
+&emsp;然后在我们的实例代码中，PointerEventConverter.expand 调用最终是返回一个 `Iterable<PointerEvent>` 实例对象，其中是一个 PointerAddedEvent 实例对象和一个 PointerDownEvent 实例对象。然后这个 `Iterable<PointerEvent>` 实例对象被添加到了：`final Queue<PointerEvent> _pendingPointerEvents = Queue<PointerEvent>();` 中，它是 GestureBinding 的一个属性，是一个专门用来记录 PointerEvent 的队列。
 
 ![截屏2024-09-24 00.24.05.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/70b726a16fe5489182e1a4f7dbb22321~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727195704&x-orig-sign=eEDGhlcUwwy7A5sZqr740VbhRhg%3D)
 
 ![截屏2024-09-24 00.23.34.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/d146111a669c446ba7f0938b192fea5b~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727195715&x-orig-sign=F8ApHJ19DTaBJu34vp7hCaiF0UY%3D)
 
+&emsp;如上截图，可看到 Pointer 事件发生的起始的物理像素为单位的坐标已经被转换为当前屏幕坐标系内的以逻辑像素为单位的坐标。再往下便是处理 `_pendingPointerEvents` 中收集到的 PointerEvent 了，通过调用 `GestureBinding._flushPointerEventQueue` 函数进行。
 
+## 总结
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+&emsp;由于篇幅限制，本篇先到这里，本篇的核心在于：`ByteData packet` -> `PointerDataPacket` -> `Iterable<PointerEvent>` 的数据转化，深入一点的话是：ByteData -> PointerData -> PointerEvent 的转换，或者说是由一个触摸事件的初始坐标点（以及触摸类型等信息），创建出一组 PoniterEvent 事件来，接下来便开始处理这一组 PointerEvent 事件。
 
 ## 参考链接
 **参考链接:🔗**
