@@ -244,19 +244,31 @@ class RenderProxyBox extends RenderBox with RenderObjectWithChildMixin<RenderBox
     this.child = child;
   }
 }
+
+mixin RenderObjectWithChildMixin<ChildType extends RenderObject> on RenderObject { //... }
+mixin RenderProxyBoxMixin<T extends RenderBox> on RenderBox, RenderObjectWithChildMixin<T> { //... }
 ```
+
+&emsp;RenderProxyBox 直接继承 RenderBox，然后混入 RenderObjectWithChildMixin 和 RenderProxyBoxMixin。RenderProxyBoxMixin 如其名，直接继承自 RenderObject，然后添加一个 child 属性。
 
 # RenderBox.hitTest
 
-&emsp;
+&emsp;由上面的 RenderView.hitTest 平滑进入 RenderBox.hitTest，看到 result 参数已经由空的 HitTestResult 对象被转化为空的 BoxHitTestResult 对象，Offset position 参数则保持不变。然后看到 `RenderBox.hitTest` 函数内部用到了 this 指针的 `_size` 属性，点开看到当前它的值是：`Size(393.0, 852.0)` 也就是当前 iPhone 15 Pro 的屏幕尺寸分辨率，目前已知的 Render Tree 中前面的一些节点的 `_size` 都是当前屏幕的尺寸。那么显然我们的入参 `Offset position：Offset(194.7, 163.7)` 肯定是在这个范围的，即：`_size!.contains(position)` 返回 true。
 
 ```dart
   bool hitTest(BoxHitTestResult result, { required Offset position }) {
+  
+    // 当前 _size 是：Size(393.0, 852.0)，即当前屏幕的尺寸。而 position 坐标则一定是在这个范围内的。
     if (_size!.contains(position)) {
-    
-      if (hitTestChildren(result, position: position) || hitTestSelf(position)) {
       
+      // 进入这个 if 后，分两叉：hitTestChildren 和 hitTestSelf，一个是继续往自己的子级去判断，一个往自己去判断。
+      if (hitTestChildren(result, position: position) || hitTestSelf(position)) {
+        
+        // 如果当前的 RenderBox 实例对象的子级或者是自己 hit test 为 true，
+        // 则用自己为参数构建一个 BoxHitTestEntry 实例对象并添加到 BoxHitTestResult result 参数中。
         result.add(BoxHitTestEntry(this, position));
+        
+        // 然后直接返回 true。
         return true;
       }
     }
@@ -265,8 +277,125 @@ class RenderProxyBox extends RenderBox with RenderObjectWithChildMixin<RenderBox
   }
 ```
 
+&emsp;显然在第二个 if 处，会进入 hitTestChildren(result, position: position) 调用，由于 RenderSemanticsAnnotations、RenderProxyBox、RenderBox、RenderObjectWithChildMixin、RenderProxyBoxMixin 中，只有 RenderProxyBoxMixin 重写了 hitTestChilderen 函数中，所以接下来不出意外的调用到了 RenderProxyBoxMixin.hitTestChildren 中。 
 
+# RenderProxyBoxMixin.hitTestChildren
 
+&emsp;RenderProxyBoxMixin.hitTestChildren 函数超简单，就是继续往自己的子级中进行 hit testing，且没有任何 position 和 result 的变化。
+
+```dart
+  @override
+  bool hitTestChildren(BoxHitTestResult result, { required Offset position }) {
+  
+    // 继续向子级中进行 hit testing。
+    return child?.hitTest(result, position: position) ?? false;
+  }
+```
+
+&emsp;且看到当前的 this 指针依然是：RenderSemanticsAnnotations 类型。
+
+&emsp;然后便是连续的 RenderProxyMixin.hitTestChildren 和 RenderBox.hitTest 的交替调用，它们分别位于 proxy_box.dart:130 和 box.dart:2762 的位置，所以我们只要看到堆栈末尾是它们两个就可知道此时调用到了它们两个函数。
+
+![截屏2024-10-01 14.04.00.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/e0b25b82430f4785b8f345e11279a948~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727849259&x-orig-sign=04JoJWyrlZolhEqCQBfrwZ%2BckbM%3D)
+
+&emsp;因为在这两个函数中是最基本的 hit test 过程，并没有牵涉到任何坐标位置的变换，仅仅是由父级 RenderBox 向子级 RenderBox 中调用 hitTest 函数的过程，所以下面我们重点放在图示中箭头指向的函数堆栈上。
+
+&emsp;下面我们避开 RenderProxyBoxMixin.hitTestChildren 和 RenderBox.hitTest 函数，看一下其它的 RenderBox 子类是如何参与 hit testing 过程的。
+
+# RenderTapRegionSurface.hitTest
+
+&emps;看到 RenderTapRegionSurface 对 hitTest 函数的重写，基本和 RenderBox.hitTest 相同，仅仅是多了 `_cachedResults[entry] = result;` 缓存过程。
+
+```dart
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (!size.contains(position)) {
+      return false;
+    }
+
+    final bool hitTarget = hitTestChildren(result, position: position) || hitTestSelf(position);
+
+    if (hitTarget) {
+      final BoxHitTestEntry entry = BoxHitTestEntry(this, position);
+      
+      // 把 entry 和 result 缓存到 _cachedResults 中。
+      _cachedResults[entry] = result;
+      
+      result.add(entry);
+    }
+
+    return hitTarget;
+  }
+```
+
+# RenderCustomPaint.hitTestChildren
+
+&emsp;RenderCustomPaint 也是一个直接继承自 RenderProxyBox 的子类。它重写了自己的 hitTestChildren 函数。
+
+```dart
+  @override
+  bool hitTestChildren(BoxHitTestResult result, { required Offset position }) {
+    // 当执行到这里的时候，看到 this 指针指向一个 RenderCustomPaint 实例对象。 
+    
+    // 如果当前的 RenderCustomPaint 实例对象的 _foregroundPainter 属性不为 null，
+    // 则调用他的 hitTest 函数。
+    if (_foregroundPainter != null && (_foregroundPainter!.hitTest(position) ?? false)) {
+      return true;
+    }
+    
+    return super.hitTestChildren(result, position: position);
+  }
+```
+
+# RenderProxyBoxWithHitTestBehavior.hitTest
+
+&emsp;第一次遇到 RenderProxyBoxWithHitTestBehavior.hitTest 时，可看到当前的 this 指针指向一个 depth 是 10 的 RenderPointerListener 实例对象。
+
+&emp;RenderPointerListener 直接继承自 RenderProxyBoxWithHitTestBehavior，而 RenderProxyBoxWithHitTestBehavior 直接继承自 RenderProxyBox，由于仅有 RenderProxyBoxWithHitTestBehavior 重写了 hitTest 函数，所以这里是调用到了 RenderProxyBoxWithHitTestBehavior.hitTest 这里。
+
+```dart
+// RenderPointerListener 直接继承自 RenderProxyBoxWithHitTestBehavior，仅重写了 handleEvent 函数，
+// 并添加了一组不同的 event 时的需要执行的回调。（以一组属性存在，在创建初始化 RenderPointerListener 对象时，可以给这一组属性赋值。）
+class RenderPointerListener extends RenderProxyBoxWithHitTestBehavior { //... }
+
+// RenderProxyBoxWithHitTestBehavior 呢，则是直接继承自 RenderProxyBox，主要是添加了一个 behavior 属性来参与 hit test 的过程，
+// 它重写了 hitTest 函数，并在其中加入 behavior 属性当前值的判断，例如：当 position 位于当前 RenderProxyBoxWithHitTestBehavior 实例对象的 size 中时，
+// 如果当前 behavior 属性值是 HitTestBehavior.translucent 则即使当前 RenderProxyBoxWithHitTestBehavior 的子级完全不响应 hit test 的话，
+// 当前的 RenderProxyBoxWithHitTestBehavior 依然可以调度 event 事件，它被作为参数构建为一个 BoxHitTestEntry 实例对象，
+// 并添加到 result 中。
+abstract class RenderProxyBoxWithHitTestBehavior extends RenderProxyBox { //... }
+```
+
+&emsp;RenderProxyBoxWithHitTestBehavior 仅是在自己的父类 RenderProxyBox 的基础上，添加了一个名为 behavior 的属性，以及重写了 hitTest 和 hitTestSelf 函数，来让此 behavior 直接参与 hit test 的过程。
+
+&emsp;behavior 属性值的类型是 HitTestBehavior 枚举。HitTestBehavior 枚举有三个值，分别表示 RenderProxyBoxWithHitTestBehavior 及其子类在进行 hit test 时的不同处理方式： 
+
+1. deferToChild：如果 target 委托给其子级，在边界内只有在 hti test 触碰到其子级之一时才会接收事件。
+2. opaque：不透明 target 可以被 hti test 击中，从而使它们在其范围内接收事件，并阻止位于其后的其他 target 也接收事件。
+3. translucent：半透明 target 既可以接收其边界内的事件，又可以让位于其后的 target 也能够接收事件。 
+
+```dart
+  @override
+  bool hitTest(BoxHitTestResult result, { required Offset position }) {
+    bool hitTarget = false;
+    
+    if (size.contains(position)) {
+      hitTarget = hitTestChildren(result, position: position) || hitTestSelf(position);
+      
+      // 如果当前子级没有被 hit test 命中，当时当前 behavior 属性是 translucent，
+      // 则表示当前这个 render 节点也是可以被调度本次 PointerEvent 事件的。
+      if (hitTarget || behavior == HitTestBehavior.translucent) {
+        result.add(BoxHitTestEntry(this, position));
+      }
+    }
+    
+    return hitTarget;
+  }
+```
+
+&emsp;OK，进行到这里发现还是没有到坐标转换到函数堆栈😂，其实它们比较靠后，前面都是系统为我们在 Render Tree 中添加的辅助性的 Render 节点，且它们多为 RenderProxyBox 的子类，且以此可以明确到它们都是仅有一个子级的 Render 节点，直到后续我们遇到 ContainerRenderObjectMixin 时，才会看到多子级的情况，它们的 defaultHitTestChildren 函数中会循环对子级进行 hitTest。
+
+&emsp;鉴于篇幅长度，本篇先到这里，我们下篇继续。下篇开始看以 RenderCustomMultiChildLayoutBox 为起点的多子级的 RenderBox 的 hit test 过程。
 
 ## 参考链接
 **参考链接:🔗**
