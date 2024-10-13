@@ -1,6 +1,6 @@
 # Flutter 源码梳理系列（四十四）：HitTesting：Coordinate-space Transformations two
 
-# `GestureBinding._flushPointerEventQueue` 
+# `GestureBinding._flushPointerEventQueue`
 
 &emsp;接上篇，`_handlePointerDataPacket` 函数内会进行 PointerData 的数据处理，会把入参传递来的 `ui.PointerDataPacket packet` 参数的 data 属性：`final List<PointerData> data` 列表中的 PointerData 转换为对应类型的 PointerEvent，目前通过打印看到实际是转换了两个 PointerEvent 的子类实例对象：PointerAddedEvent 和 PointerDownEvent，并且它们两个的 postion 属性值都是：`Offset(194.7, 163.7)`。
 
@@ -11,6 +11,8 @@
   
     // 循环遍历 _pendingPointerEvents 中的 PointerEvent 对象，对此 Pointer 事件进行处理。
     while (_pendingPointerEvents.isNotEmpty) {
+      
+      // 自顶处理 _pendingPointerEvents 队列中的 PointerEvent 对象。
       handlePointerEvent(_pendingPointerEvents.removeFirst());
     }
   }
@@ -47,7 +49,7 @@
 
 &emsp;注意当这里调用 hitTestInView 函数时，会发现调用的是：RendererBinding.hitTestInView，那么这里为什么由 GestureBinding 转移到了 RendererBinding 中去了呢？首先我们看一下 GestureBinding、RendererBinding 和 WidgetsFlutterBinding 的定义：
 
-&emsp;GestureBinding 定义：
+&emsp;GestureBinding 定义，直接继承自 BindingBase 并实现了 HitTestable、HitTestDispatcher、HitTestTarget。
 
 ```dart
 mixin GestureBinding on BindingBase implements HitTestable, 
@@ -148,7 +150,7 @@ class WidgetsFlutterBinding extends BindingBase with GestureBinding,
 &emsp;viewId 用于从 RendererBinding 的 `_viewIdToRenderView` 属性中找到与这个 viewId 对应的 RenderView 实例对象。在本次调用这里看到 `_viewIdToRenderView[viewId]` 取得的是我们的 Render Tree 的根节点：`_ReusableRenderView` 实例对象。由此三个参数可得，hit testing 的三个开始条件就达成了：
 
 1. 一个 HitTestResult 空的实例对象，用于记录 hit test 的过程。
-2. 一个 Offset 当前点击发生时在当前屏幕坐标系的坐标点，并且已经把坐标值的单位转换为逻辑像素，不同物理分辨率的设备都能取得相同的逻辑坐标。
+2. 一个 Offset 当前点击发生时在当前屏幕坐标系的坐标点，并且已经把坐标值的单位转换为逻辑像素，这里可以使得不同物理分辨率的设备都能取得相同的逻辑坐标。
 3. Render Tree 的根节点。
 
 ```dart
@@ -157,7 +159,7 @@ final Map<Object, RenderView> _viewIdToRenderView = <Object, RenderView>{}`
 
 &emsp;在 RendererBinding.hitTestInView 中首先是根据入参 int viewId 取 view，通过 Threads & Variables 选项看到当前 this 指针指向的是 WidgetsFlutterBinding 单例对象，然后它的 `_viewIdToRenderView` 属性有值，是一个 size 是 1 的 `_Map`，而这个 Map 仅有的一个元素是：key 是 0，value 是 `_ReusableRenderView`（Render Tree 根节点）。 
 
-![截屏2024-09-28 12.04.47.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/781ab1ddd7f34eaebc42798714dc9d51~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727582842&x-orig-sign=Ii3FP2Wwj8A%2B0CrHr8UTe1yMtH8%3D)
+![截屏2024-09-28 12.04.47.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/ac562500cb0b49a598fae9d2cac26558~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1728375052&x-orig-sign=lH9jBrxPEBeA5SLG1e%2B0f3Lr%2Fwc%3D)
 
 &emsp;然后是 RendererBinding.hitTestInView 函数的实现，此函数是重写自父类。看到实际仅有两行：`_viewIdToRenderView[viewId]` 取得 Render tree 的根节点，然后开始调用它的 hitTest 函数，开启整个 hit Testing 过程，而入参仅是最简单的空的 HitTestResult 实例对象和一个点击起点在当前屏幕的逻辑坐标。 
 
@@ -296,11 +298,11 @@ mixin RenderProxyBoxMixin<T extends RenderBox> on RenderBox, RenderObjectWithChi
 
 &emsp;然后便是连续的 RenderProxyMixin.hitTestChildren 和 RenderBox.hitTest 的交替调用，它们分别位于 proxy_box.dart:130 和 box.dart:2762 的位置，所以我们只要看到堆栈末尾是它们两个就可知道此时调用到了它们两个函数。
 
-![截屏2024-10-01 14.04.00.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/e0b25b82430f4785b8f345e11279a948~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1727849259&x-orig-sign=04JoJWyrlZolhEqCQBfrwZ%2BckbM%3D)
+![截屏2024-10-01 14.04.00.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/d8e6c07db0324bd2ba82f246676f0f54~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAg6bOE6bG85LiN5oCVX-eJmeWMu-S4jeaAlQ==:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMTU5MTc0ODU2OTA3NjA3OCJ9&rk3s=e9ecf3d6&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1728375133&x-orig-sign=f4x3NBkvMTL4BmWMkJnZyKUbChM%3D)
 
 &emsp;因为在这两个函数中是最基本的 hit test 过程，并没有牵涉到任何坐标位置的变换，仅仅是由父级 RenderBox 向子级 RenderBox 中调用 hitTest 函数的过程，所以下面我们重点放在图示中箭头指向的函数堆栈上。
 
-&emsp;下面我们避开 RenderProxyBoxMixin.hitTestChildren 和 RenderBox.hitTest 函数，看一下其它的 RenderBox 子类是如何参与 hit testing 过程的。
+&emsp;下面我们避开 RenderProxyBoxMixin.hitTestChildren 和 RenderBox.hitTest 函数，看一下其它的 RenderBox 子类是如何参与 hit testing 过程的，首先是 RenderTapRegionSurface。
 
 # RenderTapRegionSurface.hitTest
 
@@ -309,6 +311,8 @@ mixin RenderProxyBoxMixin<T extends RenderBox> on RenderBox, RenderObjectWithChi
 ```dart
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
+  
+    // 如果 position 不在当前的 RenderBox 的 size 内，则直接返回 false 即可。
     if (!size.contains(position)) {
       return false;
     }
@@ -337,8 +341,7 @@ mixin RenderProxyBoxMixin<T extends RenderBox> on RenderBox, RenderObjectWithChi
   bool hitTestChildren(BoxHitTestResult result, { required Offset position }) {
     // 当执行到这里的时候，看到 this 指针指向一个 RenderCustomPaint 实例对象。 
     
-    // 如果当前的 RenderCustomPaint 实例对象的 _foregroundPainter 属性不为 null，
-    // 则调用他的 hitTest 函数。
+    // 如果当前的 RenderCustomPaint 实例对象的 _foregroundPainter 属性不为 null，则调用他的 hitTest 函数。
     if (_foregroundPainter != null && (_foregroundPainter!.hitTest(position) ?? false)) {
       return true;
     }
@@ -368,7 +371,7 @@ abstract class RenderProxyBoxWithHitTestBehavior extends RenderProxyBox { //... 
 
 &emsp;RenderProxyBoxWithHitTestBehavior 仅是在自己的父类 RenderProxyBox 的基础上，添加了一个名为 behavior 的属性，以及重写了 hitTest 和 hitTestSelf 函数，来让此 behavior 直接参与 hit test 的过程。
 
-&emsp;behavior 属性值的类型是 HitTestBehavior 枚举。HitTestBehavior 枚举有三个值，分别表示 RenderProxyBoxWithHitTestBehavior 及其子类在进行 hit test 时的不同处理方式： 
+&emsp;behavior 属性值的类型是 HitTestBehavior 枚举。HitTestBehavior 枚举有三个值，分别表示 RenderProxyBoxWithHitTestBehavior 及其子类在进行 hit test 时的不同处理方式：
 
 1. deferToChild：如果 target 委托给其子级，在边界内只有在 hti test 触碰到其子级之一时才会接收事件。
 2. opaque：不透明 target 可以被 hti test 击中，从而使它们在其范围内接收事件，并阻止位于其后的其他 target 也接收事件。
@@ -393,7 +396,7 @@ abstract class RenderProxyBoxWithHitTestBehavior extends RenderProxyBox { //... 
   }
 ```
 
-&emsp;OK，进行到这里发现还是没有到坐标转换到函数堆栈😂，其实它们比较靠后，前面都是系统为我们在 Render Tree 中添加的辅助性的 Render 节点，且它们多为 RenderProxyBox 的子类，且以此可以明确到它们都是仅有一个子级的 Render 节点，直到后续我们遇到 ContainerRenderObjectMixin 时，才会看到多子级的情况，它们的 defaultHitTestChildren 函数中会循环对子级进行 hitTest。
+&emsp;OK，进行到这里发现还是没有到坐标转换到函数堆栈，其实它们比较靠后，前面都是系统为我们在 Render Tree 中添加的辅助性的 Render 节点，且它们多为 RenderProxyBox 的子类，且以此可以明确到它们都是仅有一个子级的 Render 节点，直到后续我们遇到 ContainerRenderObjectMixin 时，才会看到多子级的情况，它们的 defaultHitTestChildren 函数中会循环对子级进行 hitTest。
 
 &emsp;鉴于篇幅长度，本篇先到这里，我们下篇继续。下篇开始看以 RenderCustomMultiChildLayoutBox 为起点的多子级的 RenderBox 的 hit test 过程。
 
